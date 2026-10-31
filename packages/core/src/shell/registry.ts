@@ -16,7 +16,11 @@ import {
   sidebarCardCss,
   sidebarCss as automationSidebarCss,
 } from './css/automation.js';
-import { FLAT_ATTRIBUTE, SIDEBAR_LOGO_ATTRIBUTE } from '../look/tabs.js';
+import {
+  FLAT_ATTRIBUTE,
+  SIDEBAR_LOGO_ATTRIBUTE,
+  SIDEBAR_SEPARATORS_ATTRIBUTE,
+} from '../look/tabs.js';
 import {
   drawerCss,
   frameCss,
@@ -24,6 +28,7 @@ import {
   sidebarFlatCss,
   sidebarIconsCss,
   sidebarLogoCss,
+  sidebarSeparatorsCss,
 } from './css/chrome.js';
 import {
   cardEditCss,
@@ -210,6 +215,8 @@ export interface ShellSheet {
   readonly choice?: 'icons' | 'wall' | 'always';
   /** An attribute of `<html>`: the sheet fills only while it is there (and the sheet's own rule holds), a house's choice. */
   readonly when?: string;
+  /** The sheet drawn from the value of its `when` attribute (a house's list), in place of `css`. */
+  readonly drawn?: (value: string) => string;
 }
 
 /** Every touch of the shell. Adding a Home Assistant component is one line here plus its CSS in `css/`. */
@@ -223,6 +230,14 @@ export const SHEETS: readonly ShellSheet[] = [
   // the corner, as the house chose it: Home Assistant's logo in the sidebar's head, no hairline under it
   { id: 'sidebar-logo', target: 'ha-sidebar', css: sidebarLogoCss, when: SIDEBAR_LOGO_ATTRIBUTE },
   { id: 'sidebar-flat', target: 'ha-sidebar', css: sidebarFlatCss, when: FLAT_ATTRIBUTE },
+  // a line after the items the house chose, to set a group apart (`css` is the sheet for one, the Overview)
+  {
+    id: 'sidebar-separators',
+    target: 'ha-sidebar',
+    css: sidebarSeparatorsCss(['lovelace']),
+    when: SIDEBAR_SEPARATORS_ATTRIBUTE,
+    drawn: (value) => sidebarSeparatorsCss(value.split(' ').filter(Boolean)),
+  },
   { id: 'subpage', target: 'hass-subpage', css: subpageCss, probe: '.main-title' },
   { id: 'tabs-subpage', target: 'hass-tabs-subpage', css: tabsSubpageCss, probe: '.toolbar' },
   { id: 'tab', target: 'ha-tab', css: tabCss },

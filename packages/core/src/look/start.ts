@@ -39,6 +39,7 @@ import {
   markRoots,
   patchViewRoots,
   SIDEBAR_LOGO_ATTRIBUTE,
+  SIDEBAR_SEPARATORS_ATTRIBUTE,
   type TabsFor,
 } from './tabs.js';
 import { safeStorage } from '../storage.js';
@@ -194,6 +195,12 @@ export function startLook(): LookHandle | undefined {
     const chrome = chromeOf(now.look);
     env.document.documentElement.toggleAttribute(SIDEBAR_LOGO_ATTRIBUTE, chrome.logo);
     env.document.documentElement.toggleAttribute(FLAT_ATTRIBUTE, !chrome.dividers);
+    if (chrome.separators.length)
+      env.document.documentElement.setAttribute(
+        SIDEBAR_SEPARATORS_ATTRIBUTE,
+        chrome.separators.join(' '),
+      );
+    else env.document.documentElement.removeAttribute(SIDEBAR_SEPARATORS_ATTRIBUTE);
     // what is not a card (a page of ours) follows the preferences too
     window.dispatchEvent(new Event(PREFERENCES_EVENT));
   };

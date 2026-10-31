@@ -152,7 +152,13 @@ describe('the marks on a dashboard’s header', () => {
 
   it('mark the header’s corner: on the page’s colour, without its hairline, in every style', () => {
     const el = root('fluvy-home');
-    const corner = { logo: true, dividers: false, header: 'page', actions: 'buttons' } as const;
+    const corner = {
+      logo: true,
+      dividers: false,
+      header: 'page',
+      actions: 'buttons',
+      separators: [],
+    } as const;
     markRoot(
       el,
       marksFor(el, only({ style: 'ha', content: 'names', title: false }, 'fluvy-home', corner)),

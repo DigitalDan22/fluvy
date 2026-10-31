@@ -1089,6 +1089,8 @@
     "chrome.actions": "Actions dans un menu",
     "chrome.actions_sub": "Ajout, recherche, Assist, édition",
     "chrome.hint": "La barre latérale les prend là où Fluvy habille tout Home Assistant ({scope} → {everywhere}).",
+    "chrome.separators": "Lignes dans la barre latérale",
+    "chrome.separators_sub": "Une ligne après chaque élément activé",
     "preview.title": "Aperçu",
     "preview.sub": "Vos cartes avec ce look",
     "preview.living": "Salon",

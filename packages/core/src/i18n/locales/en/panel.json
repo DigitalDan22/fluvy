@@ -74,6 +74,8 @@
     "chrome.actions": "Actions in one menu",
     "chrome.actions_sub": "Add, search, Assist, edit",
     "chrome.hint": "The sidebar takes these where Fluvy styles all of Home Assistant ({scope} → {everywhere}).",
+    "chrome.separators": "Lines in the sidebar",
+    "chrome.separators_sub": "A line after each one switched on",
     "preview.title": "Preview",
     "preview.sub": "Your cards with this look",
     "preview.living": "Living room",

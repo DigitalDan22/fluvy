@@ -1089,6 +1089,8 @@
     "chrome.actions": "Azioni in un menu",
     "chrome.actions_sub": "Aggiungi, cerca, Assist, modifica",
     "chrome.hint": "La barra laterale li prende dove Fluvy veste tutto Home Assistant ({scope} → {everywhere}).",
+    "chrome.separators": "Linee nella barra laterale",
+    "chrome.separators_sub": "Una linea dopo ogni voce attivata",
     "preview.title": "Anteprima",
     "preview.sub": "Le tue schede con questo look",
     "preview.living": "Soggiorno",

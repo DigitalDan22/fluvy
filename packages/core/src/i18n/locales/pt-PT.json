@@ -1089,6 +1089,8 @@
     "chrome.actions": "Ações num menu",
     "chrome.actions_sub": "Adicionar, pesquisar, Assist, editar",
     "chrome.hint": "A barra lateral assume esse aspeto quando o Fluvy é aplicado a todo o Home Assistant ({scope} → {everywhere}).",
+    "chrome.separators": "Linhas na barra lateral",
+    "chrome.separators_sub": "Uma linha a seguir a cada item ativado",
     "preview.title": "Pré-visualização",
     "preview.sub": "Os seus cartões com este aspeto",
     "preview.living": "Sala",

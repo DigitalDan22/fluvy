@@ -1089,6 +1089,8 @@
     "chrome.actions": "Acties in één menu",
     "chrome.actions_sub": "Toevoegen, zoeken, Assist, bewerken",
     "chrome.hint": "De zijbalk neemt dit over waar Fluvy heel Home Assistant aankleedt ({scope} → {everywhere}).",
+    "chrome.separators": "Lijnen in de zijbalk",
+    "chrome.separators_sub": "Een lijn na elk ingeschakeld item",
     "preview.title": "Voorbeeld",
     "preview.sub": "Je kaarten in deze look",
     "preview.living": "Woonkamer",

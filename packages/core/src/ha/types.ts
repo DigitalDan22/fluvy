@@ -116,6 +116,8 @@ export interface HassPanel {
   url_path: string;
   title: string | null;
   icon: string | null;
+  /** False for a panel the sidebar never lists (Home Assistant's `light`, `climate`, …: reached from elsewhere). */
+  show_in_sidebar?: boolean;
 }
 
 export interface HomeAssistant {

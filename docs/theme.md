@@ -146,6 +146,12 @@ search, Assist and edit behind one "…", as Home Assistant draws them on a phon
 screenshots. The sidebar takes them where Fluvy styles all of Home Assistant (*Scope → Everywhere*); a
 dashboard's header takes them wherever the dashboard wears the look. The edit mode keeps Home Assistant's header.
 
+*Appearance → Lines in the sidebar* (with *Scope → Everywhere*) lists the sidebar's items, the dashboards first: each
+one switched on gets a line after it, the hairline under the sidebar's name, to set a group apart — the dashboards from
+the tools, say. The line belongs to its item, not to a place: it follows the item wherever a person's own order (Home
+Assistant's *Edit sidebar*) puts it, and a hidden item takes its line with it. A person who keeps their own look keeps
+their own lines too.
+
 ## Using the theme on its own
 
 The theme works without the cards: choose it in your profile and every Home Assistant page takes Fluvy's colours,

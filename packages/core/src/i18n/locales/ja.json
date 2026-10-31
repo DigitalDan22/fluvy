@@ -2121,6 +2121,8 @@
     "chrome.actions": "アクションを1つのメニューに",
     "chrome.actions_sub": "追加、検索、アシスト、編集",
     "chrome.hint": "サイドバーに反映されるのは、FluvyがHome Assistant全体を装飾している場合です（{scope} → {everywhere}）。",
+    "chrome.separators": "サイドバーの区切り線",
+    "chrome.separators_sub": "オンにした項目の後に線を引きます",
     "preview.title": "プレビュー",
     "preview.sub": "この見た目でのカード",
     "preview.living": "リビング",

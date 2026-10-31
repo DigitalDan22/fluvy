@@ -764,6 +764,52 @@ describe('the settings panel', () => {
     panel.remove();
   });
 
+  it('lets the house draw a line in the sidebar after the items it chooses, each named as the sidebar names it', async () => {
+    const { panel, root, row, button, handle, settle } = await mount(true, {
+      panels: {
+        lovelace: { component_name: 'lovelace', url_path: 'lovelace', title: null, icon: null },
+        'fluvy-auto': {
+          component_name: 'lovelace',
+          url_path: 'fluvy-auto',
+          title: 'Fluvy auto',
+          icon: 'fluvy:sun',
+        },
+        history: {
+          component_name: 'history',
+          url_path: 'history',
+          title: 'history',
+          icon: 'mdi:chart-box',
+        },
+        // never in the sidebar, or drawn at its foot by Home Assistant itself: no line to choose
+        light: {
+          component_name: 'light',
+          url_path: 'light',
+          title: 'light',
+          icon: 'mdi:lamps',
+          show_in_sidebar: false,
+        },
+        config: { component_name: 'config', url_path: 'config', title: 'config', icon: null },
+      },
+      localize: (key: string) => (key === 'panel.history' ? 'History' : key),
+    });
+    const listed = (): string[] =>
+      [...root.querySelectorAll('.fv-row__sub')]
+        .map((sub) => sub.textContent?.trim() ?? '')
+        .filter((sub) => sub.startsWith('/'));
+    // the sidebar is Home Assistant's own until the look covers the whole app
+    expect(listed()).toEqual([]);
+    await handle.store.saveHouse({ scope: 'everywhere' });
+    await settle();
+    expect(listed()).toEqual(['/lovelace', '/fluvy-auto', '/history']);
+    expect(row('Overview')).toBeDefined();
+    row('History')?.querySelector<HTMLElement>('.fv-hit')?.click();
+    await settle();
+    button('Apply to the house')!.click();
+    await settle();
+    expect(handle.settings().look.chrome?.separators).toEqual(['history']);
+    panel.remove();
+  });
+
   it('lets the house say how lights show their colour where a card says nothing (#41)', async () => {
     const { panel, root, row, chip, button, handle, previews, settle } = await mount();
     // on the Look tab: never, by default, so nothing changes on upgrade

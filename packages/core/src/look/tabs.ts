@@ -56,6 +56,11 @@ export interface Chrome {
   readonly header: 'bar' | 'page';
   /** The header's actions (add, search, Assist, edit): Home Assistant's buttons, or its own one menu, as on a phone. */
   readonly actions: 'buttons' | 'menu';
+  /**
+   * The sidebar's items a line is drawn after (their url paths: a dashboard, a page, an app), to set a group apart;
+   * the line follows its item wherever a person's own order puts it.
+   */
+  readonly separators: readonly string[];
 }
 
 export const CHROME_DEFAULTS: Chrome = {
@@ -63,17 +68,31 @@ export const CHROME_DEFAULTS: Chrome = {
   dividers: true,
   header: 'bar',
   actions: 'buttons',
+  separators: [],
 };
+
+/** A panel's url path as Home Assistant makes them (letters, digits, `-` and `_`): safe in an id selector as it is. */
+const PANEL_PATH = /^[a-z0-9_-]+$/i;
 
 /** A stored corner, field by field (an unknown value takes the default); undefined when nothing is stored. */
 export function parseChrome(raw: unknown): Chrome | undefined {
   if (!isRecord(raw)) return undefined;
   const d = CHROME_DEFAULTS;
+  const separators = raw['separators'];
   return {
     logo: typeof raw['logo'] === 'boolean' ? raw['logo'] : d.logo,
     dividers: typeof raw['dividers'] === 'boolean' ? raw['dividers'] : d.dividers,
     header: raw['header'] === 'bar' || raw['header'] === 'page' ? raw['header'] : d.header,
     actions: raw['actions'] === 'buttons' || raw['actions'] === 'menu' ? raw['actions'] : d.actions,
+    separators: Array.isArray(separators)
+      ? [
+          ...new Set(
+            separators.filter(
+              (path): path is string => typeof path === 'string' && PANEL_PATH.test(path),
+            ),
+          ),
+        ]
+      : d.separators,
   };
 }
 
@@ -81,10 +100,13 @@ export const sameChrome = (a: Chrome, b: Chrome): boolean =>
   a.logo === b.logo &&
   a.dividers === b.dividers &&
   a.header === b.header &&
-  a.actions === b.actions;
+  a.actions === b.actions &&
+  a.separators.join(' ') === b.separators.join(' ');
 
 /** On `<html>`: Home Assistant's logo in the sidebar's head (the shell's `sidebar-logo` sheet fills on it). */
 export const SIDEBAR_LOGO_ATTRIBUTE = 'fluvy-sidebar-logo';
+/** On `<html>`: the sidebar's items a line follows, their url paths apart by spaces (the `sidebar-separators` sheet). */
+export const SIDEBAR_SEPARATORS_ATTRIBUTE = 'fluvy-sidebar-separators';
 /** On `<html>` and on a dashboard's `hui-root`: no hairline under the sidebar's head or the header. */
 export const FLAT_ATTRIBUTE = 'fluvy-flat';
 /** On `hui-root`: the header on the page's colour, no bar. */

@@ -5,6 +5,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Lines in the sidebar: *Appearance → Lines in the sidebar* (with *Scope → Everywhere*) draws a line after each item
+  the house switches on, the hairline under the sidebar's name, to set a group apart (the dashboards from the tools).
+  The line follows its item wherever a person's own order puts it; a person's own look keeps its own lines.
+
 ## [1.11.3] — 2026-10-28
 
 ### Added

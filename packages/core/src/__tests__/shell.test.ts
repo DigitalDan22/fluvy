@@ -46,13 +46,14 @@ class FakeElement {
 
 function page() {
   const style = new Map<string, string>();
-  const attributes = new Set<string>();
+  const attributes = new Map<string, string>();
   const input = new FakeElement('ha-input', new FakeRoot(['wa-input']));
   const app = new FakeElement('home-assistant', new FakeRoot().add(input));
   const document = Object.assign(new FakeRoot().add(app), {
     documentElement: {
       style: { getPropertyValue: (name: string) => style.get(name) ?? '' },
       hasAttribute: (name: string) => attributes.has(name),
+      getAttribute: (name: string) => attributes.get(name) ?? null,
     },
   });
   const classes = new Map<string, { elementStyles: unknown[] }>([
@@ -85,19 +86,19 @@ function page() {
   };
   /** The look engine covering the whole app (`<html fluvy-look>`) instead of the theme's inline sentinel. */
   const look = (on: boolean): void => {
-    if (on) attributes.add('fluvy-look');
+    if (on) attributes.set('fluvy-look', '');
     else attributes.delete('fluvy-look');
     observed?.();
   };
   /** This device is a wall panel on a wall dashboard (`<html fluvy-wall>`). */
   const wall = (on: boolean): void => {
-    if (on) attributes.add('fluvy-wall');
+    if (on) attributes.set('fluvy-wall', '');
     else attributes.delete('fluvy-wall');
     observed?.();
   };
-  /** A house's choice on `<html>` (the corner: `fluvy-sidebar-logo`, `fluvy-flat`). */
-  const mark = (name: string, on: boolean): void => {
-    if (on) attributes.add(name);
+  /** A house's choice on `<html>` (the corner: `fluvy-sidebar-logo`, `fluvy-flat`; a list: `fluvy-sidebar-separators`). */
+  const mark = (name: string, on: boolean, value = ''): void => {
+    if (on) attributes.set(name, value);
     else attributes.delete(name);
     observed?.();
   };
@@ -272,6 +273,31 @@ describe('shell lifecycle', () => {
     mark('fluvy-sidebar-logo', false);
     expect(filled('sidebar-logo')).toBe(false);
     expect(filled('sidebar-flat')).toBe(true);
+  });
+
+  it('draws a line after each sidebar item the house chose, and again when the list changes', async () => {
+    const { env, classes, theme, mark } = page();
+    classes.set('ha-sidebar', { elementStyles: [] });
+    running = startShell(env)!;
+    await settle();
+    /** The sidebar's separators as drawn now: the one sheet that grows an item's margin for its line. */
+    const lines = (): string =>
+      (classes.get('ha-sidebar')?.elementStyles ?? [])
+        .map((sheet) => (sheet as FakeSheet).css)
+        .find((css) => css.includes('margin-block-end: 21px')) ?? '';
+    theme(true);
+    expect(lines()).toBe('');
+    mark('fluvy-sidebar-separators', true, 'fluvy-home');
+    expect(lines()).toContain(':is(#sidebar-panel-fluvy-home)::after');
+    // the same attribute, another list: the sheet follows its value
+    mark('fluvy-sidebar-separators', true, 'fluvy-home lovelace');
+    expect(lines()).toContain(':is(#sidebar-panel-fluvy-home, #sidebar-panel-lovelace)::after');
+    // another theme takes the sidebar back
+    theme(false);
+    expect(lines()).toBe('');
+    theme(true);
+    mark('fluvy-sidebar-separators', false);
+    expect(lines()).toBe('');
   });
 
   it('fills the sheets when the theme arrives and empties them when it leaves', async () => {

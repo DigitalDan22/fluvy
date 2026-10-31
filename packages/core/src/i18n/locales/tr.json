@@ -1089,6 +1089,8 @@
     "chrome.actions": "Eylemler tek menüde",
     "chrome.actions_sub": "Ekle, ara, Assist, düzenle",
     "chrome.hint": "Kenar çubuğu bunları Fluvy'nin tüm Home Assistant'ı giydirdiği yerde alır ({scope} → {everywhere}).",
+    "chrome.separators": "Kenar çubuğunda çizgiler",
+    "chrome.separators_sub": "Açılan her öğeden sonra bir çizgi",
     "preview.title": "Ön izleme",
     "preview.sub": "Bu görünümle kartlarınız",
     "preview.living": "Oturma odası",

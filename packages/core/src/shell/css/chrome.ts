@@ -137,6 +137,20 @@ export const sidebarLogoCss = [
 export const sidebarFlatCss = '.menu { border-bottom-color: transparent; }';
 
 /**
+ * A line after each item the house chose (`paths`, url paths checked by `parseChrome`), as the hairline under the
+ * sidebar's head: the item's 4 below it grows to 21, the line in its middle from the icon's edge to the text's end, in
+ * the collapsed sidebar under the icon alone. Home Assistant draws a selected item's pill as its `::before`; the line
+ * is its `::after`.
+ */
+export const sidebarSeparatorsCss = (paths: readonly string[]): string => {
+  const items = paths.map((path) => `#sidebar-panel-${path}`).join(', ');
+  return items
+    ? `:is(${items}) { margin-block-end: 21px; }
+:is(${items})::after { content: ""; position: absolute; inset-inline: var(--ha-row-item-padding-inline, 12px); inset-block-start: calc(100% + 10px); height: 1px; background-color: var(--divider-color); pointer-events: none; }`
+    : '';
+};
+
+/**
  * The sidebar's icons (an icon choice of the house's): our glyphs on Home Assistant's own panels, the
  * notifications and the apps people add most. A dashboard keeps the icon its owner chose.
  */

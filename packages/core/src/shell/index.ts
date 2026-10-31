@@ -150,18 +150,23 @@ export function createShell(env: ShellEnv, options: { frames?: boolean } = {}): 
   let active: boolean | null = null;
   let icons: boolean | null = null;
   let wall: boolean | null = null;
-  /** The house's choices the sheets wait on (`when`), as the attributes on `<html>` say them now. */
+  /** The house's choices the sheets wait on (`when`), as the attributes on `<html>` say them now, with their values. */
   const choices = [...new Set(SHEETS.flatMap((spec) => (spec.when ? [spec.when] : [])))];
   let chosen = '';
   const sync = (): void => {
+    const html = env.document.documentElement;
     const on = themed(env.document);
-    const ours = !env.document.documentElement.hasAttribute(ORIGINAL_ICONS);
-    const walled = env.document.documentElement.hasAttribute(WALL_ATTRIBUTE);
-    const now = choices.filter((name) => env.document.documentElement.hasAttribute(name)).join(' ');
+    const ours = !html.hasAttribute(ORIGINAL_ICONS);
+    const walled = html.hasAttribute(WALL_ATTRIBUTE);
+    const now = choices
+      .filter((name) => html.hasAttribute(name))
+      .map((name) => `${name}=${html.getAttribute(name)}`)
+      .join('\n');
     if (on === active && ours === icons && walled === wall && now === chosen) return;
     chosen = now;
-    const holds = (spec: ShellSheet): boolean =>
-      !spec.when || env.document.documentElement.hasAttribute(spec.when);
+    const holds = (spec: ShellSheet): boolean => !spec.when || html.hasAttribute(spec.when);
+    const cssOf = (spec: ShellSheet): string =>
+      spec.drawn && spec.when ? spec.drawn(html.getAttribute(spec.when) ?? '') : spec.css;
     const drawn = active === true && icons === true;
     const first = active === null;
     // the page wears Fluvy now: the panel frames on it get their shells
@@ -176,13 +181,13 @@ export function createShell(env: ShellEnv, options: { frames?: boolean } = {}): 
         !holds(spec)
           ? ''
           : spec.choice === 'always'
-            ? spec.css
+            ? cssOf(spec)
             : spec.choice === 'wall'
               ? walled
-                ? spec.css
+                ? cssOf(spec)
                 : ''
               : on && (spec.choice !== 'icons' || ours)
-                ? spec.css
+                ? cssOf(spec)
                 : '',
       );
     // Home Assistant's Material icons drawn as ours (or back) on what is already on the page

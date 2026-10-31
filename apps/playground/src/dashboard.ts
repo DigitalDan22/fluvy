@@ -17,6 +17,7 @@ import {
   sidebarFlatCss,
   sidebarIconsCss,
   sidebarLogoCss,
+  sidebarSeparatorsCss,
 } from '../../../packages/core/src/shell/css/chrome.js';
 import { startZoom } from '../../../packages/core/src/look/zoom.js';
 import { editBarCss } from '../../../packages/core/src/shell/css/dashboard.js';
@@ -133,6 +134,8 @@ export function dashboardOptions(params: URLSearchParams): DashboardOptions {
     dividers: params.get('flat') !== '1',
     header: params.get('header') === 'page' ? 'page' : 'bar',
     actions: params.get('actions') === 'menu' ? 'menu' : 'buttons',
+    // `separators=fluvy-home,history`: a line after each of those sidebar items
+    separators: (params.get('separators') ?? '').split(',').filter(Boolean),
   };
   return {
     tabs,
@@ -826,7 +829,8 @@ class MockSidebar extends LitElement {
     const extra = [
       ...(this.chrome.logo ? [sidebarLogoCss] : []),
       ...(this.chrome.dividers ? [] : [sidebarFlatCss]),
-    ];
+      sidebarSeparatorsCss(this.chrome.separators),
+    ].filter(Boolean);
     if (extra.length) {
       const sheet = new CSSStyleSheet();
       sheet.replaceSync(extra.join('\n'));

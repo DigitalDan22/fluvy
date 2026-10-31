@@ -613,6 +613,70 @@ function cornerMock(chrome: Chrome, title: string): TemplateResult {
   </div>`;
 }
 
+/** A sidebar item: its url path (its id is `sidebar-panel-<path>`), its name as the sidebar says it, its icon. */
+interface SidebarItem {
+  readonly path: string;
+  readonly title: string;
+  readonly icon?: string;
+}
+
+/**
+ * The panels the sidebar can list, by Home Assistant's own rule (a title, not kept out of the sidebar; the Overview,
+ * which has no title of its own), named as the sidebar names them; the dashboards first, the Overview at their head,
+ * then the rest, each by name. A person's own order is theirs: the line follows its item wherever it is.
+ */
+function sidebarItems(hass: HomeAssistant, overview: string): SidebarItem[] {
+  const named = (key: string): string | undefined => {
+    const own = hass.localize(key);
+    return own && own !== key ? own : undefined;
+  };
+  const items = Object.values(hass.panels ?? {}).flatMap((panel): SidebarItem[] => {
+    const overviewPanel = panel.url_path === 'lovelace';
+    if ((!panel.title && !overviewPanel) || panel.show_in_sidebar === false) return [];
+    if (panel.url_path === 'config' || panel.url_path === 'profile') return [];
+    const title = overviewPanel
+      ? (named('panel.states') ?? overview)
+      : (named(`panel.${panel.title}`) ?? (panel.title as string));
+    return [{ path: panel.url_path, title, ...(panel.icon ? { icon: panel.icon } : {}) }];
+  });
+  const rank = (item: SidebarItem): number =>
+    item.path === 'lovelace' ? 0 : hass.panels?.[item.path]?.component_name === 'lovelace' ? 1 : 2;
+  return items.sort((a, b) => rank(a) - rank(b) || a.title.localeCompare(b.title));
+}
+
+/**
+ * Lines in the sidebar: one after each item switched on here, to set a group apart (the dashboards from the tools).
+ * Offered where Fluvy styles the whole app, the sidebar with it.
+ */
+function separatorsCard(ctx: PanelContext): TemplateResult | typeof nothing {
+  if (ctx.shown.scope !== 'everywhere') return nothing;
+  const chrome = chromeOf(ctx.draft);
+  const toggle = (path: string, on: boolean): void =>
+    ctx.setDraft({
+      chrome: {
+        ...chrome,
+        separators: on
+          ? [...new Set([...chrome.separators, path])]
+          : chrome.separators.filter((other) => other !== path),
+      },
+    });
+  return html`<section class="fv-card pn-card">
+    ${head({ icon: 'minus', title: ctx.t('chrome.separators'), sub: ctx.t('chrome.separators_sub') })}
+    <div class="pn-rows">
+      ${sidebarItems(ctx.hass, ctx.t('scope.overview')).map((item) =>
+        listRow({
+          icon: item.icon ?? (item.path === 'lovelace' ? 'home' : 'grid'),
+          title: item.title,
+          sub: `/${item.path}`,
+          trailing: 'switch',
+          on: chrome.separators.includes(item.path),
+          onToggle: (on) => toggle(item.path, on),
+        }),
+      )}
+    </div>
+  </section>`;
+}
+
 /** The corner of every page: Home Assistant's logo in the sidebar, the hairlines, the header's surface. */
 function cornerCard(ctx: PanelContext): TemplateResult {
   const chrome = chromeOf(ctx.draft);
@@ -910,7 +974,8 @@ export function appearance(ctx: PanelContext, share: ShareActions): TemplateResu
         gap(ctx),
       )}
     </section>
-    ${tabsCard(ctx)} ${cornerCard(ctx)} ${lightsCard(ctx)} ${statusesCard(ctx)}
+    ${tabsCard(ctx)} ${cornerCard(ctx)} ${separatorsCard(ctx)} ${lightsCard(ctx)}
+    ${statusesCard(ctx)}
     ${
       settings.personalLook
         ? html`<section class="fv-card pn-card pn-rows">
