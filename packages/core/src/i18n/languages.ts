@@ -15,6 +15,7 @@ export const LANGUAGE_CODES = [
   'pt-PT',
   'tr',
   'ja',
+  'hu',
 ] as const;
 
 /** A code as Home Assistant reports `hass.language` for it (`pt-BR`, not `pt_BR`). */
@@ -126,6 +127,13 @@ export const LANGUAGES: Readonly<Record<LanguageCode, LanguageInfo>> = {
     dayParts: { morning: 5, afternoon: 11, night: 18 },
     weekday: 'short',
     joiner: '・',
+  },
+  hu: {
+    code: 'hu',
+    name: 'Magyar',
+    english: 'Hungarian',
+    // "jó reggelt" until 9:00, "jó napot" through the day, "jó estét" from 18:00; "jó éjszakát" is a farewell, so it is not a band
+    dayParts: { morning: 5, afternoon: 9, night: 18 },
   },
 };
 

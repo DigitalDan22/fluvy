@@ -103,7 +103,10 @@ function dayIn(
     ...(year === now.getFullYear() ? {} : { year: figures ? '2-digit' : 'numeric' }),
   };
   const order = hass?.locale?.date_format;
-  if (order !== 'DMY' && order !== 'MDY' && order !== 'YMD') return format(hass, moment, options);
+  if (order !== 'DMY' && order !== 'MDY' && order !== 'YMD') {
+    const own = format(hass, moment, options);
+    return figures ? own.replace(/\s+/g, '') : own;
+  }
   const part = (type: 'day' | 'month' | 'year'): string =>
     format(hass, moment, { [type]: options[type] }).replace(figures ? /\D+$/ : /\.$/, '');
   const pieces = order === 'DMY' ? [part('day'), part('month')] : [part('month'), part('day')];

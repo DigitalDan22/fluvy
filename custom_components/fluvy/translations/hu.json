@@ -1,0 +1,33 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Fluvy",
+        "description": "Telepíti a Fluvy témáját, kártyáit és beállítópaneljét. Nincs mit beállítani."
+      }
+    },
+    "abort": {
+      "already_configured": "A Fluvy már be van állítva.",
+      "single_instance_allowed": "A Fluvy már be van állítva."
+    }
+  },
+  "exceptions": {
+    "frontend_missing": {
+      "message": "A Fluvy kezelőfelületi fájljai hiányoznak a custom_components/fluvy/frontend mappából. Telepítsd újra a Fluvyt a HACS-en keresztül (fejlesztői példányban futtasd a `pnpm build` parancsot), majd indítsd újra a Home Assistantet."
+    }
+  },
+  "issues": {
+    "legacy_yaml": {
+      "title": "Távolítsd el a Fluvy régi sorait a configuration.yaml fájlból",
+      "description": "A Fluvy mostantól integráció, és a paneljét meg a modulját magától regisztrálja. Távolítsd el ezeket a configuration.yaml fájlból (a `frontend: themes: !include_dir_merge_named themes` sort hagyd meg), ellenőrizd a konfigurációt, és indítsd újra a Home Assistantet, amikor alkalmas:\n\n{lines}"
+    },
+    "theme_not_loaded": {
+      "title": "A Fluvy témája nincs betöltve",
+      "description": "A Fluvy kiírta a témáját ide: `{path}`, de a Home Assistant nem listáz Fluvy nevű témát. Add hozzá ezt a configuration.yaml fájlhoz, majd futtasd a `frontend.reload_themes` műveletet (Fejlesztői eszközök → Műveletek); újraindítás nem szükséges:\n\n{yaml}\n\nHa a sorok már ott vannak, nézd meg a Beállítások → Rendszer → Naplók oldalon, hogy nem hiúsult-e meg valamelyik téma betöltése."
+    },
+    "resources_yaml_mode": {
+      "title": "Add hozzá a Fluvy vezérlőpult-erőforrását",
+      "description": "A vezérlőpult-erőforrásaidat YAML-ban kezeled, ezért a Fluvy nem tudja magától regisztrálni a sajátját. Add hozzá ezt a configuration.yaml fájlban a `lovelace: resources:` alá, majd töltsd újra a böngészőt:\n\n```yaml\n  - url: {url}\n    type: module\n```\n\nA Fluvy már így is betöltődik minden oldalon; ez az erőforrás lehetővé teszi, hogy a vezérlőpultok még renderelés előtt betöltsék."
+    }
+  }
+}

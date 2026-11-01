@@ -16,6 +16,7 @@ catalogue per language, and a person may choose theirs in the panel's *Preferenc
 | `pt-PT` | Portuguese (Portugal) | `packages/core/src/i18n/locales/pt-PT.json` — `pt`, Home Assistant's code for Portugal, reads it; the integration's file is `translations/pt.json` | — |
 | `tr` | Turkish | `packages/core/src/i18n/locales/tr.json` | — |
 | `ja` | Japanese | `packages/core/src/i18n/locales/ja.json` | [@vinjex](https://github.com/vinjex) |
+| `hu` | Hungarian | `packages/core/src/i18n/locales/hu.json` | [@wickdj](https://github.com/wickdj) |
 
 ## How a language works
 

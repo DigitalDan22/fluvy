@@ -344,6 +344,40 @@ const ja: Table = {
     '自動ダッシュボードはHome Assistantの中で組み立てられます。ダッシュボードタブにはそのプレビューが表示されます',
 } as const;
 
+const hu: Table = {
+  'brand.sub': 'Élő demó',
+  'family.home': 'Otthon',
+  'family.devices': 'Eszközök',
+  'family.climate': 'Klíma',
+  'family.energy': 'Energia',
+  'family.charts': 'Diagramok',
+  'family.media': 'Média',
+  'family.time': 'Idő',
+  'family.helpers': 'Segédek',
+  'page.panel': 'Beállítások',
+  'page.activity': 'Tevékenység',
+  'page.history': 'Előzmények',
+  'mode.light': 'Világos',
+  'mode.dark': 'Sötét',
+  'device.title': 'Eszköz',
+  'device.phone': 'Telefon',
+  'device.phone-l': 'Nagy telefon',
+  'device.tablet': 'Táblagép',
+  'device.desktop': 'Asztali gép',
+  'palette.title': 'Paletta',
+  'palette.custom': 'Saját kiemelőszín, a beállítások panelen',
+  'language.title': 'Nyelv',
+  'links.install': 'Telepítés',
+  'links.github': 'GitHub',
+  'banner.text':
+    'Egy szimulált otthon: Marta lakása egy csütörtök estén. Itt minden kártya, oldal és beállítás valódi; a Home Assistantot egy kis helyettesítő játssza, amely egy szolgáltatáshívás után 140 ms-mal változtatja az állapotot. Semmi nincs csatlakoztatva.',
+  'banner.ok': 'Értem',
+  'notice.more_info': 'Megnyitja a(z) {entity} részleteit a Home Assistantban',
+  'notice.navigate': 'Megnyitja a(z) {path} oldalt a Home Assistantban',
+  'notice.auto':
+    'Az automatikus vezérlőpult a Home Assistanton belül épül fel; a Vezérlőpult lap ennek előnézetét mutatja',
+} as const;
+
 const TABLES: Readonly<Record<LanguageCode, Table>> = {
   en,
   es,
@@ -355,6 +389,7 @@ const TABLES: Readonly<Record<LanguageCode, Table>> = {
   'pt-PT': ptPT,
   tr,
   ja,
+  hu,
 };
 
 /** A word of the demo in `language`. */
