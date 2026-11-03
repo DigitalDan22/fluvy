@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { runAction, toggleService, type ActionConfig } from '../actions.js';
+import { goBack, navigate, runAction, toggleService, type ActionConfig } from '../actions.js';
 import type { HomeAssistant } from '../ha/types.js';
 
 const callService = vi.fn(() => Promise.resolve());
@@ -198,6 +198,84 @@ describe('runAction', () => {
 
     expect(handed).toEqual([{ config: { entity: undefined, tap_action: action }, action: 'tap' }]);
     expect(callService).not.toHaveBeenCalled();
+  });
+});
+
+describe('navigate, as Home Assistant keeps its history (#88)', () => {
+  /** Where the page is, and what its entry says. */
+  const at = (url: string, state: unknown = null): void => history.replaceState(state, '', url);
+  /** Every `location-changed` the window hears from now on, as its detail. */
+  const told = (): unknown[] => {
+    const heard: unknown[] = [];
+    const on = (event: Event): void => {
+      heard.push((event as CustomEvent).detail);
+    };
+    window.addEventListener('location-changed', on);
+    stops.push(() => window.removeEventListener('location-changed', on));
+    return heard;
+  };
+
+  it('a new page records the one it was opened from (its path, not its query): the back arrow steps back to it', () => {
+    at('/dashboard-test/kitchen?edit=1', { from: '/dashboard-test/home' });
+    const heard = told();
+
+    navigate('/dashboard-test/fridge');
+
+    expect(location.pathname).toBe('/dashboard-test/fridge');
+    expect(history.state).toEqual({ from: '/dashboard-test/kitchen' });
+    expect(heard).toEqual([{ replace: false }]);
+  });
+
+  it('a replaced page keeps what was behind it, and nothing else of the entry it takes the place of', () => {
+    at('/dashboard-test/kitchen', { from: '/dashboard-test/home', dialog: 'more-info' });
+    const heard = told();
+
+    navigate('/dashboard-test/fridge', true);
+
+    expect(location.pathname).toBe('/dashboard-test/fridge');
+    expect(history.state).toEqual({ from: '/dashboard-test/home' });
+    expect(heard).toEqual([{ replace: true }]);
+  });
+
+  it('the app’s first entry stays its first when replaced; an entry with nothing behind it keeps nothing', () => {
+    at('/dashboard-test/home', { root: true });
+    navigate('/dashboard-test/kitchen', true);
+    expect(history.state).toEqual({ root: true });
+
+    at('/dashboard-test/home', { root: true, from: '/config' });
+    navigate('/dashboard-test/kitchen', true);
+    expect(history.state).toEqual({ root: true, from: '/config' });
+
+    at('/dashboard-test/home', { dialog: 'more-info' });
+    navigate('/dashboard-test/kitchen', true);
+    expect(history.state).toBeNull();
+  });
+
+  it('back steps back to the page this one was opened from', () => {
+    at('/dashboard-test/fridge', { from: '/dashboard-test/kitchen' });
+    const back = vi.spyOn(history, 'back').mockImplementation(() => undefined);
+    const heard = told();
+
+    goBack('/dashboard-test');
+
+    expect(back).toHaveBeenCalledOnce();
+    expect(heard).toEqual([]);
+  });
+
+  it('back from a page opened from outside the app goes to the fallback in its place', () => {
+    const back = vi.spyOn(history, 'back').mockImplementation(() => undefined);
+    at('/history?entity_id=light.desk');
+
+    goBack();
+
+    expect(location.pathname).toBe('/');
+    at('/dashboard-test/fridge', { root: true });
+
+    goBack('/dashboard-test');
+
+    expect(location.pathname).toBe('/dashboard-test');
+    expect(history.state).toEqual({ root: true });
+    expect(back).not.toHaveBeenCalled();
   });
 });
 

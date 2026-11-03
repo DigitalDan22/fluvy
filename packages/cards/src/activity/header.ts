@@ -5,7 +5,7 @@ import { html, nothing, type TemplateResult } from 'lit';
 
 import { keyed } from 'lit/directives/keyed.js';
 
-import { resolveEntity } from '@fluvy/core';
+import { goBack, resolveEntity } from '@fluvy/core';
 
 import { faceOf, glyph, textWidth } from '@fluvy/ui';
 import { download } from './csv.js';
@@ -25,7 +25,7 @@ export function renderBar(page: FluvyActivity): TemplateResult {
     ? html`<button
         class="fv-round fv-round--bare"
         aria-label=${page.t('back')}
-        @click=${() => history.back()}
+        @click=${() => goBack()}
       >
         ${glyph('chevronLeft')}
       </button>`

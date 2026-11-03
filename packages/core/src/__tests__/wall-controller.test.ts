@@ -197,6 +197,25 @@ describe('the wall controller', () => {
     expect(document.documentElement.hasAttribute(WALL_BACK_ATTRIBUTE)).toBe(false);
   });
 
+  it('where the root has no way back of its own, the button goes as Home Assistant would: back, else the dashboard', async () => {
+    const { wall, back } = setup();
+    await vi.advanceTimersByTimeAsync(1);
+    const step = vi.spyOn(history, 'back').mockImplementation(() => undefined);
+    history.replaceState({ from: '/fluvy-wall/wall' }, '', '/fluvy-wall/kitchen');
+    const root = showView({ subview: true, title: 'Kitchen' });
+    await vi.advanceTimersByTimeAsync(1);
+    back()?.onBack();
+    expect(step).toHaveBeenCalledOnce();
+    // opened from a link: nothing of the app behind it
+    history.replaceState(null, '', '/fluvy-wall/kitchen');
+    back()?.onBack();
+    expect(step).toHaveBeenCalledOnce();
+    expect(location.pathname).toBe('/fluvy-wall');
+    step.mockRestore();
+    root.remove();
+    wall.stop();
+  });
+
   it('a house that keeps Home Assistant’s header: the header in a subview, the corner under it, no button', async () => {
     const { wall, shown } = setup({ subview: 'header' });
     await vi.advanceTimersByTimeAsync(1);

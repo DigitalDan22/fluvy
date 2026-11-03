@@ -58,6 +58,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   nothing: a large count in the language's short words ("5.1M queries", then "5.1M"), a figure without its unit, a
   moment as long ago as it was ("12 days ago", "12 d ago"); a figure keeps the decimals its display precision asks
   for. Thanks to @rammium (#93).
+- Home Assistant's back arrow returns to the view a Fluvy card navigated from, as after a stock card, where it went to
+  the dashboard's first view: a navigation records the page it left the way Home Assistant does, and the back buttons
+  of the Activity and History pages and the wall go back the same way. Thanks to @rammium (#88).
 
 ## [1.11.3] — 2026-10-28
 

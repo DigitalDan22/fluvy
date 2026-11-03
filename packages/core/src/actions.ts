@@ -14,10 +14,33 @@ export { haptic, setHaptics, type HapticKind };
 export const moreInfo = (node: EventTarget, entityId: string): void =>
   fireEvent(node, 'hass-more-info', { entityId });
 
+/** What Home Assistant keeps on its history entries: the page an entry was opened from, and the app's first entry. */
+interface EntryState {
+  readonly from?: string;
+  readonly root?: boolean;
+}
+
+/**
+ * Goes to a path as Home Assistant's own `navigate` does: a new entry records the page it was opened from (`from`, the
+ * path without its query), which its back arrow reads to step back; a replaced entry keeps what was behind it (`from`)
+ * and stays the app's first (`root`).
+ */
 export function navigate(path: string, replace = false): void {
-  if (replace) history.replaceState(null, '', path);
-  else history.pushState(null, '', path);
+  if (replace) {
+    const { root, from } = (history.state ?? {}) as EntryState;
+    const kept = { ...(root ? { root: true } : {}), ...(from === undefined ? {} : { from }) };
+    history.replaceState(root || from !== undefined ? kept : null, '', path);
+  } else history.pushState({ from: location.pathname }, '', path);
   fireEvent(window, 'location-changed', { replace });
+}
+
+/**
+ * Back as Home Assistant's own arrow goes (`goBack`): a step back when this entry was opened from a page of the app,
+ * else (a link, a fresh tab, a login page behind it) to `fallback` in its place.
+ */
+export function goBack(fallback = '/'): void {
+  if ((history.state as EntryState | null)?.from !== undefined) history.back();
+  else navigate(fallback, true);
 }
 
 /** What `confirmation` may say; Home Assistant's dialog reads it. */

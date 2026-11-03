@@ -5,7 +5,7 @@
 import { emptyState, glyph } from '@fluvy/ui';
 import { html, nothing, type TemplateResult } from 'lit';
 
-import { countFilters, countTargets } from '@fluvy/core';
+import { countFilters, countTargets, goBack } from '@fluvy/core';
 import { describePeriod } from '../shared/period.js';
 import { dayRange, sameRange } from '../shared/range.js';
 
@@ -20,7 +20,7 @@ export function renderBar(page: FluvyHistory): TemplateResult {
     ? html`<button
         class="fv-round fv-round--bare"
         aria-label=${page.t('back')}
-        @click=${() => history.back()}
+        @click=${() => goBack()}
       >
         ${glyph('chevronLeft')}
       </button>`

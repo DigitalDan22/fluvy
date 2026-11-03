@@ -1,7 +1,7 @@
 import { resyncCardThemes, setDarkOverride } from '../card.js';
 import type { HomeAssistant } from '../ha/types.js';
 import { firstWeather } from '../entity.js';
-import { navigate } from '../actions.js';
+import { goBack, navigate } from '../actions.js';
 import {
   WALL_ATTRIBUTE,
   WALL_BACK_ATTRIBUTE,
@@ -257,13 +257,13 @@ export function createWall(deps: WallDeps): WallHandle {
   };
 
   /** Home Assistant's own way back (the view's `back_path`, its history, the dashboard), or ours where it is missing. */
-  const goBack = (): void => {
+  const onBack = (): void => {
     if (typeof root?._goBack === 'function') {
       root._goBack();
       return;
     }
     if (view.backPath) navigate(view.backPath, true);
-    else win.history.back();
+    else goBack(`/${urlPathOf(win.location.pathname) ?? ''}`);
   };
 
   /**
@@ -289,7 +289,7 @@ export function createWall(deps: WallDeps): WallHandle {
     void ui().then((pieces) => {
       if (backHandle || !(phase === 'awake' || phase === 'asleep') || !view.subview) return;
       if (wall().subview !== 'button') return;
-      backHandle = pieces.back({ title: view.title, onBack: goBack, hass: deps.hass });
+      backHandle = pieces.back({ title: view.title, onBack, hass: deps.hass });
     });
   };
 
