@@ -284,13 +284,15 @@ const keysSeen = (page) => page.evaluate(() => window.__keys.splice(0));
     `${JSON.stringify(boxA)} vs ${JSON.stringify(boxB)}`,
   );
   // the last row lies over the panel's own rows: a tap there must reach the menu, not the switch under it
-  const last = await b.rows.nth(7).boundingBox();
+  const lastRow = b.rows.nth(7);
+  const lastName = (await lastRow.locator('.fv-menu__name').textContent()).trim();
+  const last = await lastRow.boundingBox();
   await without.mouse.click(last.x + last.width / 2, last.y + last.height / 2);
   await settle(without, 300);
   check(
     'and over what follows: a tap on its last row chooses',
-    (await b.field.textContent()).trim() === 'Português (Brasil)' && !(await b.expanded()),
-    (await b.field.textContent()).trim(),
+    (await b.field.textContent()).trim() === lastName && !(await b.expanded()),
+    `${(await b.field.textContent()).trim()} (tapped ${lastName})`,
   );
   await withTopLayer.close();
   await without.close();

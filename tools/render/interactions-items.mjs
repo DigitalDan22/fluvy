@@ -368,7 +368,7 @@ const atRest = async (page) => {
   }
   check(
     'items: compact at 152 and 172, every language, the three callsigns whole in boxes of 48 and more, each row its 48 — the value giving way (arrow, unit, under the name)',
-    short.length === 0 && names === 60,
+    short.length === 0 && names === (await everyLanguage()).length * 6,
     short.slice(0, 6).join(' | ') || `${names} names`,
   );
 }
