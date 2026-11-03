@@ -27,8 +27,8 @@ import type { Card, Section, StrategyContext, View } from './types.js';
 
 /*
  * The rooms: a view of every room of the house (its card, grouped by floor when there are floors), and a subview
- * per room with everything its card counts — its thermostats, lights, covers, gates, fans, media, plugs, readings,
- * openings and cameras, the rest of it as rows, and its appliances across under them.
+ * per room with everything it shows, every device its card counts among it — its thermostats, lights, covers, gates,
+ * fans, media, plugs, readings, openings and cameras, the rest of it as rows, and its appliances across under them.
  */
 
 /** The areas a dashboard shows: those with something to show, by the room card's own rule, floor by floor. */
@@ -88,8 +88,8 @@ export interface RoomBack {
 }
 
 /**
- * What a room holds, each entity its card counts (`areaContents`: the room card's own rule) in one part of its page
- * (#76): the card's count and what the page reaches are the same entities.
+ * What a room holds, each entity it shows (`areaContents`: the room card's own rule) in one part of its page (#76):
+ * every device its card counts is on it, and every reading, sensor and control its area shows besides (#95).
  */
 export interface RoomParts {
   readonly thermostats: readonly string[];
@@ -117,8 +117,8 @@ export interface RoomParts {
 
 /** A room's parts, each in the house's order. */
 export function roomParts(home: HomeRegistry, areaId: string): RoomParts {
-  const counted = areaContents(home.registries, areaId).entities;
-  const has = new Set(counted);
+  const shown = areaContents(home.registries, areaId).entities;
+  const has = new Set(shown);
   const of = (ids: readonly string[]): string[] => ids.filter((id) => has.has(id));
   const devices = home.applianceDevices.filter((device) => home.deviceArea(device) === areaId);
   const appliances = of(home.applianceTiles);
@@ -137,13 +137,13 @@ export function roomParts(home: HomeRegistry, areaId: string): RoomParts {
   const drawn = new Set(Object.values(parts).flat());
   const whole = new Set(devices);
   const within = new Set([
-    ...counted.filter((id) => whole.has(home.deviceOf(id) ?? '')),
+    ...shown.filter((id) => whole.has(home.deviceOf(id) ?? '')),
     ...appliances.flatMap((id) => home.readoutsOf(id)),
   ]);
   return {
     ...parts,
     devices,
-    rest: counted.filter((id) => !drawn.has(id) && !within.has(id)),
+    rest: shown.filter((id) => !drawn.has(id) && !within.has(id)),
     within: [...within].filter((id) => has.has(id) && !drawn.has(id)),
   };
 }

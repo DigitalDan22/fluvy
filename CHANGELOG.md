@@ -10,6 +10,14 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The alerts card tells apart the rows that share a name by their areas, else their devices, and says how many share
   a name they still share: four open windows each called "Window" read "Kitchen, Bathroom, Office" or "Window ×4",
   where they read "Window" as if one were open. Thanks to @rammium (#89).
+- A room card counts what a person calls the room's devices, and fills while one of them is on: its lights, the
+  switches that power something, its fans and covers, its media players, its thermostats, water heaters and
+  humidifiers, its vacuums and mowers. It counted every entity of its area, so a kitchen with five connected
+  appliances read "17 of 111 on" and stayed lit while an appliance's option switch was on. An appliance's own controls
+  (its programme, its options, its delay, its start: the switches of a device that also has a select, a number or a
+  button), its sensors, a reading, a helper, a scene, an automation, a lock or a camera no longer count, and its tiles
+  and its rows say the same. The room's page on the automatic dashboards still reaches everything the room holds, and
+  the plug tiles of Home and of a room's page leave an appliance's options out. Thanks to @rammium (#95).
 
 ### Added
 

@@ -9,6 +9,8 @@ import {
   climateAttribute,
   floorsInOrder,
   holdsSomething,
+  isLoad,
+  isRoomDevice,
   usableEntity,
   type Registries,
 } from '../areas.js';
@@ -158,6 +160,8 @@ describe('the house by its rooms', () => {
         'sensor.room_temperature',
         'switch.fan_plug',
       ],
+      // its devices: never its readings
+      devices: ['cover.blind', 'light.sofa', 'switch.fan_plug'],
       controls: ['light.sofa', 'switch.fan_plug', 'cover.blind'],
       on: 3,
       climate: { temperature: 'sensor.room_temperature', humidity: 'sensor.room_humidity' },
@@ -166,6 +170,83 @@ describe('the house by its rooms', () => {
     });
     expect(holdsSomething(contents)).toBe(true);
     expect(holdsSomething(areaContents(house(), 'attic'))).toBe(false);
+  });
+
+  it('counts what a person calls the room’s devices: never an appliance’s own controls, nor a sensor (#95)', () => {
+    const base = house();
+    const seeds: Array<[string, string, Record<string, unknown>?, Record<string, unknown>?]> = [
+      ['light.kitchen', 'on'],
+      ['switch.kettle', 'on', {}, { device_id: 'plug' }],
+      ['sensor.kettle_power', '1800', { device_class: 'power' }, { device_id: 'plug' }],
+      // a plug's settings are filed as such: it stays a plug
+      ['select.kettle_power_on', 'previous', {}, { device_id: 'plug', entity_category: 'config' }],
+      // an appliance of an integration the appliance card does not read (LocalThings): its options are switches beside
+      // its programme, its delay and its start
+      ['switch.dishwasher_power', 'on', {}, { device_id: 'dishwasher' }],
+      ['switch.dishwasher_extra_dry', 'on', {}, { device_id: 'dishwasher' }],
+      ['switch.dishwasher_sanitize', 'off', {}, { device_id: 'dishwasher' }],
+      ['select.dishwasher_program', 'eco', {}, { device_id: 'dishwasher' }],
+      ['select.dishwasher_zone', 'all', {}, { device_id: 'dishwasher' }],
+      ['number.dishwasher_delay', '0', {}, { device_id: 'dishwasher' }],
+      ['button.dishwasher_start', 'unknown', {}, { device_id: 'dishwasher' }],
+      ['sensor.dishwasher_remaining', '42', {}, { device_id: 'dishwasher' }],
+      [
+        'binary_sensor.dishwasher_door',
+        'off',
+        { device_class: 'door' },
+        { device_id: 'dishwasher' },
+      ],
+      // its socket says it is one
+      ['switch.dishwasher_socket', 'on', { device_class: 'outlet' }, { device_id: 'dishwasher' }],
+      ['media_player.kitchen', 'idle', {}, { device_id: 'speaker' }],
+      ['automation.kitchen_lights', 'on'],
+      ['scene.kitchen_dinner', '2026-11-03T20:00:00+00:00'],
+      ['input_boolean.kitchen_guests', 'on'],
+      ['lock.kitchen_door', 'unlocked'],
+      ['valve.kitchen_water', 'open'],
+      ['switch.party', 'off'],
+    ];
+    const hass: Registries = {
+      ...base,
+      states: Object.fromEntries(
+        seeds.map(([id, value, attributes]) => state(id, value, attributes)),
+      ) as Registries['states'],
+      entities: Object.fromEntries(
+        seeds.map(([id, , , entry]) => [id, { entity_id: id, area_id: 'kitchen', ...entry }]),
+      ),
+      devices: {},
+      areas: { kitchen: { area_id: 'kitchen', name: 'Kitchen' } },
+    };
+    const kitchen = areaContents(hass, 'kitchen');
+    expect(kitchen.entities).toHaveLength(seeds.length - 1);
+    expect(kitchen.devices).toEqual([
+      'light.kitchen',
+      'media_player.kitchen',
+      'switch.dishwasher_socket',
+      'switch.kettle',
+      'switch.party',
+    ]);
+    expect(kitchen.controls).toEqual([
+      'light.kitchen',
+      'switch.dishwasher_socket',
+      'switch.kettle',
+      'switch.party',
+    ]);
+    expect(isLoad(hass, 'switch.kettle')).toBe(true);
+    expect(isLoad(hass, 'switch.dishwasher_extra_dry')).toBe(false);
+    expect(isRoomDevice(hass, 'switch.dishwasher_power')).toBe(false);
+    expect(isRoomDevice(hass, 'sensor.kettle_power')).toBe(false);
+    // what the person hides of the appliance still says what it is
+    const hidden: Registries = {
+      ...hass,
+      entities: Object.fromEntries(
+        Object.entries(hass.entities).map(([id, entry]) => [
+          id,
+          /^(select|number|button)\.dishwasher/.test(id) ? { ...entry, hidden: true } : entry,
+        ]),
+      ),
+    };
+    expect(isLoad(hidden, 'switch.dishwasher_extra_dry')).toBe(false);
   });
 
   it('holds a room with a reading and nothing else, and none with only a config entity', () => {

@@ -1082,8 +1082,9 @@ describe('custom:fluvy-home strategy — a room’s page shows everything its ca
 
   it('draws the reporter’s garage whole: its readings, the smoke and the leak on its Openings card, the door as a cover', async () => {
     const hass = garage();
-    // the card's count: five devices
+    // the page's five, of which the card counts the door (#95: its sensors are not devices)
     expect(areaContents(hass, 'garage').entities).toHaveLength(5);
+    expect(areaContents(hass, 'garage').devices).toEqual(['cover.garage_main_door']);
     const { views } = await generate({ type: 'custom:fluvy-rooms' }, hass as never);
     const cards = cardsIn(views.filter((view) => view.path === 'room-garage'));
     expect(cards.find((card) => card.type === 'custom:fluvy-readouts-card')?.['rows']).toEqual([
@@ -1144,8 +1145,10 @@ describe('custom:fluvy-home strategy — a room’s page shows everything its ca
       area_id: 'garage',
       name: 'Garage plug',
     } as never;
-    const counted = areaContents(hass, 'garage').entities;
-    // the one rule: each counted entity in exactly one part of the page, or shown by a part's card
+    const { entities: counted, devices } = areaContents(hass, 'garage');
+    // the one rule: each entity the room shows in exactly one part of the page, or shown by a part's card; the devices
+    // its card counts among them
+    expect(devices.filter((id) => !counted.includes(id))).toEqual([]);
     const parts = roomParts(new HomeRegistry(hass), 'garage');
     const placed = [
       ...parts.thermostats,
@@ -1197,6 +1200,70 @@ describe('custom:fluvy-home strategy — a room’s page shows everything its ca
         title: 'Lights',
       });
     }
+  });
+});
+
+describe('custom:fluvy-home strategy — a room counts its devices, never an appliance’s controls (#95)', () => {
+  /** A galley kitchen of two lights, a radio on its plug and a dishwasher of an integration the appliance card does not read. */
+  const kitchen = () => {
+    const dishwasher = (id: string, state: string, attributes: Record<string, unknown> = {}) =>
+      entity(id, state, attributes, { device_id: 'd-dishwasher', platform: 'localthings' });
+    const hass = house([
+      entity(
+        'light.galley_ceiling',
+        'on',
+        { supported_color_modes: ['onoff'] },
+        { area_id: 'galley' },
+      ),
+      entity(
+        'light.galley_counter',
+        'off',
+        { supported_color_modes: ['onoff'] },
+        { area_id: 'galley' },
+      ),
+      entity('switch.galley_radio', 'off', { friendly_name: 'Radio' }, { device_id: 'd-radio' }),
+      entity(
+        'sensor.galley_radio_power',
+        '0',
+        { device_class: 'power', unit_of_measurement: 'W' },
+        { device_id: 'd-radio' },
+      ),
+      dishwasher('switch.dishwasher_power', 'on', { friendly_name: 'Dishwasher Power' }),
+      dishwasher('switch.dishwasher_extra_dry', 'on', { friendly_name: 'Dishwasher Extra dry' }),
+      dishwasher('switch.dishwasher_half_load', 'off', { friendly_name: 'Dishwasher Half load' }),
+      dishwasher('select.dishwasher_course', 'eco', { options: ['eco', 'auto', 'quick'] }),
+      dishwasher('select.dishwasher_zone', 'all', { options: ['all', 'upper', 'lower'] }),
+      dishwasher('number.dishwasher_delay_start', '0', { min: 0, max: 24, step: 1 }),
+      dishwasher('button.dishwasher_start', 'unknown'),
+      dishwasher('button.dishwasher_pause', 'unknown'),
+      dishwasher('sensor.dishwasher_remaining', '42', { unit_of_measurement: 'min' }),
+      dishwasher('binary_sensor.dishwasher_door', 'off', { device_class: 'door' }),
+    ]) as unknown as HomeAssistant;
+    hass.areas['kitchen'] = { area_id: 'galley', name: 'Kitchen' } as never;
+    for (const id of ['d-radio', 'd-dishwasher'])
+      hass.devices[id] = { id, area_id: 'galley', name: id.slice(2) } as never;
+    return hass;
+  };
+
+  it('counts the lights and the radio’s plug, and keeps the dishwasher’s options off the room’s plugs', async () => {
+    const hass = kitchen();
+    const { entities, devices } = areaContents(hass, 'galley');
+    expect(devices).toEqual([
+      'light.galley_ceiling',
+      'light.galley_counter',
+      'switch.galley_radio',
+    ]);
+    const parts = roomParts(new HomeRegistry(hass), 'galley');
+    expect(parts.appliances).toEqual(['switch.galley_radio']);
+    // the page still reaches every one of them: the dishwasher's controls as rows, under Devices
+    expect(parts.rest).toEqual(
+      expect.arrayContaining(['switch.dishwasher_extra_dry', 'select.dishwasher_course']),
+    );
+    const { views } = await generate({ type: 'custom:fluvy-rooms' }, hass as never);
+    const reached = reachedFrom(views, 'room-galley', hass as never);
+    expect(entities.filter((id) => !reached.has(id))).toEqual([]);
+    // Home's plugs, as the room's
+    expect(new HomeRegistry(hass).applianceTiles).not.toContain('switch.dishwasher_power');
   });
 });
 

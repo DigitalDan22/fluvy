@@ -304,6 +304,70 @@ describe('a room finds what is in it (#39)', () => {
   });
 });
 
+describe('a room counts its devices, never an appliance’s controls (#95)', () => {
+  afterEach(() => document.body.replaceChildren());
+
+  /**
+   * The reporter's kitchen: two lights, and a dishwasher of an integration the appliance card does not read
+   * (LocalThings), whose options are switches beside its programme, its delay and its start.
+   */
+  const KITCHEN: readonly Seed[] = [
+    ['light.kitchen_ceiling', 'on'],
+    ['light.kitchen_counter', 'off'],
+    ['switch.dishwasher_power', 'on'],
+    ['switch.dishwasher_extra_dry', 'on'],
+    ['switch.dishwasher_sanitize', 'off'],
+    ['select.dishwasher_course', 'eco', { options: ['eco', 'auto'] }],
+    ['number.dishwasher_delay_start', '0', { min: 0, max: 24 }],
+    ['button.dishwasher_start', 'unknown'],
+    ['sensor.dishwasher_remaining', '42', { unit_of_measurement: 'min' }],
+    ['binary_sensor.dishwasher_door', 'on', { device_class: 'door' }],
+  ];
+  const kitchen = (ceiling = 'on'): HomeAssistant => {
+    const seeds = KITCHEN.map((seed): Seed =>
+      seed[0] === 'light.kitchen_ceiling' ? [seed[0], ceiling] : seed,
+    );
+    const hass = house([...SEEDS, ...seeds]);
+    const entries = KITCHEN.map(([entity_id]) => [
+      entity_id,
+      entity_id.includes('dishwasher')
+        ? { entity_id, device_id: 'dishwasher', platform: 'localthings' }
+        : { entity_id, area_id: 'kitchen' },
+    ]);
+    return {
+      ...hass,
+      entities: { ...hass.entities, ...Object.fromEntries(entries) },
+      devices: {
+        dishwasher: {
+          id: 'dishwasher',
+          area_id: 'kitchen',
+          name: 'Dishwasher',
+          name_by_user: null,
+        },
+      },
+      areas: { ...hass.areas, kitchen: area('kitchen', 'Kitchen') },
+    } as HomeAssistant;
+  };
+
+  it('counts its lights: the readout, the line and the rows say "1 of 2 on" where they said "5 of 10"', async () => {
+    const card = await room({ area: 'kitchen', variant: 'photo' }, kitchen());
+    expect(readouts(card)).toEqual(['1of 2']);
+    const all = [...root(card).querySelectorAll('.am-rows .fv-row')].at(-1)!;
+    expect(all.querySelector('.fv-row__sub')?.textContent?.trim()).toBe('1 of 2 on');
+    const row = await room({ area: 'kitchen', variant: 'row' }, kitchen());
+    expect(root(row).querySelector('.fv-tile__state')?.textContent?.trim()).toBe('1 of 2 on');
+    // its tiles are its lights, never a dishwasher's option
+    const tiles = await room({ area: 'kitchen', variant: 'tile', controls: 'tiles' }, kitchen());
+    expect(root(tiles).querySelectorAll('.rm-controls .fv-tile')).toHaveLength(2);
+  });
+
+  it('is off while its lights are, whatever the dishwasher’s options and door say', async () => {
+    const row = await room({ area: 'kitchen', variant: 'row' }, kitchen('off'));
+    expect(root(row).querySelector('.rm-tile')?.classList.contains('is-on')).toBe(false);
+    expect(root(row).querySelector('.fv-tile__state')?.textContent?.trim()).toBe('2 devices');
+  });
+});
+
 /** A room drawn at `width` on a stub ruler: what happy-dom cannot lay out. */
 async function roomAt(
   config: Partial<RoomCardConfig> & { area: string },

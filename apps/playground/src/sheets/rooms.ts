@@ -1,4 +1,10 @@
-import { resolveLanguage, wordsIn, type HomeAssistant, type LovelaceCardConfig } from '@fluvy/core';
+import {
+  resolveLanguage,
+  wordsIn,
+  type AreaRegistryEntry,
+  type HomeAssistant,
+  type LovelaceCardConfig,
+} from '@fluvy/core';
 import { FluvyMapCard } from '../../../../packages/cards/src/map/map-card.js';
 import { FluvyRoomCard } from '../../../../packages/cards/src/room/room-card.js';
 import { moreHost } from '../../../../packages/cards/src/strategy/caps.js';
@@ -49,7 +55,8 @@ const entry = (entity_id: string, area_id: string, more: Record<string, unknown>
   [entity_id, { entity_id, area_id, ...more }] as const;
 /*
  * #76's garage, as the reporter described it: a temperature and humidity sensor (one device), a smoke detector, a leak
- * sensor and a garage door — the room card counts five devices, and the room's page reaches every one.
+ * sensor and a garage door — the room's page reaches all five, of which the card counts the door (#95: a sensor is no
+ * device).
  */
 const GARAGE: readonly StateSeed[] = [
   reading('sensor.rm_garage_temperature', '12.5', 'temperature'),
@@ -105,23 +112,89 @@ const GARAGE_DEVICE = {
 };
 const GARAGE_AREA = { area_id: 'rm_garage', name: 'Garage', icon: 'mdi:garage' };
 
-/**
- * The garage's page as the automatic dashboard lays it out (#76), in the page's language: the way back, the door as a
- * cover, its readings, the smoke and the leak on its Openings card — in a column, in reading order. Read when the
- * frame is drawn, once the page's words have landed.
+/*
+ * #95's kitchen: two lights, and a dishwasher of an integration the appliance card does not read (LocalThings), its
+ * options switches beside its programme, its zone, its delay and its rounds — the card counts the two lights.
  */
-const garagePage = (): LovelaceCardConfig[] => {
+const dishwasher = (
+  id: string,
+  state: string,
+  attributes: Record<string, unknown> = {},
+): StateSeed => [`${id.split('.')[0]}.rm_dishwasher_${id.split('.')[1]}`, state, attributes];
+const GALLEY: readonly StateSeed[] = [
+  ['light.rm_galley_ceiling', 'on', { friendly_name: 'Ceiling', supported_color_modes: ['onoff'] }],
+  [
+    'light.rm_galley_counter',
+    'off',
+    { friendly_name: 'Counter', supported_color_modes: ['onoff'] },
+  ],
+  dishwasher('switch.power', 'on', { friendly_name: 'Dishwasher Power' }),
+  dishwasher('switch.extra_dry', 'on', { friendly_name: 'Dishwasher Extra dry' }),
+  dishwasher('switch.sanitize', 'off', { friendly_name: 'Dishwasher Sanitize' }),
+  dishwasher('switch.storm_wash', 'on', { friendly_name: 'Dishwasher Storm wash' }),
+  dishwasher('select.course', 'Eco', {
+    friendly_name: 'Dishwasher Course',
+    options: ['Eco', 'Auto', 'Quick'],
+  }),
+  dishwasher('select.zone', 'All', { friendly_name: 'Dishwasher Zone', options: ['All', 'Upper'] }),
+  dishwasher('number.delay_start', '0', {
+    friendly_name: 'Dishwasher Delay start',
+    min: 0,
+    max: 24,
+    step: 1,
+    unit_of_measurement: 'h',
+  }),
+  dishwasher('button.start', 'unknown', { friendly_name: 'Dishwasher Start' }),
+  dishwasher('button.pause', 'unknown', { friendly_name: 'Dishwasher Pause' }),
+  dishwasher('sensor.remaining', '42', {
+    friendly_name: 'Dishwasher Remaining',
+    unit_of_measurement: 'min',
+  }),
+  dishwasher('binary_sensor.door', 'off', {
+    friendly_name: 'Dishwasher Door',
+    device_class: 'door',
+  }),
+];
+const GALLEY_ENTITIES = Object.fromEntries(
+  GALLEY.map(([entity_id]) => [
+    entity_id,
+    entity_id.includes('dishwasher')
+      ? { entity_id, device_id: 'rm-dishwasher', platform: 'localthings' }
+      : { entity_id, area_id: 'rm_galley' },
+  ]),
+);
+const GALLEY_DEVICE = {
+  id: 'rm-dishwasher',
+  name: 'Dishwasher',
+  name_by_user: null,
+  area_id: 'rm_galley',
+  model: null,
+  manufacturer: 'Samsung',
+  via_device_id: null,
+};
+const GALLEY_AREA = { area_id: 'rm_galley', name: 'Open kitchen', icon: 'mdi:stove' };
+
+/**
+ * A room's page as the automatic dashboard lays it out (#76), in the page's language: the way back, then what it
+ * holds — in a column, in reading order. Read when the frame is drawn, once the page's words have landed.
+ */
+const roomPage = (
+  area: AreaRegistryEntry,
+  seeds: readonly StateSeed[],
+  entities: Record<string, unknown>,
+  device: { readonly id: string },
+): LovelaceCardConfig[] => {
   const t = wordsIn(resolveLanguage(new URLSearchParams(location.search).get('lang') ?? 'en'));
   const house = {
     states: Object.fromEntries(
-      GARAGE.map(([entity_id, state, attributes = {}]) => [
+      seeds.map(([entity_id, state, attributes = {}]) => [
         entity_id,
         { entity_id, state, attributes, last_changed: '', last_updated: '' },
       ]),
     ),
-    entities: GARAGE_ENTITIES,
-    devices: { [GARAGE_DEVICE.id]: GARAGE_DEVICE },
-    areas: { rm_garage: GARAGE_AREA },
+    entities,
+    devices: { [device.id]: device },
+    areas: { [area.area_id]: area },
     language: 'en',
     user: { id: 'u1', name: 'Marta', is_admin: true },
   } as unknown as HomeAssistant;
@@ -133,9 +206,9 @@ const garagePage = (): LovelaceCardConfig[] => {
     hass: house,
     header: 0,
     caps: {},
-    more: moreHost('room-rm_garage', GARAGE_AREA.name, 'fluvy:home', 3),
+    more: moreHost(`room-${area.area_id}`, area.name, 'fluvy:home', 3),
   } as unknown as StrategyContext;
-  return roomSections(ctx, GARAGE_AREA, {
+  return roomSections(ctx, area, {
     path: '/fluvy-auto/rooms',
     title: t('strategy.all_rooms'),
   }).flatMap((section) => section.cards);
@@ -222,6 +295,7 @@ export const sheet: SheetSpec = {
     ],
     ...READINGS,
     ...GARAGE,
+    ...GALLEY,
     [
       'climate.rm_study',
       'heat',
@@ -315,8 +389,9 @@ export const sheet: SheetSpec = {
         entry('sensor.rm_store_humidity', 'rm_store', { hidden: true }),
       ]),
       ...GARAGE_ENTITIES,
+      ...GALLEY_ENTITIES,
     },
-    devices: { [GARAGE_DEVICE.id]: GARAGE_DEVICE },
+    devices: { [GARAGE_DEVICE.id]: GARAGE_DEVICE, [GALLEY_DEVICE.id]: GALLEY_DEVICE },
     areas: {
       rm_living: {
         area_id: 'rm_living',
@@ -354,6 +429,7 @@ export const sheet: SheetSpec = {
       rm_store: { area_id: 'rm_store', name: 'Storeroom', icon: 'mdi:archive' },
       rm_den: { area_id: 'rm_den', name: 'Den', icon: 'mdi:sofa' },
       rm_garage: GARAGE_AREA,
+      rm_galley: GALLEY_AREA,
     },
     floors: {
       rm_ground: { floor_id: 'rm_ground', name: 'Ground floor', level: 0 },
@@ -465,16 +541,32 @@ export const sheet: SheetSpec = {
         },
       ],
     },
-    // #76: the reporter's garage counts five devices…
+    // #76: the reporter's garage counts its door (#95: its sensors are no devices)…
     {
       title: 'Room · the reporter’s garage (#76)',
       cards: [room({ area: 'rm_garage', path: '/fluvy-auto/room-rm_garage' })],
     },
-    // …and its page reaches every one: the door as a cover, the readings, the smoke and the leak on its Openings card
+    // …and its page reaches all five: the door as a cover, the readings, the smoke and the leak on its Openings card
     {
       title: 'Room page · the reporter’s garage (#76)',
       get cards() {
-        return garagePage();
+        return roomPage(GARAGE_AREA, GARAGE, GARAGE_ENTITIES, GARAGE_DEVICE);
+      },
+    } satisfies FrameSpec,
+    // #95: a kitchen counts its two lights, never the dishwasher's options, and fills by them; its tiles are its lights…
+    {
+      title: 'Room · a kitchen with an appliance’s controls (#95)',
+      cards: [
+        room({ area: 'rm_galley', path: '/fluvy-auto/room-rm_galley' }),
+        room({ area: 'rm_galley', controls: 'tiles', variant: 'tile' }),
+        room({ area: 'rm_galley', variant: 'row', cols: 6 }),
+      ],
+    },
+    // …and its page still reaches the dishwasher's controls, as rows under Devices
+    {
+      title: 'Room page · a kitchen with an appliance’s controls (#95)',
+      get cards() {
+        return roomPage(GALLEY_AREA, GALLEY, GALLEY_ENTITIES, GALLEY_DEVICE);
       },
     } satisfies FrameSpec,
   ],

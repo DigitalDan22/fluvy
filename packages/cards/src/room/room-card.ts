@@ -90,7 +90,8 @@ const HINT_LINES = 2.8;
 
 /**
  * The room as the card draws it: the area's contents, its readings the config's where it names them, and what is on
- * among what it shows — the readout, the line and the rows count the same devices alike (a heating thermostat is on).
+ * among its devices (`isRoomDevice`: never a sensor, nor an appliance's own controls, #95) — the readout, the line and
+ * the rows count the same devices alike (a heating thermostat is on).
  */
 interface RoomContents extends AreaContents {
   /** Every entity the area holds, shown or not. */
@@ -98,6 +99,7 @@ interface RoomContents extends AreaContents {
 }
 const NOTHING: RoomContents = {
   entities: [],
+  devices: [],
   controls: [],
   on: 0,
   climate: {},
@@ -132,7 +134,7 @@ export function roomHeight(config: RoomCardConfig, room?: RoomHolds): number {
     !(config.controls === 'tiles' && (config.tiles?.length ?? found.controls.length) > 0);
   const hint = room?.admin && (found?.keptOut ?? 0) > 0 ? 32 : 0;
   const has = (domain: string): number =>
-    found?.entities.some((id) => id.startsWith(`${domain}.`)) ? 1 : 0;
+    found?.devices.some((id) => id.startsWith(`${domain}.`)) ? 1 : 0;
   const rows = found ? has('light') + has('climate') + has('media_player') + 1 : 4;
   const tiles = Math.max(
     1,
@@ -150,7 +152,7 @@ export function roomHeight(config: RoomCardConfig, room?: RoomHolds): number {
   // the readouts 20 under the hero: the climate the room reads, its count of devices on
   const readings =
     (config.show_climate !== false && (climate.temperature || climate.humidity) ? 1 : 0) +
-    (config.show_count !== false && (found?.entities.length ?? 1) ? 1 : 0);
+    (config.show_count !== false && (found?.devices.length ?? 1) ? 1 : 0);
   const stats = !empty && readings ? STATS : 0;
   return HERO + stats + (empty ? 20 + EMPTY + hint : controls) + 20;
 }
@@ -251,7 +253,7 @@ export class FluvyRoomCard extends FluvyTileCard {
     const found = areaContents(hass, room.area);
     const contents: RoomContents = {
       ...found,
-      on: found.entities.filter((id) => isActive(this.entity(id))).length,
+      on: found.devices.filter((id) => isActive(this.entity(id))).length,
       climate: {
         temperature: room.temperature_entity ?? found.climate.temperature,
         humidity: room.humidity_entity ?? found.climate.humidity,
@@ -348,7 +350,7 @@ export class FluvyRoomCard extends FluvyTileCard {
     room = this.width - 32 - (this.width >= 128 ? 44 + 12 : 0),
     cls = 'fv-tile fv-tile--compact > fv-tile__state',
   ): string {
-    const { entities: ids, on, climate: readings } = this.contents();
+    const { devices: ids, on, climate: readings } = this.contents();
     const count =
       this.room?.show_count !== false && ids.length
         ? counted(this.hass, ids, (id) => this.entity(id))
@@ -383,7 +385,7 @@ export class FluvyRoomCard extends FluvyTileCard {
   }
 
   private renderStats(): TemplateResult | typeof nothing {
-    const { entities: ids, on, climate: readings } = this.contents();
+    const { devices: ids, on, climate: readings } = this.contents();
     const climate = this.room?.show_climate !== false;
     const count = this.room?.show_count !== false;
     const stats: { label: string; value: string; unit: string }[] = [];
@@ -412,10 +414,10 @@ export class FluvyRoomCard extends FluvyTileCard {
     </div>`;
   }
 
-  /** The category rows: the lights, the climate, the media, then every device. */
+  /** The category rows: the lights, the climate, the media, then every device (its page reaches the rest). */
   private renderRows(): TemplateResult | typeof nothing {
-    const { entities: ids } = this.contents();
-    if (!this.hass || !ids.length) return nothing;
+    const { entities, devices: ids } = this.contents();
+    if (!this.hass || !entities.length) return nothing;
     const to = this.destination();
     const lights = ids.filter((id) => id.startsWith('light.'));
     const climate = ids.find((id) => id.startsWith('climate.'));

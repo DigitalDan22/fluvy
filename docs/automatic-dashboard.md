@@ -39,12 +39,20 @@ subview: it opens from its card, never from the tabs, and its heading leads back
 
 ## A room's page
 
-A room's card counts every entity of its area that a dashboard shows (not hidden, not a configuration or diagnostic
-entity), and its page reaches every one of them, by the same rule: in reading order, its thermostats, its lights, its
-blinds, its garage doors and gates (each a cover card), its fans, its media players, its plugs (with their power and
-energy beside them), its temperatures and humidities, its doors, windows, motion, leak, smoke and gas sensors on one
-Openings card for the room (which folds them after its rows), its cameras, and everything else it holds as rows under
-*Devices*; its appliances across the page as on Home. Each list keeps the house's cap (below), with its "N more" row.
+A room's page reaches every entity of its area that a dashboard shows (not hidden, not a configuration or diagnostic
+entity): in reading order, its thermostats, its lights, its blinds, its garage doors and gates (each a cover card), its
+fans, its media players, its plugs (with their power and energy beside them), its temperatures and humidities, its
+doors, windows, motion, leak, smoke and gas sensors on one Openings card for the room (which folds them after its
+rows), its cameras, and everything else it holds as rows under *Devices*; its appliances across the page as on Home.
+Each list keeps the house's cap (below), with its "N more" row.
+
+A room's card counts its devices among them, and fills while one is on: its lights, its fans and covers, its media
+players, its thermostats, water heaters and humidifiers, its vacuums and mowers, and its switches that power something.
+A switch is one of those when Home Assistant calls it an outlet or a switch, when it is on no device, or when its device
+is a plug or a relay; on a device that also has an appliance's controls (a select, a number, a button, a text, a time:
+a dishwasher's programme, its delay, its start), a switch is the appliance's own option, and neither it nor those
+controls count. Sensors, helpers, scenes, automations, locks and cameras never count; the page still reaches them all.
+A plug tile on Home and on a room's page follows the same rule.
 
 ## Capped lists
 

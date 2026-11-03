@@ -12,6 +12,7 @@ import {
   areaOf,
   areasInOrder,
   floorsInOrder,
+  isLoad,
   localize,
   usableEntity,
   type AreaRegistryEntry,
@@ -448,11 +449,14 @@ export class HomeRegistry {
     return verdict && 'kind' in verdict ? verdict.kind : 'appliance';
   }
   /**
-   * The appliances' switches a tile shows: those of a device no appliance card shows (`appliances` keeps every one: the
-   * energy views read the plugs' power through it).
+   * The appliances' switches a tile shows: the loads (`isLoad`, as a room counts its devices: never a dishwasher's
+   * option) of a device no appliance card shows (`appliances` keeps every one: the energy views read the plugs' power
+   * through it).
    */
   get applianceTiles(): readonly string[] {
-    return this.memo('applianceTiles', () => this.appliances.filter((id) => !this.ofAppliance(id)));
+    return this.memo('applianceTiles', () =>
+      this.appliances.filter((id) => isLoad(this.hass, id) && !this.ofAppliance(id)),
+    );
   }
   /** Whether an entity is one of an appliance’s (its card shows it: never a room’s reading). */
   ofAppliance(id: string): boolean {
