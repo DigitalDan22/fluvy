@@ -2,7 +2,7 @@
 import { css, html, LitElement } from 'lit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { THEME_SENTINEL } from '@fluvy/tokens/config';
-import { ORIGINAL_ICONS } from '../shell/css/chrome.js';
+import { ORIGINAL_ICONS, sidebarIconsCss } from '../shell/css/chrome.js';
 import { startShell } from '../shell/index.js';
 
 /*
@@ -95,5 +95,48 @@ describe('shell on real Lit classes', () => {
     const header = report?.sheets.find((entry) => entry.id === 'dialog-header');
     expect(report?.active).toBe(true);
     expect(header).toMatchObject({ attached: true, instances: 2, probe: true });
+  });
+});
+
+describe('the sidebar’s glyphs', () => {
+  /** What the rules of the sidebar's icon sheet reach in a sidebar drawn as Home Assistant 2026.9 to 2026.11 draw it. */
+  const reached = (markup: string): string[] => {
+    const nav = document.createElement('nav');
+    nav.innerHTML = markup;
+    document.body.append(nav);
+    const sheet = new CSSStyleSheet();
+    sheet.replaceSync(sidebarIconsCss);
+    const hit = new Set<string>();
+    for (const rule of sheet.cssRules)
+      if (rule instanceof CSSStyleRule)
+        for (const element of nav.querySelectorAll(rule.selectorText))
+          hit.add(`${element.parentElement?.id} ${element.localName}`);
+    nav.remove();
+    return [...hit].sort();
+  };
+
+  it('paint the icons alone: the count of Settings and the notifications keeps its figures (#86)', () => {
+    expect(
+      reached(`
+        <ha-list-item-button id="sidebar-panel-history" class="selected">
+          <ha-svg-icon slot="start"></ha-svg-icon><span slot="headline">History</span>
+        </ha-list-item-button>
+        <ha-list-item-button id="sidebar-panel-5c53de3b_esphome">
+          <ha-icon slot="start"></ha-icon><span slot="headline">ESPHome</span>
+        </ha-list-item-button>
+        <ha-list-item-button id="sidebar-config">
+          <ha-svg-icon slot="start"></ha-svg-icon><span class="badge" slot="start">3</span>
+          <span slot="headline">Settings</span><span class="badge" slot="end">3</span>
+        </ha-list-item-button>
+        <ha-list-item-button id="sidebar-notifications">
+          <ha-svg-icon slot="start"></ha-svg-icon><span class="badge" slot="start">1</span>
+          <span slot="headline">Notifications</span><span class="badge" slot="end">1</span>
+        </ha-list-item-button>`),
+    ).toEqual([
+      'sidebar-config ha-svg-icon',
+      'sidebar-notifications ha-svg-icon',
+      'sidebar-panel-5c53de3b_esphome ha-icon',
+      'sidebar-panel-history ha-svg-icon',
+    ]);
   });
 });

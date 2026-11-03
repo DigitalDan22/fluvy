@@ -61,6 +61,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - Home Assistant's back arrow returns to the view a Fluvy card navigated from, as after a stock card, where it went to
   the dashboard's first view: a navigation records the page it left the way Home Assistant does, and the back buttons
   of the Activity and History pages and the wall go back the same way. Thanks to @rammium (#88).
+- The count on the sidebar's Settings and Notifications shows its figures again in the collapsed sidebar, on the
+  accent, where Fluvy's icon for the item was painted a second time in its place. Thanks to @evertwoud (#86).
 
 ## [1.11.3] — 2026-10-28
 

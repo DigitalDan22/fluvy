@@ -8,7 +8,8 @@
  * pills are 36 tall in the 56 bar, the open one filled; icons alone or with the name; hidden tabs leave the name and
  * the actions at the end; Home Assistant's own style, the edit mode, a subview, a single view and a dashboard that
  * does not wear the look keep Home Assistant's header; a subview's tab stays hidden; on a phone there is no name,
- * the row scrolls under the finger, fades where it goes on, and its last tab clears the fade.
+ * the row scrolls under the finger, fades where it goes on, and its last tab clears the fade. The sidebar's counts
+ * (Settings, the notifications) keep their figures under Fluvy's glyphs (#86).
  */
 import { startSuite } from './lib/suite.mjs';
 
@@ -357,6 +358,64 @@ const shown = (h) => h.tabs.filter((t) => !t.hidden);
     'under 1024 the app keeps the whole window, as the shell’s frame does',
     under.layer.content === 'none' && under.sidebar.w === 256 && columns(under, 0),
     JSON.stringify({ layer: under.layer, sidebar: under.sidebar.w }),
+  );
+}
+
+/* ---------- the counts of Settings and the notifications under Fluvy's glyphs (#86) ---------- */
+{
+  const counts = (page) =>
+    page.evaluate(() => {
+      const sr = document.querySelector('ha-sidebar').shadowRoot;
+      const probe = document.createElement('span');
+      sr.append(probe);
+      probe.style.color = 'var(--accent-color)';
+      const accent = getComputedStyle(probe).color;
+      probe.style.color = 'var(--text-accent-color)';
+      const onAccent = getComputedStyle(probe).color;
+      probe.remove();
+      return ['sidebar-config', 'sidebar-notifications'].map((id) => {
+        const row = sr.getElementById(id);
+        const badge = (slot) => {
+          const el = row.querySelector(`.badge[slot="${slot}"]`);
+          const s = getComputedStyle(el);
+          return { text: el.textContent.trim(), mask: s.maskImage, opacity: s.opacity };
+        };
+        const start = row.querySelector('.badge[slot="start"]');
+        return {
+          glyph: getComputedStyle(row.querySelector('ha-svg-icon')).maskImage.startsWith('url('),
+          inks:
+            getComputedStyle(start).backgroundColor === accent &&
+            getComputedStyle(start).color === onAccent,
+          start: badge('start'),
+          end: badge('end'),
+        };
+      });
+    });
+  const rail = await counts(await open('frame=1&rail=1&counts=1'));
+  check(
+    'the sidebar on its icons: Settings and the notifications keep Fluvy’s glyphs, each count on its icon’s corner in its figures on the accent, never the glyph again (#86)',
+    rail.map((row) => row.start.text).join() === '5,2' &&
+      rail.every(
+        (row) =>
+          row.glyph &&
+          row.inks &&
+          row.start.mask === 'none' &&
+          row.start.opacity === '1' &&
+          row.end.opacity === '0',
+      ),
+    JSON.stringify(rail),
+  );
+  const wide = await counts(await open('frame=1&counts=1'));
+  check(
+    'the open sidebar: the counts after the names, the ones on the icons put away',
+    wide.every(
+      (row) =>
+        row.glyph &&
+        row.end.mask === 'none' &&
+        row.end.opacity === '1' &&
+        row.start.opacity === '0',
+    ),
+    JSON.stringify(wide),
   );
 }
 

@@ -298,6 +298,12 @@ describe('shell lifecycle', () => {
     theme(true);
     mark('fluvy-sidebar-separators', false);
     expect(lines()).toBe('');
+    // a value that is no url path is never put into a selector: alone it draws nothing, beside one it is left out
+    mark('fluvy-sidebar-separators', true, '}*{display:none} #x');
+    expect(lines()).toBe('');
+    mark('fluvy-sidebar-separators', true, 'history a,b:not(*)');
+    expect(lines()).toContain(':is(#sidebar-panel-history)::after');
+    expect(lines()).not.toContain('not(');
   });
 
   it('fills the sheets when the theme arrives and empties them when it leaves', async () => {

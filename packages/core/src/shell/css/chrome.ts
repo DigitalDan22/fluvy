@@ -1,4 +1,5 @@
 import { HA_LOGO_URL } from '../../icons/ha-logo.js';
+import { isPanelPath } from '../../look/tabs.js';
 import { mask } from './shared.js';
 
 /*
@@ -112,9 +113,13 @@ const APP_GLYPHS: readonly (readonly [slug: string, glyph: string])[] = [
   ['portainer', 'box'],
 ];
 
+/**
+ * An item's glyph, on its icon alone: the start slot also holds the count of Settings and the notifications (`.badge`),
+ * which keeps Home Assistant's figures on the accent.
+ */
 const iconRule = (item: string, glyph: string): string =>
-  `${item} > [slot="start"] { color: transparent; background-color: var(--sidebar-icon-color); -webkit-mask: ${mask(glyph)} center / 24px 24px no-repeat; mask: ${mask(glyph)} center / 24px 24px no-repeat; }
-${item}.selected > [slot="start"] { background-color: var(--sidebar-selected-icon-color); }`;
+  `${item} > :is(ha-svg-icon, ha-icon)[slot="start"] { color: transparent; background-color: var(--sidebar-icon-color); -webkit-mask: ${mask(glyph)} center / 24px 24px no-repeat; mask: ${mask(glyph)} center / 24px 24px no-repeat; }
+${item}.selected > :is(ha-svg-icon, ha-icon)[slot="start"] { background-color: var(--sidebar-selected-icon-color); }`;
 
 /** The sidebar: the accent pill (radius 12), 14/500 labels, a 600 title. */
 export const sidebarCss = [
@@ -137,13 +142,16 @@ export const sidebarLogoCss = [
 export const sidebarFlatCss = '.menu { border-bottom-color: transparent; }';
 
 /**
- * A line after each item the house chose (`paths`, url paths checked by `parseChrome`), as the hairline under the
- * sidebar's head: the item's 4 below it grows to 21, the line in its middle from the icon's edge to the text's end, in
- * the collapsed sidebar under the icon alone. Home Assistant draws a selected item's pill as its `::before`; the line
- * is its `::after`.
+ * A line after each item the house chose (`paths`: url paths, any other word left out, as `parseChrome` leaves it), as
+ * the hairline under the sidebar's head: the item's 4 below it grows to 21, the line in its middle from the icon's edge
+ * to the text's end, in the collapsed sidebar under the icon alone. Home Assistant draws a selected item's pill as its
+ * `::before`; the line is its `::after`.
  */
 export const sidebarSeparatorsCss = (paths: readonly string[]): string => {
-  const items = paths.map((path) => `#sidebar-panel-${path}`).join(', ');
+  const items = paths
+    .filter(isPanelPath)
+    .map((path) => `#sidebar-panel-${path}`)
+    .join(', ');
   return items
     ? `:is(${items}) { margin-block-end: 21px; }
 :is(${items})::after { content: ""; position: absolute; inset-inline: var(--ha-row-item-padding-inline, 12px); inset-block-start: calc(100% + 10px); height: 1px; background-color: var(--divider-color); pointer-events: none; }`

@@ -72,7 +72,8 @@ export const CHROME_DEFAULTS: Chrome = {
 };
 
 /** A panel's url path as Home Assistant makes them (letters, digits, `-` and `_`): safe in an id selector as it is. */
-const PANEL_PATH = /^[a-z0-9_-]+$/i;
+export const isPanelPath = (path: unknown): path is string =>
+  typeof path === 'string' && /^[a-z0-9_-]+$/i.test(path);
 
 /** A stored corner, field by field (an unknown value takes the default); undefined when nothing is stored. */
 export function parseChrome(raw: unknown): Chrome | undefined {
@@ -85,13 +86,7 @@ export function parseChrome(raw: unknown): Chrome | undefined {
     header: raw['header'] === 'bar' || raw['header'] === 'page' ? raw['header'] : d.header,
     actions: raw['actions'] === 'buttons' || raw['actions'] === 'menu' ? raw['actions'] : d.actions,
     separators: Array.isArray(separators)
-      ? [
-          ...new Set(
-            separators.filter(
-              (path): path is string => typeof path === 'string' && PANEL_PATH.test(path),
-            ),
-          ),
-        ]
+      ? [...new Set(separators.filter(isPanelPath))]
       : d.separators,
   };
 }
