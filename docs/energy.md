@@ -70,7 +70,9 @@ A flow, a balance, the sankey and the score can show a day, a week or a month (`
 Month chips to switch. A period reads the Energy dashboard's meters from Home Assistant's long-term statistics, hour
 by hour (a day by day over a week or a month), and allocates each hour the way the Energy dashboard does — grid energy
 the house did not use went to the battery first, then the sun charged the battery, then it was exported, then the
-battery exported, then the rest ran the house — and adds the hours up. The figures are the dashboard's own.
+battery exported, then the rest ran the house — and adds the hours up. The figures are the dashboard's own, rounded
+only by their decimals: a cloudy day's 0.05 kWh of sun reads 0.05 kWh. On the flow, a way under 50 Wh rests, its lane
+and its figure dimmed.
 
 ## Following Home Assistant's date picker
 

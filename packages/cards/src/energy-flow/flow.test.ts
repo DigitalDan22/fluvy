@@ -3,6 +3,7 @@ import type { HaFormSchemaItem } from '@fluvy/core';
 import { describe, expect, it } from 'vitest';
 import { allocate } from '../energy-model/allocate.js';
 import { normaliseConfig } from '../shared/config.js';
+import { writesZero } from '../shared/units.js';
 import { FluvyEnergyFlowCard } from './energy-flow-card.js';
 import { lists } from './energy-flow-editor.js';
 import {
@@ -218,7 +219,7 @@ describe('the scene', () => {
       hidden: false,
       ink: { tone: 'solar' },
     });
-    expect(said(grid(1900, 400), words, false)).toEqual({
+    expect(said(grid(1900, 400), words)).toEqual({
       first: { value: 1900, way: 'in' },
       second: { value: 400, way: 'out' },
       idle: false,
@@ -242,8 +243,11 @@ describe('the scene', () => {
     expect(lanesOf(battery, origins)).toEqual([
       { way: 'out', rest: false, hidden: false, watts: 600, ink: { tone: 'solar' } },
     ]);
-    expect(said(battery, words, false).first).toEqual({ value: 600, way: 'charging' });
-    expect(said(battery, words, true).first).toEqual({ value: 600, way: 'charged' });
+    expect(said(battery, words).first).toEqual({ value: 600, way: 'charging' });
+    expect(said(battery, words, (total) => total > 0).first).toEqual({
+      value: 600,
+      way: 'charged',
+    });
   });
 
   it('cheap hours: the grid charging the battery is lilac', () => {
@@ -273,13 +277,46 @@ describe('the scene', () => {
       pair: false,
     };
     expect(lanesOf(solar, origins)[0]).toMatchObject({ way: 'in', rest: true });
-    expect(said(solar, words, false)).toEqual({ first: { value: 0, way: '' }, idle: true });
+    expect(said(solar, words)).toEqual({ first: { value: 0, way: '' }, idle: true });
+  });
+
+  it('over a period every total is said as it is, rounded only by its decimals; under the threshold it rests (#109)', () => {
+    // two decimals of a kWh, as `decimals: 2` writes a day's totals
+    const reads = (total: number): boolean =>
+      !writesZero(total, { unit: 'kWh', divisor: 1000, digits: 2 });
+    // a day's 0.05 kWh of sun, a hair under the 50 Wh its lane rests below: Home Assistant's dashboard says 0.05
+    const solar: SceneNode = {
+      kind: 'solar',
+      ink: { tone: 'solar' },
+      reading: { in: 49.999999999997, out: 0 },
+      threshold: 50,
+      pair: false,
+    };
+    expect(said(solar, words, reads)).toEqual({
+      first: { value: 49.999999999997, way: '' },
+      idle: true,
+    });
+    expect(lanesOf(solar, origins)[0]).toMatchObject({ rest: true });
+    const battery: SceneNode = { ...solar, kind: 'battery', reading: { in: 0, out: 20 } };
+    expect(said(battery, words, reads)).toEqual({
+      first: { value: 20, way: 'charged' },
+      idle: true,
+    });
+    // both ways over the day: each said, the one that flowed lighting the figures
+    expect(said({ ...grid(3000, 20), threshold: 50 }, words, reads)).toEqual({
+      first: { value: 3000, way: 'in' },
+      second: { value: 20, way: 'out' },
+      idle: false,
+    });
+    // what its decimals write as 0.00 rests at 0, its way unsaid
+    expect(said({ ...battery, reading: { in: 4, out: 0 } }, words, reads)).toEqual({
+      first: { value: 0, way: '' },
+      idle: true,
+    });
   });
 
   it('an unreadable source says nothing it does not know', () => {
-    expect(
-      said({ ...grid(0, 0), reading: { in: null, out: null } }, words, false).first.value,
-    ).toBeNull();
+    expect(said({ ...grid(0, 0), reading: { in: null, out: null } }, words).first.value).toBeNull();
   });
 });
 

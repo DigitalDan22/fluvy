@@ -165,6 +165,10 @@ export function figuresOf(
   return digits === undefined ? scale : { ...scale, digits };
 }
 
+/** The decimals a figure of this size is written with: the precision asked, else three significant places at most. */
+const digitsFor = (size: number, precision?: number): number =>
+  precision ?? (size >= 100 ? 0 : size >= 1 ? 1 : 2);
+
 /** The number alone: three significant places at most (0.25 · 3.2 · 11.2 · 142), or the entity's own precision. */
 export function figure(
   hass: HomeAssistant | undefined,
@@ -174,7 +178,7 @@ export function figure(
 ): string {
   const shown = value / scale.divisor;
   const size = Math.abs(shown);
-  const digits = precision ?? (size >= 100 ? 0 : size >= 1 ? 1 : 2);
+  const digits = digitsFor(size, precision);
   // a scaled figure keeps its one decimal (1.0 kW beside 2.2 kW; 0.4 and 0 stay as they are), as does a precision
   // the entity asks for
   const fixed = precision !== undefined || (scale.divisor > 1 && size >= 1 && size < 100);
@@ -190,6 +194,12 @@ export const writeFigure = (
   value: number,
   figures: Figures,
 ): string => figure(hass, value, figures, figures.digits);
+
+/** Whether its set writes a base-unit figure as nothing, its decimals rounding it away (4 Wh as "0.00" kWh). */
+export function writesZero(value: number, figures: Figures): boolean {
+  const size = Math.abs(value / figures.divisor);
+  return Math.round(size * 10 ** digitsFor(size, figures.digits)) === 0;
+}
 
 /**
  * A sensor's own figure as a card asks it: in `unit` where the sensor's converts to it, at `decimals` where set (else

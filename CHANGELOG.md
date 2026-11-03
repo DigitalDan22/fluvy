@@ -51,6 +51,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - A template card whose entity is `unknown` (a button never pressed, its normal state) shows its `secondary`, where it
   said "Unknown"; only an entity that is unavailable or gone says its state in place of the line, and a template line
   of an entities row reads an unknown state the same way. Thanks to @rammium (#92).
+- The energy flow card over a period says every total as it is, rounded only by its decimals, where a figure under
+  50 Wh read 0: a cloudy day's 0.05 kWh of sun reads 0.05 kWh, as on Home Assistant's Energy dashboard, its lane still
+  resting and its figure dimmed. Thanks to @v1rusnl (#109).
 
 ## [1.11.3] — 2026-10-28
 

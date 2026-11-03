@@ -10,6 +10,7 @@ import {
   scaleNamed,
   unitClass,
   writeFigure,
+  writesZero,
 } from './units.js';
 
 /** A house with one sensor, its registry precision when given. */
@@ -81,5 +82,31 @@ describe('the one rule for units and decimals', () => {
     expect(writeFigure(undefined, 250, figuresOf(undefined, {}, 'W', 3000))).toBe('0.25');
     expect(writeFigure(undefined, 5, figuresOf(undefined, {}, 'W', 5))).toBe('5');
     expect(writeFigure(undefined, -1200, figuresOf(undefined, {}, 'W', 1200))).toBe('−1.2');
+  });
+});
+
+describe('a figure its decimals write as nothing', () => {
+  const kWh = (digits?: number) => ({
+    unit: 'kWh',
+    divisor: 1000,
+    ...(digits === undefined ? {} : { digits }),
+  });
+
+  it('is one they round to zero, never one they round up', () => {
+    expect(writesZero(0, kWh(2))).toBe(true);
+    expect(writesZero(4, kWh(2))).toBe(true);
+    expect(writeFigure(undefined, 4, kWh(2))).toBe('0.00');
+    expect(writesZero(5, kWh(2))).toBe(false);
+    expect(writesZero(49.999999999997, kWh(2))).toBe(false);
+    expect(writeFigure(undefined, 49.999999999997, kWh(2))).toBe('0.05');
+    expect(writesZero(400, kWh(0))).toBe(true);
+    expect(writesZero(500, kWh(0))).toBe(false);
+  });
+
+  it('without decimals asked, at three significant places', () => {
+    expect(writesZero(20, kWh())).toBe(false);
+    expect(writeFigure(undefined, 20, kWh())).toBe('0.02');
+    expect(writesZero(4, kWh())).toBe(true);
+    expect(writesZero(4, { unit: 'Wh', divisor: 1 })).toBe(false);
   });
 });

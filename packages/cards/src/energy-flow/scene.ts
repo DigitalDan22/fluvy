@@ -114,7 +114,7 @@ export function houseShares(a: Allocation | null): { key: Ink['tone']; value: nu
 export interface Said {
   readonly first: { readonly value: number | null; readonly way: string };
   readonly second?: { readonly value: number; readonly way: string };
-  /** Nothing flows: the figure in the secondary ink. */
+  /** Nothing flows (no way reaches its threshold): the figure, whatever it says, in the secondary ink. */
   readonly idle: boolean;
 }
 
@@ -128,23 +128,28 @@ export interface WayWords {
   readonly discharged: string;
 }
 
-export function said(node: SceneNode, words: WayWords, period: boolean): Said {
+/**
+ * A node's words. Live, a way under its threshold says 0: nothing flows. Over a period (`reads`, which tells a total
+ * its figures' decimals write as more than nothing) every total is said as it is, rounded only by those decimals, as
+ * Home Assistant's Energy dashboard says it (#109); the threshold only dims it, as it rests its lane.
+ */
+export function said(node: SceneNode, words: WayWords, reads?: (total: number) => boolean): Said {
   const into = node.reading.in;
   const out = node.reading.out;
   if (into === null || out === null) return { first: { value: null, way: '' }, idle: false };
-  const inOn = into >= node.threshold && into > 0;
-  const outOn = !oneWay(node.kind) && out >= node.threshold && out > 0;
-  if (oneWay(node.kind)) return { first: { value: inOn ? into : 0, way: '' }, idle: !inOn };
+  const flows = (value: number): boolean => value >= node.threshold && value > 0;
+  const says = reads ?? flows;
+  const inSaid = says(into);
+  const outSaid = !oneWay(node.kind) && says(out);
+  const idle = !flows(into) && (oneWay(node.kind) || !flows(out));
+  if (oneWay(node.kind)) return { first: { value: inSaid ? into : 0, way: '' }, idle };
   const grid = node.kind === 'grid';
-  const inWord = grid ? words.in : period ? words.discharged : words.discharging;
-  const outWord = grid ? words.out : period ? words.charged : words.charging;
-  if (inOn && outOn)
-    return {
-      first: { value: into, way: inWord },
-      second: { value: out, way: outWord },
-      idle: false,
-    };
-  if (outOn) return { first: { value: out, way: outWord }, idle: false };
-  if (inOn) return { first: { value: into, way: inWord }, idle: false };
+  // a period's battery charged and discharged; a moment's is charging, discharging
+  const inWord = grid ? words.in : reads ? words.discharged : words.discharging;
+  const outWord = grid ? words.out : reads ? words.charged : words.charging;
+  if (inSaid && outSaid)
+    return { first: { value: into, way: inWord }, second: { value: out, way: outWord }, idle };
+  if (outSaid) return { first: { value: out, way: outWord }, idle };
+  if (inSaid) return { first: { value: into, way: inWord }, idle };
   return { first: { value: 0, way: '' }, idle: true };
 }

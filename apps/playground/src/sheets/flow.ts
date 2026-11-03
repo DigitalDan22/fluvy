@@ -12,6 +12,7 @@ import {
   hybridWithPower,
   ISSUE_49_STATES,
 } from '../hybrid.js';
+import { house } from '../houses.js';
 import type { SheetSpec } from '../scenes.js';
 
 if (!customElements.get('fluvy-energy-flow-card'))
@@ -64,6 +65,43 @@ const STATS: Record<string, { start: number; change: number }[]> = {
   'sensor.fl_battery_out_energy': buckets([1.4, 0, 0, 1.0]),
   'sensor.fl_battery_in_energy': buckets([0, 1.6, 1.4, 0]),
 };
+
+/**
+ * Issue #109's cloudy morning: a day's totals under the 50 Wh a lane rests below, as the recorder sums them (the sun's
+ * 0.05 kWh a hair under, as Home Assistant's dashboard rounds it), and the grid carrying the house.
+ */
+const CLOUDY: Record<string, { start: number; change: number }[]> = {
+  'sensor.fl_cloudy_grid_in': buckets([1.2, 0.9]),
+  'sensor.fl_cloudy_grid_out': buckets([0, 0]),
+  'sensor.fl_cloudy_solar': buckets([0, 0.049999999999997]),
+  'sensor.fl_cloudy_battery_out': buckets([0, 0]),
+  'sensor.fl_cloudy_battery_in': buckets([0, 0.02]),
+};
+const cloudyMorning = house({
+  'energy/get_prefs': () => ({
+    energy_sources: [
+      {
+        type: 'grid',
+        stat_energy_from: 'sensor.fl_cloudy_grid_in',
+        stat_energy_to: 'sensor.fl_cloudy_grid_out',
+      },
+      { type: 'solar', stat_energy_from: 'sensor.fl_cloudy_solar' },
+      {
+        type: 'battery',
+        stat_energy_from: 'sensor.fl_cloudy_battery_out',
+        stat_energy_to: 'sensor.fl_cloudy_battery_in',
+      },
+    ],
+    device_consumption: [],
+  }),
+  'recorder/statistics_during_period': (message) =>
+    Object.fromEntries(
+      ((message['statistic_ids'] as string[] | undefined) ?? []).map((id) => [
+        id,
+        CLOUDY[id] ?? [],
+      ]),
+    ),
+});
 
 /**
  * The same day in five-minute buckets up to the sheet's 21:47 (kWh a bucket): a bell of sun from 07:00 to 19:00
@@ -493,6 +531,28 @@ export const sheet: SheetSpec = {
           title: 'Today',
           period: 'day',
           badge: 'self_powered',
+          _now: NOW,
+        },
+      ],
+    },
+    // #109: over a period every total is said as it is, rounded only by its decimals; under 50 Wh its lane rests
+    {
+      title: 'Today · a cloudy morning',
+      hass: cloudyMorning,
+      cards: [
+        {
+          type: 'custom:fluvy-energy-flow-card',
+          title: 'Today',
+          period: 'day',
+          variant: 'cross',
+          badge: 'none',
+          decimals: 2,
+          _now: NOW,
+        },
+        {
+          type: 'custom:fluvy-energy-flow-card',
+          title: 'Today',
+          period: 'day',
           _now: NOW,
         },
       ],

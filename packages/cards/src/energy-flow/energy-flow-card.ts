@@ -63,7 +63,7 @@ import { chipRow } from '../shared/chips.js';
 import { fitLine } from '../shared/fit.js';
 import { toneOf } from '../shared/colour.js';
 import { ITEM_ALIASES, type AliasSpec, type Move } from '../shared/config.js';
-import type { NumberKeys } from '../shared/units.js';
+import { writesZero, type NumberKeys } from '../shared/units.js';
 import {
   arcs,
   crossLayout,
@@ -150,7 +150,7 @@ export interface EnergyFlowCardConfig extends FluvyCardConfig, NumberKeys {
 const DEFAULT_PEAK = 6000;
 /** Consumers drawn beside the house need this much room; below it they are listed under the diagram. */
 const CONSUMERS_WIDE = 560;
-/** Over a period, a figure under 50 Wh rests. */
+/** Over a period, a way under 50 Wh rests: its lane and its figure dim, the figure still its total. */
 const PERIOD_THRESHOLD = 50;
 
 /** One node of the diagram, resolved: what it is, how it reads, how it is drawn. */
@@ -504,8 +504,10 @@ export class FluvyEnergyFlowCard extends Card<EnergyFlowCardConfig> {
         ? { value: '—', unit: '' }
         : { value: scaled(this.hass, v, scale), unit: scale.unit };
 
+    // over a period every total is said that its decimals write as more than nothing (#109)
+    const reads = period ? (total: number): boolean => !writesZero(total, scale) : undefined;
     const words = shown.map((n): Words => {
-      const say = said(n, ways, Boolean(period));
+      const say = said(n, ways, reads);
       const first = fig(say.first.value);
       return {
         label: n.label,
