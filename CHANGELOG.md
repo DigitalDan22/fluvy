@@ -21,6 +21,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - An appliance card whose appliance's power switch is off, and whose state says no more than that it is at rest, says
   Off where it said Ready: a Samsung washer or dishwasher on SmartThings, a Matter appliance or one on LocalThings
   switched off (#91).
+- The bars card warns under 20 % by default only for a battery and a soil's moisture: a row in % of any other kind (a
+  processor's use, a disk's, a room's humidity) turns warning and counts in the head's badge only under a `low` of its
+  own, where every share did under 20 %. Thanks to @rammium (#94).
 
 ### Added
 

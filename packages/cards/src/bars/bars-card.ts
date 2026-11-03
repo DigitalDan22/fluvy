@@ -43,7 +43,10 @@ export interface BarRowConfig {
   /** The bar's range, in the entity's unit. Defaults: 0–100 for a percentage, 0–largest row otherwise. */
   min?: number;
   max?: number;
-  /** Below this the row turns warning and counts towards the head badge. */
+  /**
+   * Below this the row turns warning and counts towards the head badge. Default: 20 for a battery and a soil's moisture
+   * (what runs low and wants a hand), none for any other reading.
+   */
   low?: number;
   /** Above this the row turns warning and counts towards the head badge. */
   high?: number;
@@ -72,8 +75,13 @@ export interface BarsCardConfig extends FluvyCardConfig, EmptyList, Pick<ChartKe
   badge_warn?: string;
 }
 
-/** Device classes that are a share of themselves: 0 … 100, low at 20. */
+/** Device classes that are a share of themselves: 0 … 100. */
 const PERCENT = new Set(['battery', 'moisture', 'humidity']);
+/**
+ * Those that run low and want a hand (a battery to charge, a plant's soil to water): low at 20 (#94). A room's humidity,
+ * a processor's use or a disk's are shares that warn only under a `low` of their own.
+ */
+const RUNS_LOW = new Set(['battery', 'moisture']);
 
 /** The tone a bar takes from what it measures, when the row does not say. */
 function barToneFor(view: EntityView): Tone {
@@ -256,7 +264,7 @@ export class FluvyBarsCard extends Card<BarsCardConfig> {
           : percent
             ? 100
             : (barPeak.get(quantity?.unit ?? '') ?? 0);
-      const low = row.low ?? (percent ? 20 : undefined);
+      const low = row.low ?? (RUNS_LOW.has(view.deviceClass) ? 20 : undefined);
       const warn =
         quantity !== null &&
         ((low !== undefined && quantity.value < low * factor) ||

@@ -45,7 +45,9 @@ on the card moves before the answer.
 Every card exposes what to show (section switches such as `show_fan`), which items appear and in which order (subset
 lists such as `modes: [off, heat, cool]`), and at least one other layout through `variant`. Chip rows fill the row by
 default and are content-sized on request (`preset_style`, `fan_style`, `suction_style: chips`). Cards that list rows
-(lock, alarm, camera, bars, stat tiles) take a `rows` list edited with Fluvy's own rows editor. While a device is off,
+(lock, alarm, camera, bars, stat tiles) take a `rows` list edited with Fluvy's own rows editor. A bars row turns
+warning, and counts in the head's badge, under its `low` or over its `high`; a battery and a soil's moisture are low
+under 20 % unless their row says otherwise. While a device is off,
 the thermostat and the fan can keep to the essentials (`when_off: essentials`) — the thermostat its head, value and
 modes, the fan its switch and speed ruler — and presets, fan speeds, oscillation and direction come back the moment a
 mode or the switch wakes it (the water heater and the humidifier only have modes, so nothing hides on them).

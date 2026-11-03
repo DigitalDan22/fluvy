@@ -221,6 +221,10 @@ export const sheet: SheetSpec = {
     ['sensor.so_remote_battery', '12', { friendly_name: 'Living room remote', ...BATTERY }],
     ['sensor.so_door_battery', '9', { friendly_name: 'Front door sensor', ...BATTERY }],
     ['sensor.so_thermostat_battery', '74', { friendly_name: 'Thermostat', ...BATTERY }],
+    // System Monitor's shares: no class of their own
+    ['sensor.so_processor_use', '6', { friendly_name: 'CPU usage', ...PCT }],
+    ['sensor.so_memory_use', '41', { friendly_name: 'Memory usage', ...PCT }],
+    ['sensor.so_disk_use', '73', { friendly_name: 'Disk usage', ...PCT }],
   ],
 
   history: {
@@ -700,6 +704,34 @@ export const sheet: SheetSpec = {
             'sensor.so_remote_battery',
             'sensor.so_door_battery',
             'sensor.so_thermostat_battery',
+          ],
+        },
+      ],
+    },
+    // shares that are not levels (#94): a processor at 6 % is no warning, as the room's dry air at 18 % is none; a battery
+    // and a plant's soil warn under 20 %
+    {
+      title: 'Bars · usage shares',
+      cards: [
+        {
+          type: 'custom:fluvy-bars-card',
+          title: 'Usage',
+          rows: [
+            'sensor.so_processor_use',
+            'sensor.so_memory_use',
+            'sensor.so_disk_use',
+            'sensor.so_study_humidity',
+          ],
+        },
+        {
+          type: 'custom:fluvy-bars-card',
+          title: 'Levels',
+          variant: 'compact',
+          rows: [
+            'sensor.so_processor_use',
+            'sensor.so_door_battery',
+            'sensor.so_plant_ficus',
+            { entity: 'sensor.so_memory_use', low: 50 },
           ],
         },
       ],
