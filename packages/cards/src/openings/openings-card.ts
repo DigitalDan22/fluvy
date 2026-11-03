@@ -1,6 +1,7 @@
 import {
   isActive,
   isUsable,
+  numberAttr,
   stateText,
   strings,
   type ActionConfig,
@@ -87,6 +88,16 @@ const isOpening = (view: EntityView): boolean =>
   view.domain === 'lock' ||
   view.deviceClass === 'lock' ||
   OPENING.has(view.deviceClass ?? '');
+
+/**
+ * Whether it is on: a sensor's on, a lock's unlocked; a cover (a blind, a curtain, a garage door…) whenever it is not
+ * shut — open, on its way, or a position above 0 (a blind a third up is open, #105).
+ */
+const isOn = (view: EntityView): boolean =>
+  isActive(view) ||
+  (view.domain === 'cover' &&
+    view.status === 'ok' &&
+    (numberAttr(view, 'current_position') ?? 0) > 0);
 const ALERT = new Set([
   ...OPENING,
   'lock',
@@ -194,15 +205,21 @@ export class FluvyOpeningsCard extends Card<OpeningsCardConfig> {
     return { columns: 12, rows: 'auto', min_columns: 6 };
   }
 
-  /** Open, wet, smoke, a problem: active AND of a class that is a warning. Motion is an event, not an alert. */
+  /**
+   * Open, wet, smoke, a problem: on AND of a class that is a warning, as a cover of any class is (#105). Motion is an
+   * event, not an alert.
+   */
   private alert(view: EntityView): boolean {
-    return isActive(view) && ALERT.has(view.domain === 'lock' ? 'lock' : view.deviceClass);
+    return (
+      isOn(view) &&
+      (view.domain === 'cover' || ALERT.has(view.domain === 'lock' ? 'lock' : view.deviceClass))
+    );
   }
 
   /** The state, said once, in the words the device class deserves. */
   private valueText(view: EntityView): string {
     if (view.status !== 'ok') return stateText(this.hass, view);
-    const on = isActive(view);
+    const on = isOn(view);
     const dc = view.deviceClass;
     if (view.domain === 'lock') return stateText(this.hass, view); // locking, jammed, open: Home Assistant's own words
     if (dc === 'lock') return this.t(on ? 'lock.unlocked' : 'lock.locked');

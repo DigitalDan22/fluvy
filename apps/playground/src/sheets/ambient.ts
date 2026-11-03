@@ -412,6 +412,34 @@ export const sheet: SheetSpec = {
     ],
     ['binary_sensor.am_shed', 'unavailable', { friendly_name: 'Shed door', device_class: 'door' }],
     ['lock.am_back_door', 'locked', { friendly_name: 'Back door lock' }],
+    // #105's curtains, as the reporter listed them: three open, one shut; a blind a third up by its position, and a
+    // garage door shut
+    [
+      'cover.am_bank',
+      'open',
+      { friendly_name: 'Bank', device_class: 'curtain', current_position: 100 },
+    ],
+    [
+      'cover.am_schuifpui',
+      'open',
+      { friendly_name: 'Schuifpui', device_class: 'curtain', current_position: 100 },
+    ],
+    ['cover.am_kantoor', 'opening', { friendly_name: 'Kantoor', device_class: 'curtain' }],
+    [
+      'cover.am_slaapkamer',
+      'closed',
+      { friendly_name: 'Slaapkamer', device_class: 'curtain', current_position: 0 },
+    ],
+    [
+      'cover.am_study_blind',
+      'closed',
+      { friendly_name: 'Study blind', device_class: 'blind', current_position: 30 },
+    ],
+    [
+      'cover.am_garage',
+      'closed',
+      { friendly_name: 'Garage door', device_class: 'garage', current_position: 0 },
+    ],
     // #67: the real last change — a door Home Assistant says changed just now (a restart) beside the helper that
     // kept it, a window whose own attribute holds when it opened (an epoch), a door whose helper says nothing yet
     [
@@ -1168,6 +1196,31 @@ export const sheet: SheetSpec = {
           type: 'custom:fluvy-scenes-card',
           _now,
           entities: ['script.am_goodnight', 'scene.am_gone', 'scene.am_away'],
+        },
+      ],
+    },
+    // #105: covers count in the head and light up while open, as a window does: open, on their way, or partly open by
+    // their position
+    {
+      title: 'Openings · covers (#105)',
+      cards: [
+        {
+          type: 'custom:fluvy-openings-card',
+          title: 'Gordijnen',
+          _now,
+          entities: [
+            'cover.am_bank',
+            'cover.am_schuifpui',
+            'cover.am_kantoor',
+            'cover.am_slaapkamer',
+          ],
+        },
+        {
+          type: 'custom:fluvy-openings-card',
+          title: 'Blinds',
+          variant: 'tiles',
+          _now,
+          entities: ['cover.am_study_blind', 'cover.am_garage'],
         },
       ],
     },

@@ -40,6 +40,13 @@ const STATES = [
   state('sensor.shed_real_last_changed', 'unknown', { device_class: 'timestamp' }),
   state('sensor.when', at(26), { device_class: 'timestamp' }),
   state('sensor.power', '12', { device_class: 'power', unit_of_measurement: 'W' }),
+  // #105's covers: curtains open, one a third open by its position, one shut; a garage door shut
+  state('cover.bank', 'open', { device_class: 'curtain', current_position: 100 }),
+  state('cover.schuifpui', 'opening', { device_class: 'curtain' }),
+  state('cover.kantoor', 'closed', { device_class: 'blind', current_position: 30 }),
+  state('cover.slaapkamer', 'closed', { device_class: 'curtain', current_position: 0 }),
+  state('cover.screen', 'closed', {}),
+  state('cover.garage', 'closed', { device_class: 'garage', current_position: 0 }),
 ];
 
 const hass = {
@@ -190,6 +197,45 @@ describe('the openings card’s real last change (#67)', () => {
       expect(await shown({ variant: 'tiles' })).toContain('since_pattern');
       expect(await shown({ variant: 'compact' })).not.toContain('since_pattern');
       expect(await shown({ show_time: false })).not.toContain('since_pattern');
+    });
+  });
+});
+
+describe('the openings card’s covers (#105)', () => {
+  /** The head's badge, and each row's circle tone and value. */
+  const read = (card: CardElement) => ({
+    badge: card.shadowRoot!.querySelector('.fv-card__head .fv-badge')?.textContent?.trim(),
+    rows: [...card.shadowRoot!.querySelectorAll('.am-rows .fv-row')].map((row) => [
+      row.querySelector('.fv-ico')?.className.match(/fv-ico--(\w+)/)?.[1],
+      row.querySelector('.fv-row__value')?.textContent?.trim(),
+    ]),
+  });
+
+  it('counts an open cover of any class in the head and lights it, as a window: open, opening, partly open', async () => {
+    const card = await draw({
+      rows: ['cover.bank', 'cover.schuifpui', 'cover.kantoor', 'cover.slaapkamer', 'cover.screen'],
+      max_rows: 5,
+    });
+    expect(read(card)).toEqual({
+      badge: '3 open',
+      rows: [
+        ['warning', 'Open'],
+        ['warning', 'Open'],
+        ['warning', 'Open'],
+        ['neutral', 'Closed'],
+        ['neutral', 'Closed'],
+      ],
+    });
+  });
+
+  it('reads a garage door as it did, and says all clear while every cover is shut', async () => {
+    const card = await draw({ rows: ['cover.garage', 'cover.slaapkamer'] });
+    expect(read(card)).toEqual({
+      badge: 'All clear',
+      rows: [
+        ['neutral', 'Closed'],
+        ['neutral', 'Closed'],
+      ],
     });
   });
 });

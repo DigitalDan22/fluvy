@@ -29,6 +29,10 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 - The alerts card's chips (`variant: chips`) rise in on their card's turn with the rest of the dashboard, where they
   appeared at once. Thanks to @rammium (#90).
+- The openings card counts an open cover in its head ("3 open") and lights its circle and its state as it does an open
+  window, whatever the cover's class (a curtain, a blind, a shade, an awning), where only a garage door or a gate
+  counted; a cover is open while it is not closed, on its way, or partly open by its position. Thanks to @Gnomi2
+  (#105).
 
 ## [1.11.3] — 2026-10-28
 
