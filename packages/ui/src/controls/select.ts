@@ -424,7 +424,7 @@ export class FluvySelect extends LitElement {
 
   /* ---------- markup ---------- */
 
-  /** The list; out of the tab order (a list that scrolls — ten languages — would otherwise be a tab stop of its own). */
+  /** The list; out of the tab order (a list that scrolls — eleven languages — would otherwise be a tab stop of its own). */
   private renderMenu(): TemplateResult {
     return html`<div
       id="menu"

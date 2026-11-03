@@ -14,7 +14,7 @@ import { says, type Rules } from '../shared/words.js';
  * (DEVICE_WASHER)"), and a WashTower is two devices named "<name> washer" and "<name> dryer"; then the keys only one
  * kind has (salt is a dishwasher's, i-Dos a washer's, a cavity's temperature an oven's, a setpoint that tops out below
  * 30 °C a compartment's; what LG's status can say — spinning, night dry, preheating — and what its older integration
- * writes in the device sensor's attributes); then the words of its name in any of the ten languages, the longest of
+ * writes in the device sensor's attributes); then the words of its name in any of the eleven languages, the longest of
  * words that overlap winning (`shared/words.ts`: オーブントースター is a toaster, not an oven). Some things are never
  * an appliance, whatever they say: a vacuum (Home Connect's robot has no vacuum entity, only its keys), a charger, a
  * 3D printer, and — until 1.10 — a warming drawer, LG's Styler and its kimchi fridge.
@@ -384,7 +384,7 @@ export const APPLIANCE_WORDS: Rules<ApplianceKind | 'never'> = [
 ];
 
 /**
- * By the words of its names (its own and its model) in any of the ten languages. A word of what is never an
+ * By the words of its names (its own and its model) in any of the eleven languages. A word of what is never an
  * appliance anywhere in them says none, before any kind is weighed against it: a longer kind's word around it does
  * not make it one (全自動洗濯物たたみ機 folds the laundry, 洗濯物, and washes nothing, though 全自動洗濯 is a washer's word).
  */
