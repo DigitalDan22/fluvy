@@ -35,6 +35,7 @@ import { bindAction, offered } from '../actions.js';
 import type { AlertResult, AlertsState } from '../engine.js';
 import {
   countWords,
+  culpritText,
   culprits,
   groupsOf,
   lasted,
@@ -961,15 +962,16 @@ export class FluvyAlertsSheet extends LitElement {
               <span class="fv-row__value fv-row__value--quiet">${value}</span>
             </div>`;
           // who is at fault: as many names as hold whole (the count is the row's value), else the first, ending in
-          // its ellipsis; a split alert is its one entity, already its name
-          const names = result.entity ? [] : culprits(context, result);
+          // its ellipsis (never one with its count, "Window ×4"); a split alert is its one entity, already its name
+          const who = result.entity ? [] : culprits(context, result);
+          const names = who.map((one) => culpritText(context, one));
+          const [first] = who;
           const room = this.room - (keep ? CIRCLE : 0) - end;
           const line =
             names
               .map((_, i) => names.slice(0, names.length - i).join(', '))
               .find((text) => this.ruler.width('fv-row__sub', text) <= room) ??
-            names[0] ??
-            '';
+            (first?.n === 1 ? first.name : '');
           const open = (): void => {
             this.key_ = result.key;
             this.from_ = true;

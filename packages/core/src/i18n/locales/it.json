@@ -2335,6 +2335,7 @@
     "entities": "{n} entità",
     "repairs_one": "{n} riparazione",
     "repairs": "{n} riparazioni",
+    "shared": "{name} ×{n}",
     "need_one": "{n} richiede attenzione",
     "need": "{n} richiedono attenzione",
     "snoozed_one": "{n} posticipato",

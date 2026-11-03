@@ -1031,6 +1031,7 @@
     "entities": "{n}件",
     "repairs_one": "{n}件の修復",
     "repairs": "{n}件の修復",
+    "shared": "{name} ×{n}",
     "need_one": "{n}件要確認",
     "need": "{n}件要確認",
     "snoozed_one": "{n}件スヌーズ中",

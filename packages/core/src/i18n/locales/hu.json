@@ -1031,6 +1031,7 @@
     "entities": "{n} entitás",
     "repairs_one": "{n} javítás",
     "repairs": "{n} javítás",
+    "shared": "{name} ×{n}",
     "need_one": "{n} figyelmet igényel",
     "need": "{n} figyelmet igényel",
     "snoozed_one": "{n} elhalasztva",

@@ -3,13 +3,14 @@
  * The alerts card, 1.9 (issue #48), on the playground's `alerts` sheet (real cards, simulated hass). Exit code 1 on any
  * failure.
  *   PLAYGROUND=http://127.0.0.1:5183/ node interactions-alerts.mjs
- * What it proves: a tile opens its alert's sheet as a modal, Escape closes it and the focus goes back to the tile; a
- * row opens its entity's details once, the sheet stepping aside first; a row's Install installs that update alone;
- * Home Assistant's alert is acknowledged through Home Assistant; "Lock all" asks in the sheet first and then locks every
- * match in one call; a snooze is one write of the person's data and the alert goes; a `for` reached on the page's clock
- * shows the card, its match gone hides it again (said to the dashboard both ways); the banner turns, holds under a
- * pointer and holds still without motion (saying how many more); a tile's hold opens the overview, its snoozed alert
- * with Wake; and the cards leave no interval behind.
+ * What it proves: rows that share a name are told apart by their rooms, else said with how many (#89); a tile opens
+ * its alert's sheet as a modal, Escape closes it and the focus goes back to the tile; a row opens its entity's details
+ * once, the sheet stepping aside first; a row's Install installs that update alone; Home Assistant's alert is
+ * acknowledged through Home Assistant; "Lock all" asks in the sheet first and then locks every match in one call; a
+ * snooze is one write of the person's data and the alert goes; a `for` reached on the page's clock shows the card, its
+ * match gone hides it again (said to the dashboard both ways); the banner turns, holds under a pointer and holds still
+ * without motion (saying how many more); a tile's hold opens the overview, its snoozed alert with Wake; and the cards
+ * leave no interval behind.
  */
 import { contrastRatio, toHex } from './lib/colour.mjs';
 import {
@@ -32,6 +33,24 @@ const dialog = (c) => c.locator('fluvy-alerts-sheet dialog');
 const ws = (page) => page.evaluate(() => window.fluvyMock.wsCalls.map((call) => call.type));
 
 const page = await suite.sheet('alerts');
+
+/* ---------- rows of one name: told apart by their rooms, else said with how many share it (#89) ---------- */
+{
+  const said = async (title, selector) =>
+    (await card(page, title).locator(selector).first().textContent()).replace(/\s+/g, ' ').trim();
+  const rooms = await said('One name · rooms', '.fv-tile__state');
+  const room = await said('One name · one room', '.fv-tile__state');
+  const mixed = await said('One name · mixed', '.al-rows .fv-row__sub');
+  const half = await said('One name · half', '.fv-tile__state');
+  check(
+    'four windows named "Window" are told apart by their rooms, or said with how many share the name',
+    /^Kitchen, Bathroom/.test(rooms) &&
+      room === 'Window ×4' &&
+      mixed === 'Kitchen, Bedroom ×3' &&
+      half === 'Window ×4',
+    JSON.stringify({ rooms, room, mixed, half }),
+  );
+}
 
 /* ---------- a tile opens its sheet; Escape closes it and the focus goes back ---------- */
 {

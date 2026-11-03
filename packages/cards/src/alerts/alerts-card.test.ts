@@ -3,7 +3,7 @@ import type { HomeAssistant, LovelaceCardConfig } from '@fluvy/core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { alertsHeight } from '../alerts-family.js';
 import { FluvyAlertsCard } from './alerts-card.js';
-import { change, house, MINUTE, NOW, type Seed } from './fixture.js';
+import { change, house, MINUTE, NOW, type HouseOptions, type Seed } from './fixture.js';
 import { alertFields, ALERTS_LIST } from './form.js';
 import type { FluvyAlertsSheet } from './sheet/alerts-sheet.js';
 
@@ -48,10 +48,10 @@ interface Socket {
 /** A house and the socket a card talks to. */
 function home(
   seeds: Record<string, Seed> = SEEDS,
-  options: { admin?: boolean; issues?: unknown[] } = {},
+  options: { admin?: boolean; issues?: unknown[]; areas?: HouseOptions['areas'] } = {},
 ): { hass: HomeAssistant; socket: Socket } {
   const socket: Socket = { calls: [], ws: [], heard: [] };
-  const base = house(seeds, { admin: options.admin ?? true });
+  const base = house(seeds, { admin: options.admin ?? true, areas: options.areas ?? {} });
   const hass = {
     ...base,
     themes: { darkMode: false },
@@ -140,6 +140,44 @@ describe('the alerts card', () => {
     expect(text(low?.querySelector('.al-count'))).toBe('2');
     expect(text(open?.querySelector('.fv-tile__state'))).toBe('front_door · 6 min');
     expect(open?.querySelector('.al-count')).toBeNull();
+  });
+
+  it('names windows of one name by their areas, says how many share a name, and keeps its badge (#89)', async () => {
+    const rooms = {
+      kitchen: { name: 'Kitchen' },
+      bath: { name: 'Bathroom' },
+      bedroom: { name: 'Bedroom' },
+      hall: { name: 'Hall' },
+    };
+    const line = async (areas: ReadonlyArray<string | undefined>): Promise<string[]> => {
+      const seeds = Object.fromEntries(
+        areas.map((area, i): [string, Seed] => [
+          `binary_sensor.window_${i}`,
+          {
+            state: 'on',
+            attributes: { device_class: 'window', friendly_name: 'Window' },
+            changed: NOW - (10 + i) * MINUTE,
+            ...(area ? { area } : {}),
+          },
+        ]),
+      );
+      const card = await mount(
+        { alerts: [{ preset: 'open', for: 0 }], columns: 1 },
+        home(seeds, { areas: rooms }).hass,
+      );
+      const [tile] = tiles(card);
+      return [text(tile?.querySelector('.fv-tile__state')), text(tile?.querySelector('.al-count'))];
+    };
+    // the longest open first
+    expect(await line(['hall', 'bedroom', 'bath', 'kitchen'])).toEqual([
+      'Kitchen, Bathroom, Bedroom, Hall',
+      '4',
+    ]);
+    expect(await line(['kitchen', 'kitchen', 'kitchen', 'kitchen'])).toEqual(['Window ×4', '4']);
+    expect(await line([undefined, 'kitchen', 'bath', 'kitchen'])).toEqual([
+      'Kitchen ×2, Bathroom, Window',
+      '4',
+    ]);
   });
 
   it('paints an alert’s own colour on its circle, never on its severity’s fill', async () => {

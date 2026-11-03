@@ -33,6 +33,7 @@
     "entities": "{n} entities",
     "repairs_one": "{n} repair",
     "repairs": "{n} repairs",
+    "shared": "{name} ×{n}",
     "need_one": "{n} needs a look",
     "need": "{n} need a look",
     "snoozed_one": "{n} snoozed",

@@ -5,6 +5,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Visible on upgrade
+
+- The alerts card tells apart the rows that share a name by their areas, else their devices, and says how many share
+  a name they still share: four open windows each called "Window" read "Kitchen, Bathroom, Office" or "Window ×4",
+  where they read "Window" as if one were open. Thanks to @rammium (#89).
+
 ### Added
 
 - Lines in the sidebar: *Appearance → Lines in the sidebar* (with *Scope → Everywhere*) draws a line after each item

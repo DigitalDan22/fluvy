@@ -2335,6 +2335,7 @@
     "entities": "{n} varlık",
     "repairs_one": "{n} onarım",
     "repairs": "{n} onarım",
+    "shared": "{name} ×{n}",
     "need_one": "{n} dikkat bekliyor",
     "need": "{n} dikkat bekliyor",
     "snoozed_one": "{n} ertelendi",

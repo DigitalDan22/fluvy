@@ -1,5 +1,6 @@
 import {
   areaOf,
+  formatNumber,
   localize,
   plural,
   resolveEntity,
@@ -9,12 +10,13 @@ import {
 import { durationShort } from '../helpers/datetime.js';
 import { iconOf } from '../shared/domain.js';
 import { nameOf, type AlertResult, type AlertRow } from './engine.js';
+import type { NameBy } from './model.js';
 import type { RepairsStore } from './repairs.js';
 
 /*
  * What an alert says, the same on the card and in its sheet: its name and glyph, who is at fault (its culprits, by
- * device when it counts devices), how long or how much (a battery's 12 %, a door's 6 min), and its rows grouped as it
- * counts them.
+ * device when it counts devices, rows of one name told apart or counted), how long or how much (a battery's 12 %, a
+ * door's 6 min), and its rows grouped as it counts them.
  */
 
 /** What a card and its sheet read an alert's words from besides `hass`: the repairs' titles, the clock. */
@@ -68,22 +70,64 @@ export function groupsOf(result: AlertResult): RowGroup[] {
   }));
 }
 
+/** What names a row: its device when the alert counts devices, else the alert's `name_by`. */
+const namedBy = ({ definition }: AlertResult, group: RowGroup): NameBy =>
+  definition.countBy === 'device' && group.device ? 'device' : definition.nameBy;
+
 /** A row's name: a repair's title, a device's when the alert counts devices, else by the alert's `name_by`. */
 export function rowName(
   { hass, repairs }: LookContext,
   result: AlertResult,
   group: RowGroup,
 ): string {
-  const { definition } = result;
-  if (definition.source === 'repairs') return repairs?.item(group.id)?.title ?? group.id;
-  const by = definition.countBy === 'device' && group.device ? 'device' : definition.nameBy;
-  return nameOf(hass as HomeAssistant, group.lead.id, by);
+  if (result.definition.source === 'repairs') return repairs?.item(group.id)?.title ?? group.id;
+  return nameOf(hass as HomeAssistant, group.lead.id, namedBy(result, group));
 }
 
-/** Who is at fault, in the alert's order: each row's (or device's) name once. */
-export const culprits = (context: LookContext, result: AlertResult): string[] => [
-  ...new Set(groupsOf(result).map((group) => rowName(context, result, group))),
-];
+/** One of who is at fault: a name, and how many of the alert's rows (or devices) go by it. */
+export interface Culprit {
+  readonly name: string;
+  readonly n: number;
+}
+
+/**
+ * Who is at fault, in the alert's order. Rows that share a name are named by what tells them apart: their areas, else
+ * (each named by its entity) their devices; an alert named by area keeps the person's areas, a repair its title. Those
+ * that still share a name are one culprit, counted ("Window ×4").
+ */
+export function culprits(context: LookContext, result: AlertResult): Culprit[] {
+  const named = groupsOf(result).map((group) => [group, rowName(context, result, group)] as const);
+  const sharing = new Map<string, RowGroup[]>();
+  for (const [group, name] of named) {
+    const same = sharing.get(name);
+    if (same) same.push(group);
+    else sharing.set(name, [group]);
+  }
+  // what tells apart the rows of a name: the first of their areas and devices that differs between them
+  const tellers = new Map<string, (group: RowGroup) => string>();
+  for (const [name, same] of sharing) {
+    const by = namedBy(result, same[0] as RowGroup);
+    if (same.length < 2 || by === 'area' || result.definition.source === 'repairs') continue;
+    const area = (group: RowGroup): string => rowArea(context, group.lead) || name;
+    const device = (group: RowGroup): string =>
+      nameOf(context.hass as HomeAssistant, group.lead.id, 'device');
+    const teller = (by === 'entity' ? [area, device] : [area]).find(
+      (of) => new Set(same.map(of)).size > 1,
+    );
+    if (teller) tellers.set(name, teller);
+  }
+  // each name said once, in the order of its first row, with how many go by it
+  const counts = new Map<string, number>();
+  for (const [group, name] of named) {
+    const told = tellers.get(name)?.(group) ?? name;
+    counts.set(told, (counts.get(told) ?? 0) + 1);
+  }
+  return [...counts].map(([name, n]) => ({ name, n }));
+}
+
+/** A culprit as a line says it: its name, and how many go by it where more than one does ("Window ×4"). */
+export const culpritText = ({ hass }: LookContext, { name, n }: Culprit): string =>
+  n > 1 ? localize(hass, 'alerts.shared', { name, n: formatNumber(hass, n, { digits: 0 }) }) : name;
 
 /**
  * How long a row has matched, or an alert since its oldest match ("6 min"); nothing in its first minute — a leak a

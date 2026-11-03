@@ -63,6 +63,7 @@ import {
   alertIcon,
   alertName,
   countWords,
+  culpritText,
   culprits,
   lasted,
   rowState,
@@ -611,16 +612,18 @@ export class FluvyAlertsCard extends Card<AlertsCardConfig> {
    * What a tile, a row or the banner says under an alert's name, in `room` of the class `cls`: who is at fault — a
    * name, which may end in its ellipsis — and what stays whole after it. One match: its name with how much or how long
    * ("Front door · 6 min", "Hall sensor · 12 %"), else its name alone (the name says more than the time). Several: as
-   * many names as hold whole, and how many more ("Hall sensor, Porch motion +2") — unless the count is said beside the
-   * line (`counted`: a badge, a row's value), when the names alone are said, the first ending in its ellipsis where it
-   * must. Else how long or how many alone ("4 devices"). `more` stays at the end (the still banner's "6 more").
+   * many names as hold whole (a name several share with how many, "Window ×4"), and how many more ("Hall sensor, Porch
+   * motion +2") — unless the count is said beside the line (`counted`: a badge, a row's value), when the names alone are
+   * said, the first ending in its ellipsis where it must. Else how long or how many alone ("4 devices"). `more` stays at
+   * the end (the still banner's "6 more").
    */
   private line(result: AlertResult, room: number, cls: string, counted: boolean, more = ''): Line {
     const config = this.config;
     const context = this.context();
     const width = (text: string): number => this.headFit.ruler.width(cls, text);
     // a split alert is its one entity, already its name: its line says how long
-    const names = config?.show_culprit === false || result.entity ? [] : culprits(context, result);
+    const who = config?.show_culprit === false || result.entity ? [] : culprits(context, result);
+    const names = who.map((one) => culpritText(context, one));
     const tail = more ? ` · ${more}` : '';
     const lead = result.rows[0];
     let fallback: string;
@@ -638,15 +641,19 @@ export class FluvyAlertsCard extends Card<AlertsCardConfig> {
       if (name && room - width(tail) >= WHO_MIN) return { who: name, what: tail };
       fallback = [detail, more].filter(Boolean).join(' · ');
     } else {
+      // how many the names left out stand for ("Front door +4": a culprit "Window ×4" is four)
+      const left = (k: number): number => who.slice(k).reduce((sum, { n }) => sum + n, 0);
       const rest = (k: number): string =>
-        `${counted || k === names.length ? '' : ` +${names.length - k}`}${tail}`;
+        `${counted || k === names.length ? '' : ` +${left(k)}`}${tail}`;
       for (let k = names.length; k >= 1; k--) {
-        const who = names.slice(0, k).join(', ');
-        if (width(`${who}${rest(k)}`) <= room) return { who, what: rest(k) };
+        const said = names.slice(0, k).join(', ');
+        if (width(`${said}${rest(k)}`) <= room) return { who: said, what: rest(k) };
       }
-      // the count said beside it, the first name may end in its ellipsis; else the count says it ("4 devices")
-      const [first] = names;
-      if (first && counted && room - width(tail) >= WHO_MIN) return { who: first, what: tail };
+      // the count said beside it, the first name may end in its ellipsis (never one with its count, "Window ×4"); else
+      // the count says it ("4 devices")
+      const [first] = who;
+      if (first?.n === 1 && counted && room - width(tail) >= WHO_MIN)
+        return { who: first.name, what: tail };
       fallback = [countWords(context, result), more].filter(Boolean).join(' · ');
     }
     return { who: '', what: width(fallback) <= room ? fallback : '' };

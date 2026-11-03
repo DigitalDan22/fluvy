@@ -14,9 +14,10 @@ if (!customElements.get('fluvy-alerts-card'))
  * robot's charging and Marta's phone are left out), two lights and the office's presence sensor gone (one device, three
  * entities), the front door open six minutes, the garage forty (escalated past thirty), the back door unlocked, a
  * leak in the kitchen, the robot in error, three updates (one installing), Home Assistant's freezer alert firing, a
- * well level stuck for a day and two repairs (a third ignored). Then every variant, the narrow columns, all clear,
- * colours, a fold, and the sheets docked: an alert's rows, its snooze, the overview with a snoozed alert. The cards'
- * clock is the sheets' (`_now`), but for the live frames at the end (a `for` reached, a banner turning).
+ * well level stuck for a day and two repairs (a third ignored), and eight windows named "Window" (#89). Then every
+ * variant, the narrow columns, all clear, colours, a fold, and the sheets docked: an alert's rows, its snooze, the
+ * overview with a snoozed alert. The cards' clock is the sheets' (`_now`), but for the live frames (a `for` reached, a
+ * banner turning).
  */
 
 const at = (seconds: number): string => new Date(NOW.getTime() - seconds * 1000).toISOString();
@@ -28,6 +29,9 @@ const card = (config: Record<string, unknown>): LovelaceCardConfig => ({
 });
 
 const battery = { device_class: 'battery', unit_of_measurement: '%', state_class: 'measurement' };
+
+/** Windows 1–4 in four rooms, 5–8 in the bedroom on devices of one model's name. */
+const WINDOWS = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => `binary_sensor.al_window_${n}`);
 
 const STATES: readonly StateSeed[] = [
   /* batteries */
@@ -128,6 +132,13 @@ const STATES: readonly StateSeed[] = [
   ],
   ['binary_sensor.al_patio_door', 'off', { device_class: 'door', friendly_name: 'Patio door' }],
   ['light.al_desk', 'on', { friendly_name: 'Desk lamp' }],
+  /* eight windows each named "Window" by its integration (#89), open under the house's five minutes */
+  ...WINDOWS.map((id, i): StateSeed => [
+    id,
+    'on',
+    { device_class: 'window', friendly_name: 'Window' },
+    270 - i * 30,
+  ]),
 ];
 
 const AREAS = {
@@ -139,6 +150,7 @@ const AREAS = {
   al_porch: 'Porch',
   al_garden: 'Garden',
   al_living: 'Living room',
+  al_bedroom: 'Bedroom',
 };
 
 /** Each entity's device and area. */
@@ -162,6 +174,14 @@ const PLACES: Readonly<Record<string, readonly [device: string, area: keyof type
   'lock.al_shed': ['al_shed', 'al_garden'],
   'binary_sensor.al_kitchen_leak': ['al_kitchen_leak', 'al_kitchen'],
   'binary_sensor.al_patio_door': ['al_patio_door', 'al_living'],
+  'binary_sensor.al_window_1': ['al_window_1', 'al_kitchen'],
+  'binary_sensor.al_window_2': ['al_window_2', 'al_bath'],
+  'binary_sensor.al_window_3': ['al_window_3', 'al_office'],
+  'binary_sensor.al_window_4': ['al_window_4', 'al_living'],
+  'binary_sensor.al_window_5': ['al_window_5', 'al_bedroom'],
+  'binary_sensor.al_window_6': ['al_window_6', 'al_bedroom'],
+  'binary_sensor.al_window_7': ['al_window_7', 'al_bedroom'],
+  'binary_sensor.al_window_8': ['al_window_8', 'al_bedroom'],
 };
 
 const DEVICES: Readonly<Record<string, string>> = {
@@ -180,6 +200,14 @@ const DEVICES: Readonly<Record<string, string>> = {
   al_shed: 'Shed lock',
   al_kitchen_leak: 'Kitchen leak sensor',
   al_patio_door: 'Patio door',
+  al_window_1: 'Kitchen window',
+  al_window_2: 'Bathroom window',
+  al_window_3: 'Office window',
+  al_window_4: 'Living room window',
+  al_window_5: 'Door and window sensor',
+  al_window_6: 'Door and window sensor',
+  al_window_7: 'Door and window sensor',
+  al_window_8: 'Door and window sensor',
 };
 
 /** The alerts the issue asks for, each with an id (its snoozes are remembered by it). */
@@ -197,6 +225,13 @@ const HOUSE: readonly AlertConfig[] = [
   { preset: 'errors', id: 'errors' },
   { preset: 'updates', id: 'updates' },
 ];
+
+/** Left open: these windows (1–8), from their first second. */
+const windows = (...ns: readonly number[]): AlertConfig => ({
+  preset: 'open',
+  for: 0,
+  entity: ns.map((n) => WINDOWS[n - 1] as string),
+});
 
 const sheetFrame = (title: string, alerts: readonly AlertConfig[], open: string): FrameSpec => ({
   title,
@@ -355,6 +390,12 @@ const FRAMES: readonly FrameSpec[] = [
     title: 'Banner · half',
     cards: [{ ...card({ alerts: HOUSE, variant: 'banner', rotate: 0 }), cols: 6 }],
   },
+  // rows of one name (#89): four windows told apart by their rooms; four in one room, on devices of one name, said with
+  // how many; a mix (one in the kitchen, three in the bedroom), as rows; and the counted name in half a section
+  { title: 'One name · rooms', cards: [card({ alerts: [windows(1, 2, 3, 4)] })] },
+  { title: 'One name · one room', cards: [card({ alerts: [windows(5, 6, 7, 8)] })] },
+  { title: 'One name · mixed', cards: [card({ alerts: [windows(1, 5, 6, 7)], variant: 'rows' })] },
+  { title: 'One name · half', cards: [{ ...card({ alerts: [windows(5, 6, 7, 8)] }), cols: 6 }] },
 ];
 
 export const sheet: SheetSpec = {
