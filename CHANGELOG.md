@@ -54,6 +54,10 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The energy flow card over a period says every total as it is, rounded only by its decimals, where a figure under
   50 Wh read 0: a cloudy day's 0.05 kWh of sun reads 0.05 kWh, as on Home Assistant's Energy dashboard, its lane still
   resting and its figure dimmed. Thanks to @v1rusnl (#109).
+- A tile whose reading does not fit beside its circle (a compact tile at half a phone) says it shorter where it showed
+  nothing: a large count in the language's short words ("5.1M queries", then "5.1M"), a figure without its unit, a
+  moment as long ago as it was ("12 days ago", "12 d ago"); a figure keeps the decimals its display precision asks
+  for. Thanks to @rammium (#93).
 
 ## [1.11.3] — 2026-10-28
 

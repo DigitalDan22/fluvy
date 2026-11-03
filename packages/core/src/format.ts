@@ -25,6 +25,8 @@ export interface NumberOptions {
   /** Undefined: the reading's own (its precision, else its unit's default). */
   readonly digits?: number | undefined;
   readonly minDigits?: number;
+  /** In the language's short words for its size, rounded as it rounds them (no `digits`): "5.1M", "421K", "511万". */
+  readonly compact?: boolean;
 }
 
 /** A number as the user's locale writes it; anything that is not a finite number reads as "—", never "NaN". */
@@ -40,10 +42,9 @@ export function formatNumber(
     minDigits,
     clampDigits(options.digits ?? (Math.abs(value) >= 100 ? 0 : 1)),
   );
-  const opts: Intl.NumberFormatOptions = {
-    maximumFractionDigits: digits,
-    minimumFractionDigits: minDigits,
-  };
+  const opts: Intl.NumberFormatOptions = options.compact
+    ? { notation: 'compact' }
+    : { maximumFractionDigits: digits, minimumFractionDigits: minDigits };
   if (hass?.locale?.number_format === 'none') opts.useGrouping = false;
   try {
     return numberFormat(numberLocale(hass?.locale, hass?.language ?? 'en'), opts).format(value);
@@ -58,7 +59,7 @@ function numberFormat(
   locale: string | undefined,
   opts: Intl.NumberFormatOptions,
 ): Intl.NumberFormat {
-  const key = `${locale ?? ''}|${opts.maximumFractionDigits}|${opts.minimumFractionDigits}|${opts.useGrouping === false ? 0 : 1}`;
+  const key = `${locale ?? ''}|${opts.maximumFractionDigits}|${opts.minimumFractionDigits}|${opts.useGrouping === false ? 0 : 1}|${opts.notation ?? ''}`;
   let formatter = formatters.get(key);
   if (!formatter) {
     formatter = new Intl.NumberFormat(locale, opts);

@@ -345,6 +345,82 @@ describe('a number’s large tile keeps its figure: the room gives way where bot
   });
 });
 
+describe('a reading too long for its tile says itself shorter, never goes (#93)', () => {
+  const BOOT = new Date(Date.now() - 12 * 86_400_000).toISOString();
+  const STATES = {
+    'sensor.dns_queries': state('sensor.dns_queries', '5114200', {
+      friendly_name: 'Queries',
+      unit_of_measurement: 'queries',
+    }),
+    'sensor.rules_count': state('sensor.rules_count', '420995', {
+      friendly_name: 'Rules count',
+      unit_of_measurement: 'rules',
+    }),
+    'sensor.last_boot': state('sensor.last_boot', BOOT, {
+      friendly_name: 'Last boot',
+      device_class: 'timestamp',
+    }),
+    // a meter whose two decimals the person asked for: never in short words
+    'sensor.meter': state('sensor.meter', '12345.67', {
+      friendly_name: 'Meter',
+      unit_of_measurement: 'kWh',
+    }),
+  };
+  /** The house as Home Assistant writes its states: figures grouped, a moment in full. */
+  const writing: HomeAssistant = {
+    ...house(STATES),
+    entities: { 'sensor.meter': { entity_id: 'sensor.meter', display_precision: 2 } },
+    formatEntityState: (s: { state: string; attributes: Record<string, unknown> }) => {
+      if (s.attributes['device_class'] === 'timestamp')
+        return new Intl.DateTimeFormat('en', { dateStyle: 'long', timeStyle: 'short' }).format(
+          new Date(s.state),
+        );
+      const unit = s.attributes['unit_of_measurement'] as string;
+      return `${Number(s.state).toLocaleString('en', { maximumFractionDigits: 2 })} ${unit}`;
+    },
+  } as unknown as HomeAssistant;
+  const lines = async (width: number): Promise<string[]> =>
+    (
+      await drawn(
+        {
+          type: 'custom:fluvy-tiles-card',
+          size: 'compact',
+          columns: 2,
+          tiles: Object.keys(STATES),
+        },
+        STATES,
+        2 * width + 16,
+        writing,
+      )
+    ).map((tile) => tile.querySelector('.fv-tile__state')!.textContent!.trim());
+
+  let restore: () => void;
+  beforeAll(() => {
+    restore = stateLineWidths();
+  });
+  afterAll(() => restore());
+  afterEach(() => document.body.replaceChildren());
+
+  it('half a phone of 412: a count in short words, a moment as long ago as it was', async () => {
+    expect(await lines(182)).toEqual([
+      '5.1M queries',
+      '420,995 rules',
+      '12 days ago',
+      '12,345.67 kWh',
+    ]);
+  });
+
+  it('half a phone of 360: the unit goes, then the moment’s short form', async () => {
+    expect(await lines(156)).toEqual(['5.1M', '421K', '12 d ago', '12,345.67']);
+  });
+
+  it('a whole tile says it whole', async () => {
+    const [queries, , boot] = await lines(360);
+    expect(queries).toBe('5,114,200 queries');
+    expect(boot).toMatch(/^[A-Z][a-z]+ \d+, \d{4} at /);
+  });
+});
+
 describe('the tile’s circle: what opens drawn as it stands, Home Assistant’s icon where Fluvy has none', () => {
   afterEach(() => document.body.replaceChildren());
 

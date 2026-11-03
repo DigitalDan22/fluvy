@@ -1,5 +1,6 @@
 import {
   actionRuns,
+  formatNumber,
   isActive,
   isUsable,
   lightDefaults,
@@ -78,6 +79,22 @@ export interface TileCardConfig extends FluvyCardConfig, LightColours, Omit<Tile
   tint?: Tint;
 }
 
+/**
+ * How a tile's state line is fitted (`fitState`). `dash`: the tile has no reading (unavailable, unknown): a word that
+ * cannot fit at all is a dash, where it is nothing on a tile with one. `inside`: the tile sits inside a card (a room's
+ * controls). `under`: the line sits under the head (a live large tile: "On · 70 %" over its ruler) and has the whole
+ * width. `words`: the line is the person's own (a template card's): what is left of it once its last parts are gone
+ * ends in an ellipsis, as a name does, rather than going. `figure`: the figure the line ends in and keeps
+ * (`keepsFigure`): where the whole line does not hold, the words before it go and the figure stays, alone.
+ */
+interface LineFit {
+  readonly dash?: boolean;
+  readonly inside?: boolean;
+  readonly under?: boolean;
+  readonly words?: boolean | undefined;
+  readonly figure?: string | undefined;
+}
+
 /** What a tile shows of its entity (`look`): what a card built on the tile may answer otherwise (the template card). */
 export interface TileLook {
   /** The words over its line. */
@@ -119,6 +136,35 @@ export const ruled = (view: EntityView): boolean =>
 
 /** A tile's ruler is short: its ticks are 1/12 and 1/4, or one a step up to twelve steps (`ticksOf`). */
 const TILE_TICKS = 12;
+
+/** From five figures a whole count has short words for its size ("10K"): under them they save nothing. */
+const SHORT_FROM = 10_000;
+
+/**
+ * A reading's shorter forms, longest first, for a line too narrow for it whole (#93): a large whole count in the
+ * house's short words for its size, with its unit and then without ("5.1M queries", "5.1M"), else the figure without
+ * its unit ("12,345.67"); a moment as long ago as it was ("12 days ago", "12 d ago"). `text` is the reading as Home
+ * Assistant writes it. A figure keeps the decimals the person asked for (its display precision): never in short words.
+ */
+function shorterForms(hass: HomeAssistant | undefined, view: EntityView, text: string): string[] {
+  if (view.status !== 'ok') return [];
+  if (view.deviceClass === 'timestamp') {
+    const at = new Date(view.state);
+    if (!Number.isFinite(at.getTime())) return [];
+    return [...new Set([relativeTime(hass, at), relativeTime(hass, at, new Date(), true)])];
+  }
+  const n = view.number;
+  if (n === null) return [];
+  const unit = view.unit;
+  // the figure as it is written, and what stands between it and its unit (a space, or none before "%")
+  const bare = unit && text.endsWith(unit) ? text.slice(0, -unit.length).trimEnd() : '';
+  const gap = bare ? text.slice(bare.length, -unit.length) : ' ';
+  const precision = hass?.entities?.[view.id]?.display_precision;
+  const whole = typeof precision === 'number' ? precision === 0 : Number.isInteger(n);
+  if (!whole || Math.abs(n) < SHORT_FROM) return bare ? [bare] : [];
+  const short = formatNumber(hass, n, { compact: true });
+  return unit ? [`${short}${gap}${unit}`, short] : [short];
+}
 
 /** What a large tile's foot ruler sets (`level`): where the entity stands on its scale, and the call that sets it. */
 export interface TileLevel {
@@ -394,24 +440,14 @@ export class FluvyTileCard extends Card<TileCardConfig> {
 
   /**
    * A tile's state line fitted to its tile: what does not fit loses its " · " segments from the end (a large tile's
-   * "· 11 days ago", a small one's reading); a word that cannot fit at all is a dash on a tile without a reading
-   * (unavailable, unknown) and nothing on one with — never a cut. The room is the tile's width less its sides (16 on a
-   * large or compact tile, 12 on a mini, or what a narrower mini can spare around its 44 circle) and, where the line
-   * sits beside the circle (a large tile's off skin, a compact one 128 or wider, an inner one 136 or wider), the circle
-   * and its gap. `under`: the line sits under the head (a live large tile: "On · 70 %" over its ruler) and has the
-   * whole width. `words`: the line is the person's own (a template card's): what is left of it once its last parts
-   * are gone ends in an ellipsis, as a name does, rather than going. `figure`: the figure the line ends in and keeps
-   * (`keepsFigure`): where the whole line does not hold, the words before it go and the figure stays, alone.
+   * "· 11 days ago", a small one's reading); a reading that does not fit alone says itself in the first of its shorter
+   * forms that does ("5.1M queries", "12 days ago": `shorterForms`, #93); a word that cannot fit at all is a dash or
+   * nothing (`dash`) — never a cut. The room is the tile's width less its sides (16 on a large or compact tile, 12 on a
+   * mini, or what a narrower mini can spare around its 44 circle) and, where the line sits beside the circle (a large
+   * tile's off skin, a compact one 128 or wider, an inner one 136 or wider), the circle and its gap.
    */
-  private fitState(
-    line: string,
-    size: TileSize,
-    dash: boolean,
-    inside = false,
-    under = false,
-    words = false,
-    figure?: string,
-  ): string {
+  private fitState(line: string, size: TileSize, view: EntityView, fit: LineFit = {}): string {
+    const { dash = false, inside = false, under = false, words = false, figure } = fit;
     const width = Math.floor(this.tileWidth());
     const small = size !== 'large';
     const mini = size === 'mini';
@@ -429,7 +465,10 @@ export class FluvyTileCard extends Card<TileCardConfig> {
       : line.split(' · ').map((text, index) => ({ text, optional: index > 0 }));
     const fitted = fitLine(segments, room, measure);
     if (fitted && (words || measure(fitted) <= room)) return fitted;
-    return dash ? '—' : '';
+    // the reading the line begins with, shorter; none for a line that begins with anything else (a room, a time)
+    const text = stateText(this.hass, view);
+    const shorter = segments[0]?.text === text ? shorterForms(this.hass, view, text) : [];
+    return shorter.find((form) => measure(form) <= room) ?? (dash ? '—' : '');
   }
 
   /** The reading of the first readout ("142 W"), for a small tile's state line. */
@@ -597,7 +636,7 @@ export class FluvyTileCard extends Card<TileCardConfig> {
       let line = this.tileLine(item, view, lit, level, false, true);
       const reading = usable ? this.readoutText(item) : '';
       if (reading) line = `${line} · ${reading}`;
-      line = this.fitState(line, size, !usable, inside, false, words);
+      line = this.fitState(line, size, view, { dash: !usable, inside, words });
       return html`<article
         class=${classes}
         data-card
@@ -732,7 +771,7 @@ export class FluvyTileCard extends Card<TileCardConfig> {
       <div class="fv-tile__head">${lead}${trailing}</div>
       <h3 class="fv-tile__name">${name}</h3>
       <p class="fv-tile__state" data-name=${words ? '' : nothing}>
-        ${this.fitState(line, size, !usable, inside, true, words, figure)}
+        ${this.fitState(line, size, view, { dash: !usable, inside, under: true, words, figure })}
       </p>
       ${foot} ${tapNow || holdNow ? pressCover(label, tapNow, holdNow) : nothing}
     </article>`;

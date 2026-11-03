@@ -56,6 +56,16 @@ describe('formatNumber', () => {
     );
     expect(formatNumber(make('es', 'none'), 1234.5, { digits: 1 })).toBe('1234,5');
   });
+  it('writes a large count in the language’s short words for its size (#93)', () => {
+    expect(formatNumber(make('en'), 5_114_200, { compact: true })).toBe('5.1M');
+    expect(formatNumber(make('en'), 420_995, { compact: true })).toBe('421K');
+    expect(formatNumber(make('de'), 5_114_200, { compact: true })).toBe('5,1\u00a0Mio.');
+    expect(formatNumber(make('en', 'decimal_comma'), 5_114_200, { compact: true })).toBe(
+      '5,1\u00a0Mio.',
+    );
+    // the plain figure is its own formatter, not the short one
+    expect(formatNumber(make('en'), 420_995, { digits: 0 })).toBe('420,995');
+  });
 });
 
 describe('valueParts', () => {

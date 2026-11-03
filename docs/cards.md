@@ -22,7 +22,9 @@ Every card holds from the floor of a narrow column — 152 px for a card that ta
 one — up to a wall's 520 px, in light and dark, in every language Fluvy speaks; `unavailable`, `unknown` and a
 missing entity are drawn on purpose (a quiet surface, inert controls, a dash for the value), never as an error, and
 at the size and in the anatomy the card has live, so a grid never jumps when a device goes offline. Names may be
-shortened with an ellipsis; values never are. A card that takes an action changes on screen first and calls
+shortened with an ellipsis; values never are: a reading too long for its room says itself shorter instead, a large
+count in the language's short words ("5.1M queries", then "5.1M"), a figure without its unit, a moment as long ago as
+it was ("12 days ago"). A card that takes an action changes on screen first and calls
 the service after; sliders and dials send on release, not per frame. A card of a list with nothing in it (a filter
 that matches nothing yet, the last entry taken out) shows its head and an empty panel in its own words, never an
 error: `empty_text` says what nothing means there ("All closed"), and `hide_empty: true` lets the card step aside
