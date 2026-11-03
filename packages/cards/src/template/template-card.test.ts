@@ -459,6 +459,36 @@ describe('the line under the name', () => {
     const { tile } = await drawn({ entity: 'switch.washer', ...config });
     expect(text(tile(), '.fv-tile__state') ?? '').toBe(line);
   });
+
+  // a button never pressed is `unknown`, its normal state (#92): the person's line is said, the state only when asked
+  const NEVER_PRESSED = {
+    ...LIVE,
+    'button.dishwasher_start': state('button.dishwasher_start', 'unknown', {
+      friendly_name: 'Start',
+    }),
+  };
+  it.each(VARIANTS)('%s: a button never pressed says the person’s line', async (variant) => {
+    const wire = socket();
+    const template = "{{ 'Starts the selected cycle' }}";
+    const config = { entity: 'button.dishwasher_start', variant, secondary: template };
+    const { card, tile } = await drawn(config, NEVER_PRESSED, wire.connection);
+    await settled(card);
+    wire.say(template, { result: 'Starts the selected cycle' });
+    await settled(card);
+    expect(text(tile(), '.fv-tile__state')).toBe('Starts the selected cycle');
+    expect(tile().querySelector('.fv-tile__state')!.hasAttribute('data-name')).toBe(true);
+    expect(tile().classList.contains('fv-tile--off')).toBe(false);
+  });
+
+  it.each([
+    [{}, 'Unknown'],
+    [{ secondary: 'state' }, 'Unknown'],
+    [{ secondary: 'Starts the selected cycle' }, 'Starts the selected cycle'],
+    [{ secondary: 'none' }, ''],
+  ])('a button never pressed, %j, says %j', async (config, line) => {
+    const { tile } = await drawn({ entity: 'button.dishwasher_start', ...config }, NEVER_PRESSED);
+    expect(text(tile(), '.fv-tile__state') ?? '').toBe(line);
+  });
 });
 
 describe('the stub', () => {

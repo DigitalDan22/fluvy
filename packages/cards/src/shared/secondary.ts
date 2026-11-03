@@ -1,4 +1,10 @@
-import { relativeTime, stateText, type EntityView, type HomeAssistant } from '@fluvy/core';
+import {
+  isUsable,
+  relativeTime,
+  stateText,
+  type EntityView,
+  type HomeAssistant,
+} from '@fluvy/core';
 import type { Secondary } from './config.js';
 import { stateWord } from './domain.js';
 import { changedAt } from './since.js';
@@ -8,11 +14,12 @@ import { asText, isTemplate, type TemplateTexts } from './templates.js';
  * The line under a row's name, the same on every card that lists entities: the area when the row has one, else when
  * the entity last changed (the default); its state; nothing; an attribute by name; or a template, rendered live by
  * the card's `texts` (a blank line until Home Assistant answers, nothing without them, never the template itself).
- * A state that cannot be read is said as such
- * whatever was asked (the row must never look fine). `stateShown` is the row already showing the state elsewhere
- * (a trailing value): `state` then says the area or the time instead of repeating it. `short`: the line's shorter
- * form, for a row too narrow for it — a time's ("32 d ago"), a state's one word ("Not found"). `since`: where the
- * row's last change is read from (#67), a timestamp sensor or `attribute:<name>`; Home Assistant's own without it.
+ * A state that cannot be read is said as such whatever was asked (the row must never look fine), but for an unknown
+ * one under a template: the person's own line reads it (a button never pressed is `unknown`, its normal state, #92).
+ * `stateShown` is the row already showing the state elsewhere (a trailing value): `state` then says the area or the
+ * time instead of repeating it. `short`: the line's shorter form, for a row too narrow for it — a time's ("32 d ago"),
+ * a state's one word ("Not found"). `since`: where the row's last change is read from (#67), a timestamp sensor or
+ * `attribute:<name>`; Home Assistant's own without it.
  */
 export function secondaryText(
   hass: HomeAssistant | undefined,
@@ -25,8 +32,8 @@ export function secondaryText(
 ): string {
   const mode = secondary ?? (view.areaName ? 'area' : 'last-changed');
   if (mode === 'none') return '';
+  if (isTemplate(mode) && isUsable(view)) return texts?.line(mode, view.id) ?? '';
   if (view.status !== 'ok') return short ? stateWord(hass, view) : stateText(hass, view);
-  if (isTemplate(mode)) return texts?.line(mode, view.id) ?? '';
   if (mode === 'state')
     return stateShown ? fallback(hass, view, short, since) : stateText(hass, view);
   if (mode === 'area') return view.areaName || fallback(hass, view, short, since);

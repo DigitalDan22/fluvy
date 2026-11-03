@@ -101,6 +101,11 @@ describe('secondaryText', () => {
     );
     expect(secondaryText(hass, view('light.desk'), template)).toBe('');
     expect(secondaryText(hass, view('sensor.gone'), template, false, texts)).toBe('Unavailable');
+    // an unknown state is the template's to read (a button never pressed, #92); a line of the house's says it
+    expect(secondaryText(hass, view('sensor.blank'), template, false, texts)).toBe(
+      `sensor.blank: ${template}`,
+    );
+    expect(secondaryText(hass, view('sensor.blank'), 'last-changed')).toBe('Unknown');
   });
 });
 

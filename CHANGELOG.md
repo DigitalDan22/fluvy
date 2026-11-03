@@ -45,6 +45,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The appliance card takes a helper attached to the appliance's device (a template, a utility meter, a threshold) for
   a role only where neither the appliance's own integration nor the entity the card names plays it, so a template
   summing the appliance up no longer replaces the integration's state. Thanks to @rammium (#91).
+- A template card whose entity is `unknown` (a button never pressed, its normal state) shows its `secondary`, where it
+  said "Unknown"; only an entity that is unavailable or gone says its state in place of the line, and a template line
+  of an entities row reads an unknown state the same way. Thanks to @rammium (#92).
 
 ## [1.11.3] — 2026-10-28
 

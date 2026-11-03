@@ -1,4 +1,5 @@
 import {
+  isUsable,
   relativeTime,
   strings,
   type EntityView,
@@ -226,8 +227,9 @@ export class FluvyTemplateCard extends FluvyTileCard {
       glyph: entity ? look.glyph : (item.icon ?? 'code'),
       usable,
       on: usable && this.active(lit),
-      // an entity that cannot be read says so on its line, whatever was asked: that is a state, fitted as one
-      words: !keyword(this.secondary()) && (!entity || view.status === 'ok'),
+      // an entity out of reach says so on its line, whatever was asked: that is a state, fitted as one. An unknown one
+      // is not out of reach (a button never pressed, its normal state): its line is the one asked for
+      words: !keyword(this.secondary()) && (!entity || isUsable(view)),
     };
   }
 
@@ -241,7 +243,7 @@ export class FluvyTemplateCard extends FluvyTileCard {
   ): string {
     const entity = Boolean(this.own.entity);
     const secondary = this.secondary();
-    if (entity && (secondary === 'state' || view.status !== 'ok'))
+    if (entity && (secondary === 'state' || !isUsable(view)))
       return super.tileLine(item, view, on, level, valueInHead, small);
     if (secondary === 'state' || secondary === 'none') return '';
     const at = changedAt(this.hass, view, this.own.since);

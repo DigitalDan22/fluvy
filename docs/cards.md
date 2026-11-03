@@ -270,7 +270,8 @@ alone: it wears the resting skin, toggles nothing, and is a button only for an a
 (`navigate`, `url`, `perform-action`, `assist`).
 
 - `secondary`: `state` (the default with an entity), `area`, `last-changed`, `none` (the default without one), words
-  of your own or a template. Your own words that do not fit lose their last ` · ` parts, then end in an ellipsis.
+  of your own or a template. Your own words that do not fit lose their last ` · ` parts, then end in an ellipsis. An
+  entity that is unavailable or gone says so in their place; an unknown one (a button never pressed) keeps them.
 - `icon`: an icon such as `mdi:lightbulb`, or a Fluvy glyph's name (`bulb`).
 - `color`: a colour (a Home Assistant colour's name, `#rrggbb`, `rgb(…)`) or one of the palette's tones (`warning`,
   `heat`, `water`…); `tint: always` keeps it at rest. The editor's colour picker takes a colour; a template goes in

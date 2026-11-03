@@ -44,6 +44,7 @@ export const sheet: SheetSpec = {
     ],
     ['binary_sensor.tp_door', 'on', { friendly_name: 'Front door', device_class: 'door' }],
     ['switch.tp_pump', 'unavailable', { friendly_name: 'Garden pump' }],
+    ['button.tp_dishwasher_start', 'unknown', { friendly_name: 'Dishwasher start' }],
   ],
   frames: [
     // its icon by the lamp's state, its line a reading; the washer's colour the warning's while it draws a lot
@@ -245,6 +246,21 @@ export const sheet: SheetSpec = {
           cols: 6,
         },
         { type: TEMPLATE, entity: 'switch.tp_gone', name: 'Pond pump', cols: 6 },
+      ],
+    },
+    // a button never pressed is `unknown`, its normal state: the line is the person's (#92), the state where it is asked
+    {
+      title: 'A button never pressed',
+      cards: [
+        {
+          type: TEMPLATE,
+          entity: 'button.tp_dishwasher_start',
+          name: 'Start',
+          secondary:
+            "{{ 'Unavailable' if is_state(entity, 'unavailable') else 'Starts the selected cycle' }}",
+          cols: 6,
+        },
+        { type: TEMPLATE, entity: 'button.tp_dishwasher_start', name: 'Start', cols: 6 },
       ],
     },
     // a colour at rest (`tint: always`): written, or a template's
