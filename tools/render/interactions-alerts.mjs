@@ -3,14 +3,15 @@
  * The alerts card, 1.9 (issue #48), on the playground's `alerts` sheet (real cards, simulated hass). Exit code 1 on any
  * failure.
  *   PLAYGROUND=http://127.0.0.1:5183/ node interactions-alerts.mjs
- * What it proves: rows that share a name are told apart by their rooms, else said with how many (#89); a tile opens
- * its alert's sheet as a modal, Escape closes it and the focus goes back to the tile; a row opens its entity's details
- * once, the sheet stepping aside first; a row's Install installs that update alone; Home Assistant's alert is
- * acknowledged through Home Assistant; "Lock all" asks in the sheet first and then locks every match in one call; a
- * snooze is one write of the person's data and the alert goes; a `for` reached on the page's clock shows the card, its
- * match gone hides it again (said to the dashboard both ways); the banner turns, holds under a pointer and holds still
- * without motion (saying how many more); a tile's hold opens the overview, its snoozed alert with Wake; and the cards
- * leave no interval behind.
+ * What it proves: the chips, which have no card, rise in as the tiles do, and are there at once without motion (#90);
+ * rows that share a name are told apart by their rooms, else said with how many (#89); a tile opens its alert's sheet
+ * as a modal, Escape closes it and the focus goes back to the tile; a row opens its entity's details once, the sheet
+ * stepping aside first; a row's Install installs that update alone; Home Assistant's alert is acknowledged through
+ * Home Assistant; "Lock all" asks in the sheet first and then locks every match in one call; a snooze is one write of
+ * the person's data and the alert goes; a `for` reached on the page's clock shows the card, its match gone hides it
+ * again (said to the dashboard both ways); the banner turns, holds under a pointer and holds still without motion
+ * (saying how many more); a tile's hold opens the overview, its snoozed alert with Wake; and the cards leave no
+ * interval behind.
  */
 import { contrastRatio, toHex } from './lib/colour.mjs';
 import {
@@ -33,6 +34,33 @@ const dialog = (c) => c.locator('fluvy-alerts-sheet dialog');
 const ws = (page) => page.evaluate(() => window.fluvyMock.wsCalls.map((call) => call.type));
 
 const page = await suite.sheet('alerts');
+
+/** How a card's part enters: its animation, and the delay its card was given (`--fv-enter-delay`). */
+const entrance = (c, selector) =>
+  c.evaluate((el, selector) => {
+    const look = getComputedStyle(el.shadowRoot.querySelector(selector));
+    return {
+      name: look.animationName,
+      duration: look.animationDuration,
+      delay: look.animationDelay,
+      turn: getComputedStyle(el).getPropertyValue('--fv-enter-delay').trim(),
+    };
+  }, selector);
+const seconds = (text) => Number.parseFloat(text) / (text.endsWith('ms') ? 1000 : 1);
+
+/* ---------- the chips have no card, and enter as the tiles do (#90) ---------- */
+{
+  const chips = await entrance(card(page, 'Chips'), '.al-chips');
+  const tiles = await entrance(card(page, 'Tiles'), '.al-tile');
+  check(
+    'the chips (no card of their own) rise in as the tiles do, on their card’s turn',
+    chips.name === 'fv-enter' &&
+      chips.name === tiles.name &&
+      chips.duration === tiles.duration &&
+      seconds(chips.delay) === seconds(chips.turn),
+    JSON.stringify({ chips, tiles }),
+  );
+}
 
 /* ---------- rows of one name: told apart by their rooms, else said with how many share it (#89) ---------- */
 {
@@ -349,6 +377,12 @@ await page.close();
     'without motion the banner holds the gravest alert and says how many more there are',
     first === later && first === 'Hazards' && /6 more$/.test(line),
     JSON.stringify({ first, later, line }),
+  );
+  const chips = await entrance(card(still, 'Chips'), '.al-chips');
+  check(
+    'without motion the chips are there at once (their entrance 1 ms, never delayed)',
+    chips.duration === '0.001s' && seconds(chips.delay) === 0,
+    JSON.stringify(chips),
   );
   await still.close();
 }

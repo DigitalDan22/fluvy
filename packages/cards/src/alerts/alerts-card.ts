@@ -220,9 +220,12 @@ export class FluvyAlertsCard extends Card<AlertsCardConfig> {
       .fv-tile.is-on .fv-ico[data-accent] {
         color: var(--fluvy-accent);
       }
-      /* chips: equal pills, as many rows as their words need, each filled in its alert's tone */
+      /* chips: equal pills, as many rows as their words need, each filled in its alert's tone; no card under them, so
+         the strip enters as one, as the chips card's row does */
       .al-chips {
         margin-top: 0;
+        animation: fv-enter 420ms var(--fv-ease-out) both;
+        animation-delay: var(--fv-enter-delay, 0ms);
       }
       .al-chips .fv-chip__pill {
         gap: 6px;
