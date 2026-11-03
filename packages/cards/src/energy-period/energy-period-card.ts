@@ -221,7 +221,8 @@ export class FluvyEnergyPeriodCard extends Card<EnergyPeriodCardConfig> {
       }
       .ep-date {
         flex: 1 1 auto;
-        min-width: 0;
+        /* a target at least: a date one word long ("Ma", Hungarian's today) keeps its 44 */
+        min-width: ${STEP}px;
         padding: 0 ${DATE_SIDES}px;
         font-size: 14px;
         font-weight: 600;
@@ -748,8 +749,10 @@ export class FluvyEnergyPeriodCard extends Card<EnergyPeriodCardConfig> {
       forms.find(
         (form) =>
           (form.arrows ? 2 * STEP : 0) +
-            this.ruler.width(date, form.date === 'long' ? long : short) +
-            2 * DATE_SIDES +
+            Math.max(
+              STEP,
+              this.ruler.width(date, form.date === 'long' ? long : short) + 2 * DATE_SIDES,
+            ) +
             beside(form.today, today, localize(this.hass, 'common.today')) +
             beside(form.compare, compare, p(this.hass, 'compare')) <=
           room,
