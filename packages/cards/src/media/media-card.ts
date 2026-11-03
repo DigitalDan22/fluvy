@@ -410,14 +410,28 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
     return parts.length ? parts.join(' · ') : textAttr(view, 'app_name');
   }
 
-  /** The speaker line under the track: the device, plus its input when one is selected. */
+  /**
+   * The speaker line under the track: the device, plus its input when one is selected and the line above does not say
+   * it already.
+   */
   private sourceLine(view: EntityView, name: string, said: string): string {
     const source = textAttr(view, 'source');
-    return source && source !== name && source !== said ? `${name} · ${source}` : name;
+    return source && source !== name && !said.split(' · ').includes(source)
+      ? `${name} · ${source}`
+      : name;
   }
 
+  /**
+   * The line of a player that plays nothing. One at rest (idle, in standby, off) says when it last played; one that is
+   * on says what it shows, its input or its app ("On · HDMI 1": a television watched, #101), else its state alone.
+   */
   private idleLine(view: EntityView): string {
     const text = stateText(this.hass, view);
+    const resting = isOff(view.state) || view.state === 'idle';
+    if (!resting) {
+      const shows = textAttr(view, 'source') || textAttr(view, 'app_name');
+      return shows ? `${text} · ${shows}` : text;
+    }
     const when = view.stateObj?.last_changed;
     if (!when) return text;
     const date = new Date(when);

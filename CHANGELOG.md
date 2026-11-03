@@ -33,6 +33,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   window, whatever the cover's class (a curtain, a blind, a shade, an awning), where only a garage door or a gate
   counted; a cover is open while it is not closed, on its way, or partly open by its position. Thanks to @Gnomi2
   (#105).
+- A media player that is on and plays nothing Home Assistant can name, such as a television on a tuner's channel or in
+  an app, says what it shows, its input or else its app ("On · HDMI 1"), where it said "On · last played 1 h ago"; a
+  player that is idle, in standby or off still says when it last played. Thanks to @rammium (#101).
 
 ## [1.11.3] — 2026-10-28
 

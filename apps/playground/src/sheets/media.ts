@@ -165,6 +165,36 @@ export const sheet: SheetSpec = {
         supported_features: TV,
       },
     ],
+    // #101: televisions that are on and play nothing Home Assistant can name — a tuner's channel, an app it does not
+    // report as playing; one says its input, one its app, one nothing but its state
+    [
+      'media_player.tv_on',
+      'on',
+      {
+        friendly_name: 'Den TV',
+        device_class: 'tv',
+        volume_level: 0.2,
+        source: 'HDMI 1',
+        source_list: ['TV', 'Netflix', 'HDMI 1'],
+        supported_features: TV,
+      },
+    ],
+    [
+      'media_player.tv_app',
+      'on',
+      {
+        friendly_name: 'Kids TV',
+        device_class: 'tv',
+        volume_level: 0.2,
+        app_name: 'YouTube',
+        supported_features: TV,
+      },
+    ],
+    [
+      'media_player.tv_bare',
+      'on',
+      { friendly_name: 'Guest TV', device_class: 'tv', supported_features: TV },
+    ],
     [
       'media_player.radio',
       'playing',
@@ -349,6 +379,16 @@ export const sheet: SheetSpec = {
           controls: EVERY_CONTROL,
           cols: 6,
         },
+      ],
+    },
+    // #101: a television that is on says what it shows, its input or its app, where one at rest says when it last played
+    {
+      title: 'TV · on, not playing (#101)',
+      cards: [
+        { type: 'custom:fluvy-media-card', entity: 'media_player.tv_on' },
+        { type: 'custom:fluvy-media-card', entity: 'media_player.tv_on', variant: 'mini' },
+        { type: 'custom:fluvy-media-card', entity: 'media_player.tv_app', variant: 'mini' },
+        { type: 'custom:fluvy-media-card', entity: 'media_player.tv_bare', variant: 'mini' },
       ],
     },
   ],
