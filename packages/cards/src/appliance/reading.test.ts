@@ -6,6 +6,7 @@ import {
   hcFridge,
   houseOf,
   lgDryer,
+  LOCALTHINGS_ROLES,
   type ApplianceFixture,
 } from './fixtures/index.js';
 import { findAppliance, readAppliance, type ApplianceConfig } from './reading.js';
@@ -196,6 +197,68 @@ describe('an appliance read', () => {
       event_type: 'door_is_open',
     });
     expect(dryer(after)).toMatchObject({ status: 'finished', unload: null });
+  });
+
+  it('reads #91’s LocalThings dishwasher by the roles its owner names: off by its switch, a cycle never hidden by it', () => {
+    const config: ApplianceConfig = {
+      entity: 'switch.geschirrspuler_kuche_ein_aus',
+      kind: 'dishwasher',
+      roles: LOCALTHINGS_ROLES,
+    };
+    const at = (states: Readonly<Record<string, string>>): HomeAssistant =>
+      ({
+        ...HOUSE,
+        states: {
+          ...HOUSE.states,
+          ...Object.fromEntries(
+            Object.entries(states).map(([id, state]) => [id, { ...HOUSE.states[id], state }]),
+          ),
+        },
+      }) as HomeAssistant;
+    // switched off, its machine state idle all the same; switched on and waiting
+    expect(read('lt-dish', config)).toMatchObject({
+      status: 'off',
+      statusWord: 'appliance.status_off',
+    });
+    expect(
+      read('lt-dish', config, at({ 'switch.geschirrspuler_kuche_ein_aus': 'on' })),
+    ).toMatchObject({ status: 'idle', statusWord: 'appliance.status_idle' });
+    // washing or paused while its switch has not caught up; the finish its progress holds after the cycle
+    const lagging = { 'switch.geschirrspuler_kuche_ein_aus': 'off' };
+    expect(
+      read(
+        'lt-dish',
+        config,
+        at({
+          ...lagging,
+          'sensor.geschirrspuler_kuche_maschinenzustand': 'active',
+          'sensor.geschirrspuler_kuche_fortschritt': 'wash',
+        }),
+      ),
+    ).toMatchObject({ status: 'running', step: 'wash' });
+    expect(
+      read(
+        'lt-dish',
+        config,
+        at({ ...lagging, 'sensor.geschirrspuler_kuche_maschinenzustand': 'pause' }),
+      ).status,
+    ).toBe('paused');
+    expect(
+      read(
+        'lt-dish',
+        config,
+        at({ ...lagging, 'sensor.geschirrspuler_kuche_fortschritt': 'finish' }),
+      ).status,
+    ).toBe('finished');
+    // a power role named on a reading of watts says neither on nor off
+    expect(
+      read('lt-dish', {
+        roles: [
+          { role: 'state', entity: 'sensor.geschirrspuler_kuche_maschinenzustand' },
+          { role: 'power', entity: 'sensor.waschmaschine_keller_leistung' },
+        ],
+      }).status,
+    ).toBe('idle');
   });
 
   it('says a fridge’s door has stood open after a minute, with when it opened', () => {

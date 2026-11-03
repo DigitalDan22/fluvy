@@ -6,6 +6,7 @@ import {
   stepOf,
   stepsOf,
   type ApplianceStatus,
+  type StatusInput,
 } from './status.js';
 
 const NOW = Date.parse('2026-10-17T12:00:00Z');
@@ -119,9 +120,53 @@ describe('what an appliance is doing', () => {
     // a plug: its running flag, else its switch
     expect(status(undefined, { running: true })).toBe('running');
     expect(status(undefined, { running: false, power: true })).toBe('idle');
+    expect(status(undefined, { running: false, power: false })).toBe('off');
     expect(status(undefined, { power: true })).toBe('idle');
     expect(status(undefined, { power: false })).toBe('off');
     expect(status(undefined)).toBe('idle');
+  });
+
+  it('calls an appliance whose power switch is off off where nothing says more than at rest, never over a cycle, a finish or a fault (#91)', () => {
+    const completedAt = NOW - 40 * MINUTE;
+    const table: ReadonlyArray<
+      readonly [string | undefined, Partial<StatusInput>, ApplianceStatus]
+    > = [
+      // at rest is all their state says, switched off or on and waiting: the switch says which
+      ['idle', { platform: 'localthings', power: false }, 'off'],
+      ['idle', { platform: 'localthings', power: true }, 'idle'],
+      ['idle', { platform: 'localthings' }, 'idle'],
+      ['stop', { platform: 'smartthings', power: false }, 'off'],
+      ['stop', { platform: 'smartthings', power: true }, 'idle'],
+      ['stopped', { platform: 'matter', power: false }, 'off'],
+      ['ready', { platform: 'home_connect', power: false }, 'off'],
+      ['programmed', { platform: 'miele', power: true }, 'idle'],
+      ['initial', { platform: 'lg_thinq', power: false }, 'off'],
+      ['standby', { platform: 'whirlpool' }, 'idle'],
+      // a cycle under way while the switch lags, or while it reads off by design (Miele's says whether it may be
+      // switched off, which it may not while it runs)
+      ['active', { platform: 'localthings', power: false }, 'running'],
+      ['pause', { platform: 'localthings', power: false }, 'paused'],
+      ['run', { platform: 'smartthings', power: false }, 'running'],
+      ['running', { platform: 'matter', power: false }, 'running'],
+      ['in_use', { platform: 'miele', power: false }, 'running'],
+      ['superheating', { platform: 'miele', power: false }, 'preheating'],
+      ['delayedstart', { platform: 'home_connect', power: false }, 'scheduled'],
+      ['actionrequired', { platform: 'home_connect', power: false }, 'attention'],
+      ['failure', { platform: 'miele', power: false }, 'error'],
+      // a finish the appliance says, or remembers, though it switched itself off at the end
+      ['finished', { platform: 'home_connect', power: false }, 'finished'],
+      ['stop', { platform: 'smartthings', phase: 'finish', power: false }, 'finished'],
+      ['idle', { platform: 'localthings', phase: 'finish', power: false }, 'finished'],
+      ['power_off', { platform: 'lg_thinq', power: false, completedAt }, 'finished'],
+      ['power_off', { platform: 'lg_thinq', power: false }, 'off'],
+      // no state: a phase or a running flag that says a cycle runs
+      [undefined, { phase: 'rinsing', power: false }, 'running'],
+      [undefined, { phase: 'idle', power: false }, 'off'],
+      [undefined, { running: true, power: false }, 'running'],
+      ['2', { platform: 'hon', kind: 'washer' }, 'running'],
+    ];
+    for (const [state, more, expected] of table)
+      expect(status(state, more), `${String(state)} ${JSON.stringify(more)}`).toBe(expected);
   });
 
   it('has a job while it runs, preheats, pauses or asks for attention', () => {

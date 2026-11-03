@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   allFixtures,
+  device,
+  entriesFor,
   houseOf,
   mieleCoffee,
   stOven,
@@ -12,6 +14,7 @@ import {
   applianceEntities,
   deviceSlug,
   partOf,
+  platformOf,
   roleOf,
   slugify,
   withoutSlug,
@@ -205,6 +208,75 @@ describe('an appliance’s entities', () => {
     expect(applianceEntities(HOUSE, 'lg-fridge').maintenance).toEqual([
       'sensor.kuhlschrank_wasserfilter',
     ]);
+  });
+
+  it('knows a device’s integration: one it reads by its words, else the one most of its entities are of, never a helper', () => {
+    const of = (...platforms: string[]) =>
+      platformOf(platforms.map((platform, n) => ({ entity_id: `sensor.e${n}`, platform })));
+    expect(of('template', 'lg_thinq', 'template')).toBe('lg_thinq');
+    // more helpers than its own entities, or registered before them
+    expect(of('template', 'template', 'threshold', 'esphome')).toBe('esphome');
+    expect(of('threshold', 'shelly')).toBe('shelly');
+    // a power estimate of another integration's (Powercalc) is one of fewer
+    expect(of('powercalc', 'localthings', 'localthings')).toBe('localthings');
+    // a tie goes to the first registered
+    expect(of('localthings', 'powercalc')).toBe('localthings');
+    expect(of('template')).toBe('template');
+    expect(of()).toBeUndefined();
+  });
+
+  it('plays a helper a person attached to the device only where nothing of its integration’s own does (#91)', () => {
+    // an integration read by its ids, as many helpers on its device registered first: a template summing it up, a
+    // door template known surer by its id than the integration's own door by its class, a programme only a template
+    // says
+    const esphome = entriesFor('esphome', 'esp-dish');
+    const template = entriesFor('template', 'esp-dish');
+    const house = houseOf(
+      [
+        {
+          title: 'ESPHome dishwasher, helpers on its device',
+          platform: 'esphome',
+          device: device('esp-dish', 'Spülmaschine Keller', null),
+          entities: [
+            template('sensor.spulmaschine_keller_status'),
+            template('binary_sensor.spulmaschine_keller_door'),
+            template('sensor.spulmaschine_keller_program'),
+            esphome('sensor.spulmaschine_keller_operation_state'),
+            esphome('binary_sensor.spulmaschine_keller_tur'),
+            esphome('switch.spulmaschine_keller_power'),
+          ],
+          states: [
+            ['sensor.spulmaschine_keller_status', 'Off · 2 h left'],
+            ['binary_sensor.spulmaschine_keller_door', 'off', { device_class: 'door' }],
+            ['sensor.spulmaschine_keller_program', 'Eco 50'],
+            ['sensor.spulmaschine_keller_operation_state', 'Ready'],
+            ['binary_sensor.spulmaschine_keller_tur', 'off', { device_class: 'door' }],
+            ['switch.spulmaschine_keller_power', 'off'],
+          ],
+          expected: {},
+        },
+      ],
+      NOW,
+    );
+    expect(applianceEntities(house, 'esp-dish').roles).toEqual({
+      state: 'sensor.spulmaschine_keller_operation_state',
+      door: 'binary_sensor.spulmaschine_keller_tur',
+      power: 'switch.spulmaschine_keller_power',
+      program: 'sensor.spulmaschine_keller_program',
+    });
+    // LocalThings names its entities by keys the card does not read (#97): its template's summary is the state,
+    // until the card names the integration's own, which a helper's guess never holds against
+    expect(applianceEntities(HOUSE, 'lt-dish').roles.state).toBe(
+      'sensor.geschirrspuler_kuche_status',
+    );
+    expect(
+      applianceEntities(HOUSE, 'lt-dish', [], 'sensor.geschirrspuler_kuche_maschinenzustand').roles
+        .state,
+    ).toBe('sensor.geschirrspuler_kuche_maschinenzustand');
+    // a helper the card names never takes a role from the integration's own
+    expect(
+      applianceEntities(house, 'esp-dish', [], 'sensor.spulmaschine_keller_status').roles.state,
+    ).toBe('sensor.spulmaschine_keller_operation_state');
   });
 
   it('takes a plug’s switch as its power, the entity a card names as what it plays, and a role named by hand over both', () => {

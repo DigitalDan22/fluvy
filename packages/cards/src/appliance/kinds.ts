@@ -2,7 +2,7 @@ import type { Tone } from '@fluvy/ui';
 import { printerDevices } from '../printer/roles.js';
 import type { CommandName } from './commands.js';
 import { stateOf } from './refs.js';
-import { candidatesOf, entriesOf, knownPlatform, roleOf, type House } from './roles.js';
+import { candidatesOf, entriesOf, knownPlatform, platformOf, roleOf, type House } from './roles.js';
 import type { ApplianceStep } from './status.js';
 import { KIND_WORDS, NOT_AN_APPLIANCE } from './words.generated.js';
 import { celsius } from './zones.js';
@@ -423,7 +423,6 @@ export function signalsOf(hass: House | undefined, device: string, printer = fal
   const name = entry?.name_by_user ?? entry?.name;
   const entries = entriesOf(hass, device);
   const candidates = candidatesOf(hass, entries, name);
-  const platforms = entries.map((item) => item.platform).filter(knownPlatform);
   const programs: string[] = [];
   const states: string[] = [];
   const tops: number[] = [];
@@ -442,7 +441,7 @@ export function signalsOf(hass: House | undefined, device: string, printer = fal
       tops.push(celsius(candidate.max, candidate.unit));
   }
   return {
-    platform: platforms[0] ?? entries[0]?.platform,
+    platform: platformOf(entries),
     model: entry?.model,
     name,
     keys: new Set(

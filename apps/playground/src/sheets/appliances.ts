@@ -11,6 +11,7 @@ import { FluvyAlertsCard } from '../../../../packages/cards/src/alerts/alerts-ca
 import {
   allFixtures,
   laterFixtures,
+  LOCALTHINGS_ROLES,
   plugFridge,
   reporterAtWork,
 } from '../../../../packages/cards/src/appliance/fixtures/index.js';
@@ -31,10 +32,11 @@ if (!customElements.get('fluvy-alerts-card'))
  * Connect's dishwasher out of salt, its oven preheating, its coffee machine asking to be descaled, its fridge freezer
  * with a door open; Miele's washer rinsing, its fridge super cooling, its hob with two plates on; SmartThings' washer
  * with its upper drum at rest and its oven's two cavities; Matter's dishwasher and paused washer; Whirlpool's dryer and
- * double oven; Tuya's kettle; the community's hOn, AEG and SmartThinQ washers; a washer and a dryer on smart plugs (their
- * power's history answered here). Then every variant, the list of the house's appliances, an appliance out of reach
- * beside its live twin, a failure that says why, and a house in Fahrenheit. The state words are Home Assistant's in the
- * page's language (`lang`), as its translations say them. Last, the reporter's own LG house as he dumped it (#47): his
+ * double oven; Tuya's kettle; the community's hOn, AEG and SmartThinQ washers; #91's LocalThings dishwasher, its roles
+ * named by hand, off by its switch; a washer and a dryer on smart plugs (their power's history answered here). Then
+ * every variant, the list of the house's appliances, an appliance out of reach beside its live twin, a failure that
+ * says why, and a house in Fahrenheit. The state words are Home Assistant's in the page's language (`lang`), as its
+ * translations say them. Last, the reporter's own LG house as he dumped it (#47): his
  * four appliances on both integrations he runs, at rest and at work, whole, compact and as rows — the words of LG's
  * states left to the card, as the older integration's plain English would be. And the house's status colours (1.9):
  * the four statuses on an alerts card and on a dishwasher due its salt, the palette's own and then a warning of the
@@ -394,6 +396,15 @@ const card = (device: string, more: Record<string, unknown> = {}): LovelaceCardC
   _now: at,
   ...more,
 });
+/** #91's dishwasher on LocalThings, as its owner's card names it: by its power switch, its roles by hand. */
+const localthings = (more: Record<string, unknown> = {}): LovelaceCardConfig => ({
+  type: 'custom:fluvy-appliance-card',
+  entity: 'switch.geschirrspuler_kuche_ein_aus',
+  kind: 'dishwasher',
+  roles: LOCALTHINGS_ROLES,
+  _now: at,
+  ...more,
+});
 const list = (more: Record<string, unknown> = {}): LovelaceCardConfig => ({
   type: 'custom:fluvy-appliances-card',
   _now: at,
@@ -532,6 +543,23 @@ export const sheet: SheetSpec = {
     frame({ title: 'hOn · dishwasher, its start delayed', cards: [card('hon-dish')] }),
     frame({ title: 'AEG · washer by its ids', cards: [card('aeg-washer')] }),
     frame({ title: 'SmartThinQ · washer rinsing', cards: [card('stq-washer')] }),
+    // LocalThings (#91), its roles named as its owner names them (the card reads none of its keys): switched off, its
+    // machine state idle all the same; on and waiting; its own state named over the template's summary on its device
+    frame({ title: 'LocalThings · dishwasher switched off', cards: [localthings()] }),
+    frame({
+      title: 'LocalThings · dishwasher on, waiting',
+      cards: [localthings()],
+      hass: changed({ 'switch.geschirrspuler_kuche_ein_aus': { state: 'on' } }),
+    }),
+    frame({
+      title: 'LocalThings · a helper on its device ignored',
+      cards: [
+        localthings({
+          entity: 'sensor.geschirrspuler_kuche_maschinenzustand',
+          roles: LOCALTHINGS_ROLES.filter(({ role }) => role === 'power'),
+        }),
+      ],
+    }),
     // on a plug: running (its power's history), and done, waiting to be unloaded
     frame({ title: 'A washer on a plug · running', cards: [card('plug-washer')] }),
     frame({ title: 'A dryer on a plug · done', cards: [card('plug-dryer')] }),

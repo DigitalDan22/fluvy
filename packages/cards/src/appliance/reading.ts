@@ -38,6 +38,7 @@ import {
   applianceEntities,
   candidatesOf,
   entriesOf,
+  platformOf,
   type ApplianceEntities,
   type ApplianceRoles,
   type Candidate,
@@ -114,8 +115,7 @@ export function findAppliance(hass: House | undefined, config: ApplianceConfig):
   const entry = device ? hass?.devices?.[device] : undefined;
   const entries = entriesOf(hass, device);
   const platform =
-    entries.find((item) => item.platform && item.platform !== 'threshold')?.platform ??
-    (config.entity ? hass?.entities?.[config.entity]?.platform : undefined);
+    platformOf(entries) ?? (config.entity ? hass?.entities?.[config.entity]?.platform : undefined);
   const printer = device !== undefined && printerDevices(hass).includes(device);
   const signals = device ? signalsOf(hass, device, printer) : undefined;
   // a plug's entity may be named for what it powers ("Washing machine") where its device is not ("Plug 3")
@@ -477,8 +477,9 @@ function completedFlag(v: EntityView | undefined): number | null {
   return Number.isFinite(at) ? at : null;
 }
 
+/** A switch or a flag, on or off; anything else says neither (a power role named on a reading of watts). */
 const on = (v: EntityView | undefined): boolean | undefined =>
-  v && v.status === 'ok' ? v.state === 'on' : undefined;
+  v && v.status === 'ok' && (v.state === 'on' || v.state === 'off') ? v.state === 'on' : undefined;
 
 /** The status of a unit's roles (the appliance's, or its twin's). */
 function statusOf(

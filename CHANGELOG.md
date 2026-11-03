@@ -18,6 +18,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   button), its sensors, a reading, a helper, a scene, an automation, a lock or a camera no longer count, and its tiles
   and its rows say the same. The room's page on the automatic dashboards still reaches everything the room holds, and
   the plug tiles of Home and of a room's page leave an appliance's options out. Thanks to @rammium (#95).
+- An appliance card whose appliance's power switch is off, and whose state says no more than that it is at rest, says
+  Off where it said Ready: a Samsung washer or dishwasher on SmartThings, a Matter appliance or one on LocalThings
+  switched off (#91).
 
 ### Added
 
@@ -36,6 +39,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - A media player that is on and plays nothing Home Assistant can name, such as a television on a tuner's channel or in
   an app, says what it shows, its input or else its app ("On · HDMI 1"), where it said "On · last played 1 h ago"; a
   player that is idle, in standby or off still says when it last played. Thanks to @rammium (#101).
+- The appliance card says Off while the appliance's power switch is off and its state only says it is at rest
+  (LocalThings' "idle", a stopped machine on SmartThings or Matter), and still says a cycle, a finish or a fault the
+  appliance reports while its switch lags. Thanks to @rammium (#91).
+- The appliance card takes a helper attached to the appliance's device (a template, a utility meter, a threshold) for
+  a role only where neither the appliance's own integration nor the entity the card names plays it, so a template
+  summing the appliance up no longer replaces the integration's state. Thanks to @rammium (#91).
 
 ## [1.11.3] — 2026-10-28
 

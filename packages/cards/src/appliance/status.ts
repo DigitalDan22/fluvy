@@ -209,7 +209,7 @@ export interface StatusInput {
   readonly phase?: string | undefined;
   readonly platform?: string | undefined;
   readonly kind?: ApplianceKind | undefined;
-  /** The power switch, where there is one and no state: on is at rest, off is off. */
+  /** The power switch, where there is one: off is off wherever nothing says more than at rest. */
   readonly power?: boolean | undefined;
   /** A running flag (a plug's threshold helper), where there is no state. */
   readonly running?: boolean | undefined;
@@ -223,7 +223,9 @@ export interface StatusInput {
 /**
  * The status of an appliance: its state word's, else its phase's; a finished phase over a stopped machine is
  * finished; an appliance that powered off within `doneFor` of saying it completed is finished (LG's washers power off
- * when done); with no state, a running flag or a power switch says what it can.
+ * when done); with no state, a running flag says what it can. At rest is all some states say of an appliance switched
+ * off too (SmartThings' and Matter's stopped machine, LocalThings' idle): a power switch that reads off makes it off,
+ * but never hides a cycle, a finish or a fault the appliance says while the switch lags.
  */
 export function applianceStatus(input: StatusInput): ApplianceStatus {
   const { platform, kind } = input;
@@ -235,11 +237,8 @@ export function applianceStatus(input: StatusInput): ApplianceStatus {
     if (since >= 0 && since <= input.doneFor) return 'finished';
   }
   if (said === 'idle' && phase === 'finished') return 'finished';
-  if (said) return said;
-  if (phase && phase !== 'idle') return phase;
-  if (input.running !== undefined) return input.running ? 'running' : 'idle';
-  if (input.power !== undefined) return input.power ? 'idle' : 'off';
-  return phase ?? 'idle';
+  const status = said ?? (phase && phase !== 'idle' ? phase : input.running ? 'running' : 'idle');
+  return status === 'idle' && input.power === false ? 'off' : status;
 }
 
 /** A job is under way: there is time to count, progress to draw and something to pause or stop. */

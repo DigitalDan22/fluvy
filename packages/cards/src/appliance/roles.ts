@@ -9,8 +9,9 @@ import { entityOf, stateOf } from './refs.js';
  * Assistant's own, read from their source: their translation keys, and the writes the commands module pins), and hOn,
  * Electrolux and LG's older SmartThinQ integration (from HACS, read by the ends of their ids). A role is known by the
  * integration's own translation key, then by the keys they share, then by the end of its id, then by what it is (a
- * door by its device class, a power reading by its unit); where two entities could play it, the one known more
- * surely plays it. A role the card names by hand (`roles`) wins. The rest of a device's entities are read in kind:
+ * door by its device class, a power reading by its unit); where two entities could play it, the integration's own
+ * plays it over a helper a person attached to its device (a template, a utility meter), then the one known more
+ * surely. A role the card names by hand (`roles`) wins. The rest of a device's entities are read in kind:
  * its compartments and their setpoints, its maintenance flags, a fridge's quick modes, a hob's plates, a coffee
  * machine's counters. An integration's system buttons — firmware, reboot, a factory reset — are never anything, read
  * by their key or their id without the device's name (a Miele coffee machine is the "Coffee system", and all its ids
@@ -739,6 +740,44 @@ export function entriesOf(
   return Object.values(hass?.entities ?? {}).filter((entry) => entry.device_id === device);
 }
 
+/** Home Assistant's helpers, which a person may attach to any device: never the integration it is of. */
+const HELPERS: ReadonlySet<string> = new Set([
+  'template',
+  'group',
+  'utility_meter',
+  'derivative',
+  'integration',
+  'threshold',
+  'statistics',
+  'min_max',
+  'filter',
+  'trend',
+  'history_stats',
+  'switch_as_x',
+  'mold_indicator',
+  'generic_thermostat',
+  'generic_hygrostat',
+]);
+
+/**
+ * The integration a device is of: one the card reads by its words, else the one most of its entities are of (the
+ * first's on a tie) — never a helper of Home Assistant's a person attached to it, where it has anything else.
+ */
+export function platformOf(entries: readonly EntityRegistryDisplayEntry[]): string | undefined {
+  const all = entries.flatMap((entry) => (entry.platform ? [entry.platform] : []));
+  const others = all.filter((platform) => !HELPERS.has(platform));
+  const platforms = others.length ? others : all;
+  const count = (platform: string): number =>
+    platforms.filter((other) => other === platform).length;
+  return (
+    platforms.find(knownPlatform) ??
+    platforms.reduce<string | undefined>(
+      (most, platform) => (most === undefined || count(platform) > count(most) ? platform : most),
+      undefined,
+    )
+  );
+}
+
 /**
  * The candidates of a device: each entry with its state's device class, unit and range, and its id without the
  * device's name; after LG's older integration's device sensor, its attributes as candidates of their own.
@@ -815,16 +854,21 @@ export interface ApplianceEntities {
   readonly counters: readonly string[];
 }
 
-/** An entity holding a role, and how surely. */
+/** An entity holding a role, how surely, and whether it is of the device's integration (not a helper on it). */
 interface Holder {
   readonly id: string;
   readonly rank: number;
+  readonly own: boolean;
 }
 
-/** Whether a part known this surely takes a role from its holder: a higher rank, else the role's preferred domain. */
-function surer(role: ApplianceRole, id: string, rank: number, held: Holder): boolean {
-  if (rank !== held.rank) return rank > held.rank;
-  return DOMAINS[role].indexOf(domainOf(id)) < DOMAINS[role].indexOf(domainOf(held.id));
+/**
+ * Whether an entity takes a role from its holder: the device's integration's own over a helper a person attached to
+ * it, then a higher rank, else the role's preferred domain.
+ */
+function surer(role: ApplianceRole, next: Holder, held: Holder): boolean {
+  if (next.own !== held.own) return next.own;
+  if (next.rank !== held.rank) return next.rank > held.rank;
+  return DOMAINS[role].indexOf(domainOf(next.id)) < DOMAINS[role].indexOf(domainOf(held.id));
 }
 
 /** The twin's unit, by the keys (or the attributes) that named it. */
@@ -835,9 +879,10 @@ function twinUnit(keys: readonly (string | undefined)[]): Twin['unit'] {
 }
 
 /**
- * Every role the appliance's device fills — by the entity known most surely to play it — and everything else it has,
- * read in kind; then the roles named by hand over them. Hidden entities are left out of the search. The entity the
- * card names (a plug's switch, a state sensor) is its state, power or power reading when it plays no other part.
+ * Every role the appliance's device fills — by the entity known most surely to play it, its integration's own over a
+ * helper a person attached to it — and everything else it has, read in kind; then the roles named by hand over them.
+ * Hidden entities are left out of the search. The entity the card names (a plug's switch, a state sensor) is its
+ * state, power or power reading when it plays no other part, over a helper's guess.
  */
 export function applianceEntities(
   hass: House | undefined,
@@ -856,6 +901,7 @@ export function applianceEntities(
     counters: [],
   };
   const entries = entriesOf(hass, device);
+  const platform = platformOf(entries);
   const name = device
     ? (hass?.devices?.[device]?.name_by_user ?? hass?.devices?.[device]?.name)
     : undefined;
@@ -870,9 +916,9 @@ export function applianceEntities(
     if (!part) continue;
     const table = part.twin ? twinHeld : held;
     if (part.twin) twinKeys.push(candidate.key ?? candidate.object);
+    const next = { id: candidate.id, rank: part.rank, own: candidate.platform === platform };
     const holder = table[part.role];
-    if (!holder || surer(part.role, candidate.id, part.rank, holder))
-      table[part.role] = { id: candidate.id, rank: part.rank };
+    if (!holder || surer(part.role, next, holder)) table[part.role] = next;
   }
   const roles = rolesOf(held);
   // the entity the card names plays a part of its own, or the one a lone entity would
@@ -885,7 +931,7 @@ export function applianceEntities(
       ({ sensor: 'state', switch: 'power', binary_sensor: 'running' } as const)[
         domainOf(entity) as 'sensor' | 'switch' | 'binary_sensor'
       ];
-    if (role && !roles[role]) roles[role] = entity;
+    if (role && !held[role]?.own) roles[role] = entity;
   }
   for (const { role, entity: id } of named)
     if ((APPLIANCE_ROLES as readonly string[]).includes(role) && id)
