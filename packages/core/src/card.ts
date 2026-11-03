@@ -253,13 +253,27 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
     if ((this.constructor as typeof FluvyCard).still) this.setAttribute('still', '');
     this.resizeObserver = new ResizeObserver((entries) => {
       const box = entries[0]?.contentRect;
-      if (!box) return;
-      const next = Math.round(box.width);
-      if (next > 0 && next !== this.width) this.width = next;
+      if (box) this.takeWidth(box.width);
     });
     this.resizeObserver.observe(this);
     if (this.renderRoot instanceof ShadowRoot) this.accents.adopt(this.renderRoot);
     this.syncTheme();
+  }
+
+  /**
+   * The first frame is drawn to the card's own width, read off its box before it is drawn: the 360 it starts at stands
+   * in only while it has none. Drawn 360 wide in a narrower column, its controls would reach past the page's edge until
+   * the observer first reports, and a phone's page would scroll sideways meanwhile (#104).
+   */
+  protected override scheduleUpdate(): void | Promise<unknown> {
+    if (!this.hasUpdated) this.takeWidth(parseFloat(getComputedStyle(this).width));
+    return super.scheduleUpdate();
+  }
+
+  /** The card's width off its box, in whole pixels; a card without a box (hidden, not laid out) keeps the one it had. */
+  private takeWidth(width: number): void {
+    const next = Math.round(width);
+    if (next > 0 && next !== this.width) this.width = next;
   }
 
   override disconnectedCallback(): void {

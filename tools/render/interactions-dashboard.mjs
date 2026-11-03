@@ -9,7 +9,8 @@
  * the actions at the end; Home Assistant's own style, the edit mode, a subview, a single view and a dashboard that
  * does not wear the look keep Home Assistant's header; a subview's tab stays hidden; on a phone there is no name,
  * the row scrolls under the finger, fades where it goes on, and its last tab clears the fade. The sidebar's counts
- * (Settings, the notifications) keep their figures under Fluvy's glyphs (#86).
+ * (Settings, the notifications) keep their figures under Fluvy's glyphs (#86); no view of the automatic dashboard
+ * reaches past a phone's edge, from its first frame on (#104).
  */
 import { startSuite } from './lib/suite.mjs';
 
@@ -650,6 +651,56 @@ for (const [query, why, title] of [
     hidden.title === '"Home"' && hidden.group.display === 'none',
     JSON.stringify({ title: hidden.title }),
   );
+}
+
+/* ---------- the automatic dashboard on a phone: nothing past the screen's edge (#104) ---------- */
+{
+  /**
+   * Each tab's view drawn afresh, as the tab opens it, and how far the page reached past the screen's edge: right after
+   * its cards first drew, in every frame while they settle, and at rest. The views that did, each with how far.
+   */
+  const sweep = (page) =>
+    page.evaluate(async () => {
+      const se = document.scrollingElement;
+      const past = [];
+      for (const { path, tab } of await window.fluvyAutomaticViews()) {
+        if (!tab) continue;
+        let widest = 0;
+        let watching = true;
+        const watch = () => {
+          widest = Math.max(widest, se.scrollWidth - se.clientWidth);
+          if (watching) requestAnimationFrame(watch);
+        };
+        requestAnimationFrame(watch);
+        await window.fluvyAutomaticView(path);
+        widest = Math.max(widest, se.scrollWidth - se.clientWidth);
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        watching = false;
+        widest = Math.max(widest, se.scrollWidth - se.clientWidth);
+        if (widest > 0) past.push(`${path} +${widest}`);
+      }
+      return past;
+    });
+  const phone = (width, query) =>
+    suite.page(`dashboard=auto&width=${width}&${query}`, {
+      viewport: { width, height: 780 },
+      wait: 300,
+    });
+  for (const width of [360, 390, 412])
+    await Promise.all(
+      ['light', 'dark'].flatMap((mode) =>
+        [false, true].map(async (frame) => {
+          const page = await phone(width, `mode=${mode}${frame ? '&frame=1&floating=1' : ''}`);
+          const past = await sweep(page);
+          check(
+            `a phone ${width} wide, ${mode}, ${frame ? 'the house’s frame on' : 'no frame'}: no tab of the automatic dashboard reaches past the screen, from its first frame (#104)`,
+            past.length === 0,
+            past.join(', '),
+          );
+          await page.close();
+        }),
+      ),
+    );
 }
 
 await suite.finish();

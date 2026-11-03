@@ -63,6 +63,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   of the Activity and History pages and the wall go back the same way. Thanks to @rammium (#88).
 - The count on the sidebar's Settings and Notifications shows its figures again in the collapsed sidebar, on the
   accent, where Fluvy's icon for the item was painted a second time in its place. Thanks to @evertwoud (#86).
+- On a phone the automatic dashboard no longer scrolls sideways to an empty strip: a card was drawn 360 wide for its
+  first frame, wherever it stood, until it had measured its column, and a half-width card reached past the screen
+  meanwhile. Every card now draws to its own width from its first frame. Thanks to @JavierSegoviaCordoba (#104).
 
 ## [1.11.3] — 2026-10-28
 
