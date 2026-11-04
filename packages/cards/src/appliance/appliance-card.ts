@@ -49,6 +49,8 @@ import {
   applianceHeight,
   applianceVariant as variantOf,
   APPLIANCE_VARIANTS,
+  countsButtons,
+  countsReadouts,
   type ApplianceVariant,
 } from '../appliances-family.js';
 import { automationEntity, AutomationStore } from '../automations/store.js';
@@ -4408,13 +4410,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
   /** The readouts the card names (or its kind's), those the appliance has; its counters; the card's own sensors. */
   private stats(view: View): Stat[] {
     const { r, shown } = view;
-    const wanted =
-      this.config?.readouts ??
-      (r.plug
-        ? this.variant === 'compact'
-          ? (['power', 'this_cycle'] as const)
-          : []
-        : KIND_DEFAULTS[view.kind].readouts.filter((key) => key !== 'program'));
+    const wanted = readoutKeysOf(this.config?.readouts, r, this.variant);
     const out: Stat[] = [];
     const add = (
       key: ApplianceReadout,
@@ -4429,7 +4425,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       switch (key) {
         case 'elapsed':
           // how long it has run: its own count, else what its job's times say (a dash at rest)
-          if (id || r.roles.state || r.roles.finish || r.roles.remaining || r.roles.start_at)
+          if (readoutDrawn(r, key))
             add(
               key,
               jobWords(this.hass, 'elapsed'),
@@ -4902,14 +4898,51 @@ const CONTROL_ACTIONS: Readonly<Record<CommandName, readonly Action[]>> = {
   level: ['level'],
 };
 
+/** The readouts a card shows: those it names, else its kind's (a plug's power and this cycle on a compact card). */
+const readoutKeysOf = (
+  named: readonly ApplianceReadout[] | undefined,
+  r: ApplianceReading,
+  variant: ApplianceVariant,
+): readonly ApplianceReadout[] =>
+  named ??
+  (r.plug
+    ? variant === 'compact'
+      ? ['power', 'this_cycle']
+      : []
+    : KIND_DEFAULTS[r.kind].readouts.filter((key) => key !== 'program'));
+
+/** Whether a readout has something to read: its entity, or (how long it has run) its job's times. */
+const readoutDrawn = (r: ApplianceReading, key: ApplianceReadout): boolean =>
+  Boolean(r.readouts[key]) ||
+  (key === 'elapsed' &&
+    Boolean(r.roles.state || r.roles.finish || r.roles.remaining || r.roles.start_at));
+
+/** Whether a card draws its row of readouts: one with something to read, a counter, a sensor of its own. */
+const drawsReadouts = (
+  config: ApplianceCardConfig,
+  r: ApplianceReading,
+  variant: ApplianceVariant,
+): boolean =>
+  readoutKeysOf(config.readouts, r, variant).some((key) => readoutDrawn(r, key)) ||
+  r.counters.length > 0 ||
+  (config.sensors?.length ?? 0) > 0;
+
 /**
- * The controls a card names, else its kind's, those the card knows: a name it does not (a typo by hand; the editor
- * offers only the known) drops out.
+ * The controls a card names (one written without its dash a list of one), else its kind's, those the card knows: a
+ * name it does not (a typo by hand; the editor offers only the known) drops out.
  */
-const controlsOf = (config: ApplianceCardConfig, kind: ApplianceKind): readonly CommandName[] =>
-  (config.controls ?? KIND_DEFAULTS[kind].controls).filter((control) =>
-    COMMAND_NAMES.includes(control),
+const controlsOf = (config: ApplianceCardConfig, kind: ApplianceKind): readonly CommandName[] => {
+  const named: unknown = config.controls;
+  const list: readonly unknown[] =
+    typeof named === 'string'
+      ? [named]
+      : Array.isArray(named)
+        ? named
+        : KIND_DEFAULTS[kind].controls;
+  return list.filter((control): control is CommandName =>
+    COMMAND_NAMES.includes(control as CommandName),
   );
+};
 
 /**
  * A pet device's buttons' glyphs: a meal (the feeder's own, which joins the set with the family's chunk), a clean (the
@@ -4995,6 +5028,20 @@ export function applianceHouseHeight(
       );
       height += n ? (rowsOf(n, cells.columns) - 1) * (44 + cells.gap) : -(16 + 44);
     }
+    // the rows the family counts from the config alone, as the card draws them: a compact card's readouts where one
+    // has something to read, its buttons where one can act
+    const family = { ...config, variant, kind: r.plug ? 'appliance' : r.kind };
+    const row = (drawn: boolean, counted: boolean): number =>
+      (Number(drawn) - Number(counted)) * (16 + 44);
+    const acts = controlsOf(config, r.kind).some((control) =>
+      canDo(hass, r, CONTROL_ACTIONS[control]),
+    );
+    height += row(
+      (config.show_controls ?? variant === 'ring') && acts,
+      countsButtons(family, family.kind, variant),
+    );
+    if (variant === 'compact')
+      height += row(drawsReadouts(config, r, variant), countsReadouts(family, family.kind));
     return height;
   }
   if (variant !== 'full') return height;

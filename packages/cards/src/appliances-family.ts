@@ -150,8 +150,7 @@ export const applianceHeight = (config: LovelaceCardConfig): number => {
     typeof config['kind'] === 'string' && config['kind'] !== 'auto' ? config['kind'] : 'washer';
   if (variant === 'full') return fullHeight(config, kind);
   const hero = HEROES[kind] ?? 'cycle';
-  const compact = variant === 'compact';
-  const buttons = compact || config['show_controls'] === false || QUIET.includes(kind) ? 0 : CELLS;
+  const buttons = countsButtons(config, kind, variant) ? CELLS : 0;
   if (variant === 'ring') {
     const dial =
       hero === 'cold'
@@ -163,11 +162,34 @@ export const applianceHeight = (config: LovelaceCardConfig): number => {
   }
   // compact: one row of extra-small readouts, where it names some or its kind has them, and its buttons where asked
   // for (`show_controls: true`), as a ring's under its dial
-  const named = config['readouts'];
-  const stats = Array.isArray(named) ? named.length > 0 : READOUTS.includes(kind);
-  const asked = config['show_controls'] === true && !QUIET.includes(kind) ? CELLS : 0;
-  return FRAME + heroHeight(hero, config, kind) + (stats ? CELLS : 0) + asked;
+  return (
+    FRAME + heroHeight(hero, config, kind) + (countsReadouts(config, kind) ? CELLS : 0) + buttons
+  );
 };
+
+/**
+ * Whether the family counts a compact card's row of readouts: it names some, or its kind has them. What the card
+ * draws with the house in hand (one with nothing to read draws none) corrects it (`applianceHouseHeight`).
+ */
+export const countsReadouts = (config: LovelaceCardConfig, kind: string): boolean => {
+  const named = config['readouts'];
+  return Array.isArray(named) ? named.length > 0 : READOUTS.includes(kind);
+};
+
+/**
+ * Whether the family counts a compact or ring card's row of buttons: a ring's unless it says none, a compact's where
+ * asked for, never what keeps food cold. What the card draws with the house in hand (none where no control can act)
+ * corrects it (`applianceHouseHeight`).
+ */
+export const countsButtons = (
+  config: LovelaceCardConfig,
+  kind: string,
+  variant: ApplianceVariant,
+): boolean =>
+  !QUIET.includes(kind) &&
+  (variant === 'ring'
+    ? config['show_controls'] !== false
+    : variant === 'compact' && config['show_controls'] === true);
 
 /** Rows before a "{count} more" row takes the others, when the config says nothing. */
 export const APPLIANCES_MAX_ROWS = 6;

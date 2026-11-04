@@ -449,6 +449,11 @@ describe('the appliance card', () => {
     expect(applianceHouseHeight({ type: 'x', ...config } as never, house())).toBe(
       applianceHouseHeight({ type: 'x', ...config, controls: ['stop', 'power'] } as never, house()),
     );
+    // one written without its dash is a list of one
+    const one = await mount({ device: 'hc-dish', show_controls: true, controls: 'stop' });
+    expect(
+      [...root(one).querySelectorAll('[data-action]')].map((el) => el.getAttribute('data-action')),
+    ).toEqual(['stop']);
   });
 
   it('presses LocalThings’ own buttons (#97): its pause at once, its stop once the dialog has asked, its resume greyed while its Smart Control is off', async () => {

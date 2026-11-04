@@ -12,7 +12,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   whose words for them differ in length, the car's own row can hold one round more, or one fewer, at the same width.
 - A select's row on the entities card, and among the rows of the lock, alarm and camera cards, ends in its value,
   which opens Fluvy's own dropdown as the helpers card's does, where it opened Home Assistant's dialog: the keys, a
-  letter to find a name, the option chosen at once. A row with a `tap_action` of its own keeps it.
+  letter to find a name, the option chosen at once. A row with a `tap_action` of its own keeps it, and one out of reach
+  says "—" and opens its details from the row, as before.
 - A SmartThings washer or dishwasher has no water row any more, where it said the water of all the machine's years as
   its programme's ("Water 1,642 L"); its energy, and a dryer's, says what this cycle added to the machine's meter,
   where it said its report's power energy (0 kWh on Samsung's machines) or the meter's count of years. Its readouts
@@ -31,9 +32,11 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - A room card's quick action sends each blind and player the service it takes, one call a service: a blind that only
   tilts moves its slats, a player that cannot pause stops or goes off, one that can do neither is left out, where Home
   Assistant refused the whole call and nothing moved; a round none of whose members can act takes no tap.
-- A room card's quick action for a set asks first where its tap has a `confirmation` and then turns the set on or
-  off, and opens its details where its tap or hold is `more-info` (its one member's, else where the room opens), where
-  either did nothing.
+- A room card's quick action for a set asks first where its tap has a `confirmation` and then moves the members that
+  take the set's own service (a blind that only tilts, beside blinds that close, is left to a tap that does not ask),
+  and opens its details where its tap or hold is `more-info` (its one member's, else where the room opens), where
+  either did nothing. A round none of whose members can take its call (a playing speaker that only sets its volume) is
+  drawn as it reads and takes no tap.
 - A room card whose tiles are an empty list (as the editor leaves it once the last is removed) declares the height of
   the controls it draws as its tiles, where it declared none and a column laid out by its height left it short.
 - A room's `include` or `exclude` pattern with many stars (`*`) is read at once on any id, where one that did not
@@ -54,10 +57,11 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - An appliance card with `device: none` reads no device again, as before 1.13.0: it is named after its entity and is
   what its `kind` or its entity's name says, where 1.13.0 took the name and the kind of its entity's device, and one
   that names only its roles shows them, where it showed nothing (#98).
-- An appliance card whose `controls` names one it does not know (a typo written by hand) draws the others, where the
-  card failed to draw.
-- A compact appliance card with its buttons asked for (`show_controls: true`) is as tall as it draws them, where its
-  height left their row out and the card under it in a column rose over them.
+- An appliance card whose `controls` names one it does not know (a typo written by hand) draws the others, and one
+  written without its dash (`controls: start`) is a list of one, where the card failed to draw.
+- A compact or ring appliance card is as tall as the rows it draws: its buttons where asked for (`show_controls:
+  true`) and one of them can act, its readouts where one has something to read, where a compact card's height left
+  its buttons out, and counted a row of readouts or of buttons that a machine without them never drew.
 - A LocalThings washer's or dishwasher's energy readout (the compact card's) says what this cycle used, as its row
   does, where it said the machine's count of years.
 - A PetKit litter box whose light is on is at rest and says "Light on", where it said "light" and ran with a Pause
