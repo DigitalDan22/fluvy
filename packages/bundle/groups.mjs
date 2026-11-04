@@ -18,9 +18,12 @@ const LANGUAGE = /\/packages\/core\/src\/i18n\/locales\/([\w-]+)\.json/;
 const PAGES =
   /\/packages\/(cards\/src\/shared\/(date-picker|period|range|layers?|csv)\.ts|core\/src\/sources\.ts|ui\/src\/(controls\/(time-field|select)|styles\/(generated\/)?page)\.ts)/;
 
-/** What only the Activity page uses (all of its folder but the takeover, and its English): fetched the first time `/logbook` is opened. */
+/**
+ * What only the Activity page uses (all of its folder but the takeover, Lit's `guard` directive its rows keep, and its
+ * English): fetched the first time `/logbook` is opened.
+ */
 const ACTIVITY =
-  /\/packages\/(cards\/src\/activity\/(?!takeover\.ts)|core\/src\/activity\/|ui\/src\/controls\/time-(rail|field)\.ts|core\/src\/i18n\/locales\/en\/activity\.json)/;
+  /\/packages\/(cards\/src\/activity\/(?!takeover\.ts)|core\/src\/activity\/|ui\/src\/controls\/time-(rail|field)\.ts|core\/src\/i18n\/locales\/en\/activity\.json)|\/lit(-html)?\/directives\/guard\.js$/;
 
 /**
  * What only the History page uses (its folder but the takeover, the window it reads — not `series.ts`, which the

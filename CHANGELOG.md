@@ -119,6 +119,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   on every page.
 - Copying a text (the wall's address) is the settings panel's own (`panel/clipboard.ts`), its only reader: 0.2 KB
   less on every page.
+- Lit's `guard` directive, which only the Activity page's rows keep, travels in the Activity page's chunk: 0.1 KB less
+  on every page.
 
 ## [1.12.0] — 2026-11-04
 
