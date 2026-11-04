@@ -1443,6 +1443,10 @@ forecast. It is the engine's (§ Charts) in its house's style or its own.
 - **The head** keeps its badge (the card's alert) before the sub's last part, then gives way as every head; the
   sheet's "Openings & motion" where it keeps both its circle and its badge, else "Openings".
 - **The same sensor twice** keeps both rows (rows are by position, never by entity).
+- **A row's own class and words (#102):** a row may read its sensor as a class of its own (`device_class`), which
+  gives it the class's words, its icon open or shut as it stands, and whether its on needs acting on; its own words
+  for a state (`states`) come before the class's, in the row, the tile and the label alike. The class decides what
+  counts: words alone never make a sensor an alert (a tilt sensor reads "Tilted", calm), a borrowed window does.
 - **The real last change (1.11, #67):** a row's time — the openings card's "2 h ago" or "14 min", a list row's *last
   change* line (entities, lock, camera, alarm), a tile's (a tiles group's, a room's), a template's, a person's, a
   helper row's — is Home

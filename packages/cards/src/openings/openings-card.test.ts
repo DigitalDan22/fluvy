@@ -47,6 +47,8 @@ const STATES = [
   state('cover.slaapkamer', 'closed', { device_class: 'curtain', current_position: 0 }),
   state('cover.screen', 'closed', {}),
   state('cover.garage', 'closed', { device_class: 'garage', current_position: 0 }),
+  // #102: a Shelly BLU Door/Window's tilt on ZHA, of no class
+  state('binary_sensor.window_tilt', 'on'),
 ];
 
 const hass = {
@@ -165,6 +167,24 @@ describe('the openings card’s real last change (#67)', () => {
   });
 
   describe('its editor', () => {
+    it('offers a row’s class in Home Assistant’s words, any other typed, and its own state words', () => {
+      const list = openingsEditor.lists[0]!;
+      expect(list.keys).toEqual(expect.arrayContaining(['device_class', 'states']));
+      const named = {
+        ...hass,
+        localize: (key: string) => (key.endsWith('.window.name') ? 'Window' : ''),
+      };
+      const choices = list.choices!(
+        { entity: 'binary_sensor.window_tilt' } as never,
+        named as never,
+      );
+      const classes = choices['device_class'] ?? [];
+      expect(classes.find((option) => option.value === 'window')?.label).toBe('Window');
+      expect(classes.find((option) => option.value === 'garage_door')?.label).toBe('garage door');
+      // the row's since keeps the house's timestamp sensors beside it
+      expect(choices['since']?.length).toBe(4);
+    });
+
     it('offers a row’s since among the house’s timestamp sensors, any other typed', () => {
       const list = openingsEditor.lists[0]!;
       const since = list.schema.find((item) => item.name === 'since');
@@ -237,5 +257,64 @@ describe('the openings card’s covers (#105)', () => {
         ['neutral', 'Closed'],
       ],
     });
+  });
+});
+
+/*
+ * #102: a row read as a class of its own (`device_class`) takes its words, its icon and its alert; its own words for a
+ * state (`states`) come before them. A tilt sensor of no class reads "On" and never counts.
+ */
+describe('a row’s own class and state words (#102)', () => {
+  const values = (card: CardElement): string[] =>
+    [...card.shadowRoot!.querySelectorAll('.am-rows .fv-row')].map(
+      (row) => row.querySelector('.fv-row__value')?.textContent?.trim() ?? '',
+    );
+  const badge = (card: CardElement): string =>
+    card.shadowRoot!.querySelector('.fv-card__head .fv-badge')?.textContent?.trim() ?? '';
+
+  it('says a sensor of no class in Home Assistant’s word, and never counts it', async () => {
+    const card = await draw({ rows: ['binary_sensor.window_tilt'] });
+    expect(values(card)).toEqual(['On']);
+    expect(badge(card)).toBe('All clear');
+  });
+
+  it('says a state in the row’s own words, still not counted without a class', async () => {
+    const card = await draw({
+      rows: [{ entity: 'binary_sensor.window_tilt', states: { on: 'Tilted', off: 'Closed' } }],
+    });
+    expect(values(card)).toEqual(['Tilted']);
+    expect(badge(card)).toBe('All clear');
+  });
+
+  it('reads a row as the class it borrows: a window, open and counted; its own words before the class’s', async () => {
+    const window = await draw({
+      rows: [{ entity: 'binary_sensor.window_tilt', device_class: 'window' }],
+    });
+    expect(values(window)).toEqual(['Open']);
+    expect(badge(window)).toBe('1 open');
+    expect(window.shadowRoot!.querySelector('.am-rows .fv-ico--warning')).not.toBeNull();
+    const tilted = await draw({
+      rows: [
+        { entity: 'binary_sensor.window_tilt', device_class: 'window', states: { on: 'Tilted' } },
+      ],
+    });
+    expect(values(tilted)).toEqual(['Tilted']);
+    expect(badge(tilted)).toBe('1 open');
+  });
+
+  it('reads a sensor of the wrong class as the row’s: a door read as motion is detected, an alert no more', async () => {
+    const card = await draw({
+      rows: [{ entity: 'binary_sensor.kitchen_window', device_class: 'motion' }],
+    });
+    expect(values(card)).toEqual(['Detected']);
+    expect(badge(card)).toBe('All clear');
+  });
+
+  it('says its own words on a tile too', async () => {
+    const card = await draw({
+      variant: 'tiles',
+      rows: [{ entity: 'binary_sensor.window_tilt', states: { on: 'Tilted' } }],
+    });
+    expect(card.shadowRoot!.querySelector('.fv-tile__state')?.textContent).toMatch(/^Tilted/);
   });
 });

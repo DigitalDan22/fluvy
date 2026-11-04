@@ -411,6 +411,8 @@
     "options_style": "Seçenekler şöyle",
     "options": "Seçenekler",
     "labels": "Seçenek adları",
+    "device_class": "Şöyle göster",
+    "states": "Durumların sözcükleri",
     "preset_style": "Ön ayarlar şöyle",
     "presets": "Hızlı ayar süreleri",
     "fan_style": "Fan hızları şöyle",

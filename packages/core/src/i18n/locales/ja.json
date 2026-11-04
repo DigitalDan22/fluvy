@@ -363,6 +363,8 @@
     "options_style": "オプションの形式",
     "options": "オプション",
     "labels": "オプションの名前",
+    "device_class": "表示の種類",
+    "states": "状態の表示名",
     "preset_style": "プリセットの形式",
     "presets": "クイック設定",
     "fan_style": "風量の形式",

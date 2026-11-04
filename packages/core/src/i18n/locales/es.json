@@ -411,6 +411,8 @@
     "options_style": "Opciones como",
     "options": "Opciones",
     "labels": "Nombres de las opciones",
+    "device_class": "Mostrar como",
+    "states": "Palabras para los estados",
     "preset_style": "Preajustes como",
     "presets": "Horas rápidas",
     "fan_style": "Velocidades como",

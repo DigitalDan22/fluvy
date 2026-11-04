@@ -411,6 +411,15 @@ export const sheet: SheetSpec = {
       { friendly_name: 'Porch motion', device_class: 'motion' },
     ],
     ['binary_sensor.am_shed', 'unavailable', { friendly_name: 'Shed door', device_class: 'door' }],
+    // #102: a Shelly BLU Door/Window on ZHA, its contact a window and its tilt of no class; a side door's contact of
+    // none
+    [
+      'binary_sensor.am_bedroom_window',
+      'off',
+      { friendly_name: 'Bedroom window', device_class: 'window' },
+    ],
+    ['binary_sensor.am_bedroom_window_tilt', 'on', { friendly_name: 'Bedroom window tilt' }],
+    ['binary_sensor.am_side_door_contact', 'off', { friendly_name: 'Side door contact' }],
     ['lock.am_back_door', 'locked', { friendly_name: 'Back door lock' }],
     // #105's curtains, as the reporter listed them: three open, one shut; a blind a third up by its position, and a
     // garage door shut
@@ -1196,6 +1205,53 @@ export const sheet: SheetSpec = {
           type: 'custom:fluvy-scenes-card',
           _now,
           entities: ['script.am_goodnight', 'scene.am_gone', 'scene.am_away'],
+        },
+      ],
+    },
+    // #102: a row read as a class of its own, in words of its own: a tilt sensor of no class says "Tilted" and never
+    // counts; read as a window it counts as open; a contact of no class read as a door
+    {
+      title: 'Openings · a class and words of their own (#102)',
+      cards: [
+        {
+          type: 'custom:fluvy-openings-card',
+          title: 'Bedroom',
+          _now,
+          rows: [
+            { entity: 'binary_sensor.am_bedroom_window', name: 'Window' },
+            {
+              entity: 'binary_sensor.am_bedroom_window_tilt',
+              name: 'Tilt',
+              icon: 'windowOpen',
+              states: { on: 'Tilted', off: 'Closed' },
+            },
+            {
+              entity: 'binary_sensor.am_bedroom_window_tilt',
+              name: 'Tilt, as a window',
+              device_class: 'window',
+              states: { on: 'Tilted' },
+            },
+            {
+              entity: 'binary_sensor.am_side_door_contact',
+              name: 'Side door',
+              device_class: 'door',
+            },
+          ],
+        },
+        {
+          type: 'custom:fluvy-openings-card',
+          title: 'Bedroom',
+          variant: 'tiles',
+          _now,
+          rows: [
+            { entity: 'binary_sensor.am_bedroom_window', name: 'Window' },
+            {
+              entity: 'binary_sensor.am_bedroom_window_tilt',
+              name: 'Tilt',
+              icon: 'windowOpen',
+              states: { on: 'Tilted', off: 'Closed' },
+            },
+          ],
         },
       ],
     },

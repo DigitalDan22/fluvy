@@ -411,6 +411,8 @@
     "options_style": "Optionen als",
     "options": "Optionen",
     "labels": "Namen der Optionen",
+    "device_class": "Anzeigen als",
+    "states": "Wörter für die Zustände",
     "preset_style": "Voreinstellungen als",
     "presets": "Schnellwahl-Zeiten",
     "fan_style": "Lüfterstufen als",

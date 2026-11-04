@@ -363,6 +363,8 @@
     "options_style": "Opciók megjelenése",
     "options": "Opciók",
     "labels": "Opciók nevei",
+    "device_class": "Megjelenítés mint",
+    "states": "Az állapotok szavai",
     "preset_style": "Előbeállítások megjelenése",
     "presets": "Gyorsan beállítható idők",
     "fan_style": "Ventilátorsebességek megjelenése",

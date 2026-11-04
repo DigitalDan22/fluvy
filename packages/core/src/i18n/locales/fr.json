@@ -411,6 +411,8 @@
     "options_style": "Options en",
     "options": "Options",
     "labels": "Noms des options",
+    "device_class": "Afficher comme",
+    "states": "Mots pour les états",
     "preset_style": "Préréglages en",
     "presets": "Heures rapides",
     "fan_style": "Vitesses de ventilation en",

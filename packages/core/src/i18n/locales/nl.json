@@ -411,6 +411,8 @@
     "options_style": "Opties als",
     "options": "Opties",
     "labels": "Namen van de opties",
+    "device_class": "Weergeven als",
+    "states": "Woorden voor de standen",
     "preset_style": "Presets als",
     "presets": "Sneltijden",
     "fan_style": "Ventilatorstanden als",

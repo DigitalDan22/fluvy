@@ -694,6 +694,31 @@ rows:
       gen_589828: AI Mode
 ```
 
+## Openings
+
+The openings card says each sensor's state once, in the words its class deserves — a door's Open and Closed, a
+motion's Detected and Clear, a leak's Wet and Dry — and counts what needs acting on in its head ("2 open", "1 alert"):
+an open door, window or cover, a leak, smoke, a problem. A row may read its sensor as a class of its own
+(`device_class`, Home Assistant's binary sensor classes: `door`, `window`, `garage_door`, `opening`, `motion`,
+`moisture`, `smoke` …), for a sensor that has none or the wrong one: it takes the class's words, its icon (open or shut
+as it stands) and whether it counts (#102). A row may also say a state in words of its own (`states`, by the state:
+`on`, `off`; a cover's `open`, `closed`), before the class's. The class decides what counts: a tilt sensor given words
+alone reads "Tilted" and never counts as open; given `device_class: window`, a tilted window counts as an open one.
+
+```yaml
+type: custom:fluvy-openings-card
+rows:
+  - binary_sensor.bedroom_window # the contact, a window
+  - entity: binary_sensor.bedroom_window_tilt # the tilt, of no class: said, never counted
+    name: Tilt
+    icon: mdi:window-open-variant
+    states:
+      on: Tilted
+      off: Closed
+  - entity: binary_sensor.side_door_contact # a contact of no class, read as a door
+    device_class: door
+```
+
 <!-- generated:cards -->
 
 ## Everyday
@@ -725,7 +750,7 @@ rows:
 | **Sensor** | `custom:fluvy-sensor-card` | A sensor with its 24 h curve, trend, min, max and average, or up to three sensors on one chart. | `subtitle`, `variant` (`chart`, `tile`), `hours`, `show_stats`, `label`, `chart` (`classic`, `soft`, `glow`, `minimal`, `step`, `bars`, `columns`), `curve` (`smooth`, `straight`, `step`), `fill` (`gradient`, `flat`, `none`), `line_width` (`thin`, `regular`, `bold`), `glow`, `show_points` (`none`, `end`, `all`), `show_grid` (`auto`, `none`, `x`, `y`, `both`), `show_axis`, `highlight` (`none`, `min`, `max`, `both`, `current`), `animate`, `unit` (`auto`, `W`, `kW`, `MW`, `Wh`, `kWh`, `MWh`, `L`, `m³`, `gal`, `ft³`), `decimals` (`auto`, `0`, `1`, `2`, `3`), `entities` (a list: `entity`, `name`, `icon`, `color`) | — |
 | **Readouts** | `custom:fluvy-readouts-card` | Up to four values side by side with their trends. | `hours`, `variant` (`grid`, `row`), `empty_text`, `hide_empty`, `unit` (`auto`, `W`, `kW`, `MW`, `Wh`, `kWh`, `MWh`, `L`, `m³`, `gal`, `ft³`), `decimals` (`auto`, `0`, `1`, `2`, `3`), `rows` (a list: `entity`, `name`, `unit`, `decimals`, `tap_action`) | `entities` → `rows` |
 | **People** | `custom:fluvy-people-card` | Who is home: avatars, zones, times and phone batteries, each person with a tap of their own. | `title`, `variant` (`grid`, `rows`), `map_path`, `show_zone`, `show_time`, `show_battery`, `empty_text`, `hide_empty`, `people` (a list: `entity`, `name`, `battery`, `color`, `since`, `tap_action`, `hold_action`) | `layout` → `variant`, `entities` → `people` |
-| **Openings** | `custom:fluvy-openings-card` | Doors, windows and motion at a glance, with what is open counted. | `title`, `subtitle`, `variant` (`rows`, `compact`, `tiles`), `max_rows`, `show_count`, `show_time`, `since_pattern`, `empty_text`, `hide_empty`, `rows` (a list: `entity`, `name`, `icon`, `color`, `since`, `tap_action`, `hold_action`) | `entities` → `rows` |
+| **Openings** | `custom:fluvy-openings-card` | Doors, windows and motion at a glance, with what is open counted. | `title`, `subtitle`, `variant` (`rows`, `compact`, `tiles`), `max_rows`, `show_count`, `show_time`, `since_pattern`, `empty_text`, `hide_empty`, `rows` (a list: `entity`, `name`, `icon`, `color`, `device_class`, `states`, `since`, `tap_action`, `hold_action`) | `entities` → `rows` |
 | **Alerts** | `custom:fluvy-alerts-card` | What needs a look — low batteries, devices gone, doors left open, leaks, updates, repairs — each from one line, as tiles, chips, rows or a banner, hidden while all is clear. | `title`, `subtitle`, `variant` (`tiles`, `mini`, `chips`, `rows`, `banner`), `columns` (`1`, `2`, `3`, `4`, `auto`), `show_count`, `show_culprit`, `show_duration`, `compact`, `order` (`severity`, `config`), `rotate`, `snooze` (`user`, `device`, `house`, `off`), `max_alerts`, `empty_text`, `hide_empty`, `alerts` (a list: `preset`, `name`, `icon`, `severity`, `tone`, `color`, `entity`, `domain`, `device_class`, `entity_id`, `integration`, `state`, `not_state`, `above`, `below`, `attribute`, `phones`, `acknowledged`, `area`, `floor`, `label`, `device`, `exclude`, `for`, `unchanged_for`, `include_unavailable`, `hidden`, `diagnostic`, `count_by`, `min_count`, `name_by`, `sort_rows`, `split`, `snooze`, `admin_only`, `tap_action`, `hold_action`, `row_action`, `row_hold_action`, `row_button`, `actions`, `conditions`, `escalate`, `match`, `id`) | — |
 
 ## Rooms and the map

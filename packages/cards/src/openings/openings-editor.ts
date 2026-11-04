@@ -55,20 +55,64 @@ export const keys = configKeys<OpeningsCardConfig>()([
   ...EMPTY_KEYS,
 ]);
 
+/**
+ * The classes a row may be read as (#102): Home Assistant's binary sensor classes this card speaks of, any other
+ * typed.
+ */
+const CLASSES = [
+  'door',
+  'window',
+  'garage_door',
+  'opening',
+  'lock',
+  'motion',
+  'occupancy',
+  'presence',
+  'vibration',
+  'moisture',
+  'smoke',
+  'gas',
+  'carbon_monoxide',
+  'problem',
+  'safety',
+  'tamper',
+] as const;
+
 export const lists: readonly RowsListSpec[] = [
   {
     key: 'rows',
     alias: 'entities',
     title: 'editor.rows',
     domains: ['binary_sensor', 'cover', 'lock'],
-    keys: ['entity', 'name', 'icon', 'color', 'since', 'tap_action', 'hold_action'],
+    keys: [
+      'entity',
+      'name',
+      'icon',
+      'color',
+      'device_class',
+      'states',
+      'since',
+      'tap_action',
+      'hold_action',
+    ],
     schema: [
       entityField(['binary_sensor', 'cover', 'lock']),
       nameIconFields(),
-      accentField(),
+      fieldRow(accentField(), selectField('device_class', [], { custom: true })),
+      { name: 'states', selector: { object: {} } },
       sinceField(),
       fieldRow(actionField('tap_action'), actionField('hold_action')),
     ],
+    // a row's `since` offers the house's timestamp sensors, its class Home Assistant's classes in its own words
+    choices: (item, hass) => ({
+      ...sinceChoices(item, hass),
+      device_class: CLASSES.map((value) => ({
+        value,
+        label:
+          hass?.localize(`component.binary_sensor.entity_component.${value}.name`) ||
+          value.replace(/_/g, ' '),
+      })),
+    }),
   },
 ];
 

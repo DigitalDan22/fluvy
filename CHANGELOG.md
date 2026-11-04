@@ -17,6 +17,10 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - A select's row on the helpers card may offer a part of its options in its own order (`options`), name an option
   in its own words (`labels`, for an option its integration left raw) and be chips or a dropdown whatever its length
   (`display`), in YAML and in the editor. Thanks to @rammium (#96).
+- The openings card reads a row's sensor as a class of its own (`device_class`: its words, its icon and whether it
+  counts as open), and says a state in the row's own words (`states: {on: Tilted, off: Closed}`), for a sensor of no
+  class or the wrong one: a tilt sensor that read "On" reads "Tilted", and counts as an open window only where the row
+  says it is one. Thanks to @rammium (#102).
 
 ## [1.12.0] — 2026-11-04
 

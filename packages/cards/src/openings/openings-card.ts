@@ -50,6 +50,13 @@ export interface OpeningItem {
   readonly since?: string;
   readonly tap_action?: ActionConfig;
   readonly hold_action?: ActionConfig;
+  /**
+   * The class it is read as, in place of its own or none (#102): its words, its icon, and whether its on is something
+   * to act on (a window's counts as open, a leak's as an alert).
+   */
+  readonly device_class?: string;
+  /** Its own words for a state (`on: Tilted`), before its class's. */
+  readonly states?: Readonly<Record<string, string>>;
 }
 
 export const OPENINGS_VARIANTS = ['rows', 'compact', 'tiles'] as const;
@@ -88,6 +95,22 @@ const isOpening = (view: EntityView): boolean =>
   view.domain === 'lock' ||
   view.deviceClass === 'lock' ||
   OPENING.has(view.deviceClass ?? '');
+
+/**
+ * The entity read as the row's class (#102), where the row names one: its words (Home Assistant's formatter is handed
+ * the class too), its icon and its alert are the class's.
+ */
+function classed(view: EntityView, item: OpeningItem): EntityView {
+  const dc = item.device_class;
+  if (typeof dc !== 'string' || !dc) return view;
+  const attributes = { ...view.stateObj?.attributes, device_class: dc };
+  return {
+    ...view,
+    deviceClass: dc,
+    stateObj: view.stateObj && { ...view.stateObj, attributes },
+    attr: <T>(key: string) => (key === 'device_class' ? (dc as T) : view.attr<T>(key)),
+  };
+}
 
 /**
  * Whether it is on: a sensor's on, a lock's unlocked; a cover (a blind, a curtain, a garage door…) whenever it is not
@@ -216,9 +239,11 @@ export class FluvyOpeningsCard extends Card<OpeningsCardConfig> {
     );
   }
 
-  /** The state, said once, in the words the device class deserves. */
-  private valueText(view: EntityView): string {
+  /** The state, said once: in the row's own words for it, else in those the device class deserves. */
+  private valueText(view: EntityView, item: OpeningItem): string {
     if (view.status !== 'ok') return stateText(this.hass, view);
+    const own: unknown = item.states?.[view.state];
+    if (typeof own === 'string' && own) return own;
     const on = isOn(view);
     const dc = view.deviceClass;
     if (view.domain === 'lock') return stateText(this.hass, view); // locking, jammed, open: Home Assistant's own words
@@ -256,9 +281,10 @@ export class FluvyOpeningsCard extends Card<OpeningsCardConfig> {
     // fit even alone (a long word in a narrow tile), every tile gives its circle's room to its words, as rows do; where
     // it still would not, one tile a row. A sensor that cannot be read — gone, or unknown — says a dash (its word is the
     // tile's label, and a gone one's skin): its state never lays the tiles out otherwise (1.9: a card keeps its size)
-    const words = (view: EntityView): string => (view.status === 'ok' ? this.valueText(view) : '—');
+    const words = (item: OpeningItem, view: EntityView): string =>
+      view.status === 'ok' ? this.valueText(view, item) : '—';
     const widest = Math.max(
-      ...rows.map(({ view }) => this.headFit.ruler.width(TILE_STATE, words(view))),
+      ...rows.map(({ item, view }) => this.headFit.ruler.width(TILE_STATE, words(item, view))),
     );
     // the grid's gap is the dashboard's (Fluvy's theme sets 16)
     const gap = this.gridGap();
@@ -278,7 +304,7 @@ export class FluvyOpeningsCard extends Card<OpeningsCardConfig> {
         const warn = this.alert(view);
         const dead = !isUsable(view);
         const name = item.name ?? view.name;
-        const value = words(view);
+        const value = words(item, view);
         // the state stays; its time goes, whole, where the tile cannot hold both
         const timedLine = !dead && timed ? `${value} · ${this.when(item, view, warn, now)}` : '';
         const when =
@@ -382,8 +408,14 @@ export class FluvyOpeningsCard extends Card<OpeningsCardConfig> {
   }
 
   /** A row's time where it fits beside its value; else none, whole (the value is what the row is for). */
-  private timeFitted(when: string, view: EntityView, compact: boolean, keep: boolean): string {
-    const room = this.headFit.rowRoom(this.contentWidth, this.valueText(view), {
+  private timeFitted(
+    when: string,
+    item: OpeningItem,
+    view: EntityView,
+    compact: boolean,
+    keep: boolean,
+  ): string {
+    const room = this.headFit.rowRoom(this.contentWidth, this.valueText(view, item), {
       compact,
       icon: keep,
     });
@@ -407,7 +439,10 @@ export class FluvyOpeningsCard extends Card<OpeningsCardConfig> {
     const frozen = this.config?._now ? new Date(this.config._now) : null;
     const now = frozen && !Number.isNaN(frozen.getTime()) ? frozen : new Date();
     // each row with its own entry, by position: the same sensor listed twice keeps both names
-    const rows = this.items().map((item) => ({ item, view: this.entity(item.entity) }));
+    const rows = this.items().map((item) => ({
+      item,
+      view: classed(this.entity(item.entity), item),
+    }));
     const views = rows.map(({ view }) => view);
     const alerts = views.filter((view) => this.alert(view));
     const tone = this.config?.tone ?? 'warning';
@@ -470,7 +505,7 @@ export class FluvyOpeningsCard extends Card<OpeningsCardConfig> {
       [
         ...shown.map(({ item, view }) => ({
           title: item.name ?? view.name,
-          value: isUsable(view) ? this.valueText(view) : '—',
+          value: isUsable(view) ? this.valueText(view, item) : '—',
         })),
         ...(collapsible && variant !== 'tiles'
           ? [{ title: s(this.hass, 'all_sensors'), value: '', end: 44 }]
@@ -527,11 +562,11 @@ export class FluvyOpeningsCard extends Card<OpeningsCardConfig> {
                       ? stateText(this.hass, view)
                       : ''
                     : timed
-                      ? this.timeFitted(this.when(item, view, warn, now), view, compact, keep)
+                      ? this.timeFitted(this.when(item, view, warn, now), item, view, compact, keep)
                       : '',
                   trailing: 'value',
                   // a value never wraps: a sensor that cannot be read is a dash (its word is the row's sub, or its label)
-                  value: dead ? '—' : this.valueText(view),
+                  value: dead ? '—' : this.valueText(view, item),
                   valueTone: warn ? 'warning' : '',
                   unavailable: dead,
                   ...(dead ? { label: `${title} · ${stateText(this.hass, view)}` } : {}),

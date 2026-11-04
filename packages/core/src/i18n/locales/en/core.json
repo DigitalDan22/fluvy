@@ -363,6 +363,8 @@
     "options_style": "Options as",
     "options": "Options",
     "labels": "Option names",
+    "device_class": "Show as",
+    "states": "Words for the states",
     "preset_style": "Presets as",
     "presets": "Quick-set times",
     "fan_style": "Fan speeds as",
