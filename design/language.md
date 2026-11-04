@@ -1833,7 +1833,7 @@ dashboards' bands — and change only their hero and their words.
 
 - **What it is**: PetKit's device type (its model id: `D3`…`D4SH` a feeder, `T3`…`T7` a litter box, `W4`, `W5`,
   `CTW2`, `CTW3`, `W7H` a fountain), PETLIBRO's product code (`PLAF` a feeder, `PLWF` a fountain, `PLLB` a litter box),
-  else the keys only one of them has (a meal now, a litter state, a filter's percentage), else its name in the eleven
+  else the keys only one of them has (a meal now, a litter state, a filter's percentage), else its name in the twelve
   languages ("Futterautomat", "Arenero", "自動給餌器"; a glitter lamp is no litter box). A pet of PetKit's own is a device
   too, never an appliance. Both integrations are the community's (HACS) and named by their translation keys; their
   buttons, texts and switches are pinned from their source as Home Assistant's own are.
