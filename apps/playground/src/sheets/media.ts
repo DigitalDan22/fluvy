@@ -203,6 +203,8 @@ export const sheet: SheetSpec = {
       { friendly_name: 'Guest TV', device_class: 'tv', supported_features: TV },
     ],
     ['image.den_tv', '2026-11-04T08:00:00+00:00', { entity_picture: TELEVISION }],
+    // #101: a television's status as an integration's sensor says it, for a line of the person's own
+    ['sensor.den_tv_status', 'On · TV · Volume 7 · Soundbar', { friendly_name: 'Den TV status' }],
     [
       'media_player.radio',
       'playing',
@@ -434,6 +436,57 @@ export const sheet: SheetSpec = {
           entity: 'media_player.tv_bare',
           image: 'image.den_tv',
           variant: 'hero',
+        },
+      ],
+    },
+    // #101: a line of the person's own in the player's place — a status sensor's state, a template, words — in every
+    // variant; a player out of reach still says why
+    {
+      title: 'Own line (#101)',
+      cards: [
+        {
+          type: 'custom:fluvy-media-card',
+          entity: 'media_player.tv_on',
+          variant: 'mini',
+          secondary: 'sensor.den_tv_status',
+        },
+        {
+          type: 'custom:fluvy-media-card',
+          entity: 'media_player.kitchen',
+          variant: 'mini',
+          secondary:
+            "{{ state_attr(entity, 'app_name') }} · Volume {{ (state_attr(entity, 'volume_level') * 100) | round }} %",
+        },
+        {
+          type: 'custom:fluvy-media-card',
+          entity: 'media_player.garden',
+          variant: 'mini',
+          secondary: 'Garden · Sonos',
+        },
+        {
+          type: 'custom:fluvy-media-card',
+          entity: 'media_player.tv_app',
+          image: 'image.den_tv',
+          secondary: 'sensor.den_tv_status',
+        },
+      ],
+    },
+    {
+      title: 'Own line · half',
+      cards: [
+        {
+          type: 'custom:fluvy-media-card',
+          entity: 'media_player.tv_on',
+          variant: 'mini',
+          secondary: 'sensor.den_tv_status',
+          cols: 6,
+        },
+        {
+          type: 'custom:fluvy-media-card',
+          entity: 'media_player.kitchen',
+          variant: 'mini',
+          secondary: 'Kitchen · Sonos One',
+          cols: 6,
         },
       ],
     },

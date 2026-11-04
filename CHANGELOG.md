@@ -24,8 +24,15 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The calendar card's week view rolls from today with `first_weekday: today`: today and the six days after it, named
   "Next 7 days", turning over at midnight without a reload, so a wall dashboard shows the days ahead on a Sunday too.
   Its editor shows each option with the view it acts on. Thanks to @theowneryaro (#111).
+- A television on a media card that is on and plays nothing Home Assistant can name, a tuner's channel or an app its
+  integration does not report as playing, is titled by its app or its input (else its name) where it read "Nothing
+  playing", and its line no longer says the title again. Thanks to @rammium (#101).
+
 ### Added
 
+- A line of your own on the media card in place of the player's, in every style and the compact row's too
+  (`secondary`): words, a template rendered by Home Assistant (the player is `entity` in it), or an entity said as its
+  state with its unit, such as a television's status sensor. Thanks to @rammium (#101).
 - A picture of your own on the thermostat card, in the circle's place beside its name, and on the media card, where
   the player has no artwork or always (`image`, `image_mode`): an address, or an entity whose picture it is (an
   integration's image entity, a camera, a person), as the appliance card takes one, loaded only from the web, a path in

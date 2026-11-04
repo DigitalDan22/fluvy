@@ -51,6 +51,7 @@ import {
   boolField,
   choiceField,
   colourFields,
+  editorLanguage,
   entityField,
   fieldRow,
   formLabels,
@@ -82,7 +83,8 @@ import { configKeys, type RowStyle } from '../shared/config.js';
 import { iconOf } from '../shared/domain.js';
 import { chipRow } from '../shared/chips.js';
 import { fitLine } from '../shared/fit.js';
-import { imageOf } from '../shared/picture.js';
+import { imageOf, isEntityId } from '../shared/picture.js';
+import { isTemplate, TemplateTexts } from '../shared/templates.js';
 import type { EditorDefaults } from '../shared/rows-editor.js';
 
 const s = strings('media');
@@ -114,6 +116,12 @@ export interface MediaCardConfig extends FluvyCardConfig {
    */
   image?: string;
   image_mode?: ImageMode;
+  /**
+   * The line under the title in place of the player's own, in every variant (#101): words of the person's own, a
+   * template (the player is `entity` in it), or an entity said as its state with its unit (a status sensor's "On · TV
+   * · Volume 7"). A player out of reach still says why.
+   */
+  secondary?: string;
 }
 
 export type ImageMode = 'fallback' | 'always';
@@ -308,6 +316,8 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
   private timer = 0;
   /** Lays the head's lines out to the room its rounds leave (measured, re-measured when a font lands). */
   private readonly head = new HeadFit(this);
+  /** The line of the person's own, where it is a template (`secondary`). */
+  private readonly texts = new TemplateTexts(this);
   /** Two stacked artwork layers; the front one holds the current picture so a change crossfades. */
   private readonly layers: [string, string] = ['', ''];
   private front = 0;
@@ -327,12 +337,14 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
     'controls',
     'image',
     'image_mode',
+    'secondary',
   ]);
   static override getConfigForm(): LovelaceConfigForm {
     return {
       schema: [
         entityField(['media_player']),
         nameIconFields(),
+        textField('secondary'),
         // the person's own picture, and when it shows: where the player has no artwork, or always
         fieldRow(
           textField('image'),
@@ -352,6 +364,8 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
         actionFields(),
       ],
       ...formLabels({ image_mode: 'media.editor_image_mode' }),
+      computeHelper: (schema) =>
+        schema.name === 'secondary' ? s(editorLanguage(), 'editor_secondary_helper') : undefined,
     };
   }
   /** What the card does for a key left out, shown in the editor: the power round is offered where the player has one. */
@@ -391,6 +405,14 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
 
   override getGridOptions(): LovelaceGridOptions {
     return { columns: 12, rows: 'auto', min_columns: this.variant === 'hero' ? 8 : 6 };
+  }
+
+  /** The player, and the entity its line of the person's own says (`secondary`). */
+  protected override watched(): readonly string[] {
+    const line = this.config?.secondary;
+    return typeof line === 'string' && isEntityId(line)
+      ? [...super.watched(), line]
+      : super.watched();
   }
 
   /* ---------- lifecycle ---------- */
@@ -449,7 +471,29 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
   }
 
   /**
-   * The speaker line under the track: the device, plus its input when one is selected and the line above does not say
+   * The line of the person's own (`secondary`), or undefined: their words, what their template renders to (a blank
+   * line until Home Assistant answers, nothing for one that fails), or an entity's state with its unit.
+   */
+  private ownLine(view: EntityView): string | undefined {
+    const line = this.config?.secondary;
+    // YAML may write a figure where words were meant (`secondary: 7`): they are its words
+    if (line === undefined || line === null || line === '') return undefined;
+    const text = String(line);
+    if (isTemplate(text)) return this.texts.line(text, view.id);
+    return isEntityId(text) ? stateText(this.hass, this.entity(text)) : text;
+  }
+
+  /**
+   * A television that is on and plays nothing Home Assistant can name — a tuner's channel, an app its integration does
+   * not report as playing (#101): what it shows, its app or its input, else its name; undefined for any other player.
+   */
+  private watching(view: EntityView, name: string): string | undefined {
+    if (view.deviceClass !== 'tv' || isOff(view.state) || view.state === 'idle') return undefined;
+    return textAttr(view, 'app_name') || textAttr(view, 'source') || name;
+  }
+
+  /**
+   * The speaker line under the track: the device, plus its input when one is selected and the lines above do not say
    * it already.
    */
   private sourceLine(view: EntityView, name: string, said: string): string {
@@ -461,13 +505,16 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
 
   /**
    * The line of a player that plays nothing. One at rest (idle, in standby, off) says when it last played; one that is
-   * on says what it shows, its input or its app ("On · HDMI 1": a television watched, #101), else its state alone.
+   * on says what it shows, its input or its app ("On · HDMI 1": a television watched, #101), else its state alone —
+   * never what its title says already (`said`: a television's app).
    */
-  private idleLine(view: EntityView): string {
+  private idleLine(view: EntityView, said = ''): string {
     const text = stateText(this.hass, view);
     const resting = isOff(view.state) || view.state === 'idle';
     if (!resting) {
-      const shows = textAttr(view, 'source') || textAttr(view, 'app_name');
+      const shows = [textAttr(view, 'source'), textAttr(view, 'app_name')].find(
+        (shown) => shown && shown !== said,
+      );
       return shows ? `${text} · ${shows}` : text;
     }
     const when = view.stateObj?.last_changed;
@@ -914,18 +961,24 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
     const { url: picture, own } = this.picture(view, away);
     // the plate's gradient stands in for artwork: under the person's own picture, or with nothing playing, it is at rest
     const idle = own || (!active && !picture) ? 'fv-art--idle' : '';
+    // a television watched is titled by what it shows, never "Nothing playing" (#101)
     const title = active
       ? textAttr(view, 'media_title') || textAttr(view, 'app_name') || name
       : away
         ? name
-        : this.t('media.nothing');
-    let second = active
-      ? this.secondary(view)
-      : away
-        ? this.unavailableLine(view)
-        : this.idleLine(view);
-    if (active && (second === title || !second)) second = stateText(this.hass, view);
-    const speaker = this.sourceLine(view, name, second);
+        : (this.watching(view, name) ?? this.t('media.nothing'));
+    // the person's own line in place of the player's, but for why a player out of reach is so
+    const ownWords = away ? undefined : this.ownLine(view);
+    let second =
+      ownWords ??
+      (active
+        ? this.secondary(view)
+        : away
+          ? this.unavailableLine(view)
+          : this.idleLine(view, title));
+    if (ownWords === undefined && active && (second === title || !second))
+      second = stateText(this.hass, view);
+    const speaker = this.sourceLine(view, name, `${title} · ${second}`);
     const saysSpeaker = speaker !== title;
     const plate = away ? 'ban' : 'speaker';
     const classes = `fv-card md-card ${hero ? 'md-card--hero' : ''} ${away ? 'is-off is-unavailable' : ''} ${this.isPlaying(view) ? 'is-playing' : ''} ${this.scrub_ === null ? '' : 'is-scrubbing'}`;
@@ -962,7 +1015,7 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
           </div>
           <div class="md-hero__text" data-align="center">
             ${named(title, 'md-hero__title')}
-            ${second ? html`<p class="fv-card__sub">${second}</p>` : nothing}
+            ${second ? html`<p class="fv-card__sub" data-name=${ownWords === undefined ? nothing : ''}>${second}</p>` : nothing}
             ${saysSpeaker ? html`<p class="fv-card__sub md-source">${glyph('speaker')}<span class="md-source__text">${speaker}</span></p>` : nothing}
           </div>
         </div>
@@ -1000,7 +1053,7 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
         ${keepsArt ? this.art(80, picture, idle, plate) : nothing}
         <div class="md-now__text">
           ${named(title, 'fv-card__title md-title')}
-          ${sub ? html`<p class="fv-card__sub">${sub}</p>` : nothing}
+          ${sub ? html`<p class="fv-card__sub" data-name=${ownWords === undefined ? nothing : ''}>${sub}</p>` : nothing}
           ${saysSpeaker ? html`<p class="fv-card__sub md-source">${glyph('speaker')}<span class="md-source__text">${source}</span></p>` : nothing}
         </div>
         ${
@@ -1100,9 +1153,15 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
     // the line under the title keeps its first segment (the speaker's name, or the state) and loses the rest —
     // the position, a value, never ends in an ellipsis; the figures are measured by their shape ("0:00"), as they
     // are tabular, so a position ticking once a second never fills the ruler's memory
-    const line = active
-      ? [name, position === null ? this.secondary(view) : formatDuration(position)].filter(Boolean)
-      : (away ? this.unavailableLine(view) : this.idleLine(view)).split(' · ');
+    const ownWords = away ? undefined : this.ownLine(view);
+    const line =
+      ownWords !== undefined
+        ? ownWords.split(' · ')
+        : active
+          ? [name, position === null ? this.secondary(view) : formatDuration(position)].filter(
+              Boolean,
+            )
+          : (away ? this.unavailableLine(view) : this.idleLine(view)).split(' · ');
     const sub = fitLine(
       line.map((text, index) => ({ text, optional: index > 0 })),
       inner - (art ? MINI_ART : 0) - rounds.length * MINI_ROUND,

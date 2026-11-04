@@ -2049,7 +2049,8 @@
     "repeat_one": "1曲リピート",
     "artwork": "アルバムアート",
     "editor_image_mode": "独自の画像を表示",
-    "o_fallback": "アートワークがないとき"
+    "o_fallback": "アートワークがないとき",
+    "editor_secondary_helper": "任意の文、テンプレート、または sensor.tv_status のようなエンティティ"
   },
   "now-playing": {
     "progress": "{position} / {duration}",

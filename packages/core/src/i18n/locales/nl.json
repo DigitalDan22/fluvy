@@ -152,7 +152,8 @@
     "repeat_one": "Eén herhalen",
     "artwork": "Albumhoes",
     "editor_image_mode": "Eigen afbeelding tonen",
-    "o_fallback": "Zonder hoes"
+    "o_fallback": "Zonder hoes",
+    "editor_secondary_helper": "Je eigen woorden, een sjabloon of een entiteit zoals sensor.tv_status"
   },
   "energy": {
     "solar": "Zon",

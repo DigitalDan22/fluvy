@@ -152,7 +152,8 @@
     "repeat_one": "Titel wiederholen",
     "artwork": "Albumcover",
     "editor_image_mode": "Eigenes Bild zeigen",
-    "o_fallback": "Ohne Cover"
+    "o_fallback": "Ohne Cover",
+    "editor_secondary_helper": "Eigene Worte, ein Template oder eine Entität wie sensor.tv_status"
   },
   "energy": {
     "solar": "Solar",

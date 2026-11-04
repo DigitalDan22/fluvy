@@ -152,7 +152,8 @@
     "repeat_one": "Repetir faixa",
     "artwork": "Capa do álbum",
     "editor_image_mode": "Mostrar a imagem própria",
-    "o_fallback": "Sem capa"
+    "o_fallback": "Sem capa",
+    "editor_secondary_helper": "Suas próprias palavras, um modelo ou uma entidade como sensor.tv_status"
   },
   "energy": {
     "solar": "Solar",

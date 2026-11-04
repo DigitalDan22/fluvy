@@ -152,7 +152,8 @@
     "repeat_one": "Repetir una",
     "artwork": "Carátula",
     "editor_image_mode": "Mostrar la imagen propia",
-    "o_fallback": "Sin carátula"
+    "o_fallback": "Sin carátula",
+    "editor_secondary_helper": "Tus propias palabras, una plantilla o una entidad como sensor.tv_status"
   },
   "energy": {
     "solar": "Solar",

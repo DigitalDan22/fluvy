@@ -152,7 +152,8 @@
     "repeat_one": "Birini yinele",
     "artwork": "Albüm kapağı",
     "editor_image_mode": "Kendi resmini göster",
-    "o_fallback": "Kapak yokken"
+    "o_fallback": "Kapak yokken",
+    "editor_secondary_helper": "Kendi sözcükleriniz, bir şablon veya sensor.tv_status gibi bir varlık"
   },
   "energy": {
     "solar": "Güneş",

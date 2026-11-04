@@ -22,7 +22,8 @@
     "repeat_one": "Repeat one",
     "artwork": "Album art",
     "editor_image_mode": "Own picture shown",
-    "o_fallback": "Without artwork"
+    "o_fallback": "Without artwork",
+    "editor_secondary_helper": "Your own words, a template, or an entity such as sensor.tv_status"
   },
   "now-playing": {
     "progress": "{position} of {duration}",

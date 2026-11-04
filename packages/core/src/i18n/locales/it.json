@@ -152,7 +152,8 @@
     "repeat_one": "Ripeti brano",
     "artwork": "Copertina",
     "editor_image_mode": "Mostra l’immagine propria",
-    "o_fallback": "Senza copertina"
+    "o_fallback": "Senza copertina",
+    "editor_secondary_helper": "Parole tue, un template o un’entità come sensor.tv_status"
   },
   "energy": {
     "solar": "Solare",

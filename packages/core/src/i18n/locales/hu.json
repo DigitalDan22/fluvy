@@ -2160,7 +2160,8 @@
     "repeat_one": "Egy szám ismétlése",
     "artwork": "Albumborító",
     "editor_image_mode": "Saját kép mutatása",
-    "o_fallback": "Borító nélkül"
+    "o_fallback": "Borító nélkül",
+    "editor_secondary_helper": "Saját szöveg, sablon vagy entitás, például sensor.tv_status"
   },
   "now-playing": {
     "progress": "{position} / {duration}",

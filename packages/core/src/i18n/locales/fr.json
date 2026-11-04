@@ -152,7 +152,8 @@
     "repeat_one": "Répéter le titre",
     "artwork": "Pochette",
     "editor_image_mode": "Afficher l’image personnelle",
-    "o_fallback": "Sans pochette"
+    "o_fallback": "Sans pochette",
+    "editor_secondary_helper": "Vos propres mots, un modèle ou une entité comme sensor.tv_status"
   },
   "energy": {
     "solar": "Solaire",

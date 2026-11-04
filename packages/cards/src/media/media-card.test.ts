@@ -9,7 +9,8 @@ await familiesDefined;
 /*
  * #101: a player that is on and plays nothing Home Assistant can name — a television on a tuner's channel, or in an app
  * its integration does not report as playing — says what it shows, its input or its app; "last played" is for a player
- * at rest, where it means something.
+ * at rest, where it means something. A television watched is titled by what it shows, never "Nothing playing"; and a
+ * line of the person's own (`secondary`) takes the player's place in every variant.
  */
 
 const STAMP = new Date(Date.now() - 3600_000).toISOString();
@@ -41,6 +42,8 @@ const STATES = [
   state('image.lounge_tv', '2026-11-04T08:00:00+00:00', {
     entity_picture: '/api/image_proxy/image.lounge_tv?token=abc',
   }),
+  state('sensor.tv_status', 'On · TV · Volume 7 · Soundbar'),
+  state('sensor.soundbar_volume', '7', { unit_of_measurement: '%' }),
 ];
 
 const hass = {
@@ -53,7 +56,22 @@ const hass = {
   areas: {},
   localize: (key: string) => key,
   hassUrl: (path: string) => `http://ha.local${path}`,
-  formatEntityState: (s: { state: string }) => s.state.charAt(0).toUpperCase() + s.state.slice(1),
+  formatEntityState: (s: { state: string; attributes: Record<string, unknown> }) => {
+    const unit = s.attributes['unit_of_measurement'];
+    return unit ? `${s.state} ${String(unit)}` : s.state.charAt(0).toUpperCase() + s.state.slice(1);
+  },
+  // Home Assistant renders a template as it is asked: here, what the line asks for, at once
+  connection: {
+    subscribeMessage: (callback: (event: unknown) => void, message: Record<string, unknown>) => {
+      const template = String(message['template']);
+      callback(
+        template.includes('fails')
+          ? { error: 'TemplateError', level: 'ERROR' }
+          : { result: `${String((message['variables'] as { entity: string }).entity)} · HDMI 2` },
+      );
+      return Promise.resolve(() => undefined);
+    },
+  },
 } as unknown as HomeAssistant;
 
 type CardElement = HTMLElement & {
@@ -73,6 +91,12 @@ async function draw(config: Record<string, unknown>): Promise<CardElement> {
   return card;
 }
 
+/** The title: the full player's, the hero's or the mini row's. */
+const title = (card: CardElement): string =>
+  card
+    .shadowRoot!.querySelector('.md-title, .md-hero__title, .fv-row__title')
+    ?.textContent?.trim() ?? '';
+
 /** The lines under the title, in order: the player's line, then its speaker line. */
 const lines = (card: CardElement): string[] =>
   [...card.shadowRoot!.querySelectorAll('.fv-card__sub, .fv-row__sub')].map(
@@ -90,11 +114,26 @@ describe('a player that is on and plays nothing (#101)', () => {
       // its input is said once
       'den tv',
     ]);
-    expect(lines(await draw({ entity: 'media_player.kids_tv' }))[0]).toBe('On · YouTube');
     expect(lines(await draw({ entity: 'media_player.guest_tv' }))[0]).toBe('On');
     expect(lines(await draw({ entity: 'media_player.den_tv', variant: 'mini' }))).toEqual([
       'On · HDMI 1',
     ]);
+    expect(lines(await draw({ entity: 'media_player.kids_tv', variant: 'mini' }))).toEqual([
+      'On · YouTube',
+    ]);
+  });
+
+  it('is titled, a television, by its app, else its input, else its name: never "Nothing playing"', async () => {
+    let card = await draw({ entity: 'media_player.den_tv' });
+    expect([title(card), ...lines(card)]).toEqual(['Live TV', 'On · HDMI 1', 'den tv']);
+    // what the title says, the line does not say again
+    card = await draw({ entity: 'media_player.kids_tv' });
+    expect([title(card), ...lines(card)]).toEqual(['YouTube', 'On', 'kids tv']);
+    card = await draw({ entity: 'media_player.guest_tv', variant: 'hero' });
+    expect([title(card), ...lines(card)]).toEqual(['guest tv', 'On']);
+    // a speaker at rest has nothing playing; a television in standby is at rest too
+    expect(title(await draw({ entity: 'media_player.speaker' }))).toBe('Nothing playing');
+    expect(title(await draw({ entity: 'media_player.bedroom_tv' }))).toBe('Nothing playing');
   });
 
   it('keeps "last played" for a player at rest: idle, in standby', async () => {
@@ -168,5 +207,53 @@ describe('a picture of the person’s own on the plate (#99)', () => {
     const card = await draw({ entity: 'media_player.den_tv', image: 'javascript:alert(1)' });
     expect(plate(card).url).toBe('');
     expect(card.shadowRoot!.querySelector('.fv-art svg')).not.toBeNull();
+  });
+});
+
+describe('a line of the person’s own (#101)', () => {
+  it('takes the player’s place in every variant: words, an entity’s state with its unit', async () => {
+    for (const variant of ['full', 'hero', 'mini']) {
+      const card = await draw({
+        entity: 'media_player.kitchen',
+        variant,
+        secondary: 'Kitchen · Sonos',
+      });
+      expect(lines(card)[0], variant).toBe('Kitchen · Sonos');
+    }
+    expect(
+      lines(await draw({ entity: 'media_player.den_tv', secondary: 'sensor.tv_status' }))[0],
+    ).toBe('On · TV · Volume 7 · Soundbar');
+    expect(
+      lines(
+        await draw({
+          entity: 'media_player.den_tv',
+          variant: 'mini',
+          secondary: 'sensor.soundbar_volume',
+        }),
+      ),
+    ).toEqual(['7 %']);
+  });
+
+  it('is a template Home Assistant renders, the player its entity; one that fails says nothing of itself', async () => {
+    const card = await draw({
+      entity: 'media_player.den_tv',
+      secondary: "{{ state_attr(entity, 'source') }}",
+    });
+    // the first answer lands after the first render
+    await card.updateComplete;
+    expect(lines(card)[0]).toBe('media_player.den_tv · HDMI 2');
+    const failed = await draw({
+      entity: 'media_player.den_tv',
+      variant: 'mini',
+      secondary: '{{ fails }}',
+    });
+    await failed.updateComplete;
+    expect(lines(failed)).toEqual(['']);
+  });
+
+  it('gives way to why a player is out of reach', async () => {
+    expect(
+      lines(await draw({ entity: 'media_player.garden', secondary: 'Garden · Sonos' }))[0],
+    ).toMatch(/^Unavailable/);
   });
 });
