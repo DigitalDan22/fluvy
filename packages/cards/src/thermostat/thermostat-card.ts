@@ -38,7 +38,7 @@ import { iconOf } from '../shared/domain.js';
 
 import { HeadFit } from '../energy/head.js';
 import { optionCell, optionColumnsFor, optionsHold, valuesHeld } from '../shared/options.js';
-import { imageOf } from '../shared/picture.js';
+import { BrokenPictures, imageOf } from '../shared/picture.js';
 import type { WhenOff } from '../shared/config.js';
 import { chipRow } from '../shared/chips.js';
 import { chipBlock, chipRows, optionBlock, optionRows } from '../shared/heights.js';
@@ -573,6 +573,8 @@ export class FluvyThermostatCard extends Card<ThermostatCardConfig> {
   }
 
   private readonly head = new HeadFit(this);
+  /** The person's picture (`image`) that would not load: the circle takes its place. */
+  private readonly pictures = new BrokenPictures(this);
 
   /**
    * The target the value row shows while a stepped change is on its way (5 s at most; released as soon as the entity
@@ -849,7 +851,7 @@ export class FluvyThermostatCard extends Card<ThermostatCardConfig> {
       class="fv-card cl-card ${unusable ? 'is-unavailable is-off' : ''} ${this.contentWidth < 292 ? 'is-narrow' : ''}"
       data-card
     >
-      ${head({ icon: fitted.icon ? iconOf(view, this.config?.icon) : null, picture: imageOf(this.hass, this.config?.image), tone, title: name, sub: fitted.sub, trailing: fitted.badge, name: true, cut: fitted.cut, ...this.headActions(view.id) })}
+      ${head({ icon: fitted.icon ? iconOf(view, this.config?.icon) : null, picture: this.pictures.shown(imageOf(this.hass, this.config?.image)), pictureFailed: this.pictures.failed, tone, title: name, sub: fitted.sub, trailing: fitted.badge, name: true, cut: fitted.cut, ...this.headActions(view.id) })}
       ${
         this.variant() !== 'dial'
           ? this.renderValueRow(view, m, name, unusable, figure, edge, now)

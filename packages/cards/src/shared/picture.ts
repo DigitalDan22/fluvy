@@ -1,4 +1,5 @@
 import type { HomeAssistant } from '@fluvy/core';
+import type { ReactiveController, ReactiveControllerHost } from 'lit';
 
 /** An entity's id (`image.tv`, `camera.porch`, `sensor.tv_status`): what a field taking an entity or words tells apart. */
 export const isEntityId = (text: string): boolean => /^[a-z_]+\.[a-z0-9_]+$/.test(text);
@@ -29,4 +30,32 @@ export function imageOf(hass: HomeAssistant | undefined, image: unknown): string
   const own = isEntityId(asked) ? hass?.states[asked]?.attributes['entity_picture'] : asked;
   const safe = typeof own === 'string' ? safePicture(own) : '';
   return /^\/(?!\/)/.test(safe) && hass?.hassUrl ? hass.hassUrl(safe) : safe;
+}
+
+/**
+ * The pictures a card could not load: each gives way to what the card draws without one (its circle, its drawing, its
+ * glyph) until its address changes, never a broken image. One per card: `shown` reads it, an `<img>`'s `@error`
+ * (`failed`) tells it.
+ */
+export class BrokenPictures implements ReactiveController {
+  private readonly broken = new Set<string>();
+
+  constructor(private readonly host: ReactiveControllerHost) {
+    host.addController(this);
+  }
+
+  hostConnected(): void {}
+
+  /** The address to draw, or '' for one that would not load. */
+  shown(url: string): string {
+    return url && !this.broken.has(url) ? url : '';
+  }
+
+  /** For an `<img>`'s `@error`: the address it was given would not load, and the card draws again without it. */
+  readonly failed = (event: Event): void => {
+    const url = (event.currentTarget as Element | null)?.getAttribute('src') ?? '';
+    if (!url || this.broken.has(url)) return;
+    this.broken.add(url);
+    this.host.requestUpdate();
+  };
 }

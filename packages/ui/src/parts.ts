@@ -125,6 +125,8 @@ export interface HeadOptions {
   readonly small?: boolean;
   /** The person's own picture in the circle's place (`image`: an address the card has made safe), drawn whole. */
   readonly picture?: string | undefined;
+  /** The picture would not load: the card draws its circle in its place (`BrokenPictures.failed`). */
+  readonly pictureFailed?: (event: Event) => void;
   /** A picture of the card's own in the circle's place (a car's), part of the head's button as the circle is. */
   readonly lead?: TemplateResult;
   readonly tone?: Tone;
@@ -190,7 +192,7 @@ export function head(o: HeadOptions): TemplateResult {
         ? nothing
         : o.picture
           ? html`<span class="fv-ico fv-ico--picture ${o.small ? 'fv-ico--small' : ''}" data-icon
-              ><img src=${o.picture} alt=""
+              ><img src=${o.picture} alt="" @error=${o.pictureFailed ?? nothing}
             /></span>`
           : ico(o.icon, o.tone ?? 'accent', { small: o.small ?? false }))
     }

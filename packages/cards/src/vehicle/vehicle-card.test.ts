@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import '../vehicle/english.js';
 import { vehicleHeight } from '../vehicle-family.js';
 import { carHouse, KIA, RENAULT, TESLA } from './fixtures.js';
-import { carControls, FluvyVehicleCard, pictureUrl } from './vehicle-card.js';
+import { carControls, FluvyVehicleCard } from './vehicle-card.js';
 import { vehicleEntities } from './roles.js';
 
 if (!customElements.get('fluvy-vehicle-card'))
@@ -274,14 +274,16 @@ describe('the vehicle card', () => {
     expect(at({ variant: 'mini' })).toBe(76);
   });
 
-  it('shows a picture only from an address it can show, an entity’s, or the car’s own', () => {
-    const hass = house();
-    expect(pictureUrl(hass, '/local/car.png')).toBe('http://ha.local/local/car.png');
-    expect(pictureUrl(hass, 'https://example.com/car.webp')).toBe('https://example.com/car.webp');
-    expect(pictureUrl(hass, 'data:image/png;base64,AAAA')).toBe('data:image/png;base64,AAAA');
-    expect(pictureUrl(hass, 'javascript:alert(1)')).toBe('');
-    expect(pictureUrl(hass, 'data:text/html,<b>')).toBe('');
-    expect(pictureUrl(hass, '//evil.example/car.png')).toBe('');
+  it('reads its picture as every card reads one, and draws the car’s glyph where it would not load', async () => {
+    const card = await mount({ device: TESLA.device, image: '/local/car.png' });
+    const img = root(card).querySelector<HTMLImageElement>('.vh-picture img');
+    expect(img?.getAttribute('src')).toBe('http://ha.local/local/car.png');
+    img?.dispatchEvent(new Event('error'));
+    await card.updateComplete;
+    const plate = root(card).querySelector('.vh-picture');
+    expect(plate?.classList.contains('is-empty')).toBe(true);
+    expect(plate?.querySelector('img')).toBeNull();
+    expect(plate?.querySelector('svg')).not.toBeNull();
   });
 
   it('draws its picture in the head, and a car glyph where none can be shown', async () => {

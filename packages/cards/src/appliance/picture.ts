@@ -168,14 +168,17 @@ export function pictureStep(
   );
 }
 
-/** The picture's box (`size` square), its drawing or the person's picture inside; empty until the drawings land. */
+/**
+ * The picture's box (`size` square), its drawing or the person's picture inside; empty until the drawings land. A
+ * picture that would not load is told to `failed` (`BrokenPictures`), and the card draws the drawing in its place.
+ */
 export function pictureBox(
   size: number,
   inside: TemplateResult | string | undefined,
-  extra = '',
+  failed?: (event: Event) => void,
 ): TemplateResult {
-  return html`<span class="ap-pic ${extra}" style="--ap-pic:${size}px" aria-hidden="true"
-    >${typeof inside === 'string' ? html`<img src=${inside} alt="" />` : (inside ?? nothing)}</span
+  return html`<span class="ap-pic" style="--ap-pic:${size}px" aria-hidden="true"
+    >${typeof inside === 'string' ? html`<img src=${inside} alt="" @error=${failed ?? nothing} />` : (inside ?? nothing)}</span
   >`;
 }
 

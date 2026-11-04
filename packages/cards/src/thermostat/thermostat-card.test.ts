@@ -296,4 +296,15 @@ describe('a picture of the person’s own in the head (#99)', () => {
     expect(card.renderRoot.querySelector('.is-unavailable .fv-ico--picture')).not.toBeNull();
     card.remove();
   });
+
+  it('gives way to the circle where it would not load, never a broken picture', async () => {
+    const card = await draw({ image: 'https://example.com/gone.png' });
+    card.renderRoot
+      .querySelector('.fv-card__head .fv-ico--picture > img')
+      ?.dispatchEvent(new Event('error'));
+    await card.updateComplete;
+    expect(picture(card)).toBeUndefined();
+    expect(card.renderRoot.querySelector('.fv-card__head .fv-ico')).not.toBeNull();
+    card.remove();
+  });
 });

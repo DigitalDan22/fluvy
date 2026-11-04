@@ -56,6 +56,7 @@ import {
   unitChoices,
 } from '../shared/form.js';
 import { durationSeconds, when } from '../shared/job-time.js';
+import { BrokenPictures, imageOf, isEntityId } from '../shared/picture.js';
 import type { EditorDefaults, RowsListSpec } from '../shared/rows-editor.js';
 import { Ticker, MINUTE } from '../shared/ticker.js';
 import { valueRow } from '../shared/value-row.js';
@@ -293,29 +294,11 @@ const CAR_WIDTH = 40;
 /** Minutes without a word from the car after which the card says when it last spoke (`stale_after`). */
 const STALE_AFTER = 30;
 
-/** A picture's address, as the card may show it: http(s), one Home Assistant serves (`/local/…`), or an image's data. */
-export function pictureUrl(hass: HomeAssistant | undefined, raw: string | undefined): string {
-  const text = (raw ?? '').trim();
-  if (!text) return '';
-  if (/^data:image\/(png|jpe?g|webp|gif|avif|svg\+xml)[;,]/i.test(text)) return text;
-  if (text.startsWith('/') && !text.startsWith('//'))
-    return hass?.hassUrl ? hass.hassUrl(text) : text;
-  try {
-    const url = new URL(text);
-    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : '';
-  } catch {
-    return '';
-  }
-}
-
 /** A unit a figure reads in: automatic (the sensor's own), or one of `units`. */
 const unitField = (name: string, units: readonly string[]): HaFormSchemaItem => ({
   name,
   selector: { select: { mode: 'dropdown', options: unitChoices(units) } },
 });
-
-/** An id the config names: a domain and an object id, nothing else. */
-const ENTITY_ID = /^[a-z_]+\.[a-z0-9_]+$/;
 
 /** The words of a control's state, for the reader: "Lock · Locked". */
 const said = (view: Pick<ControlView, 'name' | 'word'>): string =>
@@ -776,7 +759,7 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
     | { readonly key: string; readonly registry: unknown; readonly entities: VehicleEntities }
     | undefined;
   /** A picture that would not load: the plate keeps its place with the car's glyph (until the address changes). */
-  private broken = '';
+  private readonly pictures = new BrokenPictures(this);
 
   /** A car has no entity of its own to show: its device does; `entity` names one of its entities instead. */
   static override base: readonly BaseKey[] = [
@@ -1010,7 +993,7 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
       ...windows,
       ...Object.values(warnings),
       ...this.rowEntries().flatMap((entry) => (entry.entity ? [entry.entity] : [])),
-      ...(this.config?.image && ENTITY_ID.test(this.config.image) ? [this.config.image] : []),
+      ...(this.config?.image && isEntityId(this.config.image) ? [this.config.image] : []),
     ].filter((id): id is string => Boolean(id));
   }
 
@@ -1975,33 +1958,20 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
   /** The car's picture: the address the card gives, an entity's own, or (`auto`) the integration's. */
   private pictureSrc(): string {
     const image = this.config?.image?.trim() ?? '';
-    if (!image) return '';
-    const own = (id: string | undefined): string => {
-      const v = id ? this.hass?.states[id] : undefined;
-      const picture = v?.attributes['entity_picture'];
-      return typeof picture === 'string' ? pictureUrl(this.hass, picture) : '';
-    };
-    if (image === 'auto') {
-      const device = vehicleDevice(this.hass, this.config?.device, this.config?.entity);
-      const pictured = Object.values(this.hass?.entities ?? {}).find(
-        (entry) => entry.device_id === device && entry.entity_id.startsWith('image.'),
-      )?.entity_id;
-      return own(pictured) || own(this.car().roles.location);
-    }
-    return ENTITY_ID.test(image) ? own(image) : pictureUrl(this.hass, image);
+    if (image !== 'auto') return imageOf(this.hass, image);
+    const device = vehicleDevice(this.hass, this.config?.device, this.config?.entity);
+    const pictured = Object.values(this.hass?.entities ?? {}).find(
+      (entry) => entry.device_id === device && entry.entity_id.startsWith('image.'),
+    )?.entity_id;
+    return imageOf(this.hass, pictured) || imageOf(this.hass, this.car().roles.location);
   }
 
   private picture(lead: boolean): TemplateResult {
-    const src = this.pictureSrc();
-    const shown = src && src !== this.broken;
-    const failed = (): void => {
-      this.broken = src;
-      this.requestUpdate();
-    };
+    const src = this.pictures.shown(this.pictureSrc());
     return html`<span
-      class="${lead ? 'vh-face' : 'vh-picture'} ${shown ? '' : 'is-empty'}"
+      class="${lead ? 'vh-face' : 'vh-picture'} ${src ? '' : 'is-empty'}"
       aria-hidden="true"
-      >${shown ? html`<img src=${src} alt="" @error=${failed} />` : glyph('car')}</span
+      >${src ? html`<img src=${src} alt="" @error=${this.pictures.failed} />` : glyph('car')}</span
     >`;
   }
 

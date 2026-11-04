@@ -1,6 +1,7 @@
 import type { HomeAssistant } from '@fluvy/core';
 import { describe, expect, it } from 'vitest';
-import { imageOf, isEntityId, safePicture } from './picture.js';
+import type { ReactiveControllerHost } from 'lit';
+import { BrokenPictures, imageOf, isEntityId, safePicture } from './picture.js';
 
 /** A house with the pictures a person may point at: an image entity's, a camera's still, a face. */
 const hass = {
@@ -77,5 +78,22 @@ describe('a picture of the person’s own (#99)', () => {
       expect(isEntityId(id), id).toBe(true);
     for (const text of ['On · HDMI 1', '/local/tv.png', 'Sensor.TV', 'sensor.', 'sensor.tv status'])
       expect(isEntityId(text), text).toBe(false);
+  });
+});
+
+describe('a picture that would not load', () => {
+  it('gives way until its address changes, and the card draws again once', () => {
+    let drawn = 0;
+    const host = { addController: () => {}, requestUpdate: () => void drawn++ };
+    const pictures = new BrokenPictures(host as unknown as ReactiveControllerHost);
+    // an <img> that fires `error` twice: the address it was given, as the event hands it
+    const error = { currentTarget: { getAttribute: () => '/local/tv.png' } } as unknown as Event;
+    expect(pictures.shown('/local/tv.png')).toBe('/local/tv.png');
+    pictures.failed(error);
+    pictures.failed(error);
+    expect(pictures.shown('/local/tv.png')).toBe('');
+    expect(pictures.shown('/local/tv-2.png')).toBe('/local/tv-2.png');
+    expect(pictures.shown('')).toBe('');
+    expect(drawn).toBe(1);
   });
 });

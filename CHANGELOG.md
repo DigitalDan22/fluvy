@@ -17,6 +17,16 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - An appliance whose machine runs while its cycle waits for its delayed start, preheats or has finished says
   Scheduled, Preheating or Done, where it said Running: a Samsung washer counting down to its start on SmartThings, an
   oven on SmartThings preheating. Thanks to @rammium (#97).
+- A television on a media card that is on and plays nothing Home Assistant can name, a tuner's channel or an app its
+  integration does not report as playing, is titled by its app or its input (else its name) where it read "Nothing
+  playing", and its line no longer says the title again. Thanks to @rammium (#101).
+- A room card ends in quick actions: a round for the room's lights and one for its blinds, where it has them, at the
+  end of its head, its row or its picture. Each is a switch for all of them (a tap turns every light off while one is
+  on, else on; blinds open, close, or stop while they move) with a ring of how much of them is on, and a hold opens
+  where the room opens; as many show as the width holds once the name has its room. `quick_actions` orders the room's
+  `lights`, `covers`, `fans` and `media` and any entity, each with its own name, icon, colour and actions, and
+  `show_quick_actions: false` hides them. Thanks to @xoatrash (#113).
+- A room of sensors alone shows its readings and no "All devices" row, which said nothing under its title.
 
 ### Added
 
@@ -30,12 +40,6 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The calendar card's week view rolls from today with `first_weekday: today`: today and the six days after it, named
   "Next 7 days", turning over at midnight without a reload, so a wall dashboard shows the days ahead on a Sunday too.
   Its editor shows each option with the view it acts on. Thanks to @theowneryaro (#111).
-- A television on a media card that is on and plays nothing Home Assistant can name, a tuner's channel or an app its
-  integration does not report as playing, is titled by its app or its input (else its name) where it read "Nothing
-  playing", and its line no longer says the title again. Thanks to @rammium (#101).
-
-### Added
-
 - A compact or mini tile's long name in two lines where one would end it in an ellipsis (`name_lines: 2`), on the
   tile and tiles cards, the template card, the room lights' tiles and the room card's tiles and row: the tile is a
   line taller whatever its name says, so a row of tiles stays level. Thanks to @rammium (#100).
@@ -48,31 +52,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - A picture of your own on the thermostat card, in the circle's place beside its name, and on the media card, where
   the player has no artwork or always (`image`, `image_mode`): an address, or an entity whose picture it is (an
   integration's image entity, a camera, a person), as the appliance card takes one, loaded only from the web, a path in
-  Home Assistant or a `data:image` address. Thanks to @rammium (#99).
-
-### Fixed
-
-- A row of modes, presets or sources whose longest word would not hold beside its glyph even on a line of its own (an
-  air conditioner's Dry mode in Portuguese or Italian, in half a section) shows its words without their glyphs, where
-  the word was cut.
-- A room card ends in quick actions: a round for the room's lights and one for its blinds, where it has them, at the
-  end of its head, its row or its picture. Each is a switch for all of them (a tap turns every light off while one is
-  on, else on; blinds open, close, or stop while they move) with a ring of how much of them is on, and a hold opens
-  where the room opens; as many show as the width holds once the name has its room. `quick_actions` orders the room's
-  `lights`, `covers`, `fans` and `media` and any entity, each with its own name, icon, colour and actions, and
-  `show_quick_actions: false` hides them. Thanks to @xoatrash (#113).
-- A room of sensors alone shows its readings and no "All devices" row, which said nothing under its title.
-- A plug whose integration files its countdown or its power-on behaviour as no setting (some Tuya and Zigbee2MQTT
-  plugs) counts on its room card again: its one switch beside a power or energy reading, where 1.12 took it for an
-  appliance's option.
-
-### Added
-
+  Home Assistant or a `data:image` address. A picture that would not load gives way to the circle (to the drawing of
+  its kind on the appliance card, to the car's glyph on the Vehicle card), never a broken image. Thanks to @rammium
+  (#99).
 - `include` and `exclude` on the room card, in its editor too: entity ids, patterns of ids (`switch.dishwasher_*`),
   device ids or domains, to count what the room's rule leaves out or leave out what it shows. The automatic dashboards
   take them per room (`rooms`), for the room's card and its page. Thanks to @rammium (#95).
-### Added
-
 - Pet devices on the appliance card: a feeder, a water fountain and a litter box, found on PetKit's and PETLIBRO's
   integrations or by their names. Two tiles say what matters (a feeder's food and its next meal, a fountain's water and
   its filter, a litter box's litter and its waste bin), ringed by what is left and in the warning's or the danger's ink
@@ -80,8 +65,6 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   how often, and the days a filter, a desiccant or a deodorant has left. A feeder counts down to its next meal; the
   round gives a meal now, cleans the box or resumes a clean a cat paused, each asked first; the automatic dashboards
   give the pets a band of their own. Thanks to @eduardoribeiro (#112).
-### Added
-
 - A Vehicle card for an electric car: its battery on the car charger's ruler (or as a ring) with its range and its
   charge limit marked; when it will be at its limit while it charges, as a clock time and as how long from now; a range
   running low, a window or a boot left open, its limit reached, plugged in and not charging, a cabin too cold or too hot
@@ -107,6 +90,15 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - `picture_min: 32`, `44` or `64` keeps an appliance's picture at least that large, in the appliance card's head
   and row and in the appliances card's tiles and whole cards, a long name ending in its ellipsis beside it. Thanks to
   @rammium (#103).
+
+### Fixed
+
+- A row of modes, presets or sources whose longest word would not hold beside its glyph even on a line of its own (an
+  air conditioner's Dry mode in Portuguese or Italian, in half a section) shows its words without their glyphs, where
+  the word was cut.
+- A plug whose integration files its countdown or its power-on behaviour as no setting (some Tuya and Zigbee2MQTT
+  plugs) counts on its room card again: its one switch beside a power or energy reading, where 1.12 took it for an
+  appliance's option.
 
 ### Development
 

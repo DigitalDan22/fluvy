@@ -61,7 +61,7 @@ import { unitWord, widestDuration } from '../shared/duration.js';
 import { fitLine, type Segment } from '../shared/fit.js';
 import { COLUMN, textWidth } from '../shared/heights.js';
 import { optionColumnsFor, optionsHold } from '../shared/options.js';
-import { imageOf } from '../shared/picture.js';
+import { BrokenPictures, imageOf } from '../shared/picture.js';
 import {
   accentField,
   actionField,
@@ -1275,6 +1275,8 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
   ];
 
   private readonly head = new HeadFit(this);
+  /** The person's picture (`image`) that would not load: the kind's drawing takes its place. */
+  private readonly pictures = new BrokenPictures(this);
   /** The setpoints stepped and on their way. */
   private readonly nudges = new Nudges(() => this.requestUpdate());
   /** A plug's power and its meter's history, and this cycle's energy's. */
@@ -2080,8 +2082,12 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     const c = this.config;
     if (c?.picture === 'icon')
       return ico(view.glyph, view.unavailable ? 'off' : view.headTone, { hero: size >= 64 });
-    const own = imageOf(this.hass, c?.image);
-    return pictureBox(size, own || artOf(view.kind, () => this.requestUpdate()));
+    const own = this.pictures.shown(imageOf(this.hass, c?.image));
+    return pictureBox(
+      size,
+      own || artOf(view.kind, () => this.requestUpdate()),
+      this.pictures.failed,
+    );
   }
 
   /**
@@ -4753,8 +4759,9 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         ring && art
           ? pictureBox(
               picture,
-              imageOf(this.hass, this.config?.image) ||
+              this.pictures.shown(imageOf(this.hass, this.config?.image)) ||
                 artOf(view.kind, () => this.requestUpdate()),
+              this.pictures.failed,
             )
           : ring
             ? html`<span class="ap-ring fv-tone--${attention ? 'warning' : view.tone}">
