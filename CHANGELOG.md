@@ -444,7 +444,7 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 ### Development
 
 - The energy card's and the energy flow card's editors are modules of their own (`energy/energy-editor.ts`,
-  `energy-flow/energy-flow-editor.ts`), fetched with the visual editor: the energy chunk is 79.6 of its 80 KB, where
+  `energy-flow/energy-flow-editor.ts`), fetched with the visual editor: the energy chunk is 79.7 of its 80 KB, where
   the new keys took it half a kilobyte over. A list's helper in the rows editor is told its item and the house.
 - The light card's level (its hold until the lamp reports it, its stepper's burst, its live drag, its fine scale's
   words) and its value row are shared modules (`shared/level.ts`, `levelRow`), and so are the fan card's speeds and its
