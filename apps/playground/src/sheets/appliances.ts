@@ -946,6 +946,15 @@ export const sheet: SheetSpec = {
       cards: [card('hc-dish'), card('lg-fridge', { variant: 'compact', cols: 6 })],
       hass: changed({ ...unavailable('hc-dish'), ...unavailable('lg-fridge') }),
     }),
+    // a plug out of reach while its cycle ran: what this cycle used a dash as well, its dial's words its state's
+    frame({
+      title: 'Out of reach · a washer on a plug',
+      cards: [
+        card('plug-washer', { variant: 'ring' }),
+        card('plug-washer', { variant: 'compact' }),
+      ],
+      hass: changed(unavailable('plug-washer')),
+    }),
     frame({
       title: 'Failed · says why',
       cards: [card('lg-washer')],

@@ -43,6 +43,14 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   alone, its key typed as a count; `pnpm i18n` fails a catalogue without a form its language gives a whole number up
   to 1000, and English with a form it never says.
 
+### Fixed
+
+- An appliance card on a SmartThings or LocalThings machine, or on a plug, asks Home Assistant's recorder for its
+  energy meter's history only where it says what this cycle used (its energy row or readout, a plug's hero), where
+  every such card asked for it, and for its power's too, while its machine ran; the appliances card reads a plug's
+  power alone.
+- A ring appliance card on a plug out of reach says so under its dash, where it could say what this cycle had used.
+
 ## [1.13.1] — 2026-11-04
 
 ### Visible on upgrade

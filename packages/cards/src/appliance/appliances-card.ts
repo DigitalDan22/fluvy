@@ -64,7 +64,7 @@ import {
   cycleOf,
   cycleOfFlag,
   FINISHED_AFTER,
-  PlugHistory,
+  ReadingHistory,
   RUNNING_POWER,
   type PlugCycle,
 } from './plug.js';
@@ -340,7 +340,7 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
 
   private readonly head = new HeadFit(this);
   /** Each plug's power history, by appliance. */
-  private readonly histories = new Map<string, PlugHistory>();
+  private readonly histories = new Map<string, ReadingHistory>();
   /** The appliances found, once per registry and list. */
   private found:
     | {
@@ -582,11 +582,10 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
     if (roles.running) return cycleOfFlag(this.hass?.states[roles.running], now, doneFor);
     let history = this.histories.get(key);
     if (!history) {
-      history = new PlugHistory(() => this.requestUpdate());
+      history = new ReadingHistory(() => this.requestUpdate());
       this.histories.set(key, history);
     }
-    const { watts } = history.read(this.hass, { watts: roles.watts, energy: roles.energy }, now);
-    return cycleOf(watts, now, {
+    return cycleOf(history.read(this.hass, roles.watts, now).points, now, {
       running: RUNNING_POWER,
       finishedAfter: FINISHED_AFTER * MINUTE,
       doneFor,

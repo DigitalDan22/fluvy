@@ -7,7 +7,7 @@ import {
   energySince,
   inBase,
   LOOK_BACK,
-  PlugHistory,
+  ReadingHistory,
   valueAt,
   type Point,
 } from './plug.js';
@@ -125,23 +125,26 @@ describe('what a cycle used', () => {
   });
 });
 
-describe('a plug’s history', () => {
-  it('is fetched once — the last twelve hours, raw, as one call — then kept by the live states', async () => {
-    const callWS = vi.fn(async () => ({
+describe('an entity’s history', () => {
+  it('is fetched once — the last twelve hours, raw — then kept by the live states', async () => {
+    const recorded: Record<string, ReadonlyArray<{ s: string; lu: number }>> = {
       'sensor.p': [
         { s: '0.4', lu: (NOW - 600 * MINUTE) / 1000 },
         { s: '2050', lu: (NOW - 42 * MINUTE) / 1000 },
       ],
       'sensor.e': [{ s: '181.56', lu: (NOW - 600 * MINUTE) / 1000 }],
-    }));
+    };
+    const callWS = vi.fn(async ({ entity_ids }: { entity_ids: readonly string[] }) =>
+      Object.fromEntries(entity_ids.map((id) => [id, recorded[id] ?? []])),
+    );
     const states: Record<string, HassEntity> = {
       'sensor.p': state('sensor.p', '410', NOW - 10 * MINUTE, 'W'),
       'sensor.e': state('sensor.e', '182.3', NOW - 5 * MINUTE, 'kWh'),
     };
     const hass = { callWS, states } as unknown as HomeAssistant;
     const landed = vi.fn();
-    const history = new PlugHistory(landed);
-    const first = history.read(hass, { watts: 'sensor.p', energy: 'sensor.e' }, NOW);
+    const history = new ReadingHistory(landed);
+    const first = history.read(hass, 'sensor.p', NOW);
     expect(first.loaded).toBe(false);
     await vi.waitFor(() => expect(landed).toHaveBeenCalledTimes(1));
     expect(callWS).toHaveBeenCalledTimes(1);
@@ -149,21 +152,25 @@ describe('a plug’s history', () => {
       expect.objectContaining({
         type: 'history/history_during_period',
         start_time: new Date(NOW - LOOK_BACK).toISOString(),
-        entity_ids: ['sensor.p', 'sensor.e'],
+        entity_ids: ['sensor.p'],
         minimal_response: true,
         no_attributes: true,
       }),
     );
-    const read = history.read(hass, { watts: 'sensor.p', energy: 'sensor.e' }, NOW);
+    const read = history.read(hass, 'sensor.p', NOW);
     expect(read.loaded).toBe(true);
-    expect(read.watts.map((point) => point.value)).toEqual([0.4, 2050, 410]);
-    expect(read.energy.map((point) => point.value)).toEqual([181.56, 182.3]);
+    expect(read.points.map((point) => point.value)).toEqual([0.4, 2050, 410]);
     // a new live reading is kept; nothing is asked again
     states['sensor.p'] = state('sensor.p', '0.4', NOW - MINUTE, 'W');
-    expect(history.read(hass, { watts: 'sensor.p', energy: 'sensor.e' }, NOW).watts).toHaveLength(
-      4,
-    );
+    expect(history.read(hass, 'sensor.p', NOW).points).toHaveLength(4);
     expect(callWS).toHaveBeenCalledTimes(1);
+    // another entity is asked for afresh, alone
+    expect(history.read(hass, 'sensor.e', NOW).loaded).toBe(false);
+    await vi.waitFor(() => expect(landed).toHaveBeenCalledTimes(2));
+    expect(callWS).toHaveBeenLastCalledWith(expect.objectContaining({ entity_ids: ['sensor.e'] }));
+    expect(history.read(hass, 'sensor.e', NOW).points.map((point) => point.value)).toEqual([
+      181.56, 182.3,
+    ]);
   });
 
   it('a recorder that cannot be read leaves the live states', async () => {
@@ -174,11 +181,11 @@ describe('a plug’s history', () => {
       states: { 'sensor.p': state('sensor.p', '410', NOW - 10 * MINUTE, 'W') },
     } as unknown as HomeAssistant;
     const landed = vi.fn();
-    const history = new PlugHistory(landed);
-    history.read(hass, { watts: 'sensor.p' }, NOW);
+    const history = new ReadingHistory(landed);
+    history.read(hass, 'sensor.p', NOW);
     await vi.waitFor(() => expect(landed).toHaveBeenCalled());
-    const read = history.read(hass, { watts: 'sensor.p' }, NOW);
+    const read = history.read(hass, 'sensor.p', NOW);
     expect(read.loaded).toBe(true);
-    expect(read.watts).toEqual([{ at: NOW - 10 * MINUTE, value: 410 }]);
+    expect(read.points).toEqual([{ at: NOW - 10 * MINUTE, value: 410 }]);
   });
 });

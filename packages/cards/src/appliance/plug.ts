@@ -149,28 +149,20 @@ interface HistoryRow {
   readonly lc?: number;
 }
 
-/** The entities a plug's cycle is read from. */
-export interface PlugEntities {
-  readonly watts?: string | undefined;
-  readonly energy?: string | undefined;
-}
-
-/** The plug's readings, as `PlugHistory` keeps them. */
-export interface PlugReadings {
-  readonly watts: readonly Point[];
-  readonly energy: readonly Point[];
-  /** The history has been read (or could not be): the cycle is the history's, not the live states' alone. */
+/** An entity's readings, as `ReadingHistory` keeps them. */
+export interface Readings {
+  readonly points: readonly Point[];
+  /** Its history has been read (or could not be): they are the history's, not the live states' alone. */
   readonly loaded: boolean;
 }
 
 /**
- * A card's plug history: the last twelve hours of its power and its meter, fetched once (the recorder's raw states,
- * as one call), then kept by the live states as they come. Fetched again only for other entities.
+ * An entity's last twelve hours (a plug's power, a meter), fetched the first time a card reads it (the recorder's raw
+ * states), then kept by its live states as they come. Fetched again only for another entity.
  */
-export class PlugHistory {
-  private key = '';
-  private watts: Point[] = [];
-  private energy: Point[] = [];
+export class ReadingHistory {
+  private id: string | undefined;
+  private points: Point[] = [];
   private loaded = false;
 
   /** `landed`: the history arrived — the card draws again. */
@@ -178,46 +170,41 @@ export class PlugHistory {
 
   read(
     hass: Pick<HomeAssistant, 'callWS' | 'states'> | undefined,
-    ids: PlugEntities,
+    id: string | undefined,
     now: number,
-  ): PlugReadings {
-    const key = `${ids.watts ?? ''}|${ids.energy ?? ''}`;
-    if (key !== this.key && hass) {
-      this.key = key;
-      this.watts = [];
-      this.energy = [];
+  ): Readings {
+    if (id !== this.id && hass) {
+      this.id = id;
+      this.points = [];
       this.loaded = false;
-      void this.fetch(hass, ids, now, key);
+      if (id) void this.fetch(hass, id, now);
     }
-    this.keep(hass?.states[ids.watts ?? ''], this.watts);
-    this.keep(hass?.states[ids.energy ?? ''], this.energy);
-    return { watts: this.watts, energy: this.energy, loaded: this.loaded };
+    this.keep(id ? hass?.states[id] : undefined);
+    return { points: this.points, loaded: this.loaded };
   }
 
   /** A live state newer than the last reading kept is kept too. */
-  private keep(state: HassEntity | undefined, points: Point[]): void {
+  private keep(state: HassEntity | undefined): void {
     if (!state) return;
     const at = Date.parse(state.last_changed);
     const value = inBase(state.state, state.attributes.unit_of_measurement);
-    const last = points[points.length - 1];
+    const last = this.points[this.points.length - 1];
     if (value === null || !Number.isFinite(at) || (last && last.at >= at)) return;
-    points.push({ at, value });
+    this.points.push({ at, value });
   }
 
   private async fetch(
     hass: Pick<HomeAssistant, 'callWS' | 'states'>,
-    ids: PlugEntities,
+    id: string,
     now: number,
-    key: string,
   ): Promise<void> {
-    const wanted = [ids.watts, ids.energy].filter((id): id is string => Boolean(id));
     let rows: Record<string, readonly HistoryRow[]> = {};
     try {
       rows = await hass.callWS<Record<string, readonly HistoryRow[]>>({
         type: 'history/history_during_period',
         start_time: new Date(now - LOOK_BACK).toISOString(),
         end_time: new Date(now).toISOString(),
-        entity_ids: wanted,
+        entity_ids: [id],
         minimal_response: true,
         no_attributes: true,
         significant_changes_only: false,
@@ -225,18 +212,15 @@ export class PlugHistory {
     } catch {
       // the recorder could not be read: the live states say what they can
     }
-    if (key !== this.key) return;
-    const unit = (id: string | undefined): unknown =>
-      id ? hass.states[id]?.attributes.unit_of_measurement : undefined;
-    const points = (id: string | undefined): Point[] =>
-      (id ? (rows[id] ?? []) : []).flatMap((row) => {
-        const value = inBase(row.s, unit(id));
-        const at = (row.lc ?? row.lu ?? NaN) * 1000;
-        return value === null || !Number.isFinite(at) ? [] : [{ at, value }];
-      });
+    if (id !== this.id) return;
+    const unit = hass.states[id]?.attributes.unit_of_measurement;
+    const points = (rows[id] ?? []).flatMap((row) => {
+      const value = inBase(row.s, unit);
+      const at = (row.lc ?? row.lu ?? NaN) * 1000;
+      return value === null || !Number.isFinite(at) ? [] : [{ at, value }];
+    });
     // what the history says first, then the live states that came while it was asked
-    this.watts = merge(points(ids.watts), this.watts);
-    this.energy = merge(points(ids.energy), this.energy);
+    this.points = merge(points, this.points);
     this.loaded = true;
     this.landed();
   }

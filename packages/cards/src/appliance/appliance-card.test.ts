@@ -519,6 +519,43 @@ describe('the appliance card', () => {
     },
   );
 
+  it('asks the recorder for a meter’s history only where the card draws what this cycle used', async () => {
+    const asked = async (config: Record<string, unknown>): Promise<unknown[]> => {
+      const ids: unknown[] = [];
+      const hass = {
+        ...house(),
+        callWS: async (message: { type: string; entity_ids?: unknown }) => {
+          if (message.type.startsWith('history/') || message.type.startsWith('recorder/'))
+            ids.push(message.entity_ids);
+          return {};
+        },
+      } as unknown as HomeAssistant;
+      await mount(config, hass);
+      return ids;
+    };
+    // SmartThings' and LocalThings' meters count the machine's years: nothing asked where no energy is drawn
+    for (const device of ['st-washer', 'lt-washer']) {
+      for (const variant of ['row', 'ring'])
+        expect(await asked({ device, variant }), `${device} ${variant}`).toEqual([]);
+      expect(await asked({ device, variant: 'compact', readouts: ['program'] })).toEqual([]);
+      expect(await asked({ device, rows: ['program', 'spin'] }), device).toEqual([]);
+    }
+    // where it is, its meter alone: the whole card's energy row, a readout of it
+    const meter = [['sensor.samsung_waschmaschine_energie']];
+    expect(await asked({ device: 'st-washer' })).toEqual(meter);
+    expect(await asked({ device: 'st-washer', variant: 'compact', readouts: ['energy'] })).toEqual(
+      meter,
+    );
+    expect(await asked({ device: 'lt-washer' })).toEqual([['sensor.waschmaschine_flur_energie']]);
+    // a plug's cycle is its power's history; its meter is asked for where its hero says this cycle's energy
+    const power = ['sensor.waschmaschine_keller_leistung'];
+    expect(await asked({ device: 'plug-washer', variant: 'row' })).toEqual([power]);
+    expect(await asked({ device: 'plug-washer' })).toEqual([
+      power,
+      ['sensor.waschmaschine_keller_energie'],
+    ]);
+  });
+
   it('reads no device where it names `device: none` (#98), as before 1.13: its entity’s name, or its roles alone', async () => {
     const entity = 'switch.geschirrspuler_kuche_ein_aus';
     const hass = house({ [entity]: { attributes: { friendly_name: 'Spülmaschine' } } });
@@ -607,6 +644,38 @@ describe('the appliance card', () => {
     expect(text(root(card).querySelector('.fv-card__head'))).toMatch(/^washer Running/);
     expect(text(root(card).querySelector('.ap-figures'))).toMatch(/0:47 h of 1:16 h/);
     expect([...root(card).querySelectorAll('.ap-item')].map(text)[0]).toBe('Cotton');
+  });
+
+  it('a washer on a plug out of reach while its cycle ran says nothing of what the cycle used, its ring neither', async () => {
+    const away = { state: 'unavailable', last_changed: minutesFrom(NOW, -2) };
+    const hass = {
+      ...house({
+        'switch.waschmaschine_keller': away,
+        'sensor.waschmaschine_keller_leistung': away,
+        'sensor.waschmaschine_keller_energie': away,
+      }),
+      callWS: async () => ({
+        'sensor.waschmaschine_keller_leistung': [
+          { s: '0.4', lu: (NOW - 600 * 60_000) / 1000 },
+          { s: '2050', lu: (NOW - 42 * 60_000) / 1000 },
+        ],
+        'sensor.waschmaschine_keller_energie': [
+          { s: '181.5', lu: (NOW - 600 * 60_000) / 1000 },
+          { s: '182.4', lu: (NOW - 5 * 60_000) / 1000 },
+        ],
+      }),
+    } as unknown as HomeAssistant;
+    for (const variant of ['full', 'ring', 'compact']) {
+      const card = await mount({ device: 'plug-washer', variant }, hass, 412);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await card.updateComplete;
+      // the dial says its words in its own root
+      const dial = root(card).querySelector<HTMLElement & { sub: string }>('fluvy-dial');
+      expect(
+        `${text(root(card).querySelector('article'))} ${dial?.sub ?? ''}`,
+        variant,
+      ).not.toMatch(/kWh/);
+    }
   });
 
   it('a fridge on a plug is in operation, its compressor resting or running: never done, no bell, and switching it off asks first (#47)', async () => {

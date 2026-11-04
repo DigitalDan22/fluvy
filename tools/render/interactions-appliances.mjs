@@ -371,6 +371,23 @@ check(
     Math.abs(live - gone) <= 0.5 && Math.abs(liveFridge - goneFridge) <= 0.5,
     JSON.stringify({ live, gone, liveFridge, goneFridge }),
   );
+  // a plug out of reach while its cycle ran: its dial says its state, and neither card what this cycle used
+  const plugs = await Promise.all(
+    [0, 1].map((n) =>
+      card(page, 'Out of reach · a washer on a plug', n).evaluate((el) => {
+        const root = el.shadowRoot;
+        const said = (root.querySelector('article')?.textContent ?? '').replace(/\s+/g, ' ');
+        return { said: said.trim(), dial: root.querySelector('fluvy-dial')?.sub ?? null };
+      }),
+    ),
+  );
+  check(
+    'a washer on a plug out of reach says no energy for this cycle: its dial its state, its readout a dash',
+    plugs[0]?.dial === 'Offline' &&
+      plugs.every(({ said }) => !/kWh/.test(said)) &&
+      /This cycle —/.test(plugs[1]?.said ?? ''),
+    JSON.stringify(plugs),
+  );
   // the whole card's parts: the hob's zones, the drinks, the compartments, a small appliance's row
   const anatomy = (title) =>
     frame(page, title)

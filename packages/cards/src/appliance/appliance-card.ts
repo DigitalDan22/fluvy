@@ -177,7 +177,7 @@ import {
   drawn,
   energySince,
   FINISHED_AFTER,
-  PlugHistory,
+  ReadingHistory,
   RUNNING_POWER,
   type PlugCycle,
 } from './plug.js';
@@ -625,8 +625,8 @@ interface View {
   readonly entity: string | undefined;
   readonly now: number;
   readonly unavailable: boolean;
-  /** What this cycle has used, in kWh, where it can be said. */
-  readonly used: number | null;
+  /** A plug's cycle, from its threshold sensor or its power: when this cycle began, for what it used. */
+  readonly cycle: PlugCycle | undefined;
 }
 
 /** An entity's name without its device's at its head ("Waschmaschine Zähler" on the Waschmaschine: "Zähler"). */
@@ -1338,8 +1338,9 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
   private readonly pictures = new BrokenPictures(this);
   /** The setpoints stepped and on their way. */
   private readonly nudges = new Nudges(() => this.requestUpdate());
-  /** A plug's power and its meter's history, and this cycle's energy's. */
-  private readonly history = new PlugHistory(() => this.requestUpdate());
+  /** A plug's power's history (its cycle, what it drew) and a meter's (what this cycle used, where a part says it). */
+  private readonly power = new ReadingHistory(() => this.requestUpdate());
+  private readonly meter = new ReadingHistory(() => this.requestUpdate());
   /** The appliance, found once per registry and config: the search walks every entity. */
   private found:
     { readonly key: string; readonly at: unknown; readonly found: ApplianceFound } | undefined;
@@ -1814,27 +1815,23 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
   private cycle(roles: ApplianceRoles, now: number): PlugCycle {
     const doneFor = (this.config?.done_for ?? DONE_FOR) * MINUTE;
     if (roles.running) return cycleOfFlag(this.hass?.states[roles.running], now, doneFor);
-    const { watts } = this.history.read(
-      this.hass,
-      { watts: roles.watts, energy: roles.energy },
-      now,
-    );
-    return cycleOf(watts, now, {
+    return cycleOf(this.power.read(this.hass, roles.watts, now).points, now, {
       running: this.config?.running_power ?? RUNNING_POWER,
       finishedAfter: (this.config?.finished_after ?? FINISHED_AFTER) * MINUTE,
       doneFor,
     });
   }
 
-  /** What this cycle has used (kWh): its meter's gain since it started, else what the plug drew. */
-  private used(
-    r: ApplianceReading,
-    shown: Shown,
-    cycle: PlugCycle | undefined,
-    now: number,
-  ): number | null {
+  /**
+   * What this cycle has used (kWh): its meter's gain since it started, else what the plug drew; none out of reach, nor
+   * for what keeps food cold (its plug's bursts are its compressor's). Asked by the parts that say it, so a meter's
+   * history is read only where the card draws what it used.
+   */
+  private used(view: View): number | null {
+    const { r, shown, cycle, now } = view;
     const { energy, watts } = r.roles;
-    if (!energy && !watts) return null;
+    if (view.unavailable || KIND_DEFAULTS[view.kind].hero === 'cold' || (!energy && !watts))
+      return null;
     const end = shown.status === 'finished' ? shown.finishedAt : now;
     const start =
       cycle?.start ??
@@ -1844,9 +1841,21 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
           ? shown.finishedAt - shown.clock.total * 1000
           : null);
     if (start === null || end === null) return null;
-    const readings = this.history.read(this.hass, { watts, energy }, now);
-    if (energy) return energySince(readings.energy, start, end);
-    return readings.loaded ? drawn(readings.watts, start, end) : null;
+    if (energy) return energySince(this.meter.read(this.hass, energy, now).points, start, end);
+    const power = this.power.read(this.hass, watts, now);
+    return power.loaded ? drawn(power.points, start, end) : null;
+  }
+
+  /** What this cycle used, as a readout says it: its kilowatt-hours, a dash until that is known. */
+  private usedText(view: View): { readonly value: string; readonly unit: string } {
+    const used = this.used(view);
+    return used !== null ? { value: this.kwh(used), unit: 'kWh' } : { value: '—', unit: '' };
+  }
+
+  /** What this cycle used, as a line under a figure says it ("This cycle 0.90 kWh"); nothing until that is known. */
+  private usedLine(view: View): string {
+    const used = this.usedText(view);
+    return used.unit ? `${s(this.hass, 'r_this_cycle')} ${used.value} ${used.unit}` : '';
   }
 
   /** The card's view of the appliance now; none where there is no appliance to show. */
@@ -1886,8 +1895,6 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         : said;
     const tone = statusTone(shown.status, config, kind);
     const resting = shown.status === 'idle' || shown.status === 'off';
-    const wantsEnergy = (config.readouts ?? KIND_DEFAULTS[kind].readouts).includes('this_cycle');
-    // what keeps food cold has no cycle to have used anything in: its plug's bursts are its compressor's
     return {
       found,
       r,
@@ -1911,7 +1918,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         hob[0],
       now,
       unavailable: gone,
-      used: !cold && (wantsEnergy || meterEnergy(r)) ? this.used(r, shown, cycle, now) : null,
+      cycle,
     };
   }
 
@@ -1940,12 +1947,8 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
    * so what this cycle used. A dash out of reach, and until that is known.
    */
   private energyText(view: View): { readonly value: string; readonly unit: string } {
-    const { r } = view;
-    if (view.unavailable) return { value: '—', unit: '' };
-    if (r.readouts.energy && !meterEnergy(r)) return this.valueText(r.readouts.energy);
-    return view.used !== null
-      ? { value: this.kwh(view.used), unit: 'kWh' }
-      : { value: '—', unit: '' };
+    if (meterEnergy(view.r)) return this.usedText(view);
+    return view.unavailable ? { value: '—', unit: '' } : this.valueText(view.r.readouts.energy);
   }
 
   /** An entity's value as a readout says it: its figure and unit, else Home Assistant's words; a dash out of reach. */
@@ -2441,8 +2444,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       label = s(this.hass, 'r_power');
       value =
         view.unavailable || watts.value === dash ? dash : `${watts.value} ${watts.unit}`.trim();
-      if (view.used !== null && !view.unavailable)
-        sub = `${s(this.hass, 'r_this_cycle')} ${this.kwh(view.used)} kWh`;
+      sub = this.usedLine(view);
     } else if (view.unavailable) {
       // out of reach: the time left's place, a dash
     } else if (shown.status === 'scheduled' && r.startAt !== null) {
@@ -3578,8 +3580,6 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         return this.renderCycle(view, compact);
       case 'heat':
         return this.renderHeat(view, compact);
-      case 'plug':
-        return compact ? nothing : this.renderPlug(view);
       case 'hob':
         return this.renderHob(view);
       case 'cold':
@@ -3872,29 +3872,6 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       decrease: `${name} · ${this.t('common.decrease')}`,
       increase: `${name} · ${this.t('common.increase')}`,
     });
-  }
-
-  /* ---------- a plug ---------- */
-
-  /** A plug's appliance: what it draws now, and what this cycle has used. */
-  private renderPlug(view: View): TemplateResult {
-    const watts = this.valueText(view.r.roles.watts);
-    const main: Figure = { label: s(this.hass, 'r_power'), value: watts.value, unit: watts.unit };
-    const side: Figure = {
-      label: s(this.hass, 'r_this_cycle'),
-      value: view.used !== null && !view.unavailable ? this.kwh(view.used) : '—',
-      unit: view.used !== null && !view.unavailable ? 'kWh' : '',
-    };
-    const stacked = sideStacked(
-      this.head.ruler,
-      this.contentWidth,
-      [{ ...main, value: '8888', unit: 'W' }],
-      [{ ...side, value: '88.88', unit: 'kWh' }],
-    );
-    return html`<div class="fv-value-row ap-top ${stacked ? 'is-stacked' : ''}">
-      ${readout({ ...main, size: 'l' })}
-      <div class="ap-top__side">${readout({ ...side, size: 's' })}</div>
-    </div>`;
   }
 
   /* ---------- a hob ---------- */
@@ -4387,10 +4364,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       label = s(this.hass, 'r_power');
       text = watts.value;
       unit = watts.unit;
-      sub =
-        view.used !== null
-          ? `${s(this.hass, 'r_this_cycle')} ${this.kwh(view.used)} kWh`
-          : shown.word;
+      sub = this.usedLine(view) || shown.word;
     }
     // the sub inside the disc while it holds it, else said by the line under the dial
     const disc = Math.floor((radius - 10) / 4) * 8 - 16;
@@ -4509,15 +4483,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
           if (id) add(key, s(this.hass, 'r_energy'), this.energyText(view), id);
           break;
         case 'this_cycle':
-          if (id)
-            add(
-              key,
-              s(this.hass, 'r_this_cycle'),
-              view.used !== null && !view.unavailable
-                ? { value: this.kwh(view.used), unit: 'kWh' }
-                : { value: '—', unit: '' },
-              id,
-            );
+          if (id) add(key, s(this.hass, 'r_this_cycle'), this.usedText(view), id);
           break;
         case 'program':
           if (id) add(key, s(this.hass, 'r_program'), { value: r.program || '—', unit: '' }, id);
