@@ -900,6 +900,10 @@ export function roleOf(
   return partOf(candidate, rigour)?.role;
 }
 
+/** A count of what an appliance makes or runs, by the end of an id: shots, cups, steamings, washes, cycles, loads. */
+const MADE_COUNT =
+  /(^|_)(espresso|coffee|cup|drink|shot|brew|steam|steaming|milk|wash|cycle|load|clean|cleaning|descaling)s?_count(er)?$/;
+
 /** What else an entity is to an appliance (a compartment's, a flag to look after, a quick mode, a plate, a counter). */
 export function gatheredOf(candidate: Candidate): Gathered | undefined {
   if (NEVER.test(candidate.object) || (candidate.key && NEVER.test(candidate.key)))
@@ -908,13 +912,17 @@ export function gatheredOf(candidate: Candidate): Gathered | undefined {
   if (maintenanceOf(candidate)) return 'maintenance';
   if (boostOf(candidate)) return 'boosts';
   if (hobOf(candidate)) return 'hob';
-  // a counter by its integration's key (Home Connect's drinks), or by its id on one the card does not know (a DE1's
-  // "espresso_count")
-  const { key, object } = candidate;
+  // a counter by its integration's key (Home Connect's drinks), or by its id on one the card does not know: what the
+  // appliance made (a DE1's "espresso_count"), never what its plug or board counts of itself (an outage, a reconnect,
+  // a boot) nor what Home Assistant files under its settings or diagnostics
+  const { key, object, category } = candidate;
   if (
     candidate.domain === 'sensor' &&
     (/_counter$/.test(key ?? '') ||
-      (!key && !knownPlatform(candidate.platform) && /(^|_)count(er)?$/.test(object)))
+      (!key &&
+        !knownPlatform(candidate.platform) &&
+        category === undefined &&
+        MADE_COUNT.test(object)))
   )
     return 'counters';
   return undefined;

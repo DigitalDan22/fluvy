@@ -265,6 +265,52 @@ describe('an appliance’s entities', () => {
         candidate({ id: 'sensor.x_cycle_count', object: 'cycle_count', platform: 'esphome' }),
       ),
     ).toBe('counters');
+    // what a plug or a board counts of itself is never the appliance's, nor a count filed under diagnostics
+    for (const object of [
+      'power_outage_count',
+      'mqtt_connect_count',
+      'boot_count',
+      'restart_counter',
+    ])
+      expect(
+        gatheredOf(candidate({ id: `sensor.x_${object}`, object, platform: 'mqtt' })),
+        object,
+      ).toBeUndefined();
+    expect(
+      gatheredOf(
+        candidate({
+          id: 'sensor.x_wash_count',
+          object: 'wash_count',
+          platform: 'mqtt',
+          category: 'diagnostic',
+        }),
+      ),
+    ).toBeUndefined();
+  });
+
+  it('gathers no count a washer’s plug keeps of itself, an outage’s (1.14 judge)', () => {
+    const outage = {
+      entity_id: 'sensor.waschmaschine_keller_power_outage_count',
+      platform: 'shelly',
+    };
+    const house = {
+      ...HOUSE,
+      entities: {
+        ...HOUSE.entities,
+        [outage.entity_id]: { ...outage, device_id: 'plug-washer' },
+      },
+      states: {
+        ...HOUSE.states,
+        [outage.entity_id]: {
+          entity_id: outage.entity_id,
+          state: '3',
+          attributes: {},
+          last_changed: '',
+          last_updated: '',
+        },
+      },
+    } as unknown as typeof HOUSE;
+    expect(applianceEntities(house, 'plug-washer').counters).toEqual([]);
   });
 
   it('knows a device’s integration: one it reads by its words, else the one most of its entities are of, never a helper', () => {
