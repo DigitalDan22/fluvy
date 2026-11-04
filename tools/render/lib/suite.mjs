@@ -62,13 +62,19 @@ export async function startSuite() {
   /**
    * A playground page at `query`, ready (its cards defined and settled). `clock`: a fake clock the suite runs on —
    * `true` from the real time, or `{ time }` from a moment of the suite's choosing (a check that runs the clock on
-   * reads the same windows whatever the hour it runs at).
+   * reads the same windows whatever the hour it runs at). `reducedMotion: 'reduce'`: the cards enter at once, so a
+   * page read after its wait is never read mid-entrance, however loaded the machine.
    */
   const page = async (
     query,
-    { viewport = { width: 1400, height: 1000 }, clock = false, wait = 900 } = {},
+    {
+      viewport = { width: 1400, height: 1000 },
+      clock = false,
+      wait = 900,
+      reducedMotion = 'no-preference',
+    } = {},
   ) => {
-    const p = await browser.newPage({ viewport });
+    const p = await browser.newPage({ viewport, reducedMotion });
     await p.addInitScript(INIT);
     if (clock) await p.clock.install(clock === true ? undefined : clock);
     await p.goto(`${BASE}?${query}`);

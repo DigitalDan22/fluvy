@@ -12,6 +12,9 @@
  * longer seen as listed fails too (remove it: the file only shrinks), and `--write-known` rewrites the file from
  * what the run saw, keeping the reasons.
  *
+ * The pages are read under reduced motion, as the measurer reads them: a card is never read mid-entrance (at its
+ * entrance's 0.985 scale), whatever the machine's load.
+ *
  * A frame that says its heights hold under the full-card floor too (`heights` in its spec: half a section, 152 and
  * 172) is drawn again at those card widths, in every language, and there no drift is known: what it declares is what
  * it draws (a strip that wraps where a word runs long would move every card under it).
@@ -108,7 +111,10 @@ const all = [];
 /** The card widths under the floor each sheet's frames hold their heights at. */
 const narrowWidths = new Map();
 for (const sheet of sheets) {
-  const page = await suite.page(`sheet=${sheet}`, { viewport: { width: 1400, height: 1200 } });
+  const page = await suite.page(`sheet=${sheet}`, {
+    viewport: { width: 1400, height: 1200 },
+    reducedMotion: 'reduce',
+  });
   all.push(...(await sample(page, 360)));
   const widths = await page.evaluate(() =>
     [...document.querySelectorAll('[data-frame][data-heights]')].flatMap((frame) =>
@@ -126,6 +132,7 @@ for (const [sheet, widths] of narrowWidths)
     for (const lang of await everyLanguage()) {
       const page = await suite.page(`sheet=${sheet}&width=${2 * width + 16}&lang=${lang}`, {
         viewport: { width: 1400, height: 1200 },
+        reducedMotion: 'reduce',
       });
       narrow.push(...(await sample(page, width, true)).map((row) => ({ ...row, width, lang })));
       await page.close();
