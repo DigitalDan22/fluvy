@@ -5,6 +5,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Visible on upgrade
+
+- The Appliance card's device picker, and the Appliances card's, lists every device of the house with a sensor, a
+  binary sensor or a switch, whatever its integration (#115), where it listed only the integrations the cards read
+  and said "No devices available" for an espresso machine over MQTT or a washer of another integration.
+
 ### Added
 
 - Slovak (`sk`) translation for the Fluvy interface, panel and cards, appliance naming words, the demo and Home Assistant integration messages.
@@ -16,6 +22,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The Appliance card's device picker offers PetKit's and PETLIBRO's feeders, fountains and litter boxes, which the
+  card reads since 1.13.0 but its editor left out.
 - The Appliance card says an appliance's failure, or its call for a hand, in its alarm row where only its state says
   it ("Fatal error"), where the row said "No alarm" under a head that said the error.
 

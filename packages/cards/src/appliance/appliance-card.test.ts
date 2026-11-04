@@ -981,6 +981,18 @@ describe('the appliance card’s editor', () => {
     document.documentElement.lang = 'en';
   });
 
+  it('offers every device an appliance can live on, whatever its integration: an MQTT one, a pet device (#115)', () => {
+    const picker = {
+      name: 'device',
+      selector: { device: { entity: { domain: ['sensor', 'binary_sensor', 'switch'] } } },
+    };
+    expect(FluvyApplianceCard.getConfigForm().schema[0]).toEqual(picker);
+    // the list of the house's appliances names its items the same way
+    const items = FluvyAppliancesCard.lists?.find((list) => list.key === 'appliances');
+    expect(items?.picker).toEqual(picker);
+    expect(items?.schema[0]).toEqual(picker);
+  });
+
   it('shows what the card does for the appliance it is about where the config says nothing', () => {
     const hass = house();
     const defaults = FluvyApplianceCard.defaults?.(

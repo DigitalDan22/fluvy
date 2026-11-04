@@ -181,7 +181,7 @@ export const APPLIANCE_ROLES: readonly ApplianceRole[] = [
  * SmartThings), are read from their source: their keys, and (in `commands.ts`) the writes their source pins. The
  * community's others, from HACS, are read by the ends of their ids, and never written to.
  */
-export const VERIFIED_PLATFORMS = [
+const VERIFIED_PLATFORMS = [
   'lg_thinq',
   'home_connect',
   'miele',

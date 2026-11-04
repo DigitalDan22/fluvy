@@ -1,12 +1,11 @@
 import type { HaFormSchemaItem, MessageKey } from '@fluvy/core';
 import { editorWord, type OptionWord } from '../shared/form.js';
 import { APPLIANCE_KINDS, type ApplianceKind } from './kinds.js';
-import { VERIFIED_PLATFORMS, COMMUNITY_PLATFORMS } from './roles.js';
 
 /*
  * The appliance cards' editor parts: a choice whose words are the family's own (they travel with its chunk, never in
  * core's `option` table), the folding group every long editor shares (`sectionField`, the shared form's), the kinds,
- * the least a picture steps down to, and the device picker filtered to the integrations the cards read.
+ * the least a picture steps down to, and the device picker.
  */
 
 /** A choice among values, each named by a word of the catalogue (the family's, or core's `option` words). */
@@ -55,14 +54,12 @@ export const pictureMinField = (): HaFormSchemaItem => ({
   helper: 'appliance.editor_picture_min_helper',
 });
 
-/** The device picker, filtered to the integrations the cards read (a plug's appliance is picked by its entity). */
+/**
+ * The device picker: any device of the house, of an integration the cards read or not (#115: an espresso machine over
+ * MQTT, its kind and its roles named in the editor), but one with no entity an appliance's state, power or readings
+ * live in — a hub, a bridge, a player, a light — which can never be one.
+ */
 export const deviceField = (): HaFormSchemaItem => ({
   name: 'device',
-  selector: {
-    device: {
-      filter: [...VERIFIED_PLATFORMS, ...COMMUNITY_PLATFORMS].map((integration) => ({
-        integration,
-      })),
-    },
-  },
+  selector: { device: { entity: { domain: ['sensor', 'binary_sensor', 'switch'] } } },
 });
