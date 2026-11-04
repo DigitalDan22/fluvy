@@ -250,30 +250,70 @@ function flipOf(domain: string, views: readonly EntityView[], on: boolean): Flip
   };
 }
 
-/**
- * Runs a round's on and off: every call at once, its members drawn as they will be; or, asked first (`confirmation`),
- * through Home Assistant's own dialog, which asks before one action — the first call, the members that take the set's
- * own service (a blind that only tilts is left to a tap that does not ask), and nothing moves before the answer.
- */
-function runFlip(host: QuickHost, flip: Flip, confirmation: ActionConfig['confirmation']): void {
-  const [first] = flip.calls;
-  if (confirmation) {
-    if (first)
-      host.run(
-        {
-          action: 'perform-action',
-          perform_action: `${flip.domain}.${first.service}`,
-          target: { entity_id: [...first.ids] },
-          confirmation,
-        },
-        undefined,
-      );
-    return;
-  }
+/** Every call of a round's at once, its members drawn as they will be. */
+function perform(host: QuickHost, flip: Flip): void {
   for (const { service, ids } of flip.calls) {
     if (flip.expect) for (const id of ids) host.expect(id, flip.expect);
     host.call(flip.domain, service, { entity_id: [...ids] });
   }
+}
+
+/** What a round's several calls carry through Home Assistant's dialog, and back once it is answered yes. */
+const ASKED = 'fluvy_quick_action';
+/** The round Home Assistant's dialog asks about, by its mark: one at a time, as its dialog is. */
+let asking: { readonly mark: number; readonly yes: () => void } | undefined;
+let marks = 0;
+
+/** Home Assistant's yes: its `fire-dom-event` comes back as `ll-custom`, and the round it asked about moves. */
+function answered(event: Event): void {
+  const action = (event as CustomEvent<Record<string, unknown> | undefined>).detail;
+  if (!asking || action?.[ASKED] !== asking.mark) return;
+  const { yes } = asking;
+  asking = undefined;
+  window.removeEventListener('ll-custom', answered);
+  yes();
+}
+
+/**
+ * Runs a round's on and off: every call at once; or, asked first (`confirmation`), once Home Assistant's own dialog
+ * has its answer, nothing moving before. One call goes to it whole (its words, where the tap says none, name its
+ * service); several go as one `fire-dom-event` it hands back once answered yes, so every member is asked about (a
+ * blind that only tilts beside blinds that close as well), its words where the tap says none Home Assistant's sentence
+ * naming the round ("Are you sure you want to run action "Blinds"?"), else the round's name.
+ */
+function runFlip(
+  host: QuickHost,
+  flip: Flip,
+  confirmation: ActionConfig['confirmation'],
+  name: string,
+): void {
+  if (!confirmation) return perform(host, flip);
+  const [first, ...rest] = flip.calls;
+  if (!first) return;
+  if (!rest.length)
+    return host.run(
+      {
+        action: 'perform-action',
+        perform_action: `${flip.domain}.${first.service}`,
+        target: { entity_id: [...first.ids] },
+        confirmation,
+      },
+      undefined,
+    );
+  const mark = ++marks;
+  asking = { mark, yes: () => perform(host, flip) };
+  window.addEventListener('ll-custom', answered);
+  const own = typeof confirmation === 'object' ? confirmation : {};
+  const key = 'ui.panel.lovelace.cards.actions.action_confirmation';
+  const said = host.hass?.localize?.(key, { action: name });
+  host.run(
+    {
+      action: 'fire-dom-event',
+      [ASKED]: mark,
+      confirmation: { ...own, text: own.text ?? (said && said !== key ? said : name) },
+    },
+    undefined,
+  );
 }
 
 /** The domains a round turns on and off itself (`flipOf`), all of a set at once; the rest by the house's toggle. */
@@ -340,8 +380,9 @@ function roundOf(host: QuickHost, item: QuickAction): LevelRound {
     tap.action === 'toggle' && !tap.entity && FLIPS.has(first.domain)
       ? flipOf(first.domain, views, on)
       : undefined;
+  const name = item.name ?? (group ? localize(hass, LOOKS[group][0]) : first.name);
   return {
-    name: item.name ?? (group ? localize(hass, LOOKS[group][0]) : first.name),
+    name,
     glyph: item.icon ?? (group && !single ? LOOKS[group][1] : iconOf(first)),
     usable: views.some(isUsable),
     on,
@@ -352,7 +393,7 @@ function roundOf(host: QuickHost, item: QuickAction): LevelRound {
     // a set none of whose members takes its call reads as it is and takes no tap
     onTap: flip
       ? flip.calls.length > 0
-        ? () => runFlip(host, flip, tap.confirmation)
+        ? () => runFlip(host, flip, tap.confirmation, name)
         : undefined
       : runs(tap),
     onHold: runs(item.hold_action ?? MORE_INFO),

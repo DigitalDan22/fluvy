@@ -770,6 +770,21 @@ export const sheet: SheetSpec = {
         }),
       ],
     },
+    // asked first: Home Assistant's dialog asks once for the blinds and the roof alike, and both move at its yes
+    {
+      title: 'Room · blinds that only tilt among its covers, asked first',
+      cards: [
+        room({
+          area: 'rm_sunroom',
+          variant: 'tile',
+          controls: 'none',
+          quick_actions: [
+            { group: 'covers', tap_action: { action: 'toggle', confirmation: true } },
+          ],
+          path: '/fluvy-auto/room-rm_sunroom',
+        }),
+      ],
+    },
     // an empty list of tiles (an editor that cleared it) is the room's controls, as no list is: declared as drawn
     {
       title: 'Room · an empty list of tiles',

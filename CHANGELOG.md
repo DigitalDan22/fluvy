@@ -53,6 +53,10 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - An appliance card that names `device: none` finds the "Tell me when it's done" automation 1.12 wrote for it again,
   its bell on while it is and turning it off, on and away, where since 1.13.0 the card did not see it and a tap wrote a
   second one beside it; as in 1.12, every such card reads that one until it is removed, then each writes its own.
+- A room card's quick action with a `confirmation` asks once for all its round moves, then moves every member, where it
+  asked about and moved only those that took the set's own service: blinds that only tilt beside blinds that close,
+  or a player that can only stop beside one that pauses, were left to a tap that did not ask. Where the tap gives the
+  dialog no words, such a set's dialog names the round ("Blinds").
 
 ## [1.13.1] — 2026-11-04
 

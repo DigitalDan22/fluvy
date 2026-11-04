@@ -880,31 +880,40 @@ describe('a room’s quick actions (#113)', () => {
   });
 
   it('asks first where its tap says so, in Home Assistant’s own dialog, then turns the set off: nothing moves before', async () => {
-    const asked: unknown[] = [];
+    const asked: Record<string, unknown>[] = [];
     const ask = (event: Event): void =>
       void asked.push(
-        (event as CustomEvent<{ config: { tap_action: unknown } }>).detail.config.tap_action,
+        (event as CustomEvent<{ config: { tap_action: Record<string, unknown> } }>).detail.config
+          .tap_action,
       );
     document.addEventListener('hass-action', ask);
     try {
       sent.length = 0;
       const confirmation = { text: 'Every light off?' };
-      const card = await room(
-        {
-          area: 'lounge',
-          quick_actions: [
-            { group: 'lights', tap_action: { action: 'toggle', confirmation } },
-            { group: 'covers', tap_action: { action: 'toggle', confirmation: true } },
-          ],
-        },
-        lounge([['cover.lounge_louvre', 'open', { supported_features: 16 | 32 }]]),
-      );
-      const [lights, blinds] = rounds(card);
+      const quick_actions = [
+        { group: 'lights', tap_action: { action: 'toggle', confirmation } },
+        { group: 'covers', tap_action: { action: 'toggle', confirmation: true } },
+        { group: 'media', tap_action: { action: 'toggle', confirmation: { title: 'Music' } } },
+      ] as const;
+      const house = lounge([
+        ['cover.lounge_louvre', 'open', { supported_features: 16 | 32 }],
+        ['media_player.lounge_radio', 'playing', { supported_features: 4096 }],
+      ]);
+      // Home Assistant's own words where the tap says none
+      const localize = (key: string, values?: Record<string, unknown>): string =>
+        key === 'ui.panel.lovelace.cards.actions.action_confirmation'
+          ? `Are you sure you want to run action "${String(values?.['action'])}"?`
+          : key;
+      const card = await room({ area: 'lounge', quick_actions }, { ...house, localize });
+      const [lights, blinds, media] = rounds(card);
       lights!.click();
       blinds!.click();
+      media!.click();
       await card.updateComplete;
       expect(sent).toEqual([]);
+      const [mark, played] = [asked[1]?.['fluvy_quick_action'], asked[2]?.['fluvy_quick_action']];
       expect(asked).toEqual([
+        // one call: handed to Home Assistant whole, which names its service where the tap says no words
         {
           action: 'perform-action',
           perform_action: 'light.turn_off',
@@ -913,17 +922,47 @@ describe('a room’s quick actions (#113)', () => {
           },
           confirmation,
         },
-        // Home Assistant asks before one action: the blinds' own, the louvre that only tilts left to a tap that does
-        // not ask
+        // several (the louvre only tilts, the radio only stops): asked once for all of the set, which Home Assistant
+        // hands back once answered yes
         {
-          action: 'perform-action',
-          perform_action: 'cover.close_cover',
-          target: { entity_id: ['cover.lounge_blinds'] },
-          confirmation: true,
+          action: 'fire-dom-event',
+          fluvy_quick_action: mark,
+          confirmation: { text: 'Are you sure you want to run action "Blinds"?' },
+        },
+        {
+          action: 'fire-dom-event',
+          fluvy_quick_action: played,
+          confirmation: { title: 'Music', text: 'Are you sure you want to run action "Media"?' },
         },
       ]);
+      expect(typeof mark).toBe('number');
       // still on until Home Assistant has asked
       expect(lights?.getAttribute('aria-checked')).toBe('true');
+      // a yes to the blinds, asked before the players, moves nothing: the dialog open is the players'
+      const yes = (action: Record<string, unknown> | undefined): void =>
+        void document.body.dispatchEvent(
+          new CustomEvent('ll-custom', { detail: action, bubbles: true, composed: true }),
+        );
+      yes(asked[1]);
+      expect(sent).toEqual([]);
+      yes(asked[2]);
+      expect(sent.map(({ service, data }) => `${service} ${String(data['entity_id'])}`)).toEqual([
+        'media_pause media_player.lounge',
+        'media_stop media_player.lounge_radio',
+      ]);
+      // asked again, every blind moves at the answer, drawn as it will be
+      sent.length = 0;
+      blinds!.click();
+      yes(asked[3]);
+      await card.updateComplete;
+      expect(sent.map(({ service, data }) => `${service} ${String(data['entity_id'])}`)).toEqual([
+        'close_cover cover.lounge_blinds',
+        'close_cover_tilt cover.lounge_louvre',
+      ]);
+      expect(blinds?.getAttribute('aria-checked')).toBe('false');
+      // answered once, a set does not move again on the same answer
+      yes(asked[3]);
+      expect(sent).toHaveLength(2);
     } finally {
       document.removeEventListener('hass-action', ask);
     }

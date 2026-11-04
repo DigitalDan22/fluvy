@@ -9,7 +9,8 @@
  * for an administrator only, why it is empty; a room counts what is on once (its readout and its rows alike); at 211
  * a tile head gives its circle to a name that would be cut and the hint runs three lines at most, in every language;
  * a room's quick actions (#113) end its row, its head and its picture — its lights' round turns them all off in one
- * call, its blinds' closes them (a roof that only tilts by its slats, a screen that can do neither left out), a hold on
+ * call, its blinds' closes them (a roof that only tilts by its slats, a screen that can do neither left out), asked
+ * first in one question for the blinds and the roof alike, both moving at its yes, a hold on
  * a set of several opens the room and on an entity its details, one that cannot be read or act takes no tap, and half
  * a section holds as many as the name leaves room for;
  * the map's zones hold the right faces, a person nobody can place stands in Unknown, the rows say
@@ -312,6 +313,39 @@ const navigations = (page) => page.evaluate(() => window.__navigations.splice(0)
       'cover.close_cover cover.rm_sunroom_blinds | cover.close_cover_tilt cover.rm_sunroom_roof' &&
       (await sunroom.nth(1).getAttribute('aria-disabled')) === 'true',
     shut.join(' | '),
+  );
+  // asked first: one action handed to Home Assistant's dialog for all of the set; its yes (the action handed back as
+  // `ll-custom`, as Home Assistant does) moves the blinds and the roof alike
+  await page.evaluate(() => {
+    window.__asked = [];
+    document.addEventListener('hass-action', (event) =>
+      window.__asked.push(event.detail.config.tap_action),
+    );
+  });
+  await reset(page);
+  await press(
+    frame(page, 'Room · blinds that only tilt among its covers, asked first')
+      .locator('.rm-quick .lt-bulb')
+      .first(),
+  );
+  const asked = await page.evaluate(() => window.__asked.slice());
+  const before = (await calls(page)).length;
+  await page.evaluate(() =>
+    document.body.dispatchEvent(
+      new CustomEvent('ll-custom', { detail: window.__asked[0], bubbles: true, composed: true }),
+    ),
+  );
+  await settle(page, 200);
+  const answered = (await calls(page)).map((call) => `${call.s} ${ids(call).join()}`);
+  check(
+    'asked first, a set of blinds and a roof that only tilts is one question, and both move at its yes',
+    asked.length === 1 &&
+      asked[0]?.action === 'fire-dom-event' &&
+      typeof asked[0]?.confirmation?.text === 'string' &&
+      before === 0 &&
+      answered.join(' | ') ===
+        'cover.close_cover cover.rm_sunroom_blinds | cover.close_cover_tilt cover.rm_sunroom_roof',
+    JSON.stringify({ asked, before, answered }),
   );
   await page.close();
 }
