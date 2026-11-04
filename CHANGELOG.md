@@ -64,6 +64,11 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   alone, its key typed as a count; `pnpm i18n` fails a catalogue without a form its language gives a whole number up
   to 1000, and English with a form it never says.
 
+### Fixed
+
+- The stat tiles card's highlighted tile firms its hairline in its own colour under the pointer, as a lit tile does,
+  where it took the neutral one.
+
 ## [1.13.1] — 2026-11-04
 
 ### Visible on upgrade

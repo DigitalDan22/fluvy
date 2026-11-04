@@ -238,7 +238,8 @@
     box-shadow: inset 0 0 0 1px var(--fluvy-border-strong);
   }
 
-  .fv-tile--tap.is-on:hover {
+  /* a filled tile firms its hairline in its tone's ink: a lit tile, a highlighted figure */
+  .fv-tile--tap:is(.is-on, .is-active):hover {
     box-shadow: inset 0 0 0 1px var(--tone-ink);
   }
 
