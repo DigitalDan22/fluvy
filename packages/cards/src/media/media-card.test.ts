@@ -193,6 +193,15 @@ describe('a picture of the person’s own on the plate (#99)', () => {
     ).toEqual({ url: TV, own: true, idle: true });
   });
 
+  it('draws its entity’s new picture: the image entity is watched', async () => {
+    const card = await draw({ entity: 'media_player.den_tv', image: 'image.lounge_tv' });
+    const next = { ...hass.states['image.lounge_tv']! };
+    next.attributes = { entity_picture: '/api/image_proxy/image.lounge_tv?token=def' };
+    card.hass = { ...hass, states: { ...hass.states, 'image.lounge_tv': next } };
+    await card.updateComplete;
+    expect(plate(card).url).toBe('http://ha.example/api/image_proxy/image.lounge_tv?token=def');
+  });
+
   it('stays out of reach, where the player has no artwork, in place of the ban glyph', async () => {
     const card = await draw({
       entity: 'media_player.garden',

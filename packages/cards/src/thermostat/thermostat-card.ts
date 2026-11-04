@@ -38,7 +38,7 @@ import { iconOf } from '../shared/domain.js';
 
 import { HeadFit } from '../energy/head.js';
 import { optionCell, optionColumnsFor, optionsHold, valuesHeld } from '../shared/options.js';
-import { BrokenPictures, imageOf } from '../shared/picture.js';
+import { BrokenPictures, imageEntity, imageOf } from '../shared/picture.js';
 import type { WhenOff } from '../shared/config.js';
 import { chipRow } from '../shared/chips.js';
 import { chipBlock, chipRows, optionBlock, optionRows } from '../shared/heights.js';
@@ -315,6 +315,12 @@ export class FluvyThermostatCard extends Card<ThermostatCardConfig> {
       show_presets: config.show_presets ?? true,
       show_fan: config.show_fan ?? true,
     };
+  }
+
+  /** The device, and the entity its picture is read from (`image`): its new picture draws the card again. */
+  protected override watched(): readonly string[] {
+    const image = imageEntity(this.config?.image);
+    return image ? [...super.watched(), image] : super.watched();
   }
 
   override getCardSize(): number {

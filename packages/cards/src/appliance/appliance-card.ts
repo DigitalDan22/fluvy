@@ -62,7 +62,7 @@ import { unitWord, widestDuration } from '../shared/duration.js';
 import { fitLine, type Segment } from '../shared/fit.js';
 import { COLUMN, textWidth } from '../shared/heights.js';
 import { optionColumnsFor, optionsHold } from '../shared/options.js';
-import { BrokenPictures, imageOf } from '../shared/picture.js';
+import { BrokenPictures, imageEntity, imageOf } from '../shared/picture.js';
 import {
   accentField,
   actionField,
@@ -1695,6 +1695,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       ...this.sensors().map((sensor) => sensor.entity),
       ...this.zoneEntries().map((entry) => entry.entity),
       this.noticeAutomation(),
+      imageEntity(this.config?.image),
     ]
       .filter((id): id is string => Boolean(id))
       .map(entityOf);

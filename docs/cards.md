@@ -277,7 +277,9 @@ integration gives a product picture with, a camera's still, a person's face. The
 place beside the name, and it gives way in a narrow column as the circle does. The media card shows it on its plate
 where the player has no artwork (`image_mode: fallback`, the default: a television on its tuner, a speaker at rest) or
 always (`always`), drawn whole, never cropped. An address of any other kind than `https:`, `http:`, a path or
-`data:image/` is never loaded, and out of reach the picture greys and fades with the card.
+`data:image/` is never loaded, and out of reach the picture greys and fades with the card. A picture that will not
+load gives way to what the card draws without one and is tried again by itself, so one Home Assistant could not serve
+while it restarted comes back; an entity's picture is drawn again as it changes.
 
 ```yaml
 type: custom:fluvy-media-card

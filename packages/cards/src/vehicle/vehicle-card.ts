@@ -56,7 +56,7 @@ import {
   unitChoices,
 } from '../shared/form.js';
 import { durationSeconds, when } from '../shared/job-time.js';
-import { BrokenPictures, imageOf, isEntityId } from '../shared/picture.js';
+import { BrokenPictures, imageEntity, imageOf } from '../shared/picture.js';
 import type { EditorDefaults, RowsListSpec } from '../shared/rows-editor.js';
 import { Ticker, MINUTE } from '../shared/ticker.js';
 import { valueRow } from '../shared/value-row.js';
@@ -993,7 +993,7 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
       ...windows,
       ...Object.values(warnings),
       ...this.rowEntries().flatMap((entry) => (entry.entity ? [entry.entity] : [])),
-      ...(this.config?.image && isEntityId(this.config.image) ? [this.config.image] : []),
+      imageEntity(this.config?.image),
     ].filter((id): id is string => Boolean(id));
   }
 

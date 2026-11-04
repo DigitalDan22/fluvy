@@ -10,6 +10,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - A picture of your own on the thermostat, appliance or Vehicle card that would not load once (while Home Assistant
   restarted) comes back by itself once it loads again, where the card kept its circle, its drawing or its glyph until
   the picture's address changed.
+- The thermostat, media and appliance cards draw the new picture of the entity their `image` names (an image
+  entity's, a camera's still) as it changes, where they kept the one they had drawn until something else on the card
+  changed.
 
 ## [1.13.0] — 2026-11-04
 

@@ -83,7 +83,7 @@ import { configKeys, type RowStyle } from '../shared/config.js';
 import { iconOf } from '../shared/domain.js';
 import { chipRow } from '../shared/chips.js';
 import { fitLine } from '../shared/fit.js';
-import { imageOf, isControl, isEntityId } from '../shared/picture.js';
+import { imageEntity, imageOf, isControl, isEntityId } from '../shared/picture.js';
 import { isTemplate, TemplateTexts } from '../shared/templates.js';
 import type { EditorDefaults } from '../shared/rows-editor.js';
 
@@ -411,12 +411,18 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
     return { columns: 12, rows: 'auto', min_columns: this.variant === 'hero' ? 8 : 6 };
   }
 
-  /** The player, and the entity its line of the person's own says (`secondary`). */
+  /**
+   * The player, the entity its line of the person's own says (`secondary`), and the one its picture is read from
+   * (`image`): its new picture draws the plate again.
+   */
   protected override watched(): readonly string[] {
     const line = this.config?.secondary;
-    return typeof line === 'string' && isEntityId(line)
-      ? [...super.watched(), line]
-      : super.watched();
+    const image = imageEntity(this.config?.image);
+    return [
+      ...super.watched(),
+      ...(typeof line === 'string' && isEntityId(line) ? [line] : []),
+      ...(image ? [image] : []),
+    ];
   }
 
   /* ---------- lifecycle ---------- */

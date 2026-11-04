@@ -308,6 +308,16 @@ describe('a picture of the person’s own in the head (#99)', () => {
     card.remove();
   });
 
+  it('draws its entity’s new picture: the image entity is watched', async () => {
+    const card = await draw({ image: 'image.living_ac' });
+    const hass = card.hass!;
+    const next = { ...ac, attributes: { entity_picture: 'https://example.com/ac-2.png' } };
+    card.hass = { ...hass, states: { ...hass.states, 'image.living_ac': next } };
+    await card.updateComplete;
+    expect(picture(card)).toBe('https://example.com/ac-2.png');
+    card.remove();
+  });
+
   it('comes back once it loads again (Home Assistant restarted), the circle kept until then', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     // the picture as the house serves it, tried out of sight: not there while it restarts, then back

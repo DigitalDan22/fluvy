@@ -152,6 +152,29 @@ describe('the appliance card', () => {
     expect(root(none).querySelector('.ap-pic, .ap-power')).toBeNull();
   });
 
+  it('draws its image entity’s new picture: the entity is watched (#99)', async () => {
+    const picture = (url: string): HassEntity =>
+      ({
+        entity_id: 'image.dishwasher',
+        state: AT,
+        attributes: { entity_picture: url },
+        last_changed: AT,
+        last_updated: AT,
+      }) as HassEntity;
+    const hass = house();
+    hass.states['image.dishwasher'] = picture('https://example.com/dish.png');
+    const card = await mount({ device: 'hc-dish', image: 'image.dishwasher' }, hass);
+    const src = (): string | null | undefined =>
+      root(card).querySelector('.fv-card__head .ap-pic img')?.getAttribute('src');
+    expect(src()).toBe('https://example.com/dish.png');
+    card.hass = {
+      ...hass,
+      states: { ...hass.states, 'image.dishwasher': picture('https://example.com/dish-2.png') },
+    };
+    await card.updateComplete;
+    expect(src()).toBe('https://example.com/dish-2.png');
+  });
+
   it('a new card takes the house’s first appliance', () => {
     const hass = house();
     expect(FluvyApplianceCard.getStubConfig(hass)).toEqual({

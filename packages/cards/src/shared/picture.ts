@@ -27,6 +27,12 @@ export function safePicture(url: string): string {
     : '';
 }
 
+/** The entity the person's own picture (`image`) is read from, where it names one: a card watches it for a new picture. */
+export function imageEntity(image: unknown): string | undefined {
+  const asked = typeof image === 'string' ? image.trim() : '';
+  return isEntityId(asked) ? asked : undefined;
+}
+
 /**
  * The person's own picture (`image`): an address, or an entity that has one (`image.washer`, a camera's still, a
  * person's face: its `entity_picture`), else none; an address Home Assistant serves is made whole by it (`hassUrl`),
@@ -34,7 +40,8 @@ export function safePicture(url: string): string {
  */
 export function imageOf(hass: HomeAssistant | undefined, image: unknown): string {
   const asked = typeof image === 'string' ? image.trim() : '';
-  const own = isEntityId(asked) ? hass?.states[asked]?.attributes['entity_picture'] : asked;
+  const entity = imageEntity(asked);
+  const own = entity ? hass?.states[entity]?.attributes['entity_picture'] : asked;
   const safe = typeof own === 'string' ? safePicture(own) : '';
   return /^\/(?!\/)/.test(safe) && hass?.hassUrl ? hass.hassUrl(safe) : safe;
 }

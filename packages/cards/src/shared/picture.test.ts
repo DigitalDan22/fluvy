@@ -1,7 +1,7 @@
 import type { HomeAssistant } from '@fluvy/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactiveControllerHost } from 'lit';
-import { BrokenPictures, imageOf, isEntityId, safePicture } from './picture.js';
+import { BrokenPictures, imageEntity, imageOf, isEntityId, safePicture } from './picture.js';
 
 /** A house with the pictures a person may point at: an image entity's, a camera's still, a face. */
 const hass = {
@@ -74,6 +74,14 @@ describe('a picture of the person’s own (#99)', () => {
     expect(imageOf(hass, 'person.marta')).toBe('');
     expect(imageOf(hass, 'javascript:alert(1)')).toBe('');
     expect(imageOf(undefined, '/local/tv.png')).toBe('/local/tv.png');
+  });
+
+  it('names the entity it is read from, which the card watches, and none for an address', () => {
+    expect(imageEntity('image.lounge_tv')).toBe('image.lounge_tv');
+    expect(imageEntity(' camera.porch ')).toBe('camera.porch');
+    expect(imageEntity('/local/tv.png')).toBeUndefined();
+    expect(imageEntity('https://example.com/tv.png')).toBeUndefined();
+    expect(imageEntity(undefined)).toBeUndefined();
   });
 
   it('tells an entity’s id from words and addresses', () => {
