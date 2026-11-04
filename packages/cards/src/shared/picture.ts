@@ -53,6 +53,8 @@ interface Retry {
   wait: number;
   timer: ReturnType<typeof setTimeout> | undefined;
   probe: HTMLImageElement | undefined;
+  /** The card's latest draw did not ask for it: at its next try it is forgotten instead of loaded. */
+  missed: boolean;
 }
 
 /**
@@ -87,13 +89,13 @@ export class BrokenPictures implements ReactiveController {
     for (const retry of this.broken.values()) stop(retry);
   }
 
-  /** An address the card no longer draws (a picture's new token, another picture) is forgotten, its try called off. */
+  /**
+   * Whether the card's latest draw asked for each address: one it no longer draws (a picture's new token, another
+   * picture) is forgotten at its next try, never loaded; one asked for again after a draw without it stays broken
+   * and keeps its wait, where forgetting it at once would load it again at once.
+   */
   hostUpdated(): void {
-    for (const [url, retry] of this.broken)
-      if (!this.asked.has(url)) {
-        stop(retry);
-        this.broken.delete(url);
-      }
+    for (const [url, retry] of this.broken) retry.missed = !this.asked.has(url);
     this.asked.clear();
   }
 
@@ -108,7 +110,7 @@ export class BrokenPictures implements ReactiveController {
   readonly failed = (event: Event): void => {
     const url = (event.currentTarget as Element | null)?.getAttribute('src') ?? '';
     if (!url || this.broken.has(url)) return;
-    const retry: Retry = { wait: RETRY_FIRST, timer: undefined, probe: undefined };
+    const retry: Retry = { wait: RETRY_FIRST, timer: undefined, probe: undefined, missed: false };
     this.broken.set(url, retry);
     this.schedule(url, retry);
     this.host.requestUpdate();
@@ -120,12 +122,16 @@ export class BrokenPictures implements ReactiveController {
 
   /**
    * The picture loaded and decoded where it is not drawn: the card draws it then, from the browser's memory; while it
-   * still will not load, the next try waits twice as long. A try the card has given up on (off the page, the address
-   * no longer drawn) says nothing.
+   * still will not load, the next try waits twice as long. One the card's latest draw did not ask for is forgotten
+   * then, never loaded; a try the card has given up on (off the page) says nothing.
    */
   private probe(url: string, retry: Retry): void {
-    const probe = new Image();
     retry.timer = undefined;
+    if (retry.missed) {
+      this.broken.delete(url);
+      return;
+    }
+    const probe = new Image();
     retry.probe = probe;
     const current = (): boolean => retry.probe === probe && this.broken.get(url) === retry;
     probe.src = url;

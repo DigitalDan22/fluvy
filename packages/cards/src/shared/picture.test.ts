@@ -169,6 +169,19 @@ describe('a picture that would not load', () => {
     expect(Probe.tried).toEqual([]);
   });
 
+  it('keeps an address broken through one draw without it, its wait and no load at once', async () => {
+    const { pictures, draw } = card();
+    draw('/local/tv.png');
+    pictures.failed(error('/local/tv.png'));
+    // a draw that skips the picture (its part hidden a moment), then asks for it again
+    draw();
+    expect(draw('/local/tv.png')).toEqual(['']);
+    await vi.advanceTimersByTimeAsync(9_999);
+    expect(Probe.tried).toEqual([]);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(Probe.tried).toEqual(['/local/tv.png']);
+  });
+
   it('tries nothing while the card is off the page, and from the first wait once it is back', async () => {
     const { pictures, draw } = card();
     draw('/local/tv.png');
