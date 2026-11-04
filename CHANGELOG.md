@@ -25,6 +25,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   charge port's door, where the doors' lock was meant.
 - The Vehicle card counts a door, a window or a tyre's warning only of what can say it is open or on: a button or a
   switch named for the windows (one that vents them) gave the card a Windows round that read shut whatever they did.
+- The Vehicle card's charging round turns a charge switch by the switch's own state: a switch still on while the charge
+  read complete was turned on again by a tap, where it should have turned off (asking first, as stopping a charge
+  does), and one off while the car still charged asked to stop it.
 
 ### Development
 

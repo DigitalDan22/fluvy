@@ -1531,17 +1531,18 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
                       ? s(this.hass, 'idle')
                       : '—';
         const stop = asks(true, s(this.hass, 'stop_charge_confirm'));
+        // a switch turns by its own state (on while the charge is complete, it turns off), buttons by the charge; the
+        // round looks as the charge is
+        const on = sw ? this.stateOf(sw) === 'on' : charging;
         const act: ActionConfig | undefined = sw
-          ? service(
-              sw.id,
-              charging ? 'switch.turn_off' : 'switch.turn_on',
-              charging ? stop : asks(false),
-            )
-          : charging && roles.charge_stop
+          ? service(sw.id, on ? 'switch.turn_off' : 'switch.turn_on', on ? stop : asks(false))
+          : on && roles.charge_stop
             ? service(roles.charge_stop, 'button.press', stop)
-            : !charging && roles.charge_start
+            : !on && roles.charge_start
               ? service(roles.charge_start, 'button.press')
               : undefined;
+        // a charge cannot start without its cable
+        const cableless = unplugged && Boolean(act) && !on;
         return {
           ...base,
           glyph: entry.icon ?? (charging ? 'bolt' : 'plug'),
@@ -1563,9 +1564,9 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
                 ? 'warning'
                 : 'neutral',
           entity: reading?.id ?? roles.charge_start,
-          act: unplugged && act && !charging ? undefined : act,
-          disabled: unplugged && Boolean(act) && !charging,
-          why: unplugged && act ? s(this.hass, 'not_plugged') : '',
+          act: cableless ? undefined : act,
+          disabled: cableless,
+          why: cableless ? s(this.hass, 'not_plugged') : '',
         };
       }
       case 'charge_port':

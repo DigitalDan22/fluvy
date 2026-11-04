@@ -192,6 +192,51 @@ describe('the vehicle card', () => {
     }
   });
 
+  it('turns a charge switch by its own state, and says where the charge is', async () => {
+    const asked: unknown[] = [];
+    const listen = (event: Event) => asked.push((event as CustomEvent).detail.config.tap_action);
+    document.body.addEventListener('hass-action', listen);
+    try {
+      // the switch still on while the charge reads complete: a tap stops it, asking first, and the round says Charged
+      const full = house({
+        'sensor.model_y_charging': { state: 'complete' },
+        'sensor.model_y_charger_power': { state: '0' },
+      });
+      const done = await mount({ device: TESLA.device, controls: ['charging'] }, full);
+      root(done).querySelector<HTMLButtonElement>('.vh-control')?.click();
+      expect(words(done)).toEqual(['Charged']);
+      expect(asked).toEqual([
+        expect.objectContaining({
+          perform_action: 'switch.turn_off',
+          confirmation: { text: 'Stop charging?' },
+        }),
+      ]);
+      expect(full.calls).toEqual([]);
+      document.body.replaceChildren();
+      // the switch off while the charge still reads charging: a tap turns it on, at once
+      const off = house({ 'switch.model_y_charge': { state: 'off' } });
+      const charging = await mount({ device: TESLA.device, controls: ['charging'] }, off);
+      root(charging).querySelector<HTMLButtonElement>('.vh-control')?.click();
+      expect(words(charging)).toEqual(['Charging']);
+      expect(off.calls).toEqual([
+        { domain: 'switch', service: 'turn_on', target: { entity_id: 'switch.model_y_charge' } },
+      ]);
+      // still on while the cable is out, the switch can still be turned off: only a start needs the cable
+      document.body.replaceChildren();
+      const out = await mount(
+        { device: TESLA.device, controls: ['charging'] },
+        house({
+          'sensor.model_y_charging': { state: 'disconnected' },
+          'binary_sensor.model_y_charge_cable': { state: 'off' },
+          'sensor.model_y_charger_power': { state: '0' },
+        }),
+      );
+      expect(root(out).querySelector('.vh-control')?.getAttribute('aria-disabled')).toBeNull();
+    } finally {
+      document.body.removeEventListener('hass-action', listen);
+    }
+  });
+
   it('keeps the charging round still while the cable is out, and says why', async () => {
     const card = await mount(
       { device: TESLA.device, controls: ['charging'] },
