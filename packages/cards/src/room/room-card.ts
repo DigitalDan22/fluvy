@@ -399,7 +399,7 @@ export class FluvyRoomCard extends FluvyTileCard {
         call: (domain, service, data) => this.call(domain, service, data, ''),
         run: (action, entity) => this.tap(entity, action),
         accent: (colour) => this.accents.item(colour),
-        open: this.destination() ? () => this.open() : undefined,
+        destination: this.destination(),
       },
       room - Math.min(ROW_NAME_MIN, this.headFit.ruler.width(cls, name)),
     );

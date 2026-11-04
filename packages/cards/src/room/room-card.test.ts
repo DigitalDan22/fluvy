@@ -559,6 +559,8 @@ describe('a room’s quick actions (#113)', () => {
   beforeAll(() => loadQuickActions());
   afterEach(() => document.body.replaceChildren());
 
+  /** A player's `supported_features`: pause, volume, on, off, stop, play. */
+  const PLAYER = 1 | 4 | 128 | 256 | 4096 | 16384;
   /** A lounge: three lights (one dims at 70 %, one only switches, one off), blinds at 40 %, a fan, a speaker, a door. */
   const LOUNGE: readonly Seed[] = [
     ['light.lounge_ceiling', 'on', { brightness: 178, supported_color_modes: ['brightness'] }],
@@ -567,23 +569,24 @@ describe('a room’s quick actions (#113)', () => {
     ['cover.lounge_blinds', 'open', { current_position: 40, supported_features: 15 }],
     ['cover.lounge_door', 'closed', { device_class: 'door', supported_features: 3 }],
     ['fan.lounge', 'off', { percentage: 0, supported_features: 1 }],
-    ['media_player.lounge', 'playing', { volume_level: 0.3 }],
+    ['media_player.lounge', 'playing', { volume_level: 0.3, supported_features: PLAYER }],
     ['switch.kettle', 'off', { device_class: 'outlet', friendly_name: 'Kettle' }],
     ['lock.front', 'locked', { friendly_name: 'Front door' }],
     ['switch.porch', 'unavailable', { friendly_name: 'Porch' }],
   ];
   const sent: { domain: string; service: string; data: Record<string, unknown> }[] = [];
-  const lounge = (): HomeAssistant => {
-    const hass = house([...SEEDS, ...LOUNGE]);
+  /** The lounge, with more of its own (`more`: its ids name it). */
+  const lounge = (more: readonly Seed[] = []): HomeAssistant => {
+    const seeds = [...LOUNGE, ...more];
+    const hass = house([...SEEDS, ...seeds]);
     return {
       ...hass,
       entities: {
         ...hass.entities,
         ...Object.fromEntries(
-          LOUNGE.filter(([id]) => id.includes('lounge')).map(([entity_id]) => [
-            entity_id,
-            { entity_id, area_id: 'lounge' },
-          ]),
+          seeds
+            .filter(([id]) => id.includes('lounge'))
+            .map(([entity_id]) => [entity_id, { entity_id, area_id: 'lounge' }]),
         ),
       },
       areas: { ...hass.areas, lounge: area('lounge', 'Lounge') },
@@ -686,6 +689,91 @@ describe('a room’s quick actions (#113)', () => {
     expect(await at('opening')).toBe('stop_cover');
   });
 
+  /** What a tap on the round of `group` sends in a lounge with `more`: each call as `domain.service ids`. */
+  const tapped = async (group: string, more: readonly Seed[]): Promise<string[]> => {
+    sent.length = 0;
+    const card = await room({ area: 'lounge', quick_actions: [group] }, lounge(more));
+    rounds(card)[0]!.click();
+    return sent.map(
+      ({ domain, service, data }) => `${domain}.${service} ${String(data['entity_id'])}`,
+    );
+  };
+  /** One of the lounge's own in another state. */
+  const at = (id: string, state: string): Seed => [
+    id,
+    state,
+    LOUNGE.find(([own]) => own === id)?.[2] ?? {},
+  ];
+  /** An entity of the lounge in `state` that supports `features`. */
+  const of = (id: string, state: string, features: number): Seed => [
+    id,
+    state,
+    { supported_features: features },
+  ];
+
+  it('sends each blind what it takes, one call a service: one that only tilts by its slats, one that does neither none', async () => {
+    // a louvre that only tilts, and a screen that only takes a position: Home Assistant refuses a whole call to either
+    const louvre = (state: string): Seed => of('cover.lounge_louvre', state, 16 | 32 | 64 | 128);
+    const screen = (state: string): Seed => of('cover.lounge_screen', state, 4);
+    expect(await tapped('covers', [louvre('open'), screen('open')])).toEqual([
+      'cover.close_cover cover.lounge_blinds',
+      'cover.close_cover_tilt cover.lounge_louvre',
+    ]);
+    expect(
+      await tapped('covers', [
+        louvre('closed'),
+        screen('closed'),
+        at('cover.lounge_blinds', 'closed'),
+      ]),
+    ).toEqual([
+      'cover.open_cover cover.lounge_blinds',
+      'cover.open_cover_tilt cover.lounge_louvre',
+    ]);
+    // the louvre stops by its slats while it moves
+    expect(await tapped('covers', [louvre('closing')])).toEqual([
+      'cover.stop_cover_tilt cover.lounge_louvre',
+    ]);
+  });
+
+  it('sends each player what it takes: one that cannot pause stops, then goes off; one that takes none is left out', async () => {
+    expect(
+      await tapped('media', [
+        of('media_player.lounge_radio', 'playing', 4096),
+        of('media_player.lounge_tv', 'playing', 128 | 256),
+        of('media_player.lounge_display', 'playing', 0),
+      ]),
+    ).toEqual([
+      'media_player.media_pause media_player.lounge',
+      'media_player.media_stop media_player.lounge_radio',
+      'media_player.turn_off media_player.lounge_tv',
+    ]);
+    // none plays: those on play where they can; none on: those that can come on
+    expect(
+      await tapped('media', [
+        at('media_player.lounge', 'paused'),
+        of('media_player.lounge_tv', 'idle', 128 | 256),
+      ]),
+    ).toEqual(['media_player.media_play media_player.lounge']);
+    expect(
+      await tapped('media', [
+        at('media_player.lounge', 'off'),
+        of('media_player.lounge_radio', 'off', 4096 | 16384),
+      ]),
+    ).toEqual(['media_player.turn_on media_player.lounge']);
+  });
+
+  it('takes no tap where none of its members can act, and is drawn as one that cannot', async () => {
+    // a speaker that plays and can only have its volume set
+    const hass = lounge([of('media_player.lounge', 'playing', 4)]);
+    sent.length = 0;
+    const card = await room({ area: 'lounge', quick_actions: ['media', 'lights'] }, hass);
+    const [media, lights] = rounds(card);
+    expect(media?.getAttribute('aria-disabled')).toBe('true');
+    expect(lights?.getAttribute('aria-disabled')).toBeNull();
+    media!.click();
+    expect(sent).toEqual([]);
+  });
+
   it('pauses what plays, toggles a lock as Home Assistant does, and runs an action of its own', async () => {
     sent.length = 0;
     const card = await room(
@@ -733,6 +821,90 @@ describe('a room’s quick actions (#113)', () => {
         user: { id: 'u2', name: 'Guest', is_admin: false },
       } as HomeAssistant);
       expect(rounds(guest)[0]?.fvHold).toBeUndefined();
+    } finally {
+      window.removeEventListener('location-changed', moved);
+      document.removeEventListener('hass-more-info', more);
+    }
+  });
+
+  it('asks first where its tap says so, in Home Assistant’s own dialog, then turns the set off: nothing moves before', async () => {
+    const asked: unknown[] = [];
+    const ask = (event: Event): void =>
+      void asked.push(
+        (event as CustomEvent<{ config: { tap_action: unknown } }>).detail.config.tap_action,
+      );
+    document.addEventListener('hass-action', ask);
+    try {
+      sent.length = 0;
+      const confirmation = { text: 'Every light off?' };
+      const card = await room(
+        {
+          area: 'lounge',
+          quick_actions: [
+            { group: 'lights', tap_action: { action: 'toggle', confirmation } },
+            { group: 'covers', tap_action: { action: 'toggle', confirmation: true } },
+          ],
+        },
+        lounge([['cover.lounge_louvre', 'open', { supported_features: 16 | 32 }]]),
+      );
+      const [lights, blinds] = rounds(card);
+      lights!.click();
+      blinds!.click();
+      await card.updateComplete;
+      expect(sent).toEqual([]);
+      expect(asked).toEqual([
+        {
+          action: 'perform-action',
+          perform_action: 'light.turn_off',
+          target: {
+            entity_id: ['light.lounge_ceiling', 'light.lounge_reading', 'light.lounge_shelf'],
+          },
+          confirmation,
+        },
+        // Home Assistant asks before one action: the blinds' own, the louvre that only tilts left to a tap that does
+        // not ask
+        {
+          action: 'perform-action',
+          perform_action: 'cover.close_cover',
+          target: { entity_id: ['cover.lounge_blinds'] },
+          confirmation: true,
+        },
+      ]);
+      // still on until Home Assistant has asked
+      expect(lights?.getAttribute('aria-checked')).toBe('true');
+    } finally {
+      document.removeEventListener('hass-action', ask);
+    }
+  });
+
+  it('opens a set’s details where its tap or hold says so: its one member’s, else where the room opens, else none', async () => {
+    const opened: string[] = [];
+    const went: string[] = [];
+    const more = (event: Event): void =>
+      void opened.push((event as CustomEvent<{ entityId: string }>).detail.entityId);
+    const moved = (): void => void went.push(window.location.pathname);
+    window.addEventListener('location-changed', moved);
+    document.addEventListener('hass-more-info', more);
+    try {
+      const details = { action: 'more-info' } as const;
+      const quick_actions = [
+        { group: 'covers', tap_action: details },
+        { group: 'lights', tap_action: details },
+        { group: 'fans', tap_action: { action: 'toggle' }, hold_action: details },
+      ] as const;
+      const card = await room({ area: 'lounge', path: '/lounge', quick_actions }, lounge());
+      const [blinds, lights, fans] = rounds(card);
+      blinds!.click();
+      lights!.click();
+      fans!.fvHold?.();
+      expect(opened).toEqual(['cover.lounge_blinds', 'fan.lounge']);
+      expect(went).toEqual(['/lounge']);
+      // nowhere to open (no path, no administrator): the lights’ round takes no tap
+      const guest = await room({ area: 'lounge', quick_actions }, {
+        ...lounge(),
+        user: { id: 'u2', name: 'Guest', is_admin: false },
+      } as HomeAssistant);
+      expect((rounds(guest)[1] as Round & { fvTap?: () => void }).fvTap).toBeUndefined();
     } finally {
       window.removeEventListener('location-changed', moved);
       document.removeEventListener('hass-more-info', more);

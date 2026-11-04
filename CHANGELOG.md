@@ -38,6 +38,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   saying Unlocking, a cabin's temperature or a setpoint of half a degree could take a round from the row (or push the
   card's own list onto another row), and a car out of reach, its rounds all dashes, showed one round more than while it
   read.
+- A room card's quick action sends each blind and player the service it takes, one call a service: a blind that only
+  tilts moves its slats, a player that cannot pause stops or goes off, one that can do neither is left out, where Home
+  Assistant refused the whole call and nothing moved; a round none of whose members can act takes no tap.
+- A room card's quick action for a set asks first where its tap has a `confirmation` and then turns the set on or
+  off, and opens its details where its tap or hold is `more-info` (its one member's, else where the room opens), where
+  either did nothing.
 
 ### Development
 

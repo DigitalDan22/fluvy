@@ -85,7 +85,7 @@ export interface QuickHost {
   /** A colour as the card's sheet gives it (`data-accent`). */
   accent(colour: unknown): string | undefined;
   /** Where the room opens, where it opens anywhere. */
-  readonly open: (() => void) | undefined;
+  readonly destination: string | undefined;
 }
 
 /** The rounds drawn in the room the card gives them, and what they take of its line: their width and 12 before. */
@@ -151,40 +151,132 @@ function levelOf(view: EntityView): number {
 
 /** States a blind moves in: a tap then stops it. */
 const MOVING: ReadonlySet<string> = new Set(['opening', 'closing']);
+
+/* the `supported_features` of a blind and a player that say which service each takes */
+const COVER_OPEN = 1;
+const COVER_CLOSE = 2;
 const COVER_STOP = 8;
+const COVER_OPEN_TILT = 16;
+const COVER_CLOSE_TILT = 32;
+const COVER_STOP_TILT = 64;
+const MEDIA_PAUSE = 1;
+const MEDIA_TURN_ON = 128;
+const MEDIA_TURN_OFF = 256;
+const MEDIA_STOP = 4096;
+const MEDIA_PLAY = 16384;
+
+/** The services a move may be, best first, each with the feature a member needs for it (0: every member takes it). */
+type Ways = readonly (readonly [service: string, feature: number])[];
+
+/** A blind stops, closes and opens itself, else (one that only tilts) its slats. */
+const STOPS: Ways = [
+  ['stop_cover', COVER_STOP],
+  ['stop_cover_tilt', COVER_STOP_TILT],
+];
+const CLOSES: Ways = [
+  ['close_cover', COVER_CLOSE],
+  ['close_cover_tilt', COVER_CLOSE_TILT],
+];
+const OPENS: Ways = [
+  ['open_cover', COVER_OPEN],
+  ['open_cover_tilt', COVER_OPEN_TILT],
+];
+/** A player that plays pauses, else stops (Home Assistant's own play button), else goes off. */
+const PAUSES: Ways = [
+  ['media_pause', MEDIA_PAUSE],
+  ['media_stop', MEDIA_STOP],
+  ['turn_off', MEDIA_TURN_OFF],
+];
+const PLAYS: Ways = [['media_play', MEDIA_PLAY]];
+const WAKES: Ways = [['turn_on', MEDIA_TURN_ON]];
+
+/** One call of a round's: a service of its domain and the members that take it. */
+interface Call {
+  readonly service: string;
+  readonly ids: readonly string[];
+}
 
 /**
- * A round's own on and off, for all of it at once: a set on goes off, a set off comes on (every one, in one call);
- * blinds that move stop, else open ones close and closed ones open; players that play pause, else those on play and
- * those off come on.
+ * The calls that move `views`, one a service in the order of `ways`: each member by the first of them it supports, one
+ * that supports none left out (Home Assistant refuses a whole call one of its entities cannot take).
  */
-function flip(host: QuickHost, domain: string, views: readonly EntityView[], on: boolean): void {
+function callsOf(views: readonly EntityView[], ways: Ways): Call[] {
+  const way = (view: EntityView): string | undefined =>
+    ways.find(([, feature]) => !feature || view.supports(feature))?.[0];
+  return ways
+    .map(([service]) => ({
+      service,
+      ids: views.filter((view) => way(view) === service).map((view) => view.id),
+    }))
+    .filter((call) => call.ids.length > 0);
+}
+
+/** A round's on and off as it would go now: its calls (none: none of its members can), and the state they expect. */
+interface Flip {
+  readonly domain: string;
+  readonly calls: readonly Call[];
+  readonly expect?: string;
+}
+
+/**
+ * A round's own on and off, for all of it at once: a set on goes off, a set off comes on; blinds that move stop, else
+ * open ones close and closed ones open; players that play pause, else those on play and those off come on — each
+ * member by what it takes (a blind that only tilts by its slats), one call a service.
+ */
+function flipOf(domain: string, views: readonly EntityView[], on: boolean): Flip {
   const usable = views.filter(isUsable);
-  const ids = (list: readonly EntityView[]): { entity_id: string[] } => ({
-    entity_id: list.map((view) => view.id),
-  });
-  const expect = (list: readonly EntityView[], state: string): void => {
-    for (const view of list) host.expect(view.id, state);
-  };
   if (domain === 'cover') {
-    const moving = usable.filter((view) => MOVING.has(view.state) && view.supports(COVER_STOP));
-    if (moving.length) return host.call('cover', 'stop_cover', ids(moving));
-    expect(usable, on ? 'closed' : 'open');
-    return host.call('cover', on ? 'close_cover' : 'open_cover', ids(usable));
+    const stops = callsOf(
+      usable.filter((view) => MOVING.has(view.state)),
+      STOPS,
+    );
+    if (stops.length) return { domain, calls: stops };
+    return on
+      ? { domain, calls: callsOf(usable, CLOSES), expect: 'closed' }
+      : { domain, calls: callsOf(usable, OPENS), expect: 'open' };
   }
   if (domain === 'media_player') {
     const playing = usable.filter((view) => view.state === 'playing');
+    if (playing.length) return { domain, calls: callsOf(playing, PAUSES) };
     const awake = usable.filter((view) => view.state !== 'off');
-    if (playing.length) return host.call(domain, 'media_pause', ids(playing));
-    if (!awake.length) return host.call(domain, 'turn_on', ids(usable));
-    expect(awake, 'playing');
-    return host.call(domain, 'media_play', ids(awake));
+    return awake.length
+      ? { domain, calls: callsOf(awake, PLAYS), expect: 'playing' }
+      : { domain, calls: callsOf(usable, WAKES) };
   }
-  expect(usable, on ? 'off' : 'on');
-  host.call(domain, on ? 'turn_off' : 'turn_on', ids(usable));
+  return {
+    domain,
+    calls: callsOf(usable, [[on ? 'turn_off' : 'turn_on', 0]]),
+    expect: on ? 'off' : 'on',
+  };
 }
 
-/** The domains a round turns on and off itself (`flip`), all of a set in one call; the rest by the house's toggle. */
+/**
+ * Runs a round's on and off: every call at once, its members drawn as they will be; or, asked first (`confirmation`),
+ * through Home Assistant's own dialog, which asks before one action — the first call, the members that take the set's
+ * own service (a blind that only tilts is left to a tap that does not ask), and nothing moves before the answer.
+ */
+function runFlip(host: QuickHost, flip: Flip, confirmation: ActionConfig['confirmation']): void {
+  const [first] = flip.calls;
+  if (confirmation) {
+    if (first)
+      host.run(
+        {
+          action: 'perform-action',
+          perform_action: `${flip.domain}.${first.service}`,
+          target: { entity_id: [...first.ids] },
+          confirmation,
+        },
+        undefined,
+      );
+    return;
+  }
+  for (const { service, ids } of flip.calls) {
+    if (flip.expect) for (const id of ids) host.expect(id, flip.expect);
+    host.call(flip.domain, service, { entity_id: [...ids] });
+  }
+}
+
+/** The domains a round turns on and off itself (`flipOf`), all of a set at once; the rest by the house's toggle. */
 const FLIPS: ReadonlySet<string> = new Set([
   'light',
   'switch',
@@ -201,8 +293,8 @@ const TOGGLE: ActionConfig = { action: 'toggle' };
 /**
  * A round as drawn: its name and glyph (its set's, else its entity's), on while any of it is, its ring the level of
  * all of it (an off one at 0: the room's light as a share of all it could give, its blinds' mean position), its colour
- * (a set of lights in what is lit, as the room's lights' row; else its own, else its kind's), its tap (on and off) and
- * its hold (its details; a set of several: where the room opens).
+ * (a set of lights in what is lit, as the room's lights' row; else its own, else its kind's), its tap (on and off; none
+ * where none of it can, and then it is drawn as one that cannot) and its hold (its details).
  */
 function roundOf(host: QuickHost, item: QuickAction): LevelRound {
   const { hass, config } = host;
@@ -229,29 +321,36 @@ function roundOf(host: QuickHost, item: QuickAction): LevelRound {
       ? lightLook(item, config, glow)
       : [item.color, statusToneOf(item, toneFor(first))];
   const single = ids.length === 1 ? ids[0] : undefined;
+  // what its actions are for: its own entity, else its one member; a set of several has none
+  const own = item.entity ?? single;
+  /**
+   * An action of the round's, where it can run: a set of several's details are where the room opens, whose page lists
+   * them as a group's own dialog lists its members (Home Assistant has no dialog for entities that are no group).
+   */
+  const runs = (asked: ActionConfig): (() => void) | undefined => {
+    const action =
+      asked.action === 'more-info' && !asked.entity && !own && host.destination
+        ? { ...asked, action: 'navigate' as const, navigation_path: host.destination }
+        : asked;
+    return actionRuns(action, own) ? () => host.run(action, own) : undefined;
+  };
   const tap = item.tap_action ?? (group || TOGGLE_DOMAINS.has(first.domain) ? TOGGLE : MORE_INFO);
-  const switches =
-    tap.action === 'toggle' && !tap.entity && !tap.confirmation && FLIPS.has(first.domain);
-  const hold = item.hold_action ?? (single ? MORE_INFO : undefined);
+  // its own on and off where its tap toggles it, asked first or not
+  const flip =
+    tap.action === 'toggle' && !tap.entity && FLIPS.has(first.domain)
+      ? flipOf(first.domain, views, on)
+      : undefined;
   return {
     name: item.name ?? (group ? localize(hass, LOOKS[group][0]) : first.name),
     glyph: item.icon ?? (group && !single ? LOOKS[group][1] : iconOf(first)),
-    usable: views.some(isUsable),
+    usable: flip ? flip.calls.length > 0 : views.some(isUsable),
     on,
     level: on ? Math.max(1, Math.round(level)) : 0,
     tone,
     accent: host.accent(colour),
-    switches,
-    onTap: switches
-      ? () => flip(host, first.domain, views, on)
-      : actionRuns(tap, item.entity)
-        ? () => host.run(tap, item.entity)
-        : undefined,
-    onHold: hold
-      ? actionRuns(hold, single)
-        ? () => host.run(hold, single)
-        : undefined
-      : host.open,
+    switches: flip !== undefined,
+    onTap: flip ? () => runFlip(host, flip, tap.confirmation) : runs(tap),
+    onHold: runs(item.hold_action ?? MORE_INFO),
   };
 }
 

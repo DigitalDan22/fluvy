@@ -869,9 +869,12 @@ once the name has its room (none in half a phone's section), each a switch for a
 much of it is on. By default they are the room's lights (their ring: the light the room gives of all it could, a dimmed
 light by its brightness) and its blinds (their ring: where they stand); `quick_actions` asks for the room's `lights`,
 `covers`, `fans` or `media`, or any entity, in your order, each with its own `name`, `icon`, `tone`, `color`,
-`tap_action` and `hold_action`. A tap turns a set off while any of it is on and on otherwise, in one call; blinds open,
-close, or stop while they move; players pause, else play. A hold opens an entity's details, or where the room opens
-for a set of several. `show_quick_actions: false` hides them.
+`tap_action` and `hold_action`. A tap turns a set off while any of it is on and on otherwise; blinds open, close, or
+stop while they move; players pause, else play. Each takes what it can, one call a service: a blind that only tilts
+moves its slats, a player that cannot pause stops or goes off, one that can do neither is left out, and a round none
+of whose members can act takes no tap. With a `confirmation` Home Assistant asks first; it asks before one action, so
+blinds that only tilt beside others are left to a tap that does not ask. A hold (or `more-info`) opens an entity's
+details, or where the room opens for a set of several. `show_quick_actions: false` hides them.
 
 ```yaml
 type: custom:fluvy-room-card

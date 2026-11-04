@@ -9,8 +9,9 @@
  * for an administrator only, why it is empty; a room counts what is on once (its readout and its rows alike); at 211
  * a tile head gives its circle to a name that would be cut and the hint runs three lines at most, in every language;
  * a room's quick actions (#113) end its row, its head and its picture — its lights' round turns them all off in one
- * call, its blinds' closes them, a hold on a set of several opens the room and on an entity its details, one that
- * cannot be read takes no tap, and half a section holds as many as the name leaves room for;
+ * call, its blinds' closes them (a roof that only tilts by its slats, a screen that can do neither left out), a hold on
+ * a set of several opens the room and on an entity its details, one that cannot be read or act takes no tap, and half
+ * a section holds as many as the name leaves room for;
  * the map's zones hold the right faces, a person nobody can place stands in Unknown, the rows say
  * the distance only for someone away with a fix, and Home Assistant's map, which the playground cannot make,
  * gives way to the zones silently.
@@ -297,6 +298,20 @@ const navigations = (page) => page.evaluate(() => window.__navigations.splice(0)
     'in half a phone’s section none: the picture’s pill keeps its glyph and its name whole',
     counts.join() === '0,0,0,0' && pills.join() === '1,1',
     `${counts.join()} · ${pills.join()}`,
+  );
+  const sunroom = frame(page, 'Room · blinds that only tilt among its covers').locator(
+    '.rm-quick .lt-bulb',
+  );
+  await reset(page);
+  await press(sunroom.nth(0));
+  await press(sunroom.nth(1));
+  const shut = (await calls(page)).map((call) => `${call.s} ${ids(call).join()}`);
+  check(
+    'the sunroom’s blinds’ round closes the blinds and tilts the roof shut, one call each, never the screen; its radio, which can do nothing, takes no tap',
+    shut.join(' | ') ===
+      'cover.close_cover cover.rm_sunroom_blinds | cover.close_cover_tilt cover.rm_sunroom_roof' &&
+      (await sunroom.nth(1).getAttribute('aria-disabled')) === 'true',
+    shut.join(' | '),
   );
   await page.close();
 }

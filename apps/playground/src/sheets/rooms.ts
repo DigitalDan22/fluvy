@@ -221,6 +221,34 @@ const UTILITY_DEVICE = {
   via_device_id: null,
 };
 
+/*
+ * The 1.13 judge's sunroom: roller blinds, a louvred roof that only tilts and a screen that only takes a position —
+ * its blinds' round closes the blinds and tilts the roof shut, and leaves the screen out; its radio plays and can do
+ * nothing else, so its round takes no tap.
+ */
+const SUNROOM: readonly StateSeed[] = [
+  ['light.rm_sunroom', 'on', { friendly_name: 'Sunroom', supported_color_modes: ['onoff'] }],
+  [
+    'cover.rm_sunroom_blinds',
+    'open',
+    { friendly_name: 'Blinds', current_position: 50, supported_features: 15 },
+  ],
+  [
+    'cover.rm_sunroom_roof',
+    'open',
+    { friendly_name: 'Louvred roof', current_tilt_position: 70, supported_features: 240 },
+  ],
+  [
+    'cover.rm_sunroom_screen',
+    'open',
+    { friendly_name: 'Screen', current_position: 100, supported_features: 4 },
+  ],
+  ['media_player.rm_sunroom_radio', 'playing', { friendly_name: 'Radio', supported_features: 0 }],
+];
+const SUNROOM_ENTITIES = Object.fromEntries(
+  SUNROOM.map(([entity_id]) => entry(entity_id, 'rm_sunroom')),
+);
+
 /**
  * A room's page as the automatic dashboard lays it out (#76), in the page's language: the way back, then what it
  * holds — in a column, in reading order. Read when the frame is drawn, once the page's words have landed.
@@ -292,7 +320,8 @@ export const sheet: SheetSpec = {
       'open',
       { friendly_name: 'Blinds', current_position: 40, supported_features: 15 },
     ],
-    ['media_player.rm_tv', 'off', { friendly_name: 'Living room TV' }],
+    // a television's features: it pauses, stops and plays, comes on and goes off, and has a volume
+    ['media_player.rm_tv', 'off', { friendly_name: 'Living room TV', supported_features: 21893 }],
     [
       'climate.rm_living',
       'heat',
@@ -344,6 +373,7 @@ export const sheet: SheetSpec = {
     ...GARAGE,
     ...GALLEY,
     ...UTILITY,
+    ...SUNROOM,
     ['switch.rm_porch', 'unavailable', { friendly_name: 'Porch lantern' }],
     [
       'climate.rm_study',
@@ -440,6 +470,7 @@ export const sheet: SheetSpec = {
       ...GARAGE_ENTITIES,
       ...GALLEY_ENTITIES,
       ...UTILITY_ENTITIES,
+      ...SUNROOM_ENTITIES,
     },
     devices: {
       [GARAGE_DEVICE.id]: GARAGE_DEVICE,
@@ -485,6 +516,7 @@ export const sheet: SheetSpec = {
       rm_garage: GARAGE_AREA,
       rm_galley: GALLEY_AREA,
       rm_utility: { area_id: 'rm_utility', name: 'Utility room', icon: 'mdi:washing-machine' },
+      rm_sunroom: { area_id: 'rm_sunroom', name: 'Sunroom', icon: 'mdi:flower' },
     },
     floors: {
       rm_ground: { floor_id: 'rm_ground', name: 'Ground floor', level: 0 },
@@ -722,6 +754,19 @@ export const sheet: SheetSpec = {
           controls: 'none',
           cols: 6,
           show_quick_actions: false,
+        }),
+      ],
+    },
+    // the sunroom: its blinds' round closes the blinds and tilts the roof shut, never the screen; its radio's takes no tap
+    {
+      title: 'Room · blinds that only tilt among its covers',
+      cards: [
+        room({
+          area: 'rm_sunroom',
+          variant: 'tile',
+          controls: 'none',
+          quick_actions: ['covers', 'media', 'lights'],
+          path: '/fluvy-auto/room-rm_sunroom',
         }),
       ],
     },
