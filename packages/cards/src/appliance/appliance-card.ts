@@ -1776,9 +1776,26 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
 
   /** The automation of this appliance's "Tell me when it's done", where an administrator looks at its whole card. */
   private noticeAutomation(): string | undefined {
-    const key = applianceKey(this.appliance(), this.config ?? {});
-    if (!key || !this.hass?.user?.is_admin || this.variant !== 'full') return undefined;
-    return automationEntity(this.hass, noticeId(key))?.entity_id;
+    if (!this.hass?.user?.is_admin || this.variant !== 'full') return undefined;
+    return this.notice(this.appliance())?.automation;
+  }
+
+  /**
+   * This appliance's "Tell me when it's done": its id, and the automation that carries it where one does. A card that
+   * names `device: none` finds the one 1.12 wrote for it, known by that `none`, until the person removes it: it is
+   * read, never moved, so nothing is written behind their back (an automation they edited keeps their edits); once it
+   * is gone, a tap writes the card's own.
+   */
+  private notice(
+    found: ApplianceFound,
+  ): { readonly id: string; readonly automation: string | undefined } | undefined {
+    const hass = this.hass;
+    const key = applianceKey(found, this.config ?? {});
+    if (!hass || !key) return undefined;
+    const own = noticeId(key);
+    const ids = this.config?.device === NO_DEVICE ? [own, noticeId(NO_DEVICE)] : [own];
+    const id = ids.find((each) => automationEntity(hass, each)) ?? own;
+    return { id, automation: automationEntity(hass, id)?.entity_id };
   }
 
   private now(): number {
@@ -2486,8 +2503,8 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
    */
   private renderNotice(view: View, words: readonly string[]): TemplateResult | typeof nothing {
     const hass = this.hass;
-    const key = applianceKey(view.found, this.config ?? {});
-    if (!hass?.user?.is_admin || this.config?.show_notify === false || !key) return nothing;
+    const notice = this.notice(view.found);
+    if (!hass?.user?.is_admin || this.config?.show_notify === false || !notice) return nothing;
     const room = this.contentWidth - 44 - 12;
     const fits = words.every(
       (text, index) =>
@@ -2501,8 +2518,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         })
       : [];
     if (!triggers.length) return nothing;
-    const id = noticeId(key);
-    const automation = automationEntity(hass, id)?.entity_id;
+    const { id, automation } = notice;
     const now = Date.now();
     const sent = !automation && this.noticeSent > now;
     const armed = automation !== undefined && this.noticeArmed > now;

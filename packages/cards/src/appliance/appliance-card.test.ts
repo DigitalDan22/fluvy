@@ -1141,7 +1141,7 @@ describe('the appliance card’s editor', () => {
 describe('“Tell me when it’s done” (#47)', () => {
   const ID = 'fluvy_done_hc_dish';
   /** The house with Home Assistant's config API, recording what it is sent; the notice's automation where it is. */
-  function houseWith(automation?: 'on' | 'off', admin = true) {
+  function houseWith(automation?: 'on' | 'off', admin = true, id = ID) {
     const hass = house();
     const api: Array<[string, string, unknown?]> = [];
     const states = { ...hass.states };
@@ -1149,7 +1149,7 @@ describe('“Tell me when it’s done” (#47)', () => {
       states['automation.geschirrspuler_tell_me'] = {
         entity_id: 'automation.geschirrspuler_tell_me',
         state: automation,
-        attributes: { id: ID, friendly_name: 'Geschirrspüler: tell me when it’s done' },
+        attributes: { id, friendly_name: 'Geschirrspüler: tell me when it’s done' },
         last_changed: AT,
         last_updated: AT,
       } as HassEntity;
@@ -1230,5 +1230,43 @@ describe('“Tell me when it’s done” (#47)', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('on a `device: none` card, is the one 1.12 wrote, known by that `none`, until it is removed; then its own', async () => {
+    const state = 'sensor.geschirrspuler_betriebszustand';
+    const config = {
+      device: 'none',
+      kind: 'dishwasher',
+      roles: [{ role: 'state', entity: state }],
+    };
+    const old = houseWith('on', true, 'fluvy_done_none');
+    const card = await mount(config, old);
+    expect(bell(card)?.getAttribute('aria-pressed')).toBe('true');
+    bell(card)?.click();
+    expect(old.calls.at(-1)).toMatchObject({ domain: 'automation', service: 'turn_off' });
+    vi.useFakeTimers();
+    try {
+      bell(card)?.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', button: 0 }),
+      );
+      vi.advanceTimersByTime(600);
+      await card.updateComplete;
+      window.dispatchEvent(new PointerEvent('pointerup'));
+      bell(card)?.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
+      expect(old.api.at(-1)).toEqual(['DELETE', 'config/automation/config/fluvy_done_none']);
+    } finally {
+      vi.useRealTimers();
+    }
+    // read, never moved: nothing written for it; once it is gone, a tap writes the card's own
+    expect(old.api.filter(([method]) => method === 'POST')).toEqual([]);
+    const fresh = houseWith();
+    bell(await mount(config, fresh))?.click();
+    expect(fresh.api[0]?.slice(0, 2)).toEqual([
+      'POST',
+      'config/automation/config/fluvy_done_sensor_geschirrspuler_betriebszustand',
+    ]);
+    // a card that names its device was never known by `none`
+    const named = await mount({ device: 'hc-dish' }, houseWith('on', true, 'fluvy_done_none'));
+    expect(bell(named)?.getAttribute('aria-pressed')).toBe('false');
   });
 });

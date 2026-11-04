@@ -507,10 +507,14 @@ const band = (): LovelaceCardConfig[] => {
   );
 };
 
-/** "Tell me when it's done" (#47) as Home Assistant lists it: the dishwasher's on, the washer's off. */
+/**
+ * "Tell me when it's done" (#47) as Home Assistant lists it: the dishwasher's on, the washer's off; and on, the one
+ * 1.12 wrote for a card that names no device, known by that `none`.
+ */
 const NOTICES: ReadonlyArray<readonly [string, 'on' | 'off']> = [
   ['mk-dish', 'on'],
   ['mk-washer', 'off'],
+  ['none', 'on'],
 ];
 const withNotices = (hass: HomeAssistant): HomeAssistant => {
   const states = { ...hass.states };
@@ -626,6 +630,18 @@ export const sheet: SheetSpec = {
         card('mk-dish', { kind: 'dishwasher' }),
         card('mk-washer', { kind: 'washer' }),
         card('mk-dryer', { kind: 'dryer' }),
+      ],
+    },
+    // a card that names no device (`device: none`, its roles by hand) finds the one 1.12 wrote for it
+    {
+      title: 'Tell me when it’s done · no device, as 1.12 wrote it',
+      hass: withNotices,
+      cards: [
+        card('none', {
+          kind: 'dishwasher',
+          name: 'Geschirrspüler',
+          roles: [{ role: 'state', entity: 'sensor.mk_geschirrspuler_betriebszustand' }],
+        }),
       ],
     },
   ],

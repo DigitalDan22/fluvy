@@ -50,6 +50,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   every such card asked for it, and for its power's too, while its machine ran; the appliances card reads a plug's
   power alone.
 - A ring appliance card on a plug out of reach says so under its dash, where it could say what this cycle had used.
+- An appliance card that names `device: none` finds the "Tell me when it's done" automation 1.12 wrote for it again,
+  its bell on while it is and turning it off, on and away, where since 1.13.0 the card did not see it and a tap wrote a
+  second one beside it; as in 1.12, every such card reads that one until it is removed, then each writes its own.
 
 ## [1.13.1] — 2026-11-04
 

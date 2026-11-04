@@ -581,6 +581,23 @@ check(
       removed?.path === 'config/automation/config/fluvy_done_mk_dish',
     JSON.stringify({ toggled, armed, removed }),
   );
+  // a card that names no device finds the one 1.12 wrote for it, known by that `none`, and acts on it
+  const none = frame(p, 'Tell me when it’s done · no device, as 1.12 wrote it')
+    .locator('fluvy-appliance-card .ap-notice')
+    .first();
+  const old = await none.getAttribute('aria-pressed');
+  await reset(p);
+  await none.click();
+  await settle(p, 200);
+  const offed = await calls(p);
+  check(
+    'a card that names no device (`device: none`) finds the notice 1.12 wrote for it, on, and a tap turns that one off',
+    old === 'true' &&
+      offed.length === 1 &&
+      offed[0].s === 'automation.turn_off' &&
+      JSON.stringify(offed[0].t ?? offed[0].d).includes('automation.fluvy_done_none'),
+    JSON.stringify({ old, offed }),
+  );
   await p.close();
 }
 
