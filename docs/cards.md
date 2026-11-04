@@ -719,6 +719,25 @@ rows:
     device_class: door
 ```
 
+## Calendar
+
+The calendar card draws one table of events as the view chosen: the day's agenda, the month, the week's strip,
+the month and the day, the day's timeline, the upcoming days or a tile. The week and the month start on the day
+`first_weekday` says — a weekday, or `language`, the default: your profile's, else your language's. The week view
+may roll instead (#111): `first_weekday: today` makes its strip today and the six days after it, "Next 7 days", so on
+a Sunday it shows the week ahead and not the one ending; it rolls over at midnight on its own, as a wall dashboard
+that is never reloaded needs, and a day picked in it stays picked while it is in the strip. A month keeps your
+week's first day.
+
+```yaml
+type: custom:fluvy-calendar-card
+variant: week
+first_weekday: today
+calendars:
+  - calendar.family
+  - calendar.work
+```
+
 <!-- generated:cards -->
 
 ## Everyday
@@ -812,7 +831,7 @@ rows:
 | Card | Type | What it is | Options | Reads |
 | --- | --- | --- | --- | --- |
 | **Clock** | `custom:fluvy-clock-card` | Analog or digital, hero, side or tile, with or without weather. | `face` (`analog`, `digital`), `variant` (`hero`, `side`, `tile`), `numerals` (`none`, `quarters`, `all`), `title`, `show_seconds`, `hour12`, `show_date`, `show_week`, `weather`, `show_forecast`, `time_zone` | `variant` → `face`, `seconds` → `show_seconds`, `date` → `show_date`, `week` → `show_week`, `forecast` → `show_forecast` |
-| **Calendar** | `custom:fluvy-calendar-card` | Agenda, month, week, month + day, timeline, upcoming or tile. | `variant` (`agenda`, `month`, `week`, `month-day`, `timeline`, `upcoming`, `tile`), `title`, `tile` (`date`, `next`), `first_weekday` (`language`, `sunday`, `monday`, `tuesday`, `wednesday`, `thursday`, `friday`, `saturday`), `days`, `start_hour`, `end_hour`, `calendars` (a list: `entity`, `name`, `tone`, `color`) | `entities` → `calendars` |
+| **Calendar** | `custom:fluvy-calendar-card` | Agenda, month, week, month + day, timeline, upcoming or tile. | `variant` (`agenda`, `month`, `week`, `month-day`, `timeline`, `upcoming`, `tile`), `title`, `tile` (`date`, `next`), `first_weekday` (`language`, `today`, `sunday`, `monday`, `tuesday`, `wednesday`, `thursday`, `friday`, `saturday`), `days`, `start_hour`, `end_hour`, `calendars` (a list: `entity`, `name`, `tone`, `color`) | `entities` → `calendars` |
 
 <!-- /generated:cards -->
 

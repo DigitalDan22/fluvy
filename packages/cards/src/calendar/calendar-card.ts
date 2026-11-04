@@ -290,8 +290,19 @@ export class FluvyCalendarCard extends Card<CalendarCardConfig> {
     return date && !Number.isNaN(date.getTime()) ? date : this.clock;
   }
 
+  /** Whether the week view's strip starts on today and the six days after it (`first_weekday: today`, #111). */
+  private get rolling(): boolean {
+    return this.config?.first_weekday === 'today' && this.view === 'week';
+  }
+
+  /**
+   * The weekday a week starts on: today's in a rolling week, so the strip, the window it reads, a picked day and the
+   * keys all turn on today, and roll over with it at midnight; the house's where a month's grid asks.
+   */
   private get first(): number {
-    return firstWeekday(this.hass, this.config?.first_weekday);
+    if (this.rolling) return this.now.getDay();
+    const configured = this.config?.first_weekday;
+    return firstWeekday(this.hass, configured === 'today' ? undefined : configured);
   }
 
   /** The selected day. A view only keeps a pick it can show: the agenda today or tomorrow, the week its own seven days. */
@@ -419,6 +430,7 @@ export class FluvyCalendarCard extends Card<CalendarCardConfig> {
       day: this.day,
       month: this.shownMonth,
       first: this.first,
+      rolling: this.rolling,
       turn: this.turn,
       focus: this.focused ?? this.day,
       host: this,

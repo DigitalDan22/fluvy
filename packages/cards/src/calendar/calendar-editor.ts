@@ -7,12 +7,13 @@ import {
   entityField,
   fieldRow,
   numberField,
+  onlyWhen,
   selectField,
   showIconField,
   textField,
   toneField,
 } from '../shared/form.js';
-import { VIEWS, type CalendarCardConfig } from './config.js';
+import { VIEWS, type CalendarCardConfig, type CalendarView } from './config.js';
 import { WEEKDAYS } from '../shared/dates.js';
 import { configKeys } from '../shared/config.js';
 import type { EditorDefaults, RowsListSpec } from '../shared/rows-editor.js';
@@ -62,22 +63,32 @@ export const defaults: EditorDefaults = () => ({
   first_weekday: 'language',
 });
 
+/** Whether the view is one of these: what a field acts on. */
+const viewIs =
+  (...views: readonly CalendarView[]) =>
+  ({ variant }: Readonly<Record<string, unknown>>): boolean =>
+    views.includes(variant as CalendarView);
+
 export function getConfigForm(): LovelaceConfigForm {
   return {
     schema: [
       entitiesField('entities', ['calendar'], true),
       fieldRow(selectField('variant', VIEWS), textField('title')),
       showIconField(),
-      fieldRow(
-        selectField('tile', ['date', 'next']),
+      // what each view reads, shown with it: the tile which of its two, the week and the month their first day — the
+      // week's may be today's, a rolling week (#111) — the upcoming list its days, the timeline its hours
+      onlyWhen(viewIs('tile'), selectField('tile', ['date', 'next'])),
+      onlyWhen(viewIs('week'), selectField('first_weekday', ['language', 'today', ...WEEKDAYS])),
+      onlyWhen(
+        viewIs('month', 'month-day'),
         selectField('first_weekday', ['language', ...WEEKDAYS]),
       ),
-      fieldRow(numberField('days', 1, 31), numberField('start_hour', 0, 23)),
-      fieldRow(
-        numberField('end_hour', 1, 24),
-        accentField(),
-        accentField('card_color', { none: true }),
+      onlyWhen(viewIs('upcoming'), numberField('days', 1, 31)),
+      onlyWhen(
+        viewIs('timeline'),
+        fieldRow(numberField('start_hour', 0, 23), numberField('end_hour', 1, 24)),
       ),
+      fieldRow(accentField(), accentField('card_color', { none: true })),
     ],
     ...editorLabels(s, EDITOR_LABELS, { days: 'editor.days' }),
   };

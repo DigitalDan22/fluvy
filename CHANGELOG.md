@@ -21,6 +21,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   counts as open), and says a state in the row's own words (`states: {on: Tilted, off: Closed}`), for a sensor of no
   class or the wrong one: a tilt sensor that read "On" reads "Tilted", and counts as an open window only where the row
   says it is one. Thanks to @rammium (#102).
+- The calendar card's week view rolls from today with `first_weekday: today`: today and the six days after it, named
+  "Next 7 days", turning over at midnight without a reload, so a wall dashboard shows the days ahead on a Sunday too.
+  Its editor shows each option with the view it acts on. Thanks to @theowneryaro (#111).
 
 ## [1.12.0] — 2026-11-04
 

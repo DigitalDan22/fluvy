@@ -47,7 +47,8 @@ export interface CalendarCardConfig extends FluvyCardConfig, HeadConfig {
   /** Which of the two tiles the `tile` view draws. */
   tile?: 'date' | 'next';
   title?: string;
-  first_weekday?: FirstWeekday;
+  /** The weekday the week and the month start on; `today` (#111): the week view's strip starts on today, rolling. */
+  first_weekday?: FirstWeekday | 'today';
   /** `upcoming`: how many days ahead (default 7). */
   days?: number;
   /** `timeline`: the hours drawn (default 8 – 23), widened when the day's events need it. */

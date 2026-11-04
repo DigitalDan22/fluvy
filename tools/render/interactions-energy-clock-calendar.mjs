@@ -478,6 +478,38 @@ async function moreInfos(page, run) {
     opened.length === 1 && opened[0] === 'calendar.ona',
     JSON.stringify(opened),
   );
+
+  // #111: a rolling week's keys walk today and the six days after it, and stop at its ends
+  const rolling = frame(page, 'Week · rolling from today (#111)')
+    .locator('fluvy-calendar-card')
+    .first();
+  const strip = async () =>
+    rolling.evaluate((card) => ({
+      days: [...card.shadowRoot.querySelectorAll('.cd-wday__d')].map((d) => d.textContent),
+      focused: card.shadowRoot.activeElement?.querySelector('.cd-wday__d')?.textContent,
+    }));
+  await rolling.locator('.cd-wday.is-selected').focus();
+  await page.keyboard.press('ArrowLeft');
+  const start = await strip();
+  await page.keyboard.press('End');
+  const end = await strip();
+  await page.keyboard.press('Home');
+  const home = await strip();
+  check(
+    'calendar: a rolling week is today and the six after it; its keys stop at its ends',
+    start.days.join(',') === '17,18,19,20,21,22,23' &&
+      start.focused === '17' &&
+      end.focused === '23' &&
+      home.focused === '17',
+    JSON.stringify({ start, end, home }),
+  );
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(300);
+  check(
+    'calendar: Enter picks a day of the rolling week',
+    (await rolling.locator('.cd-wday[aria-pressed="true"] .cd-wday__d').textContent()) === '18',
+  );
   await page.close();
 }
 

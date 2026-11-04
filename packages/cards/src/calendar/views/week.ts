@@ -30,7 +30,10 @@ function onStripKey(event: KeyboardEvent, days: readonly Date[], first: number):
   buttons[at]?.focus();
 }
 
-/** "This week": the seven-day strip (weekday, number, one dot) over the selected day's events. */
+/**
+ * "This week": the seven-day strip (weekday, number, one dot) over the selected day's events; a rolling week (#111) is
+ * "Next 7 days", today and the six after it.
+ */
 export function weekView(ctx: ViewContext): TemplateResult {
   const { agenda, words } = ctx;
   const broken = outage(ctx);
@@ -40,7 +43,9 @@ export function weekView(ctx: ViewContext): TemplateResult {
   const ready = ctx.status === 'ok' && days.every((date) => agenda.covers(date));
   const total = ready ? days.reduce((sum, date) => sum + agenda.count(date), 0) : 0;
 
-  const title = ctx.config.title ?? words.t('calendar.this_week');
+  const title =
+    ctx.config.title ??
+    (ctx.rolling ? words.t('calendar.next_days', { count: 7 }) : words.t('calendar.this_week'));
   // the count gives way before the title does: "10 events", or just "10" where the words do not fit, or none
   const line = words.ranges(start, addDays(start, 6));
   const fit = fitBadgeHead(

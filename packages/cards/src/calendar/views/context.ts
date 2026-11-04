@@ -33,6 +33,8 @@ export interface ViewContext {
   readonly month: Date;
   /** The weekday a week starts on, as `Date#getDay()` counts. */
   readonly first: number;
+  /** The week view's strip is today and the six days after it (`first_weekday: today`), not this week. */
+  readonly rolling: boolean;
   /** Which way the month last turned: the grid slides in from that side. */
   readonly turn: -1 | 0 | 1;
   /** The day holding the month grid's tab stop (the selected day until the keys move it). */

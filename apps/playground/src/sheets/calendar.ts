@@ -300,6 +300,19 @@ export const sheet: SheetSpec = {
         base('month', { first_weekday: 'sunday' }),
       ],
     },
+    // #111: a rolling week — today and the six days after it — on the sheet's Thursday, and on a Sunday, the day the
+    // reporter's Monday week showed nothing ahead, with Thursday picked in it
+    {
+      title: 'Week · rolling from today (#111)',
+      cards: [
+        base('week', { first_weekday: 'today' }),
+        base('week', {
+          first_weekday: 'today',
+          _now: '2026-09-13T09:30:00',
+          _picked: '2026-09-17',
+        }),
+      ],
+    },
     {
       title: 'All day · multi-day',
       cards: [
