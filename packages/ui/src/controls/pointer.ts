@@ -293,10 +293,12 @@ export function startPress(event: PointerEvent): void {
 /**
  * The click of a pressable surface: the tap, unless this press was held (its hold already ran) or dragged. A
  * keyboard's click (Enter, Space: `detail` 0) always taps — a held touch press whose click never came cannot
- * swallow it.
+ * swallow it. A press on a control inside the surface that holds too (a room's quick action in a head that is the
+ * card's button) is the control's: the surface's click, which comes first, leaves it to the control's.
  */
 export function clickPress(event: MouseEvent): void {
   const target = event.currentTarget as PressTarget;
+  if (pressTarget && pressTarget !== target && target.contains(pressTarget)) return;
   const spent = event.detail !== 0 && pressTarget === target && (pressHeld || pressMoved);
   pressHeld = false;
   pressMoved = false;

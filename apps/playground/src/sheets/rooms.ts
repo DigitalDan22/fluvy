@@ -344,6 +344,7 @@ export const sheet: SheetSpec = {
     ...GARAGE,
     ...GALLEY,
     ...UTILITY,
+    ['switch.rm_porch', 'unavailable', { friendly_name: 'Porch lantern' }],
     [
       'climate.rm_study',
       'heat',
@@ -663,6 +664,66 @@ export const sheet: SheetSpec = {
     {
       title: 'Room · a plug with a timer and a power-on behaviour',
       cards: [room({ area: 'rm_utility', variant: 'tile', controls: 'tiles' })],
+    },
+    // #113: the quick actions at the end of the head, the row and the picture — the room's lights and blinds by default
+    {
+      title: 'Room · quick actions (#113)',
+      cards: [
+        room({ area: 'rm_living', variant: 'row' }),
+        room({ area: 'rm_bedroom', variant: 'row', quick_actions: ['lights', 'fans'] }),
+        room({
+          area: 'rm_den',
+          variant: 'tile',
+          controls: 'none',
+          path: '/fluvy-auto/room-rm_den',
+        }),
+      ],
+    },
+    // the person's own: an entity with its own name and colour (the kettle on), one that cannot be read, one not
+    // there, a set; and the order asked for, as many as the picture and the head hold
+    {
+      title: 'Room · quick actions of one’s own (#113)',
+      hass: (hass) => ({
+        ...hass,
+        states: {
+          ...hass.states,
+          'switch.rm_kettle': { ...hass.states['switch.rm_kettle']!, state: 'on' },
+        },
+      }),
+      cards: [
+        room({
+          area: 'rm_kitchen',
+          variant: 'photo',
+          quick_actions: [
+            { entity: 'switch.rm_kettle', name: 'Kettle', color: '#e2725b' },
+            'switch.rm_porch',
+            'switch.rm_ghost',
+            'lights',
+          ],
+        }),
+        room({
+          area: 'rm_living',
+          variant: 'tile',
+          controls: 'none',
+          quick_actions: ['media', 'covers', { group: 'lights', icon: 'mdi:ceiling-light' }],
+        }),
+      ],
+    },
+    // half a section: as many rounds as the name leaves room for, none where it leaves none; and none asked for
+    {
+      title: 'Room · quick actions in half a section (#113)',
+      cards: [
+        room({ area: 'rm_den', variant: 'photo', controls: 'none', cols: 6 }),
+        room({ area: 'rm_kitchen', variant: 'photo', controls: 'none', cols: 6 }),
+        room({ area: 'rm_den', variant: 'tile', controls: 'none', cols: 6 }),
+        room({
+          area: 'rm_living',
+          variant: 'tile',
+          controls: 'none',
+          cols: 6,
+          show_quick_actions: false,
+        }),
+      ],
     },
   ],
 };

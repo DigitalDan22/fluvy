@@ -1427,6 +1427,9 @@
     "kept_out_one": "{n} entité masquée ou de diagnostic · choisissez ses capteurs dans les paramètres de la pièce"
   },
   "room-editor": {
+    "show_quick_actions": "Afficher les actions rapides",
+    "quick_actions": "Actions rapides",
+    "group": "Agit sur",
     "include": "Compter aussi",
     "exclude": "Laisser de côté",
     "entries_help": "Des entités, des appareils ou des domaines, ou un motif d’identifiants comme switch.dishwasher_*"

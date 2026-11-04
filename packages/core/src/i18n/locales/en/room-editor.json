@@ -1,5 +1,8 @@
 {
   "room-editor": {
+    "show_quick_actions": "Show the quick actions",
+    "quick_actions": "Quick actions",
+    "group": "Acts on",
     "include": "Also count",
     "exclude": "Leave out",
     "entries_help": "Entities, devices or domains, or a pattern of ids such as switch.dishwasher_*"

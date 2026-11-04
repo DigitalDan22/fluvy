@@ -11,10 +11,15 @@ import {
 } from '@fluvy/core';
 import { configKeys } from '../shared/config.js';
 import {
+  accentField,
   actionField,
+  actionFields,
   areaField,
   boolField,
+  choiceField,
   colourFields,
+  editorWord,
+  entityField,
   fieldRow,
   formLabels,
   lightColourFields,
@@ -26,11 +31,13 @@ import {
   sinceChoices,
   textField,
   tintField,
+  toneField,
 } from '../shared/form.js';
 import type { BaseKey } from '../shared/base.js';
 import type { EditorChoices, EditorDefaults, RowsListSpec } from '../shared/rows-editor.js';
 import { lists as tilesLists } from '../tiles/tiles-editor.js';
 import type { RoomCardConfig } from './room-card.js';
+import { defaultGroups, QUICK_GROUPS, quickEntry } from './quick-actions.js';
 import words from '@fluvy/core/locales/en/room-editor.json';
 
 // the editor's own English, in its chunk: its words are said once it is drawn, never by a dashboard
@@ -49,6 +56,10 @@ const drawsTiles = (form: Readonly<Record<string, unknown>>): boolean =>
 /** …its lights, in a row of their own or among its tiles. */
 const drawsLights = (form: Readonly<Record<string, unknown>>): boolean =>
   drawsControls(form) && form['controls'] !== 'none';
+
+/** …its quick actions. */
+const drawsQuick = ({ show_quick_actions: shown }: Readonly<Record<string, unknown>>): boolean =>
+  shown !== false;
 
 /** A reading's field: a sensor of its class, or the thermostat (the humidifier) that carries it (`climateAttribute`). */
 const readingField = (kind: ClimateKind, ...domain: string[]): HaFormSchemaItem => ({
@@ -73,8 +84,10 @@ export const keys = configKeys<RoomCardConfig>()([
   'picture',
   'show_climate',
   'show_count',
+  'show_quick_actions',
   'controls',
   'tiles',
+  'quick_actions',
   'path',
   'temperature_entity',
   'humidity_entity',
@@ -86,6 +99,24 @@ export const keys = configKeys<RoomCardConfig>()([
   'light_whites',
 ]);
 
+/** What a quick action stands for: one of the room's sets, by its word, or an entity. */
+const groupField = choiceField('group', [
+  ...QUICK_GROUPS.map((group) => [group, `strategy.${group}`] as const),
+  ['entity', 'editor.entity'],
+]);
+/** A set's round: its own name, icon, colour and actions; an entity's, the entity first. */
+const GROUP_ITEM: readonly HaFormSchemaItem[] = [
+  groupField,
+  nameIconFields(),
+  fieldRow(toneField(), accentField('color', { bulb: true })),
+  actionFields(),
+];
+const ENTITY_ITEM: readonly HaFormSchemaItem[] = [
+  groupField,
+  entityField(undefined, 'entity', false),
+  ...GROUP_ITEM.slice(1),
+];
+
 export const lists: readonly RowsListSpec[] = [
   {
     key: 'tiles',
@@ -93,6 +124,30 @@ export const lists: readonly RowsListSpec[] = [
     keys: tilesLists[0]?.keys ?? [],
     schema: tilesLists[0]?.schema ?? [],
     when: drawsTiles,
+  },
+  {
+    key: 'quick_actions',
+    idKey: 'group',
+    also: ['entity'],
+    title: 'room-editor.quick_actions',
+    keys: ['group', 'entity', 'name', 'icon', 'tone', 'color', 'tap_action', 'hold_action'],
+    picker: groupField,
+    computeLabel: (schema) =>
+      schema.name === 'group' ? editorWord('room-editor.group') : undefined,
+    read: (raw) => quickEntry(raw) as Record<string, unknown> | null,
+    // a set alone is its word, an entity alone its id; an entity's kind is never written beside it
+    write: ({ group, entity, ...own }) => {
+      const kept = Object.fromEntries(
+        Object.entries(own).filter(([, value]) => value !== undefined && value !== ''),
+      );
+      const bare = !Object.keys(kept).length;
+      if (group !== 'entity') return bare ? String(group) : { group, ...kept };
+      if (typeof entity !== 'string' || !entity) return { group };
+      return bare ? entity : { entity, ...kept };
+    },
+    schema: ENTITY_ITEM,
+    schemaOf: (item) => (item['group'] === 'entity' ? ENTITY_ITEM : GROUP_ITEM),
+    when: drawsQuick,
   },
 ];
 
@@ -135,7 +190,8 @@ const entriesField = (name: 'include' | 'exclude'): HaFormSchemaItem => ({
 
 /**
  * What the editor shows where the config says nothing: what the card does then — its variant, the readings it found
- * in the room as its `include` and `exclude` say.
+ * and its quick actions (its lights, then its blinds, where it has them), in the room as its `include` and `exclude`
+ * say.
  */
 export const defaults: EditorDefaults = (config, hass) => {
   const area = hass?.areas?.[String(config['area'] ?? '')];
@@ -147,6 +203,8 @@ export const defaults: EditorDefaults = (config, hass) => {
     name_lines: '1',
     show_count: true,
     show_climate: true,
+    show_quick_actions: true,
+    quick_actions: defaultGroups(hass, found?.devices ?? []),
     tint: 'on',
     light_colors: lightDefaults().colors,
     light_whites: 'temperature',
@@ -166,6 +224,9 @@ export function getConfigForm(): LovelaceConfigForm {
         onlyWhen(drawsControls, selectField('controls', ['rows', 'tiles', 'none'])),
       ),
       fieldRow(boolField('show_climate'), boolField('show_count')),
+      boolField('show_quick_actions'),
+      // the list is edited item by item (the rows editor takes the field out of the form)
+      { name: 'quick_actions', selector: { object: {} } },
       // a picture is the photo's alone (the default where the room has one)
       fieldRow(
         onlyWhen(({ variant }) => variant === 'photo', textField('picture')),
@@ -189,6 +250,8 @@ export function getConfigForm(): LovelaceConfigForm {
     ...formLabels({
       temperature_entity: 'editor.temperature_entity',
       humidity_entity: 'editor.humidity_entity',
+      show_quick_actions: 'room-editor.show_quick_actions',
+      quick_actions: 'room-editor.quick_actions',
       include: 'room-editor.include',
       exclude: 'room-editor.exclude',
     }),

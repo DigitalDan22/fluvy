@@ -36,7 +36,7 @@ import {
   type Tone,
 } from '@fluvy/ui';
 import { css, html, nothing, type CSSResultGroup, type TemplateResult } from 'lit';
-import { HeadFit } from '../energy/head.js';
+import { HeadFit, ROW_NAME_MIN } from '../energy/head.js';
 import { Crossfade } from '../shared/crossfade.js';
 import { counted } from '../shared/counted.js';
 import { ITEM_ALIASES, type AliasSpec } from '../shared/config.js';
@@ -48,6 +48,7 @@ import { statsRow } from '../shared/readouts.js';
 import type { CardEditor } from '../shared/base.js';
 import type { LightColours, Tint } from '../shared/colour.js';
 import { FluvyTileCard, type NameLines, type TileItem } from '../tile/tile-card.js';
+import type { QuickAction, QuickRounds } from './quick-actions.js';
 
 const s = strings('room');
 
@@ -79,7 +80,23 @@ export interface RoomCardConfig extends FluvyCardConfig, LightColours, RoomTunin
   tint?: Tint;
   /** Its tiles' names (and the row's) in two lines where one would cut them (`2`), each a line taller (#100). */
   name_lines?: NameLines;
+  /** The quick actions at the end of its head, its row or its picture (default). */
+  show_quick_actions?: boolean;
+  /**
+   * The quick actions in order, as many as the width holds: the room's `lights`, `covers`, `fans` or `media` (a round
+   * for each set), or an entity (default: its lights, then its blinds).
+   */
+  quick_actions?: readonly (string | QuickAction)[];
 }
+
+/** The quick actions' module, a chunk of its own (`quick-actions`): fetched with the families as the bundle starts. */
+type QuickModule = typeof import('./quick-actions.js');
+let quick: QuickModule | undefined;
+let quickPending: Promise<QuickModule> | undefined;
+export const loadQuickActions = (): Promise<QuickModule> =>
+  (quickPending ??= import('./quick-actions.js').then((module) => (quick = module)));
+
+const NO_ROUNDS: QuickRounds = { taken: 0, template: nothing };
 
 const HERO = 160;
 const STATS = 64; // 20 above a row of three small readouts (44)
@@ -125,7 +142,8 @@ export interface RoomHolds {
  * (`house-heights.ts`): its rows (the lights, the climate, the media, then every device where it has one: four where
  * the house is not there to say), its tiles (its controls, four at most), its readouts (the climate it reads and its
  * count), its picture (the photo card where the area has one, else the tile); a room with nothing to show is the
- * panel (an administrator reads why under it) where the rest would be.
+ * panel (an administrator reads why under it) where the rest would be. Its quick actions stand beside its name: they
+ * never make it taller.
  */
 export function roomHeight(config: RoomCardConfig, room?: RoomHolds): number {
   const lines = twoLines(config) ? NAME_LINE.compact : 0;
@@ -290,12 +308,19 @@ export class FluvyRoomCard extends FluvyTileCard {
   protected override watched(): readonly string[] {
     const { members, entities, climate } = this.contents();
     // every entity the area holds, shown or not: one whose state comes late fills the room, a hidden one moves the hint;
-    // what it includes from elsewhere; a light group's members (its colour is theirs); and what a tile's last change is
-    // read from (`since`)
+    // what it includes from elsewhere, and its quick actions' own; a light group's members (its colour is theirs); and
+    // what a tile's last change is read from (`since`)
     const tiles = this.tiles();
     return withMembers(
       [
-        ...idsOf([...members, ...entities, ...tiles, climate.temperature, climate.humidity]),
+        ...idsOf([
+          ...members,
+          ...entities,
+          ...tiles,
+          ...(this.room?.quick_actions ?? []),
+          climate.temperature,
+          climate.humidity,
+        ]),
         ...sinceIds(tiles),
       ],
       this.hass,
@@ -353,10 +378,37 @@ export class FluvyRoomCard extends FluvyTileCard {
     };
   }
 
-  /** The state line: "3 of 5 on · 21.4 °C". */
+  /**
+   * The quick actions in `room` less what the name keeps beside them — 96, or its own width in `cls` where it is
+   * shorter (a row's rule): as many rounds as that holds (`quick-actions.ts`), none where the card hides them; none
+   * either until their chunk has landed (the bundle fetches it as it starts), when the card is drawn again.
+   */
+  private rounds(room: number, cls: string, name: string): QuickRounds {
+    if (this.room?.show_quick_actions === false) return NO_ROUNDS;
+    if (!quick) {
+      void loadQuickActions().then(() => this.requestUpdate());
+      return NO_ROUNDS;
+    }
+    return quick.quickRounds(
+      {
+        hass: this.hass,
+        config: this.room,
+        devices: this.contents().devices,
+        state: (view) => this.stateOf(view),
+        expect: (id, state) => this.expect(id, state),
+        call: (domain, service, data) => this.call(domain, service, data, ''),
+        run: (action, entity) => this.tap(entity, action),
+        accent: (colour) => this.accents.item(colour),
+        open: this.destination() ? () => this.open() : undefined,
+      },
+      room - Math.min(ROW_NAME_MIN, this.headFit.ruler.width(cls, name)),
+    );
+  }
+
+  /** The state line in `room`: "3 of 5 on · 21.4 °C". */
   private roomLine(
-    // the compact tile's words by default; the tile variant's head measures its sub in its own class and room
-    room = this.width - 32 - (this.width >= 128 ? 44 + 12 : 0),
+    room: number,
+    // the compact tile's words by default; the tile variant's head measures its sub in its own class
     cls = 'fv-tile fv-tile--compact > fv-tile__state',
   ): string {
     const { devices: ids, on, climate: readings } = this.contents();
@@ -377,8 +429,6 @@ export class FluvyRoomCard extends FluvyTileCard {
           : `${value.value} ${value.unit}`.trim(),
         optional: true,
       });
-    // the compact tile's words have its width less its 16 px sides, and less its circle and gap where it keeps one
-    // (128 and wider: tiles.css)
     const width = (text: string): number => this.headFit.ruler.width(cls, text);
     // the count stays, the climate leaves first; then the count in figures ("3/5") where its words would be cut, the
     // tile's fill already saying that something is on — or, with nothing on, the word for it ("3 appareils" in half a
@@ -532,26 +582,32 @@ export class FluvyRoomCard extends FluvyTileCard {
     return Math.floor((this.contentWidth - 8) / 2 / 4) * 4;
   }
 
-  /** The room's picture on the hero, cross-faded in once decoded; without one, the accent's gradient. */
+  /**
+   * The room's picture on the hero, cross-faded in once decoded; without one, the accent's gradient. Its quick actions
+   * stand at its foot's end, centred on the name's pill, where the pill keeps its glyph and what its name needs.
+   */
   private renderHero(name: string, glyph: string): TemplateResult {
     const picture = this.pictureUrl();
     if (picture !== this.shownPicture) {
       this.shownPicture = picture;
       if (picture) this.photo.show(picture);
     }
+    // what the pill keeps: its 28 and its glyph's 28 beside the name's room
+    const quick = this.rounds(this.contentWidth - 56, 'am-area__badge', name);
     return html`<div class="rm-hero">
       ${picture ? this.photo.render() : nothing}
       ${picture ? html`<span class="rm-hero__scrim" data-measure="skip"></span>` : nothing}
-      ${this.renderBadge(name, glyph)} ${this.roomCover(name)}
+      ${this.renderBadge(name, glyph, this.contentWidth - quick.taken)} ${this.roomCover(name)}
+      ${quick.template}
     </div>`;
   }
 
   /**
-   * The name pill, 20 in from the hero's sides: the glyph and the name where both hold, else the name alone (the
-   * head's order: the glyph gives way first), else a pill as wide as the hero allows with the name to its ellipsis.
+   * The name pill, 20 in from the hero's sides, in `room`: the glyph and the name where both hold, else the name alone
+   * (the head's order: the glyph gives way first), else a pill as wide as the room allows with the name to its
+   * ellipsis.
    */
-  private renderBadge(name: string, glyph: string): TemplateResult {
-    const room = this.contentWidth;
+  private renderBadge(name: string, glyph: string, room: number): TemplateResult {
     const holds = (pad: number): boolean =>
       this.headFit.ruler.pill('am-area__badge', name, pad) <= room;
     // the pill's own 28 (`data-fit`), and with the glyph its 20 and the 8 after it
@@ -606,7 +662,11 @@ export class FluvyRoomCard extends FluvyTileCard {
     const { onTap, onHold } = this.roomActions();
 
     if (variant === 'row') {
-      const line = this.roomLine();
+      // the words have the tile less its 16 px sides, and less its circle and gap where it keeps one (128 and wider:
+      // tiles.css); the quick actions end the row where the name keeps what it needs
+      const words = this.width - 32 - (this.width >= 128 ? 44 + 12 : 0);
+      const quick = this.rounds(words, 'fv-tile fv-tile--compact > fv-tile__name', name);
+      const line = this.roomLine(words - quick.taken);
       return html`<article
         class="fv-tile fv-tile--compact fv-tile--accent fv-tile--tap rm-tile ${twoLines(this.room) ? 'fv-tile--lines' : ''} ${on ? 'is-on' : ''}"
         data-card
@@ -616,19 +676,27 @@ export class FluvyRoomCard extends FluvyTileCard {
           <h3 class="fv-tile__name">${name}</h3>
           <p class="fv-tile__state">${line || s(this.hass, 'nothing')}</p>
         </div>
-        ${this.roomCover(name)}
+        ${quick.template} ${this.roomCover(name)}
       </article>`;
     }
 
     // an empty room keeps its anatomy, its way in and its actions: the panel stands where the rest would be
     const empty = this.empty();
     if (variant === 'tile') {
-      // the head's rule (`show_icon`): the circle gives way where that makes the name whole beside the chevron, which
-      // takes 48 of the line — its 44 and the 12 before it, less the 8 its ink stands past the column edge
+      // what trails the name, with the gap before it: the quick actions where the name keeps what it needs beside its
+      // circle, then the chevron's 48 — its 44 and the 12 before it, less the 8 its ink stands past the column edge
+      const chevron = to ? 48 : 0;
+      const quick = this.rounds(
+        this.contentWidth - chevron - (this.showIcon === 'never' ? 0 : 56),
+        'fv-card__title',
+        name,
+      );
+      const end = quick.taken + chevron;
+      // the head's rule (`show_icon`): the circle gives way where that makes the name whole beside what trails it
       const fitted = this.headFit.fit({
         width: this.contentWidth,
         title: name,
-        trailing: to ? 36 : 0,
+        trailing: end && end - 12,
       });
       return html`<article class="fv-card am-card" data-card>
         ${head({
@@ -637,21 +705,20 @@ export class FluvyRoomCard extends FluvyTileCard {
           title: name,
           name: true,
           cut: fitted.cut,
-          // the head's line: its room is the column less the circle and its gap and the chevron's 48
-          sub: this.roomLine(
-            this.contentWidth - (fitted.icon ? 56 : 0) - (to ? 48 : 0),
-            'fv-card__sub',
-          ),
+          // the head's line: its room is the column less the circle and its gap and what trails it
+          sub: this.roomLine(this.contentWidth - (fitted.icon ? 56 : 0) - end, 'fv-card__sub'),
           // "opens" is the bare chevron the rows use, its ink on the column edge
-          trailing: to
-            ? html`<button
-                class="fv-hit fv-head__open"
-                aria-label=${name}
-                @click=${() => this.open()}
-              >
-                ${icon('chevron')}
-              </button>`
-            : nothing,
+          trailing: html`${quick.template}${
+            to
+              ? html`<button
+                  class="fv-hit fv-head__open"
+                  aria-label=${name}
+                  @click=${() => this.open()}
+                >
+                  ${icon('chevron')}
+                </button>`
+              : nothing
+          }`,
           onTap,
           onHold,
         })}

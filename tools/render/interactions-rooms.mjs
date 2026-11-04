@@ -8,12 +8,15 @@
  * the working sensor past a dead one, a sensor that comes late — and an empty one keeps its photo, its way in and,
  * for an administrator only, why it is empty; a room counts what is on once (its readout and its rows alike); at 211
  * a tile head gives its circle to a name that would be cut and the hint runs three lines at most, in every language;
+ * a room's quick actions (#113) end its row, its head and its picture — its lights' round turns them all off in one
+ * call, its blinds' closes them, a hold on a set of several opens the room and on an entity its details, one that
+ * cannot be read takes no tap, and half a section holds as many as the name leaves room for;
  * the map's zones hold the right faces, a person nobody can place stands in Unknown, the rows say
  * the distance only for someone away with a fix, and Home Assistant's map, which the playground cannot make,
  * gives way to the zones silently.
  */
 import { everyLanguage } from './lib.mjs';
-import { calls, frame, reset, settle, startSuite } from './lib/suite.mjs';
+import { calls, frame, moreInfo, reset, settle, startSuite } from './lib/suite.mjs';
 
 const suite = await startSuite();
 const { check } = suite;
@@ -186,6 +189,114 @@ const navigations = (page) => page.evaluate(() => window.__navigations.splice(0)
       (await late.locator('.fv-empty-state').count()) === 0 &&
       (await values(late)).join() === '19.6°C',
     (await values(late)).join(),
+  );
+  await page.close();
+}
+
+/* ---------- #113: a room's quick actions ---------- */
+{
+  const page = await suite.sheet('rooms');
+  await watchNavigation(page);
+  const ids = (call) => [].concat(call?.d?.entity_id ?? call?.t?.entity_id ?? []);
+  /** A finger's press on a round: a tap, or held for 700 ms. */
+  const press = async (round, hold = false) => {
+    await round.scrollIntoViewIfNeeded();
+    const box = await round.boundingBox();
+    await page.mouse.move(box.x + 22, box.y + 22);
+    await page.mouse.down();
+    if (hold) await page.waitForTimeout(700);
+    await page.mouse.up();
+    await settle(page, 200);
+  };
+  const quick = frame(page, 'Room · quick actions (#113)').locator('fluvy-room-card');
+  const living = quick.nth(0).locator('.rm-quick .lt-bulb');
+  check(
+    'a row ends in the room’s lights, then its blinds',
+    (await living.count()) === 2 &&
+      (await living.nth(0).getAttribute('aria-label')) === 'Lights' &&
+      (await living.nth(1).getAttribute('aria-label')) === 'Blinds',
+  );
+  await reset(page);
+  await press(living.nth(0));
+  const lights = await calls(page);
+  check(
+    'its lights’ round turns every light of the room off in one call, under the finger, and never the room’s own tap',
+    lights.length === 1 &&
+      lights[0].s === 'light.turn_off' &&
+      ids(lights[0]).length === 3 &&
+      (await living.nth(0).getAttribute('aria-checked')) === 'false' &&
+      (await navigations(page)).length === 0,
+    JSON.stringify(lights),
+  );
+  await reset(page);
+  await press(living.nth(1));
+  const blinds = await calls(page);
+  check(
+    'its blinds’ round closes the open blinds',
+    blinds.length === 1 &&
+      blinds[0].s === 'cover.close_cover' &&
+      ids(blinds[0]).join() === 'cover.rm_blinds',
+    JSON.stringify(blinds),
+  );
+  const fan = quick.nth(1).locator('.rm-quick .lt-bulb').nth(1);
+  await reset(page);
+  await press(fan);
+  check(
+    'the bedroom’s fans’ round turns its fan off',
+    JSON.stringify((await calls(page)).map((call) => call.s)) === '["fan.turn_off"]',
+  );
+  // a hold on a set of several opens the room; on one of a single entity, its details
+  await reset(page);
+  await press(quick.nth(2).locator('.rm-quick .lt-bulb').first(), true);
+  const opened = await navigations(page);
+  check(
+    'a hold on the den’s lights (three) opens the room, and turns nothing',
+    opened.join() === '/fluvy-auto/room-rm_den' && (await calls(page)).length === 0,
+    `${opened.join(' ')} ${JSON.stringify(await calls(page))}`,
+  );
+  const own = frame(page, 'Room · quick actions of one’s own (#113)')
+    .locator('fluvy-room-card')
+    .first();
+  const hero = own.locator('.rm-hero .rm-quick .lt-bulb');
+  check(
+    'the picture ends in the person’s own, as many as it holds: the kettle by its name, the porch that cannot be read, one not there',
+    (await hero.count()) === 3 &&
+      (await hero.nth(0).getAttribute('aria-label')) === 'Kettle' &&
+      (await hero.nth(1).getAttribute('aria-disabled')) === 'true' &&
+      (await hero.nth(2).getAttribute('aria-disabled')) === 'true',
+  );
+  await reset(page);
+  await press(hero.nth(0), true);
+  check(
+    'a hold on the kettle opens its details, never the room',
+    JSON.stringify(await moreInfo(page)) === '["switch.rm_kettle"]' &&
+      (await navigations(page)).length === 0,
+    JSON.stringify(await moreInfo(page)),
+  );
+  await reset(page);
+  await press(hero.nth(0));
+  await press(hero.nth(1));
+  const kettle = await calls(page);
+  check(
+    'a tap on the kettle switches it, on the picture, and the porch that cannot be read takes none',
+    kettle.length === 1 &&
+      kettle[0].s === 'switch.turn_off' &&
+      ids(kettle[0]).join() === 'switch.rm_kettle',
+    JSON.stringify(kettle),
+  );
+  const half = frame(page, 'Room · quick actions in half a section (#113)').locator(
+    'fluvy-room-card',
+  );
+  const counts = await Promise.all(
+    [0, 1, 2, 3].map((n) => half.nth(n).locator('.rm-quick .lt-bulb').count()),
+  );
+  const pills = await Promise.all(
+    [0, 1].map((n) => half.nth(n).locator('.am-area__badge:not(.is-cut) svg').count()),
+  );
+  check(
+    'in half a phone’s section none: the picture’s pill keeps its glyph and its name whole',
+    counts.join() === '0,0,0,0' && pills.join() === '1,1',
+    `${counts.join()} · ${pills.join()}`,
   );
   await page.close();
 }

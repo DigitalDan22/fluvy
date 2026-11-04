@@ -88,6 +88,8 @@ const BUDGETS = {
   'items-sheet': 8192,
   // the light card's colour controls: the quick colours' table and row, fetched by the first colour bulb
   'light-colour': 4096,
+  // a room's quick actions (1.13, #113): their sets, levels, taps and holds, fetched as the bundle starts
+  'quick-actions': 4096,
   // the weather card
   weather: 12_288,
   editor: 8192,

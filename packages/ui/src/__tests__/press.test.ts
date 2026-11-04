@@ -83,6 +83,29 @@ describe('a press on a surface that taps and holds', () => {
     expect(tap).toHaveBeenCalledTimes(1);
   });
 
+  it('leaves a press on a control inside a surface to the control: its hold never also taps it (#113)', () => {
+    vi.useFakeTimers();
+    const head = surface();
+    const hold = vi.fn();
+    const round = surface(hold);
+    // the head hears the click first (in its capture, as a head's button does) and never the press (the round's)
+    head.el.removeEventListener('click', clickPress as EventListener);
+    head.el.addEventListener('click', clickPress as EventListener, { capture: true });
+    round.el.addEventListener('pointerdown', (event) => event.stopPropagation());
+    head.el.append(round.el);
+    round.el.dispatchEvent(pointer('pointerdown'));
+    vi.advanceTimersByTime(500);
+    window.dispatchEvent(pointer('pointerup'));
+    round.el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 }));
+    expect(hold).toHaveBeenCalledTimes(1);
+    expect(round.tap).not.toHaveBeenCalled();
+    expect(head.tap).not.toHaveBeenCalled();
+    // a still press taps the round alone
+    pressAndClick(round.el, 0);
+    expect(round.tap).toHaveBeenCalledTimes(1);
+    expect(head.tap).not.toHaveBeenCalled();
+  });
+
   it('starts every press clean: a drag never spends the next tap', () => {
     const { el, tap } = surface();
     pressAndClick(el, 20);

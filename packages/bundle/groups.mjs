@@ -174,6 +174,12 @@ const ITEMS =
 /** The light card's colour controls (the quick colours' table and row, the hue maths): fetched by the first colour bulb drawn. */
 const LIGHT_COLOUR = /\/packages\/cards\/src\/light\/colour\.ts/;
 
+/**
+ * A room's quick actions (their sets, levels, taps and holds, #113): fetched as the bundle starts, with the families,
+ * so a room card draws them from its first render (`room-card.ts` asks for them itself where it is drawn first).
+ */
+const QUICK_ACTIONS = /\/packages\/cards\/src\/room\/quick-actions\.ts/;
+
 /** The icons a view's name says, for a tab row asked for icons whose views have none: fetched the first time it is. */
 const VIEW_ICONS = /\/packages\/core\/src\/look\/view-icons\.ts/;
 
@@ -204,9 +210,9 @@ const FORMS =
  * every page carries, the weather card, the media, the chart engine, the Chart card, the Energy period card, energy
  * (the history bars' readings on their own), devices (the cameras' sheet on its own), appliances (their pictures on
  * their own), automations and alerts families (each sheet on its own), the template card, the web page card, the Slider
- * card, the items card (its sheet on its own), the cards' editor, the view icons, the icon set's other part, and
- * everything else (Fluvy's packages and Lit) in `core`. The bundle's own entry stays in `fluvy.js`. Rolldown processes the groups in
- * this order; the priorities only say so out loud.
+ * card, the items card (its sheet on its own), the light card's colours, a room's quick actions, the cards' editor, the
+ * view icons, the icon set's other part, and everything else (Fluvy's packages and Lit) in `core`. The bundle's own
+ * entry stays in `fluvy.js`. Rolldown processes the groups in this order; the priorities only say so out loud.
  * @type {readonly Group[]}
  */
 export const GROUPS = [
@@ -240,6 +246,7 @@ export const GROUPS = [
   { name: 'items-sheet', test: ITEMS_SHEET },
   { name: 'items', test: ITEMS },
   { name: 'light-colour', test: LIGHT_COLOUR },
+  { name: 'quick-actions', test: QUICK_ACTIONS },
   { name: 'editor', test: EDITOR },
   { name: 'view-icons', test: VIEW_ICONS },
   { name: 'icons', test: ICONS },

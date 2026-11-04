@@ -29,7 +29,7 @@ import { FluvyTimerCard } from './timer/timer-card.js';
 import { FluvyTodoCard } from './todo/todo-card.js';
 import { FluvyUpdatesCard } from './updates/updates-card.js';
 import { FluvyVacuumCard } from './vacuum/vacuum-card.js';
-import { FluvyRoomCard } from './room/room-card.js';
+import { FluvyRoomCard, loadQuickActions } from './room/room-card.js';
 import { FluvyLightsCard } from './lights/lights-card.js';
 import { FluvyMapCard } from './map/map-card.js';
 import { defineStrategies } from './strategy/define.js';
@@ -283,12 +283,14 @@ for (const [entries] of FAMILIES)
   for (const [tag, name, description, height] of entries)
     announceCard({ tag, name, description }, height);
 /**
- * The families defined and the chart engine landed (what a test waits on before its page goes; the bundle never
- * waits): the engine is fetched with the families, so a core card's chart is drawn before its history answers.
+ * The families defined, the chart engine and the room's quick actions landed (what a test waits on before its page
+ * goes; the bundle never waits): they are fetched with the families, so a core card's chart is drawn before its
+ * history answers, and a room's quick actions with its first render.
  */
 export const familiesDefined: Promise<unknown> = Promise.all([
   ...FAMILIES.map(([, chunk]) => chunk()),
   loadChartEngine(),
+  loadQuickActions(),
 ]);
 
 /** Every card with its element: the eager ones, then each family's (docs, tests), the chart engine landed. */

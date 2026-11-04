@@ -169,6 +169,9 @@ export function stateWord(hass: HomeAssistant | undefined, view: EntityView): st
   return view.status === 'missing' ? localize(hass, 'state.not_found') : stateText(hass, view);
 }
 
+/** Covers that are a way in, not a window's shade: a garage door, a gate, a door (their classes). */
+export const GATEWAYS: ReadonlySet<string> = new Set(['garage', 'gate', 'door']);
+
 /** The tone an entity fills with when it is active. Off, unavailable and events stay neutral. */
 export function toneFor(view: EntityView): Tone {
   switch (view.domain) {

@@ -692,6 +692,9 @@
     "kept_out_one": "{n} rejtett vagy diagnosztikai entitás · az érzékelőit a terület beállításaiban választhatod ki"
   },
   "room-editor": {
+    "show_quick_actions": "A gyorsműveletek megjelenítése",
+    "quick_actions": "Gyorsműveletek",
+    "group": "Mire hat",
     "include": "Ezeket is számolja",
     "exclude": "Kihagyás",
     "entries_help": "Entitások, eszközök vagy tartományok, vagy egy azonosítóminta, például switch.dishwasher_*"

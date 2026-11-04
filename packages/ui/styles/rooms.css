@@ -47,6 +47,19 @@
   outline-offset: -2px;
 }
 
+/* its quick actions (#113) at the hero's foot's end, centred on the name's pill, over the photo and its button; one
+   that is off on the card's fill, as the pill is */
+.rm-hero > .rm-quick {
+  position: absolute;
+  right: 20px;
+  bottom: 12px;
+  z-index: 4;
+}
+
+.rm-hero .lt-bulb:not(.is-on) {
+  background: var(--fluvy-card);
+}
+
 /* the tile variant: a compact tile's anatomy with the room's icon and its count */
 .rm-tile .fv-tile__state {
   white-space: nowrap;

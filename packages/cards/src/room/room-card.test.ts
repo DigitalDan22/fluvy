@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { afterAll, afterEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
   areaContents,
   areaEntities,
@@ -10,7 +10,7 @@ import {
 } from '@fluvy/core';
 import { familiesDefined } from '../index.js';
 import { cardForm, drawEditor, listTitles, shownNames } from '../shared/fixtures/editor.js';
-import { FluvyRoomCard, roomHeight, type RoomCardConfig } from './room-card.js';
+import { FluvyRoomCard, loadQuickActions, roomHeight, type RoomCardConfig } from './room-card.js';
 import * as roomEditor from './room-editor.js';
 
 // the index fetches the lazy families: they land before this file's page goes
@@ -501,17 +501,21 @@ describe('the room card’s editor offers what acts in the room’s style (#58)'
       expect(row).not.toContain(name);
     // what a row does draw stays: its line, its way in
     for (const name of ['show_climate', 'show_count', 'path']) expect(row).toContain(name);
-    expect(listTitles(await editor({ variant: 'row', controls: 'tiles' }))).toEqual([]);
+    // its quick actions it draws in every variant, unless it hides them
+    expect(listTitles(await editor({ variant: 'row', controls: 'tiles' }))).toEqual([
+      'Quick actions',
+    ]);
+    expect(listTitles(await editor({ variant: 'row', show_quick_actions: false }))).toEqual([]);
   });
 
   it('the tiles and their colour at rest with tiles alone; the lights’ colours wherever lights are drawn', async () => {
     const rows = await editor({ variant: 'tile' });
     expect(shownNames(cardForm(rows).schema)).not.toContain('tint');
     expect(shownNames(cardForm(rows).schema)).toContain('light_colors');
-    expect(listTitles(rows)).toEqual([]);
+    expect(listTitles(rows)).toEqual(['Quick actions']);
     const tiles = await editor({ variant: 'tile', controls: 'tiles' });
     expect(shownNames(cardForm(tiles).schema)).toContain('tint');
-    expect(listTitles(tiles)).toEqual(['Tiles']);
+    expect(listTitles(tiles)).toEqual(['Tiles', 'Quick actions']);
     expect(await shown({ variant: 'tile', controls: 'none' })).not.toContain('light_colors');
   });
 
@@ -548,6 +552,216 @@ describe('the room card’s editor offers what acts in the room’s style (#58)'
     expect(names).not.toContain('readouts');
     expect(roomEditor.keys).not.toContain('size');
     expect(roomEditor.keys).not.toContain('readouts');
+  });
+});
+
+describe('a room’s quick actions (#113)', () => {
+  beforeAll(() => loadQuickActions());
+  afterEach(() => document.body.replaceChildren());
+
+  /** A lounge: three lights (one dims at 70 %, one only switches, one off), blinds at 40 %, a fan, a speaker, a door. */
+  const LOUNGE: readonly Seed[] = [
+    ['light.lounge_ceiling', 'on', { brightness: 178, supported_color_modes: ['brightness'] }],
+    ['light.lounge_shelf', 'on', { supported_color_modes: ['onoff'] }],
+    ['light.lounge_reading', 'off', { supported_color_modes: ['brightness'] }],
+    ['cover.lounge_blinds', 'open', { current_position: 40, supported_features: 15 }],
+    ['cover.lounge_door', 'closed', { device_class: 'door', supported_features: 3 }],
+    ['fan.lounge', 'off', { percentage: 0, supported_features: 1 }],
+    ['media_player.lounge', 'playing', { volume_level: 0.3 }],
+    ['switch.kettle', 'off', { device_class: 'outlet', friendly_name: 'Kettle' }],
+    ['lock.front', 'locked', { friendly_name: 'Front door' }],
+    ['switch.porch', 'unavailable', { friendly_name: 'Porch' }],
+  ];
+  const sent: { domain: string; service: string; data: Record<string, unknown> }[] = [];
+  const lounge = (): HomeAssistant => {
+    const hass = house([...SEEDS, ...LOUNGE]);
+    return {
+      ...hass,
+      entities: {
+        ...hass.entities,
+        ...Object.fromEntries(
+          LOUNGE.filter(([id]) => id.includes('lounge')).map(([entity_id]) => [
+            entity_id,
+            { entity_id, area_id: 'lounge' },
+          ]),
+        ),
+      },
+      areas: { ...hass.areas, lounge: area('lounge', 'Lounge') },
+      callService: (domain: string, service: string, data: Record<string, unknown>) => {
+        sent.push({ domain, service, data });
+        return Promise.resolve();
+      },
+    } as unknown as HomeAssistant;
+  };
+  type Round = HTMLElement & { fvHold?: () => void };
+  const rounds = (card: RoomElement): Round[] => [
+    ...root(card).querySelectorAll<Round>('.rm-quick .lt-bulb'),
+  ];
+  const names = (card: RoomElement): string[] =>
+    rounds(card).map((round) => round.getAttribute('aria-label') ?? '');
+  /** A round's ring as a share of its circle, in %; none while it is off. */
+  const ring = (round: Round): number | undefined => {
+    const dash = round.querySelector('.lt-ring circle')?.getAttribute('stroke-dasharray');
+    if (!dash) return undefined;
+    const [lit = 0, whole = 1] = dash.split(' ').map(Number);
+    return Math.round((lit / whole) * 100);
+  };
+
+  it('stands for the room’s lights, then its blinds, at the end of its picture, its head and its row', async () => {
+    const parts = { photo: '.rm-hero', tile: '.fv-card__head', row: '.rm-tile' } as const;
+    for (const [variant, part] of Object.entries(parts)) {
+      const card = await room({ area: 'lounge', variant: variant as never }, lounge());
+      expect(names(card), variant).toEqual(['Lights', 'Blinds']);
+      expect(root(card).querySelectorAll(`${part} .rm-quick`), variant).toHaveLength(1);
+    }
+    // none where the card hides them; a room of neither has none
+    const hidden = await room({ area: 'lounge', show_quick_actions: false }, lounge());
+    expect(rounds(hidden)).toHaveLength(0);
+    expect(rounds(await room({ area: 'garten' }))).toHaveLength(0);
+  });
+
+  it('says how much of the room is lit and how far its blinds are open: off counts as nothing, a door never', async () => {
+    const card = await room({ area: 'lounge', variant: 'tile' }, lounge());
+    const [lights, blinds] = rounds(card);
+    // (70 + 100 + 0) / 3 lit; the blinds at 40, the door not one of them
+    expect(ring(lights!)).toBe(57);
+    expect(ring(blinds!)).toBe(40);
+    expect(lights?.getAttribute('aria-checked')).toBe('true');
+    expect(lights?.classList.contains('is-on')).toBe(true);
+  });
+
+  it('draws the ones asked for, in their order: a set, an entity of one’s own, one that cannot be read, never a set it has none of', async () => {
+    const card = await room(
+      {
+        area: 'lounge',
+        quick_actions: [
+          'media',
+          { entity: 'switch.kettle', name: 'Tea', color: '#e2725b' },
+          'switch.porch',
+          { group: 'fans', icon: 'mdi:ceiling-fan' },
+          'nonsense',
+          { group: 'entity' },
+        ],
+      },
+      lounge(),
+    );
+    expect(names(card)).toEqual(['Media', 'Tea', 'Porch', 'Fans']);
+    const [media, , porch] = rounds(card);
+    // the speaker at 30 % while it plays
+    expect(ring(media!)).toBe(30);
+    expect(porch?.getAttribute('aria-disabled')).toBe('true');
+    expect(porch?.classList.contains('fv-ico--off')).toBe(true);
+  });
+
+  it('turns the room’s lights off in one call while one is on, and on again', async () => {
+    sent.length = 0;
+    const card = await room({ area: 'lounge', variant: 'tile' }, lounge());
+    rounds(card)[0]!.click();
+    await card.updateComplete;
+    expect(sent).toEqual([
+      {
+        domain: 'light',
+        service: 'turn_off',
+        data: { entity_id: ['light.lounge_ceiling', 'light.lounge_reading', 'light.lounge_shelf'] },
+      },
+    ]);
+    // the round answers under the finger
+    expect(rounds(card)[0]?.getAttribute('aria-checked')).toBe('false');
+    rounds(card)[0]!.click();
+    expect(sent.at(-1)?.service).toBe('turn_on');
+  });
+
+  it('closes open blinds, opens closed ones, and stops them while they move', async () => {
+    const at = async (state: string): Promise<string | undefined> => {
+      sent.length = 0;
+      const hass = lounge();
+      hass.states['cover.lounge_blinds'] = { ...hass.states['cover.lounge_blinds']!, state };
+      const card = await room({ area: 'lounge', quick_actions: ['covers'] }, hass);
+      rounds(card)[0]!.click();
+      expect(sent[0]?.data).toEqual({ entity_id: ['cover.lounge_blinds'] });
+      return sent[0]?.service;
+    };
+    expect(await at('open')).toBe('close_cover');
+    expect(await at('closed')).toBe('open_cover');
+    expect(await at('opening')).toBe('stop_cover');
+  });
+
+  it('pauses what plays, toggles a lock as Home Assistant does, and runs an action of its own', async () => {
+    sent.length = 0;
+    const card = await room(
+      {
+        area: 'lounge',
+        quick_actions: [
+          'media',
+          'lock.front',
+          {
+            entity: 'switch.kettle',
+            tap_action: { action: 'perform-action', perform_action: 'script.tea' },
+          },
+        ],
+      },
+      lounge(),
+    );
+    for (const round of rounds(card)) round.click();
+    await new Promise((resolve) => setTimeout(resolve));
+    expect(sent.map(({ domain, service }) => `${domain}.${service}`)).toEqual([
+      'media_player.media_pause',
+      'lock.unlock',
+      'script.tea',
+    ]);
+  });
+
+  it('holds: an entity’s details, a set of one’s too; a set of several opens where the room opens', async () => {
+    const opened: string[] = [];
+    const went: string[] = [];
+    const more = (event: Event): void =>
+      void opened.push((event as CustomEvent<{ entityId: string }>).detail.entityId);
+    const moved = (): void => void went.push(window.location.pathname);
+    window.addEventListener('location-changed', moved);
+    document.addEventListener('hass-more-info', more);
+    try {
+      const card = await room(
+        { area: 'lounge', path: '/lounge', quick_actions: ['lights', 'covers', 'switch.kettle'] },
+        lounge(),
+      );
+      for (const round of rounds(card)) round.fvHold?.();
+      expect(went).toEqual(['/lounge']);
+      expect(opened).toEqual(['cover.lounge_blinds', 'switch.kettle']);
+      // nowhere to open (no path, no administrator): a set of several holds nothing
+      const guest = await room({ area: 'lounge', quick_actions: ['lights'] }, {
+        ...lounge(),
+        user: { id: 'u2', name: 'Guest', is_admin: false },
+      } as HomeAssistant);
+      expect(rounds(guest)[0]?.fvHold).toBeUndefined();
+    } finally {
+      window.removeEventListener('location-changed', moved);
+      document.removeEventListener('hass-more-info', more);
+    }
+  });
+
+  it('takes as many as the width holds once the name has what it needs: none in half a section, the name whole', async () => {
+    // 8 px a glyph: "Lounge" (48)
+    const ruler = { width: (_cls: string, text: string) => text.length * 8 };
+    const count = async (variant: string, width: number): Promise<number> =>
+      rounds(
+        await roomAt(
+          { area: 'lounge', variant: variant as never, path: '/l' },
+          width,
+          ruler,
+          lounge(),
+        ),
+      ).length;
+    // a head at 360: 320 − 48 (the chevron) − 56 (the circle) − 48 = 168 → two rounds and their 12 (108)
+    expect(await count('tile', 360)).toBe(2);
+    // at 211: 171 − 48 − 56 − 48 = 19, none; at 266: 74, one
+    expect(await count('tile', 211)).toBe(0);
+    expect(await count('tile', 266)).toBe(1);
+    // the picture's pill keeps its glyph: 320 − 56 − 48 = 216; half a section's 132 − 56 − 48 = 28, none
+    expect(await count('photo', 360)).toBe(2);
+    expect(await count('photo', 172)).toBe(0);
+    // a row: 360 − 32 − 56 − 48 = 224; 172 − 32 − 56 − 48 = 36, none
+    expect(await count('row', 360)).toBe(2);
+    expect(await count('row', 172)).toBe(0);
   });
 });
 

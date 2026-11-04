@@ -7,6 +7,7 @@ import {
   type ApplianceKind,
 } from '../appliance/kinds.js';
 import { printerDevices } from '../printer/roles.js';
+import { GATEWAYS } from '../shared/domain.js';
 import { says, type Rules } from '../shared/words.js';
 import {
   areaContents,
@@ -59,8 +60,6 @@ export {
 };
 const WEATHER_PLATFORMS =
   /aemet|met\b|met_|openweather|accuweather|forecast|weather|tomorrow|pirate|ecowitt|buienradar|nws/i;
-/** Covers that are a way in, not a window's shade. */
-const GATEWAYS = new Set(['garage', 'gate', 'door']);
 const OPENINGS = new Set([
   'door',
   'window',

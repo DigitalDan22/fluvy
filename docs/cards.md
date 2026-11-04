@@ -811,6 +811,15 @@ patterns of ids (`switch.dishwasher_*`), device ids or domains (`media_player`);
 from wherever its area is, and what a room includes it keeps whatever it excludes. What a room leaves out leaves its
 count, its rows and its readings.
 
+Its **quick actions** stand at the end of its head, its row or its picture: a round each, as many as the width holds
+once the name has its room (none in half a phone's section), each a switch for all it stands for and a ring of how
+much of it is on. By default they are the room's lights (their ring: the light the room gives of all it could, a dimmed
+light by its brightness) and its blinds (their ring: where they stand); `quick_actions` asks for the room's `lights`,
+`covers`, `fans` or `media`, or any entity, in your order, each with its own `name`, `icon`, `tone`, `color`,
+`tap_action` and `hold_action`. A tap turns a set off while any of it is on and on otherwise, in one call; blinds open,
+close, or stop while they move; players pause, else play. A hold opens an entity's details, or where the room opens
+for a set of several. `show_quick_actions: false` hides them.
+
 ```yaml
 type: custom:fluvy-room-card
 area: kitchen
@@ -818,6 +827,12 @@ exclude:
   - switch.dishwasher_*
 include:
   - switch.coffee_machine
+quick_actions:
+  - lights
+  - covers
+  - entity: switch.kettle
+    name: Kettle
+    color: '#e2725b'
 ```
 
 The automatic dashboards take the same say per room: `rooms` in the dashboard's raw configuration, by area id, tunes
@@ -869,7 +884,7 @@ strategy:
 
 | Card | Type | What it is | Options | Reads |
 | --- | --- | --- | --- | --- |
-| **Room** | `custom:fluvy-room-card` | A room of the house from its area: its picture, its climate, what is on, and its controls. | `area`, `variant` (`photo`, `tile`, `row`), `controls` (`rows`, `tiles`, `none`), `show_climate`, `show_count`, `picture`, `path`, `temperature_entity`, `humidity_entity`, `include`, `exclude`, `tint` (`on`, `always`), `name_lines` (`1`, `2`), `light_colors`, `light_whites` (`palette`, `temperature`), `tiles` (a list: `entity`, `name`, `icon`, `tone`, `color`, `readouts`, `since`, `tap_action`, `hold_action`) | — |
+| **Room** | `custom:fluvy-room-card` | A room of the house from its area: its picture, its climate, what is on, and its controls. | `area`, `variant` (`photo`, `tile`, `row`), `controls` (`rows`, `tiles`, `none`), `show_climate`, `show_count`, `show_quick_actions`, `picture`, `path`, `temperature_entity`, `humidity_entity`, `include`, `exclude`, `tint` (`on`, `always`), `name_lines` (`1`, `2`), `light_colors`, `light_whites` (`palette`, `temperature`), `tiles` (a list: `entity`, `name`, `icon`, `tone`, `color`, `readouts`, `since`, `tap_action`, `hold_action`), `quick_actions` (a list: `group`, `entity`, `name`, `icon`, `tone`, `color`, `tap_action`, `hold_action`) | — |
 | **Map** | `custom:fluvy-map-card` | Where everyone is: the house’s zones as columns of faces, a row a person, or Home Assistant’s map on a plate. | `title`, `variant` (`zones`, `map`, `rows`), `map_shape` (`wide`, `square`), `hours_to_show`, `default_zoom`, `fit_zones`, `show_empty`, `show_distance`, `map_path`, `empty_text`, `hide_empty`, `zones` (a list: `entity`, `name`, `icon`) | — |
 
 ## Structure and navigation

@@ -1427,6 +1427,9 @@
     "kept_out_one": "{n} entidad oculta o de diagnóstico · elige sus sensores en los ajustes del área"
   },
   "room-editor": {
+    "show_quick_actions": "Mostrar las acciones rápidas",
+    "quick_actions": "Acciones rápidas",
+    "group": "Actúa sobre",
     "include": "Contar también",
     "exclude": "Dejar fuera",
     "entries_help": "Entidades, dispositivos o dominios, o un patrón de ID como switch.dishwasher_*"

@@ -481,11 +481,29 @@ Rectangular tappables share **one radius: 12** (option tiles, buttons, keys, fie
   with no control but numbers and selects. An appliance's option switches stay out: it has several switches, or a
   start button.
 - **A room's own say (1.13, #95).** `include` counts what the rule leaves out, `exclude` leaves out what the room shows
-  (its count, its rows, its readings, its default tiles): entity ids, patterns of ids (`*`, matched as
-  characters, never as an expression), device ids, domains. An entity or a device named whole comes from wherever its
+  (its count, its rows, its readings, its default tiles and quick actions): entity ids, patterns of ids (`*`, matched
+  as characters, never as an expression), device ids, domains. An entity or a device named whole comes from wherever its
   area is; a pattern or a domain reads the room's own; what a room includes it keeps whatever it excludes. The
   automatic dashboards take the same per room (`rooms: { <area>: { include, exclude } }`): the room's card, whether it
   is shown, and its page.
+- **Quick actions (1.13, #113).** Rounds at the room's end, the room lights' rounds (§ Room lights): 44, 8 apart, its
+  glyph, on its colour's fill and a 2 px ring 4 inside its edge to its level from the top while any of it is on, the
+  neutral circle while none is, the dashed ring when none of it can be read (no tap; a hold still opens it). By default
+  the room's lights (their ring: the room's light as a share of all it could give, an off lamp at 0, a dimmed one by
+  its brightness, each lamp once) and its blinds (their ring: their mean position; never a door, a gate or a garage);
+  `quick_actions` orders the room's `lights`, `covers`, `fans` (their speed) and `media` (their volume while they play)
+  and any entity, each with its own name, icon, tone, colour and actions. A tap is the set's switch in one call — off
+  while any of it is on, else on; blinds stop while they move, else close when open and open when closed; players pause
+  what plays, else play — and an entity's the house's own toggle; a hold opens an entity's details, a set of one's
+  too, and a set of several where the room opens (none where it opens nowhere). **Where:** the head's end, before the
+  chevron, 12 after the words; the compact row's end, 12 after its words; the picture's foot, 20 from its edge and
+  centred on the name's pill (12 from the foot), each round that is off on the card's fill as the pill is. Inside a lit
+  row every round is a card disc, as the row's own circle is, a lit one in its colour's ink with its ring. **How many:**
+  as many as the line holds once the room's own anatomy has its room — the head's circle (56) and chevron (48), the
+  pill's glyph (28) and sides (28), the row's circle — and the name 96, or its whole width where shorter; none in half a
+  phone's section (152, 172), and beside "Living room" at 360 two in the head (with its chevron), three on the picture.
+  Never a line of their own: the card's height is its config's. A press on a round is the round's, never the room's (its picture's, its row's or its head's button);
+  `show_quick_actions: false` hides them.
 
 ## Map
 

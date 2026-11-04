@@ -1427,6 +1427,9 @@
     "kept_out_one": "{n} verborgen of diagnostische entiteit · kies de sensoren in de instellingen van de ruimte"
   },
   "room-editor": {
+    "show_quick_actions": "Snelle acties tonen",
+    "quick_actions": "Snelle acties",
+    "group": "Werkt op",
     "include": "Ook meetellen",
     "exclude": "Weglaten",
     "entries_help": "Entiteiten, apparaten of domeinen, of een patroon van ID’s zoals switch.dishwasher_*"

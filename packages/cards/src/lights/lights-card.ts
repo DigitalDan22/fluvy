@@ -18,7 +18,6 @@ import {
   chips,
   clickPress,
   head,
-  icon,
   preventMenu,
   rulerLabels,
   sheetStyles,
@@ -28,7 +27,7 @@ import {
   type RulerChangeDetail,
   type Tone,
 } from '@fluvy/ui';
-import { css, html, nothing, svg, type CSSResultGroup, type TemplateResult } from 'lit';
+import { css, html, nothing, type CSSResultGroup, type TemplateResult } from 'lit';
 import { HeadFit, SWITCH_SLOT } from '../energy/head.js';
 import type { CardEditor } from '../shared/base.js';
 import { toneOf } from '../shared/colour.js';
@@ -49,6 +48,7 @@ import { hideEmpty, itemsOf, listOf, type EmptyList } from '../shared/lists.js';
 import { DIMMABLE, lightLook, litColour, withMembers, type LightWhites } from '../shared/light.js';
 import { FluvyTileCard, type NameLines } from '../tile/tile-card.js';
 import { fittedColumns } from '../shared/chips.js';
+import { levelRound, ROUND, ROUND_GAP } from '../shared/round.js';
 
 const s = strings('lights');
 
@@ -90,9 +90,6 @@ export interface LightsCardConfig extends FluvyCardConfig, EmptyList {
   name_lines?: NameLines;
 }
 
-/** A round and the gap between rounds. */
-const ROUND = 44;
-const ROUND_GAP = 8;
 /** What the room's name keeps beside its rounds before they take their own line. */
 const MIN_TITLE = 96;
 /** An inner tile (a compact tile inside a card) is 84 tall. */
@@ -497,48 +494,23 @@ export class FluvyLightsCard extends FluvyTileCard {
   }
 
   /**
-   * A light's round: its glyph; lit, its colour's fill and a ring of its level (all the way round for a light that
-   * does not dim, or when the level is not shown); a tap is its switch, a hold its details. One that cannot be read
-   * is the dashed ring: it takes no tap, and a hold still opens it.
+   * A light's round (`levelRound`): lit, its colour and a ring of its level (all the way round for a light that does
+   * not dim, or when the level is not shown); a tap is its switch, a hold its details.
    */
   private renderBulb(lamp: Lamp, place?: string): TemplateResult {
-    const tone: Tone = !lamp.usable ? 'off' : lamp.on ? lamp.tone : 'neutral';
-    const level = this.room?.show_level !== false && lamp.level !== null ? lamp.level : 100;
-    // a press on a round is the round's: it never reaches the room's
-    const down = (event: PointerEvent): void => {
-      event.stopPropagation();
-      startPress(event);
-    };
-    const click = (event: MouseEvent): void => {
-      event.stopPropagation();
-      clickPress(event);
-    };
-    // 4 inside the edge: on the round's fill, where its ink reads in every palette
-    const r = ROUND / 2 - 4;
-    const length = 2 * Math.PI * r;
-    return html`<button
-      class="lt-bulb fv-ico fv-ico--${tone} ${lamp.on ? 'is-on' : ''}"
-      style=${place ?? nothing}
-      data-target
-      data-accent=${lamp.on ? (lamp.accent ?? nothing) : nothing}
-      role="switch"
-      aria-checked=${lamp.on ? 'true' : 'false'}
-      aria-disabled=${lamp.usable ? nothing : 'true'}
-      aria-label=${lamp.name}
-      title=${lamp.name}
-      .fvTap=${lamp.usable ? () => this.flipLamp(lamp) : undefined}
-      .fvHold=${() => this.openLamp(lamp)}
-      @pointerdown=${down}
-      @click=${click}
-      @contextmenu=${preventMenu}
-    >
-      ${icon(lamp.glyph)}
-      ${
-        lamp.on
-          ? svg`<svg class="lt-ring" viewBox="0 0 ${ROUND} ${ROUND}" aria-hidden="true"><circle cx=${ROUND / 2} cy=${ROUND / 2} r=${r} stroke-dasharray="${((length * level) / 100).toFixed(2)} ${length.toFixed(2)}"></circle></svg>`
-          : nothing
-      }
-    </button>`;
+    return levelRound({
+      name: lamp.name,
+      glyph: lamp.glyph,
+      usable: lamp.usable,
+      on: lamp.on,
+      level: this.room?.show_level !== false && lamp.level !== null ? lamp.level : 100,
+      tone: lamp.tone,
+      accent: lamp.accent,
+      switches: true,
+      onTap: () => this.flipLamp(lamp),
+      onHold: () => this.openLamp(lamp),
+      place,
+    });
   }
 
   /** Each light a chip with its name: a tap turns it on and off, a hold opens it. */

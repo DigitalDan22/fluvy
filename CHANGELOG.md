@@ -49,6 +49,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - A row of modes, presets or sources whose longest word would not hold beside its glyph even on a line of its own (an
   air conditioner's Dry mode in Portuguese or Italian, in half a section) shows its words without their glyphs, where
   the word was cut.
+- A room card ends in quick actions: a round for the room's lights and one for its blinds, where it has them, at the
+  end of its head, its row or its picture. Each is a switch for all of them (a tap turns every light off while one is
+  on, else on; blinds open, close, or stop while they move) with a ring of how much of them is on, and a hold opens
+  where the room opens; as many show as the width holds once the name has its room. `quick_actions` orders the room's
+  `lights`, `covers`, `fans` and `media` and any entity, each with its own name, icon, colour and actions, and
+  `show_quick_actions: false` hides them. Thanks to @xoatrash (#113).
 - A room of sensors alone shows its readings and no "All devices" row, which said nothing under its title.
 - A plug whose integration files its countdown or its power-on behaviour as no setting (some Tuya and Zigbee2MQTT
   plugs) counts on its room card again: its one switch beside a power or energy reading, where 1.12 took it for an

@@ -1427,6 +1427,9 @@
     "kept_out_one": "{n} gizli veya tanılama varlığı · sensörlerini alan ayarlarından seçin"
   },
   "room-editor": {
+    "show_quick_actions": "Hızlı eylemleri göster",
+    "quick_actions": "Hızlı eylemler",
+    "group": "Neyi kontrol eder",
     "include": "Bunları da say",
     "exclude": "Hariç tut",
     "entries_help": "Varlıklar, cihazlar ya da alan adları veya switch.dishwasher_* gibi bir kimlik deseni"

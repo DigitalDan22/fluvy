@@ -1427,6 +1427,9 @@
     "kept_out_one": "{n} ausgeblendete oder Diagnose-Entität · wähle seine Sensoren in den Bereichseinstellungen"
   },
   "room-editor": {
+    "show_quick_actions": "Schnellaktionen zeigen",
+    "quick_actions": "Schnellaktionen",
+    "group": "Wirkt auf",
     "include": "Auch zählen",
     "exclude": "Weglassen",
     "entries_help": "Entitäten, Geräte oder Domänen, oder ein Muster von IDs wie switch.dishwasher_*"
