@@ -147,18 +147,19 @@ export const runsOf = <T>(items: readonly T[], size: number): T[][] =>
   );
 
 /**
- * Readings side by side, each named by its place: four on one card (two by two), else a card a run of three — a
- * readouts card draws four at most.
+ * Readings side by side, each named by its place (`nameOf`, else where it is): four on one card (two by two), else a
+ * card a run of three — a readouts card draws four at most.
  */
 export const readoutsCards = (
   home: HomeRegistry,
   ids: readonly string[],
   extra: Record<string, unknown> = {},
+  nameOf: (id: string) => string = (id) => home.placeName(id),
 ): Card[] =>
   (ids.length > 4 ? runsOf(ids, 3) : ids.length ? [ids] : []).map((run) => ({
     type: 'custom:fluvy-readouts-card',
     ...extra,
-    rows: run.map((id) => ({ entity: id, name: home.placeName(id) })),
+    rows: run.map((id) => ({ entity: id, name: nameOf(id) })),
   }));
 
 /** A thermostat in the dashboard's variant. */

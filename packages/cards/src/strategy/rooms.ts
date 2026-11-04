@@ -217,11 +217,20 @@ export function roomSections(
     parts.appliances,
     (ids) => tileRows(ids.map((id) => applianceTile(home, id))),
   );
+  // every reading on the room's page is the room's: each is named by what it measures, as the room card names its
+  // climate, where it alone measures it (two thermometers keep their own names)
+  const measured = parts.readings.length ? parts.readings : named;
+  const kindOf = (id: string): 'temperature' | 'humidity' =>
+    id === found.humidity || home.humidities.includes(id) ? 'humidity' : 'temperature';
+  const measureName = (id: string): string =>
+    measured.filter((other) => kindOf(other) === kindOf(id)).length > 1
+      ? home.displayName(id)
+      : t(`room.${kindOf(id)}`);
   const readings = capped(
     ctx,
     { key: 'readings', title: 'strategy.readings', icon: 'fluvy:thermo' },
-    parts.readings.length ? parts.readings : named,
-    (ids) => readoutsCards(home, ids).map((card) => [card]),
+    measured,
+    (ids) => readoutsCards(home, ids, {}, measureName).map((card) => [card]),
   );
   const cameras = capped(
     ctx,
@@ -281,7 +290,7 @@ export function roomSections(
         ),
       ),
       ...moreAfter(
-        readoutsCards(home, readings.shown).map((card) => [card]),
+        readoutsCards(home, readings.shown, {}, measureName).map((card) => [card]),
         readings,
       ),
       // the openings and the safety sensors on one card scoped to the room, which folds them itself

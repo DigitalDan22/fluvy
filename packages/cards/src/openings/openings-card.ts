@@ -453,9 +453,10 @@ export class FluvyOpeningsCard extends Card<OpeningsCardConfig> {
     const alerts = views.filter((view) => this.alert(view));
     const tone = this.config?.tone ?? 'warning';
 
+    // the rooms are counted where there are several: one says nothing a room's own page or card does not
     const rooms = new Set(views.map((view) => view.areaName).filter(Boolean));
     const countText = this.count('sensors', views.length);
-    const roomText = rooms.size === 0 ? '' : this.count('rooms', rooms.size);
+    const roomText = rooms.size > 1 ? this.count('rooms', rooms.size) : '';
 
     // "1 open" when everything alerting is an opening; a leak or smoke makes it "1 alert"
     const openOnly = alerts.every((view) => isOpening(view));

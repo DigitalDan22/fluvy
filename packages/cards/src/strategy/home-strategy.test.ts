@@ -590,7 +590,8 @@ describe('custom:fluvy-home strategy', () => {
       .find((view) => view.path === 'room-loft')!
       .sections.flatMap((section) => section.cards)
       .find((card) => card.type === 'custom:fluvy-readouts-card');
-    expect(loft?.['rows']).toEqual([{ entity: 'sensor.loft_humidity', name: 'Loft' }]);
+    // on the room's own page a reading is named by what it measures
+    expect(loft?.['rows']).toEqual([{ entity: 'sensor.loft_humidity', name: 'Humidity' }]);
   });
 
   it('puts the map beside the people once the house has a zone', async () => {
@@ -1114,6 +1115,29 @@ describe('custom:fluvy-home strategy — a room’s page shows everything its ca
     return hass;
   };
 
+  it('names two readings of one measure on a room’s page by their own names', async () => {
+    const hass = garage([
+      entity(
+        'sensor.garage_bench_temperature',
+        '14.0',
+        { device_class: 'temperature', unit_of_measurement: '°C', friendly_name: 'Workbench' },
+        { area_id: 'garage' },
+      ),
+    ]);
+    const { views } = await generate({ type: 'custom:fluvy-rooms' }, hass as never);
+    const cards = cardsIn(views.filter((view) => view.path === 'room-garage'));
+    const rows = cards.find((card) => card.type === 'custom:fluvy-readouts-card')?.['rows'] as {
+      name: string;
+    }[];
+    const names = rows.map((row) => row.name);
+    // the two thermometers by their own names (the fixture's first has none but its id), the one hygrometer by its measure
+    expect(names).toHaveLength(3);
+    expect(names).toContain('Workbench');
+    expect(names).not.toContain('Temperature');
+    expect(names).not.toContain('Garage');
+    expect(names).toContain('Humidity');
+  });
+
   it('draws the reporter’s garage whole: its readings, the smoke and the leak on its Openings card, the door as a cover', async () => {
     const hass = garage();
     // the page's five, of which the card counts the door (#95: its sensors are not devices)
@@ -1121,9 +1145,10 @@ describe('custom:fluvy-home strategy — a room’s page shows everything its ca
     expect(areaContents(hass, 'garage').devices).toEqual(['cover.garage_main_door']);
     const { views } = await generate({ type: 'custom:fluvy-rooms' }, hass as never);
     const cards = cardsIn(views.filter((view) => view.path === 'room-garage'));
+    // the room's own readings, named by what they measure: the place is the page's
     expect(cards.find((card) => card.type === 'custom:fluvy-readouts-card')?.['rows']).toEqual([
-      { entity: 'sensor.garage_climate_temperature', name: 'Garage' },
-      { entity: 'sensor.garage_climate_humidity', name: 'Garage' },
+      { entity: 'sensor.garage_climate_temperature', name: 'Temperature' },
+      { entity: 'sensor.garage_climate_humidity', name: 'Humidity' },
     ]);
     expect(cards.find((card) => card.type === 'custom:fluvy-openings-card')).toMatchObject({
       title: 'Sensors',

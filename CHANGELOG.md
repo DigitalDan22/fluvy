@@ -82,6 +82,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The gauge card lays a sensor out for what it reaches where its unit takes no prefix and its readings pass a
   thousand (daylight in lx, the air's pressure in hPa, carbon dioxide in ppm), and the card names no `max`, where its
   Min / Max / Average ran past their columns at 211 to 266 px.
+- A room's page on the automatic dashboards names its readings by what they measure ("Temperature", "Humidity"), as
+  the room card does, where both said the room's own name, and the openings card counts the rooms only where there
+  are several, where it said "· 1 room" on the room's own page.
 
 ## [1.13.1] — 2026-11-04
 

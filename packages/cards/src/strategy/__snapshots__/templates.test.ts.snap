@@ -35,11 +35,11 @@ exports[`the dashboard templates > draw the reporter’s garage whole on its pag
           "rows": [
             {
               "entity": "sensor.garage_temperature",
-              "name": "Garage",
+              "name": "Temperature",
             },
             {
               "entity": "sensor.garage_humidity",
-              "name": "Garage",
+              "name": "Humidity",
             },
           ],
           "type": "custom:fluvy-readouts-card",
@@ -771,11 +771,11 @@ exports[`the dashboard templates > generate the same dashboard for the demo home
               "rows": [
                 {
                   "entity": "sensor.garden_temperature",
-                  "name": "Garden",
+                  "name": "Temperature",
                 },
                 {
                   "entity": "sensor.garden_humidity",
-                  "name": "Garden",
+                  "name": "Humidity",
                 },
               ],
               "type": "custom:fluvy-readouts-card",
@@ -1085,11 +1085,11 @@ exports[`the dashboard templates > generate the same dashboard for the demo home
               "rows": [
                 {
                   "entity": "sensor.garden_temperature",
-                  "name": "Garden",
+                  "name": "Temperature",
                 },
                 {
                   "entity": "sensor.garden_humidity",
-                  "name": "Garden",
+                  "name": "Humidity",
                 },
               ],
               "type": "custom:fluvy-readouts-card",

@@ -789,11 +789,11 @@ exports[`custom:fluvy-home strategy > generates the same dashboard for the demo 
               "rows": [
                 {
                   "entity": "sensor.garden_temperature",
-                  "name": "Garden",
+                  "name": "Temperature",
                 },
                 {
                   "entity": "sensor.garden_humidity",
-                  "name": "Garden",
+                  "name": "Humidity",
                 },
               ],
               "type": "custom:fluvy-readouts-card",
