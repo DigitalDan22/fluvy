@@ -5,6 +5,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.14.1] — 2026-11-04
+
 ### Visible on upgrade
 
 - Slovak says the words its translator asked for (#116): "Snímač" for a sensor, "Panel" for a dashboard,
