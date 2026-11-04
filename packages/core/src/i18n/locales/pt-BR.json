@@ -539,8 +539,6 @@
   },
   "strategy": {
     "home": "Início",
-    "lights": "Luzes",
-    "climate": "Clima",
     "energy": "Energia",
     "sensors": "Sensores",
     "appliances": "Eletrodomésticos",
@@ -555,9 +553,7 @@
     "plants": "Plantas",
     "updates": "Atualizações",
     "helpers": "Auxiliares",
-    "media": "Mídia",
     "agenda": "Agenda",
-    "covers": "Persianas",
     "today": "Hoje",
     "actions": "Ações",
     "rooms": "Cômodos",
@@ -577,7 +573,6 @@
     "all_appliances": "Ver todos",
     "show_all": "Ver todos",
     "thermostats": "Termostatos",
-    "fans": "Ventiladores",
     "humidity": "Umidade",
     "temperatures": "Temperaturas",
     "readings": "Leituras",
@@ -1425,7 +1420,12 @@
     "temperature": "Temperatura",
     "humidity": "Umidade",
     "kept_out": "{n} entidades ocultas ou de diagnóstico · escolha os sensores nas configurações da área",
-    "kept_out_one": "{n} entidade oculta ou de diagnóstico · escolha os sensores nas configurações da área"
+    "kept_out_one": "{n} entidade oculta ou de diagnóstico · escolha os sensores nas configurações da área",
+    "lights": "Luzes",
+    "climate": "Clima",
+    "media": "Mídia",
+    "covers": "Persianas",
+    "fans": "Ventiladores"
   },
   "room-editor": {
     "show_quick_actions": "Mostrar as ações rápidas",

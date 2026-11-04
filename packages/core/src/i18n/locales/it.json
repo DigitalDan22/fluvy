@@ -539,8 +539,6 @@
   },
   "strategy": {
     "home": "Casa",
-    "lights": "Luci",
-    "climate": "Clima",
     "energy": "Energia",
     "sensors": "Sensori",
     "appliances": "Elettrodomestici",
@@ -555,9 +553,7 @@
     "plants": "Piante",
     "updates": "Aggiornamenti",
     "helpers": "Helper",
-    "media": "Media",
     "agenda": "Agenda",
-    "covers": "Tapparelle",
     "today": "Oggi",
     "actions": "Azioni",
     "rooms": "Stanze",
@@ -577,7 +573,6 @@
     "all_appliances": "Vedi tutti",
     "show_all": "Mostra tutti",
     "thermostats": "Termostati",
-    "fans": "Ventilatori",
     "humidity": "Umidità",
     "temperatures": "Temperature",
     "readings": "Letture",
@@ -1425,7 +1420,12 @@
     "temperature": "Temperatura",
     "humidity": "Umidità",
     "kept_out": "{n} entità nascoste o di diagnostica · scegli i suoi sensori nelle impostazioni dell’area",
-    "kept_out_one": "{n} entità nascosta o di diagnostica · scegli i suoi sensori nelle impostazioni dell’area"
+    "kept_out_one": "{n} entità nascosta o di diagnostica · scegli i suoi sensori nelle impostazioni dell’area",
+    "lights": "Luci",
+    "climate": "Clima",
+    "media": "Media",
+    "covers": "Tapparelle",
+    "fans": "Ventilatori"
   },
   "room-editor": {
     "show_quick_actions": "Mostra le azioni rapide",

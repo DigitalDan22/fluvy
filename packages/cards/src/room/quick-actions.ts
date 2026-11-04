@@ -36,10 +36,10 @@ export const QUICK_GROUPS = Object.keys(GROUPS) as readonly QuickGroup[];
 
 /** A set's word (its round's name) and glyph (where it holds more than one). */
 const LOOKS = {
-  lights: ['strategy.lights', 'bulb'],
-  covers: ['strategy.covers', 'blinds'],
-  fans: ['strategy.fans', 'fan'],
-  media: ['strategy.media', 'speaker'],
+  lights: ['room.lights', 'bulb'],
+  covers: ['room.covers', 'blinds'],
+  fans: ['room.fans', 'fan'],
+  media: ['room.media', 'speaker'],
 } as const;
 
 /** One round: one of the room's sets (`group`), or one entity; its own name, icon, colour and actions. */

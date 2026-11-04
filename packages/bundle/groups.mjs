@@ -36,8 +36,9 @@ const HISTORY =
 const PANEL =
   /\/packages\/(cards\/src\/panel\/(?!on-demand\.ts)|tokens\/src\/palettes\/community\/|demo-home\/src\/simulate\.ts|core\/src\/i18n\/locales\/en\/panel\.json)/;
 
-/** The automatic dashboard's strategy (all of its folder but the definer): fetched when a dashboard asks for it. */
-const STRATEGY = /\/packages\/cards\/src\/strategy\/(?!define\.ts)/;
+/** The automatic dashboard's strategy (all of its folder but the definer, and its English): fetched when a dashboard asks for it. */
+const STRATEGY =
+  /\/packages\/(cards\/src\/strategy\/(?!define\.ts)|core\/src\/i18n\/locales\/en\/strategy\.json)/;
 
 /**
  * The heights counted with the house (what an entity's capabilities draw, what a room holds): the strategy's, fetched

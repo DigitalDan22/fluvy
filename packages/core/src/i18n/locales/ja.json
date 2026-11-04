@@ -488,8 +488,6 @@
   },
   "strategy": {
     "home": "ホーム",
-    "lights": "照明",
-    "climate": "空調",
     "energy": "エネルギー",
     "sensors": "センサー",
     "appliances": "家電",
@@ -504,9 +502,7 @@
     "plants": "植物",
     "updates": "アップデート",
     "helpers": "ヘルパー",
-    "media": "メディア",
     "agenda": "予定",
-    "covers": "ブラインド",
     "today": "今日",
     "actions": "アクション",
     "rooms": "部屋",
@@ -526,7 +522,6 @@
     "all_appliances": "すべての家電",
     "show_all": "すべて表示",
     "thermostats": "サーモスタット",
-    "fans": "ファン",
     "humidity": "湿度",
     "temperatures": "温度",
     "readings": "測定値",
@@ -690,7 +685,12 @@
     "temperature": "温度",
     "humidity": "湿度",
     "kept_out": "非表示または診断用のエンティティ{n}件 · エリアの設定でセンサーを選択してください",
-    "kept_out_one": "非表示または診断用のエンティティ{n}件 · エリアの設定でセンサーを選択してください"
+    "kept_out_one": "非表示または診断用のエンティティ{n}件 · エリアの設定でセンサーを選択してください",
+    "lights": "照明",
+    "climate": "空調",
+    "media": "メディア",
+    "covers": "ブラインド",
+    "fans": "ファン"
   },
   "room-editor": {
     "show_quick_actions": "クイックアクションを表示",

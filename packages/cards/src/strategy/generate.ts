@@ -1,3 +1,5 @@
+// the dashboards' words first: they are here before anything in the strategy's chunk says them
+import './english.js';
 import type { HomeAssistant } from '@fluvy/core';
 import { appliancesView } from './appliances.js';
 import { moreHost } from './caps.js';

@@ -488,7 +488,7 @@ export class FluvyRoomCard extends FluvyTileCard {
         ? [
             [
               'bulb',
-              this.t('strategy.lights'),
+              this.t('room.lights'),
               counted(this.hass, lights, (id) => this.entity(id)),
               'light',
             ] as const,
@@ -498,7 +498,7 @@ export class FluvyRoomCard extends FluvyTileCard {
         ? [
             [
               'thermo',
-              this.t('strategy.climate'),
+              this.t('room.climate'),
               stateText(this.hass, this.entity(climate)),
               'heat',
             ] as const,
@@ -508,7 +508,7 @@ export class FluvyRoomCard extends FluvyTileCard {
         ? [
             [
               'speaker',
-              this.t('strategy.media'),
+              this.t('room.media'),
               stateText(this.hass, this.entity(player)),
               'neutral',
             ] as const,

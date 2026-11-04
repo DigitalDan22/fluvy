@@ -101,7 +101,7 @@ export const keys = configKeys<RoomCardConfig>()([
 
 /** What a quick action stands for: one of the room's sets, by its word, or an entity. */
 const groupField = choiceField('group', [
-  ...QUICK_GROUPS.map((group) => [group, `strategy.${group}`] as const),
+  ...QUICK_GROUPS.map((group) => [group, `room.${group}`] as const),
   ['entity', 'editor.entity'],
 ]);
 /** A set's round: its own name, icon, colour and actions; an entity's, the entity first. */

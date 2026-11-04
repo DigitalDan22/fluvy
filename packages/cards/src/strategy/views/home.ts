@@ -74,7 +74,7 @@ export function homeView(ctx: StrategyContext): Section[] {
   const { climate } = home;
   const lights = capped(
     ctx,
-    { key: 'lights', title: 'strategy.lights', icon: 'fluvy:bulb' },
+    { key: 'lights', title: 'room.lights', icon: 'fluvy:bulb' },
     home.lights,
     (ids) => lightGroups(ctx, ids),
   );
@@ -86,10 +86,10 @@ export function homeView(ctx: StrategyContext): Section[] {
   );
   const covers = capped(
     ctx,
-    { key: 'covers', title: 'strategy.covers', icon: 'fluvy:blinds' },
+    { key: 'covers', title: 'room.covers', icon: 'fluvy:blinds' },
     home.covers,
     (ids) =>
-      byArea(ctx, ids, t('strategy.covers'), (title, own) => [
+      byArea(ctx, ids, t('room.covers'), (title, own) => [
         heading(title, 'fluvy:blinds', own),
         coverTiles(home, own),
       ]),
@@ -116,7 +116,7 @@ export function homeView(ctx: StrategyContext): Section[] {
       ...when(lights.shown.length, () =>
         moreAfter(
           headed(
-            heading(t('strategy.lights'), 'fluvy:bulb', home.lights, `${base}/lights`),
+            heading(t('room.lights'), 'fluvy:bulb', home.lights, `${base}/lights`),
             tileRows(lights.shown.map((id) => sizedTile(id, home.named(id), ctx.style))),
           ),
           lights,
@@ -135,7 +135,7 @@ export function homeView(ctx: StrategyContext): Section[] {
         moreAfter(
           [
             [
-              heading(t('strategy.covers'), 'fluvy:blinds', home.covers),
+              heading(t('room.covers'), 'fluvy:blinds', home.covers),
               coverTiles(home, covers.shown),
             ],
           ],
@@ -218,7 +218,7 @@ export function climateView(ctx: StrategyContext): Section[] {
   );
   const fans = capped(
     ctx,
-    { key: 'fans', title: 'strategy.fans', icon: 'fluvy:fan' },
+    { key: 'fans', title: 'room.fans', icon: 'fluvy:fan' },
     home.fans,
     each(fan),
   );
@@ -346,7 +346,7 @@ export function mediaView(ctx: StrategyContext): Section[] {
   // what plays first, wherever it is in the list
   const players = capped(
     ctx,
-    { key: 'media', title: 'strategy.media', icon: 'fluvy:speaker' },
+    { key: 'media', title: 'room.media', icon: 'fluvy:speaker' },
     playing ? [playing, ...home.players.filter((id) => id !== playing)] : home.players,
     each(player),
   );
@@ -469,14 +469,14 @@ export const HOME_VIEWS: readonly ViewSpec[] = [
   {
     key: 'lights',
     icon: 'fluvy:bulb',
-    title: 'strategy.lights',
+    title: 'room.lights',
     build: lightsView,
     when: ({ home }) => home.lights.length > 0,
   },
   {
     key: 'climate',
     icon: 'fluvy:thermo',
-    title: 'strategy.climate',
+    title: 'room.climate',
     build: climateView,
     when: ({ home, weather }) =>
       Boolean(home.climate.length || home.temperatures.length || weather),
@@ -498,7 +498,7 @@ export const HOME_VIEWS: readonly ViewSpec[] = [
   {
     key: 'media',
     icon: 'fluvy:speaker',
-    title: 'strategy.media',
+    title: 'room.media',
     build: mediaView,
     when: ({ home }) => home.players.length > 0,
   },

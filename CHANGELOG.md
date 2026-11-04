@@ -121,6 +121,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   less on every page.
 - Lit's `guard` directive, which only the Activity page's rows keep, travels in the Activity page's chunk: 0.1 KB less
   on every page.
+- The automatic dashboards' English is a part of its own (`en/strategy.json`, in the strategy's chunk); the groups a
+  room card and its quick actions name (lights, climate, media, blinds, fans) are the `room` namespace's, in every
+  catalogue, each word as it was: 0.3 KB less on every page.
 
 ## [1.12.0] — 2026-11-04
 

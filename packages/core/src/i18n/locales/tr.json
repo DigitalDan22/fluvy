@@ -539,8 +539,6 @@
   },
   "strategy": {
     "home": "Ana sayfa",
-    "lights": "Işıklar",
-    "climate": "İklim",
     "energy": "Enerji",
     "sensors": "Sensörler",
     "appliances": "Ev aletleri",
@@ -555,9 +553,7 @@
     "plants": "Bitkiler",
     "updates": "Güncellemeler",
     "helpers": "Yardımcılar",
-    "media": "Medya",
     "agenda": "Ajanda",
-    "covers": "Panjurlar",
     "today": "Bugün",
     "actions": "Eylemler",
     "rooms": "Odalar",
@@ -577,7 +573,6 @@
     "all_appliances": "Tüm ev aletleri",
     "show_all": "Tümünü göster",
     "thermostats": "Termostatlar",
-    "fans": "Vantilatörler",
     "humidity": "Nem",
     "temperatures": "Sıcaklıklar",
     "readings": "Ölçümler",
@@ -1425,7 +1420,12 @@
     "temperature": "Sıcaklık",
     "humidity": "Nem",
     "kept_out": "{n} gizli veya tanılama varlığı · sensörlerini alan ayarlarından seçin",
-    "kept_out_one": "{n} gizli veya tanılama varlığı · sensörlerini alan ayarlarından seçin"
+    "kept_out_one": "{n} gizli veya tanılama varlığı · sensörlerini alan ayarlarından seçin",
+    "lights": "Işıklar",
+    "climate": "İklim",
+    "media": "Medya",
+    "covers": "Panjurlar",
+    "fans": "Vantilatörler"
   },
   "room-editor": {
     "show_quick_actions": "Hızlı eylemleri göster",

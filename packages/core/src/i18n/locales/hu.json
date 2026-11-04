@@ -488,8 +488,6 @@
   },
   "strategy": {
     "home": "Otthon",
-    "lights": "Világítás",
-    "climate": "Klíma",
     "energy": "Energia",
     "sensors": "Érzékelők",
     "appliances": "Készülékek",
@@ -504,9 +502,7 @@
     "plants": "Növények",
     "updates": "Frissítések",
     "helpers": "Segédek",
-    "media": "Média",
     "agenda": "Napirend",
-    "covers": "Redőnyök",
     "today": "Ma",
     "actions": "Műveletek",
     "rooms": "Szobák",
@@ -526,7 +522,6 @@
     "all_appliances": "Minden készülék",
     "show_all": "Összes megjelenítése",
     "thermostats": "Termosztátok",
-    "fans": "Ventilátorok",
     "humidity": "Páratartalom",
     "temperatures": "Hőmérsékletek",
     "readings": "Mérések",
@@ -690,7 +685,12 @@
     "temperature": "Hőmérséklet",
     "humidity": "Páratartalom",
     "kept_out": "{n} rejtett vagy diagnosztikai entitás · az érzékelőit a terület beállításaiban választhatod ki",
-    "kept_out_one": "{n} rejtett vagy diagnosztikai entitás · az érzékelőit a terület beállításaiban választhatod ki"
+    "kept_out_one": "{n} rejtett vagy diagnosztikai entitás · az érzékelőit a terület beállításaiban választhatod ki",
+    "lights": "Világítás",
+    "climate": "Klíma",
+    "media": "Média",
+    "covers": "Redőnyök",
+    "fans": "Ventilátorok"
   },
   "room-editor": {
     "show_quick_actions": "A gyorsműveletek megjelenítése",

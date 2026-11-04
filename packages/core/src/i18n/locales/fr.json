@@ -539,8 +539,6 @@
   },
   "strategy": {
     "home": "Accueil",
-    "lights": "Lumières",
-    "climate": "Climat",
     "energy": "Énergie",
     "sensors": "Capteurs",
     "appliances": "Appareils",
@@ -555,9 +553,7 @@
     "plants": "Plantes",
     "updates": "Mises à jour",
     "helpers": "Assistants",
-    "media": "Médias",
     "agenda": "Agenda",
-    "covers": "Volets",
     "today": "Aujourd’hui",
     "actions": "Actions",
     "rooms": "Pièces",
@@ -577,7 +573,6 @@
     "all_appliances": "Tout voir",
     "show_all": "Tout afficher",
     "thermostats": "Thermostats",
-    "fans": "Ventilateurs",
     "humidity": "Humidité",
     "temperatures": "Températures",
     "readings": "Relevés",
@@ -1425,7 +1420,12 @@
     "temperature": "Température",
     "humidity": "Humidité",
     "kept_out": "{n} entités masquées ou de diagnostic · choisissez ses capteurs dans les paramètres de la pièce",
-    "kept_out_one": "{n} entité masquée ou de diagnostic · choisissez ses capteurs dans les paramètres de la pièce"
+    "kept_out_one": "{n} entité masquée ou de diagnostic · choisissez ses capteurs dans les paramètres de la pièce",
+    "lights": "Lumières",
+    "climate": "Climat",
+    "media": "Médias",
+    "covers": "Volets",
+    "fans": "Ventilateurs"
   },
   "room-editor": {
     "show_quick_actions": "Afficher les actions rapides",

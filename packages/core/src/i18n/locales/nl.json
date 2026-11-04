@@ -539,8 +539,6 @@
   },
   "strategy": {
     "home": "Thuis",
-    "lights": "Verlichting",
-    "climate": "Klimaat",
     "energy": "Energie",
     "sensors": "Sensoren",
     "appliances": "Apparaten",
@@ -555,9 +553,7 @@
     "plants": "Planten",
     "updates": "Updates",
     "helpers": "Helpers",
-    "media": "Media",
     "agenda": "Agenda",
-    "covers": "Rolluiken",
     "today": "Vandaag",
     "actions": "Acties",
     "rooms": "Kamers",
@@ -577,7 +573,6 @@
     "all_appliances": "Alle apparaten",
     "show_all": "Alles tonen",
     "thermostats": "Thermostaten",
-    "fans": "Ventilatoren",
     "humidity": "Luchtvochtigheid",
     "temperatures": "Temperaturen",
     "readings": "Metingen",
@@ -1425,7 +1420,12 @@
     "temperature": "Temperatuur",
     "humidity": "Vochtigheid",
     "kept_out": "{n} verborgen of diagnostische entiteiten · kies de sensoren in de instellingen van de ruimte",
-    "kept_out_one": "{n} verborgen of diagnostische entiteit · kies de sensoren in de instellingen van de ruimte"
+    "kept_out_one": "{n} verborgen of diagnostische entiteit · kies de sensoren in de instellingen van de ruimte",
+    "lights": "Verlichting",
+    "climate": "Klimaat",
+    "media": "Media",
+    "covers": "Rolluiken",
+    "fans": "Ventilatoren"
   },
   "room-editor": {
     "show_quick_actions": "Snelle acties tonen",

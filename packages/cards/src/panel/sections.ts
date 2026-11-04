@@ -494,7 +494,7 @@ function tabsMock(ctx: PanelContext, tabs: ViewTabs, chrome: Chrome): TemplateRe
   const views = [
     ['strategy.home', 'home'],
     ['strategy.rooms', 'rooms'],
-    ['strategy.lights', 'bulb'],
+    ['room.lights', 'bulb'],
   ] as const;
   const ha = tabs.style === 'ha';
   const names = !ha && tabs.content !== 'icons';

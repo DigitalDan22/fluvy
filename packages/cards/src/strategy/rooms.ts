@@ -183,13 +183,13 @@ export function roomSections(
   );
   const lights = capped(
     ctx,
-    { key: 'lights', title: 'strategy.lights', icon: 'fluvy:bulb' },
+    { key: 'lights', title: 'room.lights', icon: 'fluvy:bulb' },
     parts.lights,
     (ids) => lightGroups(ctx, ids),
   );
   const covers = capped(
     ctx,
-    { key: 'covers', title: 'strategy.covers', icon: 'fluvy:blinds' },
+    { key: 'covers', title: 'room.covers', icon: 'fluvy:blinds' },
     parts.covers,
     (ids) => [[coverTiles(ids)]],
   );
@@ -201,13 +201,13 @@ export function roomSections(
   );
   const fans = capped(
     ctx,
-    { key: 'fans', title: 'strategy.fans', icon: 'fluvy:fan' },
+    { key: 'fans', title: 'room.fans', icon: 'fluvy:fan' },
     parts.fans,
     each(fan),
   );
   const players = capped(
     ctx,
-    { key: 'media', title: 'strategy.media', icon: 'fluvy:speaker' },
+    { key: 'media', title: 'room.media', icon: 'fluvy:speaker' },
     parts.players,
     each(player),
   );
@@ -246,7 +246,7 @@ export function roomSections(
       ...when(lights.shown.length, () =>
         moreAfter(
           headed(
-            heading(t('strategy.lights'), 'fluvy:bulb', parts.lights),
+            heading(t('room.lights'), 'fluvy:bulb', parts.lights),
             tileRows(lights.shown.map((id) => sizedTile(id, home.named(id), ctx.style))),
           ),
           lights,
@@ -254,7 +254,7 @@ export function roomSections(
       ),
       ...when(covers.shown.length, () =>
         moreAfter(
-          [[heading(t('strategy.covers'), 'fluvy:blinds', parts.covers), coverTiles(covers.shown)]],
+          [[heading(t('room.covers'), 'fluvy:blinds', parts.covers), coverTiles(covers.shown)]],
           covers,
         ),
       ),

@@ -539,8 +539,6 @@
   },
   "strategy": {
     "home": "Zuhause",
-    "lights": "Licht",
-    "climate": "Klima",
     "energy": "Energie",
     "sensors": "Sensoren",
     "appliances": "Geräte",
@@ -555,9 +553,7 @@
     "plants": "Pflanzen",
     "updates": "Updates",
     "helpers": "Helfer",
-    "media": "Medien",
     "agenda": "Agenda",
-    "covers": "Rollos",
     "today": "Heute",
     "actions": "Aktionen",
     "rooms": "Räume",
@@ -577,7 +573,6 @@
     "all_appliances": "Alle Geräte",
     "show_all": "Alle anzeigen",
     "thermostats": "Thermostate",
-    "fans": "Ventilatoren",
     "humidity": "Luftfeuchtigkeit",
     "temperatures": "Temperaturen",
     "readings": "Messwerte",
@@ -1425,7 +1420,12 @@
     "temperature": "Temperatur",
     "humidity": "Luftfeuchte",
     "kept_out": "{n} ausgeblendete oder Diagnose-Entitäten · wähle seine Sensoren in den Bereichseinstellungen",
-    "kept_out_one": "{n} ausgeblendete oder Diagnose-Entität · wähle seine Sensoren in den Bereichseinstellungen"
+    "kept_out_one": "{n} ausgeblendete oder Diagnose-Entität · wähle seine Sensoren in den Bereichseinstellungen",
+    "lights": "Licht",
+    "climate": "Klima",
+    "media": "Medien",
+    "covers": "Rollos",
+    "fans": "Ventilatoren"
   },
   "room-editor": {
     "show_quick_actions": "Schnellaktionen zeigen",
