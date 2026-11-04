@@ -150,7 +150,9 @@
     "repeat_off": "Ripetizione disattivata",
     "repeat_all": "Ripeti tutto",
     "repeat_one": "Ripeti brano",
-    "artwork": "Copertina"
+    "artwork": "Copertina",
+    "editor_image_mode": "Mostra l’immagine propria",
+    "o_fallback": "Senza copertina"
   },
   "energy": {
     "solar": "Solare",
@@ -387,6 +389,7 @@
     "entities": "Entità",
     "name": "Nome",
     "icon": "Icona",
+    "image": "Immagine propria (indirizzo o entità)",
     "tone": "Tono",
     "title": "Titolo",
     "subtitle": "Sottotitolo",
@@ -2259,7 +2262,6 @@
     "o_inline": "Accanto al testo",
     "o_at_end": "Alla fine",
     "editor_picture": "Immagine",
-    "editor_image": "Immagine propria (indirizzo o entità)",
     "editor_show_power": "Mostra il pulsante di accensione",
     "editor_power_action": "Pulsante di accensione",
     "editor_show_hero": "Mostra i valori",

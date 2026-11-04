@@ -150,7 +150,9 @@
     "repeat_off": "Répétition désactivée",
     "repeat_all": "Tout répéter",
     "repeat_one": "Répéter le titre",
-    "artwork": "Pochette"
+    "artwork": "Pochette",
+    "editor_image_mode": "Afficher l’image personnelle",
+    "o_fallback": "Sans pochette"
   },
   "energy": {
     "solar": "Solaire",
@@ -387,6 +389,7 @@
     "entities": "Entités",
     "name": "Nom",
     "icon": "Icône",
+    "image": "Image personnelle (adresse ou entité)",
     "tone": "Tonalité",
     "title": "Titre",
     "subtitle": "Sous-titre",
@@ -2259,7 +2262,6 @@
     "o_inline": "À côté du texte",
     "o_at_end": "À la fin",
     "editor_picture": "Image",
-    "editor_image": "Image personnelle (adresse ou entité)",
     "editor_show_power": "Afficher le bouton marche/arrêt",
     "editor_power_action": "Bouton marche/arrêt",
     "editor_show_hero": "Afficher les valeurs",

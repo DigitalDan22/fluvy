@@ -1,4 +1,3 @@
-import type { HomeAssistant } from '@fluvy/core';
 import { css, html, nothing, type TemplateResult } from 'lit';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import type { ArtName } from './art/art.js';
@@ -7,7 +6,8 @@ import type { ApplianceKind } from './kinds.js';
 /*
  * An appliance's picture: the product drawing of its kind (the `appliance-art` chunk, fetched by the first card that
  * draws one and kept), the person's own picture (`image`: an address, or an entity whose `entity_picture` it is), or
- * nothing while the drawings are on their way — the box keeps its size, so nothing moves when they land.
+ * nothing while the drawings are on their way — the box keeps its size, so nothing moves when they land. The person's
+ * picture is read as every card reads one (`imageOf`, shared/picture.ts).
  */
 
 /** What a card shows in a picture's place: the drawing (default), the kind's circle, or nothing. */
@@ -76,19 +76,6 @@ export function artOf(kind: ApplianceKind, then: () => void): TemplateResult | u
     drawn.set(name, template);
   }
   return template;
-}
-
-/**
- * The person's own picture: an address, or an entity that has one (`image.waschmaschine`, a camera's still), else
- * none; an address Home Assistant serves is made whole by it (`hassUrl`).
- */
-export function imageOf(hass: HomeAssistant | undefined, image: string | undefined): string {
-  if (!image) return '';
-  const own = /^[a-z_]+\.[\w-]+$/.test(image)
-    ? hass?.states[image]?.attributes['entity_picture']
-    : image;
-  if (typeof own !== 'string' || !own) return '';
-  return own.startsWith('/') && hass?.hassUrl ? hass.hassUrl(own) : own;
 }
 
 /**

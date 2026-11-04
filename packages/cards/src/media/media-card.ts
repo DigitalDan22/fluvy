@@ -49,12 +49,15 @@ import { HeadFit } from '../energy/head.js';
 import {
   actionFields,
   boolField,
+  choiceField,
   colourFields,
   entityField,
   fieldRow,
   formLabels,
   nameIconFields,
+  onlyWhen,
   selectField,
+  textField,
 } from '../shared/form.js';
 import {
   controlsField,
@@ -79,6 +82,7 @@ import { configKeys, type RowStyle } from '../shared/config.js';
 import { iconOf } from '../shared/domain.js';
 import { chipRow } from '../shared/chips.js';
 import { fitLine } from '../shared/fit.js';
+import { imageOf } from '../shared/picture.js';
 import type { EditorDefaults } from '../shared/rows-editor.js';
 
 const s = strings('media');
@@ -103,7 +107,16 @@ export interface MediaCardConfig extends FluvyCardConfig {
    * take it; as many as the row holds beside the title, the last ones giving way. Default `[play, next]`.
    */
   controls?: readonly MediaControl[];
+  /**
+   * A picture of the person's own (#99): an address, or an entity whose picture it is (a television's product
+   * picture, `image.lounge_tv`), on the plate where the player has no artwork (`image_mode: fallback`, the default), or
+   * always (`always`).
+   */
+  image?: string;
+  image_mode?: ImageMode;
 }
+
+export type ImageMode = 'fallback' | 'always';
 
 /** The click of a pressed head or row, seen before its own buttons': a hold, or a mouse's drag, never also taps. */
 const clickHeld = { handleEvent: clickPress, capture: true };
@@ -169,6 +182,17 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
       }
       .md-art--l.fv-art--idle {
         box-shadow: inset 0 0 0 1px var(--fluvy-border);
+      }
+      /* the person's own picture is drawn whole, never cropped; out of reach it greys and fades with the card */
+      .fv-art__img--own {
+        background-size: contain;
+        background-repeat: no-repeat;
+      }
+      .is-unavailable .fv-art__img--own {
+        filter: grayscale(1);
+      }
+      .is-unavailable .fv-art__img--own.is-on {
+        opacity: 0.5;
       }
       /* the art and the words are the player's button (its head's, as headTap draws it): the art gives under the finger and
          rises under a pointer, as a head's circle does, and the words dim; the hero's head is its art and its words */
@@ -301,12 +325,25 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
     'show_volume',
     'show_power',
     'controls',
+    'image',
+    'image_mode',
   ]);
   static override getConfigForm(): LovelaceConfigForm {
     return {
       schema: [
         entityField(['media_player']),
         nameIconFields(),
+        // the person's own picture, and when it shows: where the player has no artwork, or always
+        fieldRow(
+          textField('image'),
+          onlyWhen(
+            (data) => Boolean(data['image']),
+            choiceField('image_mode', [
+              ['fallback', 'media.o_fallback'],
+              ['always', 'option.always'],
+            ]),
+          ),
+        ),
         fieldRow(selectField('variant', VARIANTS), selectField('source_style', ['full', 'chips'])),
         fieldRow(boolField('show_source'), boolField('show_volume')),
         boolField('show_power'),
@@ -314,7 +351,7 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
         ...colourFields(),
         actionFields(),
       ],
-      ...formLabels({}),
+      ...formLabels({ image_mode: 'media.editor_image_mode' }),
     };
   }
   /** What the card does for a key left out, shown in the editor: the power round is offered where the player has one. */
@@ -327,6 +364,7 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
       show_volume: true,
       show_power: view.stateObj ? hasPower(view) : true,
       controls: [...MINI_CONTROLS],
+      image_mode: 'fallback',
     };
   };
 
@@ -473,12 +511,32 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
 
   /* ---------- pieces ---------- */
 
-  /** The gradient plate with the entity picture over it; a picture change crossfades the two layers. */
+  /**
+   * The picture on the plate: the person's own (`image`) where the player has no artwork, or always where asked
+   * (`image_mode: always`), else the artwork. A player out of reach has none of its own and keeps the person's, greyed
+   * with the card. `own`: the person's picture is the one shown.
+   */
+  private picture(
+    view: EntityView,
+    away: boolean,
+  ): { readonly url: string; readonly own: boolean } {
+    const own = imageOf(this.hass, this.config?.image);
+    const artwork = away ? '' : mediaPicture(this.hass, view);
+    return own && (this.config?.image_mode === 'always' || !artwork)
+      ? { url: own, own: true }
+      : { url: artwork, own: false };
+  }
+
+  /**
+   * The gradient plate with the picture over it; a picture change crossfades the two layers. The person's own picture
+   * is drawn whole (a product picture is never cropped).
+   */
   private art(size: number, picture: string, extra = '', ref: IconRef = 'speaker'): TemplateResult {
     if (this.layers[this.front] !== picture) {
       this.front = this.front === 0 ? 1 : 0;
       this.layers[this.front] = picture;
     }
+    const own = imageOf(this.hass, this.config?.image);
     return html`<span
       class="fv-art ${extra}"
       data-measure="skip"
@@ -487,7 +545,7 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
       ${this.layers.map(
         (url, index) =>
           html`<span
-            class="fv-art__img ${url && index === this.front ? 'is-on' : ''}"
+            class="fv-art__img ${url && index === this.front ? 'is-on' : ''} ${url && url === own ? 'fv-art__img--own' : ''}"
             style=${url ? `background-image:url("${cssUrl(url)}")` : nothing}
           ></span>`,
       )}
@@ -853,7 +911,9 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
     // and why over the plate, the seek line, the rounds and the volume still — only the colours change (1.9)
     const away = !isUsable(view);
     const active = !away && this.isActive(view);
-    const picture = away ? '' : mediaPicture(this.hass, view);
+    const { url: picture, own } = this.picture(view, away);
+    // the plate's gradient stands in for artwork: under the person's own picture, or with nothing playing, it is at rest
+    const idle = own || (!active && !picture) ? 'fv-art--idle' : '';
     const title = active
       ? textAttr(view, 'media_title') || textAttr(view, 'app_name') || name
       : away
@@ -897,7 +957,7 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
           @click=${pressed ? clickHeld : nothing}
         >
           <div class="md-hero">
-            ${this.art(size, picture, `md-art--l ${active || picture ? '' : 'fv-art--idle'}`, plate)}
+            ${this.art(size, picture, `md-art--l ${idle}`, plate)}
             ${power ? this.powerRound(view, power, 'md-hero__power') : nothing}
           </div>
           <div class="md-hero__text" data-align="center">
@@ -937,7 +997,7 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
         @contextmenu=${onHold ? preventMenu : nothing}
         @click=${pressed ? clickHeld : nothing}
       >
-        ${keepsArt ? this.art(80, picture, active || picture ? '' : 'fv-art--idle', plate) : nothing}
+        ${keepsArt ? this.art(80, picture, idle, plate) : nothing}
         <div class="md-now__text">
           ${named(title, 'fv-card__title md-title')}
           ${sub ? html`<p class="fv-card__sub">${sub}</p>` : nothing}
@@ -1029,7 +1089,7 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
   private renderMini(view: EntityView, name: string): TemplateResult {
     const away = !isUsable(view);
     const active = !away && this.isActive(view);
-    const picture = away ? '' : mediaPicture(this.hass, view);
+    const { url: picture, own } = this.picture(view, away);
     const duration = numberAttr(view, 'media_duration');
     const position = trackPosition(view, duration);
     const title = active
@@ -1065,10 +1125,10 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
         ${
           !art
             ? nothing
-            : away
+            : away && !own
               ? ico('ban', 'off')
               : picture
-                ? this.art(44, picture, 'md-art--s')
+                ? this.art(44, picture, `md-art--s ${own ? 'fv-art--idle' : ''}`)
                 : ico(iconOf(view, this.config?.icon), active ? 'media' : 'neutral')
         }
         <div class="fv-row__text">

@@ -150,7 +150,9 @@
     "repeat_off": "Yineleme kapalı",
     "repeat_all": "Tümünü yinele",
     "repeat_one": "Birini yinele",
-    "artwork": "Albüm kapağı"
+    "artwork": "Albüm kapağı",
+    "editor_image_mode": "Kendi resmini göster",
+    "o_fallback": "Kapak yokken"
   },
   "energy": {
     "solar": "Güneş",
@@ -387,6 +389,7 @@
     "entities": "Varlıklar",
     "name": "Ad",
     "icon": "Simge",
+    "image": "Kendi resmi (adres veya varlık)",
     "tone": "Ton",
     "title": "Başlık",
     "subtitle": "Alt başlık",
@@ -2259,7 +2262,6 @@
     "o_inline": "Yazının yanında",
     "o_at_end": "Sonda",
     "editor_picture": "Resim",
-    "editor_image": "Kendi resmi (adres veya varlık)",
     "editor_show_power": "Açma/kapama düğmesini göster",
     "editor_power_action": "Açma/kapama düğmesi",
     "editor_show_hero": "Değerleri göster",

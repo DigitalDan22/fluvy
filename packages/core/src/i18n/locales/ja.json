@@ -339,6 +339,7 @@
     "entities": "エンティティ",
     "name": "名前",
     "icon": "アイコン",
+    "image": "独自の画像（URLまたはエンティティ）",
     "tone": "トーン",
     "title": "タイトル",
     "subtitle": "サブタイトル",
@@ -1364,7 +1365,6 @@
     "o_inline": "文字の横",
     "o_at_end": "末尾",
     "editor_picture": "画像",
-    "editor_image": "独自の画像（URLまたはエンティティ）",
     "editor_show_power": "電源ボタンを表示",
     "editor_power_action": "電源ボタン",
     "editor_show_hero": "数値を表示",
@@ -2047,7 +2047,9 @@
     "repeat_off": "リピートオフ",
     "repeat_all": "全曲リピート",
     "repeat_one": "1曲リピート",
-    "artwork": "アルバムアート"
+    "artwork": "アルバムアート",
+    "editor_image_mode": "独自の画像を表示",
+    "o_fallback": "アートワークがないとき"
   },
   "now-playing": {
     "progress": "{position} / {duration}",

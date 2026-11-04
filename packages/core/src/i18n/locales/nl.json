@@ -150,7 +150,9 @@
     "repeat_off": "Herhalen uit",
     "repeat_all": "Alles herhalen",
     "repeat_one": "Eén herhalen",
-    "artwork": "Albumhoes"
+    "artwork": "Albumhoes",
+    "editor_image_mode": "Eigen afbeelding tonen",
+    "o_fallback": "Zonder hoes"
   },
   "energy": {
     "solar": "Zon",
@@ -387,6 +389,7 @@
     "entities": "Entiteiten",
     "name": "Naam",
     "icon": "Icoon",
+    "image": "Eigen afbeelding (adres of entiteit)",
     "tone": "Toon",
     "title": "Titel",
     "subtitle": "Ondertitel",
@@ -2259,7 +2262,6 @@
     "o_inline": "Naast de tekst",
     "o_at_end": "Aan het eind",
     "editor_picture": "Afbeelding",
-    "editor_image": "Eigen afbeelding (adres of entiteit)",
     "editor_show_power": "Aan/uit-knop tonen",
     "editor_power_action": "Aan/uit-knop",
     "editor_show_hero": "Waarden tonen",

@@ -59,6 +59,7 @@ import { widestDuration } from '../shared/duration.js';
 import { fitLine, type Segment } from '../shared/fit.js';
 import { COLUMN, textWidth } from '../shared/heights.js';
 import { optionColumnsFor, optionsHold } from '../shared/options.js';
+import { imageOf } from '../shared/picture.js';
 import {
   accentField,
   actionField,
@@ -130,14 +131,7 @@ import { maintenanceOf, MAINTENANCE_KEYS, type MaintenanceKey } from './maintena
 import { rememberUnloaded, unloadedAt, UNLOADED_EVENT } from './memory.js';
 import { noticeTriggers, phoneOf } from './notice.js';
 import { Nudges } from './nudge.js';
-import {
-  artOf,
-  headFit,
-  imageOf,
-  pictureBox,
-  pictureStyles,
-  type PictureStyle,
-} from './picture.js';
+import { artOf, headFit, pictureBox, pictureStyles, type PictureStyle } from './picture.js';
 import { entityOf, refView, stateOf } from './refs.js';
 import {
   cycleOf,
@@ -1459,7 +1453,6 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         progress_style: 'editor_progress_style',
         time: 'editor_time',
         picture: 'editor_picture',
-        image: 'editor_image',
         show_power: 'editor_show_power',
         power_action: 'editor_power_action',
         show_notify: 'editor_show_notify',

@@ -253,3 +253,47 @@ describe('the value row of a range', () => {
     card.remove();
   });
 });
+
+describe('a picture of the person’s own in the head (#99)', () => {
+  const ac = entity('image.living_ac', '2026-11-04T08:00:00+00:00', {
+    entity_picture: 'https://example.com/ac.png',
+  });
+  const draw = async (
+    more: Partial<ThermostatCardConfig>,
+    states = [homematic, ac],
+  ): Promise<FluvyThermostatCard> => {
+    const card = document.createElement('fluvy-thermostat-card') as FluvyThermostatCard;
+    card.setConfig(config(more) as LovelaceCardConfig);
+    card.hass = house(...states);
+    document.body.append(card);
+    await card.updateComplete;
+    return card;
+  };
+  const picture = (card: FluvyThermostatCard): string | null | undefined =>
+    card.renderRoot
+      .querySelector<HTMLImageElement>('.fv-card__head .fv-ico--picture > img')
+      ?.getAttribute('src');
+
+  it('stands in the circle’s place: an address, or an entity’s picture', async () => {
+    let card = await draw({ image: 'image.living_ac' });
+    expect(picture(card)).toBe('https://example.com/ac.png');
+    expect(
+      card.renderRoot.querySelector('.fv-card__head .fv-ico:not(.fv-ico--picture)'),
+    ).toBeNull();
+    card.remove();
+    card = await draw({ image: 'https://example.com/daikin.png', variant: 'compact' });
+    expect(picture(card)).toBe('https://example.com/daikin.png');
+    card.remove();
+  });
+
+  it('leaves the circle where there is nothing to show, and stays out of reach, greyed with the card', async () => {
+    let card = await draw({ image: 'javascript:alert(1)' });
+    expect(picture(card)).toBeUndefined();
+    expect(card.renderRoot.querySelector('.fv-card__head .fv-ico')).not.toBeNull();
+    card.remove();
+    card = await draw({ image: 'image.living_ac' }, [{ ...homematic, state: 'unavailable' }, ac]);
+    expect(picture(card)).toBe('https://example.com/ac.png');
+    expect(card.renderRoot.querySelector('.is-unavailable .fv-ico--picture')).not.toBeNull();
+    card.remove();
+  });
+});

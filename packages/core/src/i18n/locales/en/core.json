@@ -339,6 +339,7 @@
     "entities": "Entities",
     "name": "Name",
     "icon": "Icon",
+    "image": "Own picture (address or entity)",
     "tone": "Tone",
     "title": "Title",
     "subtitle": "Subtitle",

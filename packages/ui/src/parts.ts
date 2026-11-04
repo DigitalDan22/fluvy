@@ -123,6 +123,8 @@ export interface HeadOptions {
   readonly icon?: IconRef | string | null | undefined;
   /** The head's smaller circle (`HeadFit`'s `small`): the full one would leave the name under its floor. */
   readonly small?: boolean;
+  /** The person's own picture in the circle's place (`image`: an address the card has made safe), drawn whole. */
+  readonly picture?: string | undefined;
   readonly tone?: Tone;
   readonly title: string;
   readonly sub?: string;
@@ -180,7 +182,15 @@ export function head(o: HeadOptions): TemplateResult {
     @contextmenu=${o.onHold ? preventMenu : nothing}
     @click=${press ? clickHead : nothing}
   >
-    ${o.icon === null ? nothing : ico(o.icon, o.tone ?? 'accent', { small: o.small ?? false })}
+    ${
+      o.icon === null
+        ? nothing
+        : o.picture
+          ? html`<span class="fv-ico fv-ico--picture ${o.small ? 'fv-ico--small' : ''}" data-icon
+              ><img src=${o.picture} alt=""
+            /></span>`
+          : ico(o.icon, o.tone ?? 'accent', { small: o.small ?? false })
+    }
     <div class="fv-card__titles">
       <h3 class=${titleClass} data-name=${o.name ? '' : nothing}>${title}</h3>
       ${o.sub ? html`<p class="fv-card__sub">${o.sub}</p>` : nothing}

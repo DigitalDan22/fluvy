@@ -140,6 +140,27 @@
   outline-offset: -1px;
 }
 
+/* the person's own picture in a head's circle's place (`image`, 1.13: a thermostat's air conditioner): drawn whole in
+   the circle's box, on no fill, its corners a control's; out of reach it greys and fades with the card, as an
+   appliance's picture does */
+.fv-ico--picture {
+  overflow: hidden;
+  border-radius: var(--fluvy-radius-control);
+  background: none;
+  box-shadow: none;
+}
+
+.fv-ico--picture > img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.is-unavailable .fv-ico--picture {
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+
 /* hero size: weather condition, confirm sheets */
 .fv-ico--hero {
   flex-basis: 64px;

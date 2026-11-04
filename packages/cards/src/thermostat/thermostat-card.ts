@@ -38,6 +38,7 @@ import { iconOf } from '../shared/domain.js';
 
 import { HeadFit } from '../energy/head.js';
 import { optionCell, optionColumnsFor, optionsHold, valuesHeld } from '../shared/options.js';
+import { imageOf } from '../shared/picture.js';
 import type { WhenOff } from '../shared/config.js';
 import { chipRow } from '../shared/chips.js';
 import { chipBlock, chipRows, optionBlock, optionRows } from '../shared/heights.js';
@@ -49,6 +50,11 @@ export type RowStyle = 'chips' | 'full';
 export interface ThermostatCardConfig extends FluvyCardConfig {
   /** The line under the name; empty hides it. Default: the area (left out where it is the name) and the humidity. */
   subtitle?: string;
+  /**
+   * A picture of the person's own in the circle's place (#99): an address, or an entity whose picture it is (an air
+   * conditioner's product picture, `image.living_ac`). The circle's glyph where it cannot be read.
+   */
+  image?: string;
   show_presets?: boolean;
   show_fan?: boolean;
   /** `dial` (default): the ring. `compact`: the target as a readout with its stepper, no dial. `ruler`: the readout, the stepper and a horizontal ruler. */
@@ -843,7 +849,7 @@ export class FluvyThermostatCard extends Card<ThermostatCardConfig> {
       class="fv-card cl-card ${unusable ? 'is-unavailable is-off' : ''} ${this.contentWidth < 292 ? 'is-narrow' : ''}"
       data-card
     >
-      ${head({ icon: fitted.icon ? iconOf(view, this.config?.icon) : null, tone, title: name, sub: fitted.sub, trailing: fitted.badge, name: true, cut: fitted.cut, ...this.headActions(view.id) })}
+      ${head({ icon: fitted.icon ? iconOf(view, this.config?.icon) : null, picture: imageOf(this.hass, this.config?.image), tone, title: name, sub: fitted.sub, trailing: fitted.badge, name: true, cut: fitted.cut, ...this.headActions(view.id) })}
       ${
         this.variant() !== 'dial'
           ? this.renderValueRow(view, m, name, unusable, figure, edge, now)

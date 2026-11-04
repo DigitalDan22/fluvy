@@ -339,6 +339,7 @@
     "entities": "Entitások",
     "name": "Név",
     "icon": "Ikon",
+    "image": "Saját kép (cím vagy entitás)",
     "tone": "Színárnyalat",
     "title": "Cím",
     "subtitle": "Alcím",
@@ -1364,7 +1365,6 @@
     "o_inline": "A szöveg mellett",
     "o_at_end": "A végén",
     "editor_picture": "Kép",
-    "editor_image": "Saját kép (cím vagy entitás)",
     "editor_show_power": "A főkapcsoló gomb megjelenítése",
     "editor_power_action": "Főkapcsoló gomb",
     "editor_show_hero": "Az adatok megjelenítése",
@@ -2158,7 +2158,9 @@
     "repeat_off": "Ismétlés ki",
     "repeat_all": "Összes ismétlése",
     "repeat_one": "Egy szám ismétlése",
-    "artwork": "Albumborító"
+    "artwork": "Albumborító",
+    "editor_image_mode": "Saját kép mutatása",
+    "o_fallback": "Borító nélkül"
   },
   "now-playing": {
     "progress": "{position} / {duration}",

@@ -150,7 +150,9 @@
     "repeat_off": "Sin repetición",
     "repeat_all": "Repetir todo",
     "repeat_one": "Repetir una",
-    "artwork": "Carátula"
+    "artwork": "Carátula",
+    "editor_image_mode": "Mostrar la imagen propia",
+    "o_fallback": "Sin carátula"
   },
   "energy": {
     "solar": "Solar",
@@ -387,6 +389,7 @@
     "entities": "Entidades",
     "name": "Nombre",
     "icon": "Icono",
+    "image": "Imagen propia (dirección o entidad)",
     "tone": "Tono",
     "title": "Título",
     "subtitle": "Subtítulo",
@@ -2259,7 +2262,6 @@
     "o_inline": "Junto al texto",
     "o_at_end": "Al final",
     "editor_picture": "Imagen",
-    "editor_image": "Imagen propia (dirección o entidad)",
     "editor_show_power": "Mostrar el botón de encendido",
     "editor_power_action": "Botón de encendido",
     "editor_show_hero": "Mostrar las cifras",

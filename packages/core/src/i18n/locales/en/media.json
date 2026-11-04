@@ -20,7 +20,9 @@
     "repeat_off": "Repeat off",
     "repeat_all": "Repeat all",
     "repeat_one": "Repeat one",
-    "artwork": "Album art"
+    "artwork": "Album art",
+    "editor_image_mode": "Own picture shown",
+    "o_fallback": "Without artwork"
   },
   "now-playing": {
     "progress": "{position} of {duration}",

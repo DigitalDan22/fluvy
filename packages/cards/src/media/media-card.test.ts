@@ -33,6 +33,14 @@ const STATES = [
   state('media_player.guest_tv', 'on', { device_class: 'tv' }),
   state('media_player.speaker', 'idle'),
   state('media_player.bedroom_tv', 'standby', { device_class: 'tv', source: 'HDMI 1' }),
+  state('media_player.kitchen', 'playing', {
+    media_title: 'Midnight Coda',
+    entity_picture: '/api/media_player_proxy/media_player.kitchen?token=1',
+  }),
+  state('media_player.garden', 'unavailable'),
+  state('image.lounge_tv', '2026-11-04T08:00:00+00:00', {
+    entity_picture: '/api/image_proxy/image.lounge_tv?token=abc',
+  }),
 ];
 
 const hass = {
@@ -44,6 +52,7 @@ const hass = {
   devices: {},
   areas: {},
   localize: (key: string) => key,
+  hassUrl: (path: string) => `http://ha.local${path}`,
   formatEntityState: (s: { state: string }) => s.state.charAt(0).toUpperCase() + s.state.slice(1),
 } as unknown as HomeAssistant;
 
@@ -95,5 +104,69 @@ describe('a player that is on and plays nothing (#101)', () => {
     expect(lines(await draw({ entity: 'media_player.bedroom_tv' }))[0]).toMatch(
       /^Standby · last played /,
     );
+  });
+});
+
+/** The picture the plate shows (its front layer), whether it is the person's own, and whether the plate is at rest. */
+const plate = (card: CardElement) => {
+  const art = card.shadowRoot!.querySelector('.fv-art')!;
+  const front = art.querySelector<HTMLElement>('.fv-art__img.is-on');
+  return {
+    url: /url\("(.*)"\)/.exec(front?.style.backgroundImage ?? '')?.[1] ?? '',
+    own: front?.classList.contains('fv-art__img--own') ?? false,
+    idle: art.classList.contains('fv-art--idle'),
+  };
+};
+
+describe('a picture of the person’s own on the plate (#99)', () => {
+  const TV = 'http://ha.local/api/image_proxy/image.lounge_tv?token=abc';
+
+  it('stands where the player has no artwork, drawn whole on the plate at rest', async () => {
+    for (const variant of ['full', 'hero', 'mini'])
+      expect(
+        plate(await draw({ entity: 'media_player.den_tv', image: 'image.lounge_tv', variant })),
+        variant,
+      ).toEqual({ url: TV, own: true, idle: true });
+    expect(plate(await draw({ entity: 'media_player.den_tv', image: '/local/tv.png' }))).toEqual({
+      url: 'http://ha.local/local/tv.png',
+      own: true,
+      idle: true,
+    });
+  });
+
+  it('gives way to the artwork, unless it is asked for always', async () => {
+    const artwork = 'http://ha.local/api/media_player_proxy/media_player.kitchen?token=1';
+    expect(plate(await draw({ entity: 'media_player.kitchen', image: 'image.lounge_tv' }))).toEqual(
+      {
+        url: artwork,
+        own: false,
+        idle: false,
+      },
+    );
+    expect(
+      plate(
+        await draw({
+          entity: 'media_player.kitchen',
+          image: 'image.lounge_tv',
+          image_mode: 'always',
+        }),
+      ),
+    ).toEqual({ url: TV, own: true, idle: true });
+  });
+
+  it('stays out of reach, where the player has no artwork, in place of the ban glyph', async () => {
+    const card = await draw({
+      entity: 'media_player.garden',
+      image: '/local/speaker.png',
+      variant: 'mini',
+    });
+    expect(plate(card).own).toBe(true);
+    expect(card.shadowRoot!.querySelector('.fv-ico--off')).toBeNull();
+  });
+
+  it('is never loaded from a scheme a picture is not: the plate keeps its glyph', async () => {
+    const card = await draw({ entity: 'media_player.den_tv', image: 'javascript:alert(1)' });
+    expect(plate(card).url).toBe('');
+    expect(card.shadowRoot!.querySelector('.fv-art svg')).not.toBeNull();
   });
 });

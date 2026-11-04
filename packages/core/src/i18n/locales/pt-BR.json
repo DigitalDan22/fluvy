@@ -150,7 +150,9 @@
     "repeat_off": "Repetição desligada",
     "repeat_all": "Repetir tudo",
     "repeat_one": "Repetir faixa",
-    "artwork": "Capa do álbum"
+    "artwork": "Capa do álbum",
+    "editor_image_mode": "Mostrar a imagem própria",
+    "o_fallback": "Sem capa"
   },
   "energy": {
     "solar": "Solar",
@@ -387,6 +389,7 @@
     "entities": "Entidades",
     "name": "Nome",
     "icon": "Ícone",
+    "image": "Imagem própria (endereço ou entidade)",
     "tone": "Tom",
     "title": "Título",
     "subtitle": "Subtítulo",
@@ -2259,7 +2262,6 @@
     "o_inline": "Ao lado do texto",
     "o_at_end": "No final",
     "editor_picture": "Imagem",
-    "editor_image": "Imagem própria (endereço ou entidade)",
     "editor_show_power": "Mostrar o botão liga/desliga",
     "editor_power_action": "Botão liga/desliga",
     "editor_show_hero": "Mostrar os valores",

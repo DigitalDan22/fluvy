@@ -62,6 +62,13 @@ const art = (from: string, to: string): string =>
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${from}"/><stop offset="1" stop-color="${to}"/></linearGradient></defs><rect width="240" height="240" fill="url(#g)"/><circle cx="72" cy="66" r="42" fill="#ffffff" opacity="0.22"/><circle cx="168" cy="186" r="66" fill="#000000" opacity="0.12"/></svg>`,
   );
 
+/** A television's product picture (#99), as an image entity or a person's own address gives one. */
+const TELEVISION =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="s" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34475a"/><stop offset="0.55" stop-color="#141a21"/><stop offset="1" stop-color="#0b0e12"/></linearGradient></defs><ellipse cx="32" cy="53" rx="15" ry="1.8" fill="#000" opacity="0.18"/><rect x="4" y="11" width="56" height="34" rx="2.5" fill="#15181c"/><rect x="5.5" y="12.5" width="53" height="31" rx="1.5" fill="url(#s)"/><path d="M5.5 12.5h22l-14 31h-8z" fill="#fff" opacity="0.06"/><rect x="29" y="45" width="6" height="5" fill="#2c3036"/><rect x="21" y="50" width="22" height="2.5" rx="1.25" fill="#2c3036"/></svg>`,
+  );
+
 /** The position is anchored to the real clock: the card advances it once a second while playing. */
 const anchor = new Date().toISOString();
 
@@ -195,6 +202,7 @@ export const sheet: SheetSpec = {
       'on',
       { friendly_name: 'Guest TV', device_class: 'tv', supported_features: TV },
     ],
+    ['image.den_tv', '2026-11-04T08:00:00+00:00', { entity_picture: TELEVISION }],
     [
       'media_player.radio',
       'playing',
@@ -389,6 +397,44 @@ export const sheet: SheetSpec = {
         { type: 'custom:fluvy-media-card', entity: 'media_player.tv_on', variant: 'mini' },
         { type: 'custom:fluvy-media-card', entity: 'media_player.tv_app', variant: 'mini' },
         { type: 'custom:fluvy-media-card', entity: 'media_player.tv_bare', variant: 'mini' },
+      ],
+    },
+    // #99: the person's own picture on the plate at rest where the player has no artwork — an image entity's, an
+    // address — whole, never cropped; over the artwork too where it is asked for always; out of reach, greyed
+    {
+      title: 'Own picture (#99)',
+      cards: [
+        { type: 'custom:fluvy-media-card', entity: 'media_player.tv_on', image: 'image.den_tv' },
+        {
+          type: 'custom:fluvy-media-card',
+          entity: 'media_player.tv_off',
+          image: TELEVISION,
+          variant: 'mini',
+        },
+        {
+          type: 'custom:fluvy-media-card',
+          entity: 'media_player.tv',
+          image: 'image.den_tv',
+          image_mode: 'always',
+          variant: 'mini',
+        },
+        {
+          type: 'custom:fluvy-media-card',
+          entity: 'media_player.garden',
+          image: 'image.den_tv',
+          variant: 'mini',
+        },
+      ],
+    },
+    {
+      title: 'Own picture · hero',
+      cards: [
+        {
+          type: 'custom:fluvy-media-card',
+          entity: 'media_player.tv_bare',
+          image: 'image.den_tv',
+          variant: 'hero',
+        },
       ],
     },
   ],

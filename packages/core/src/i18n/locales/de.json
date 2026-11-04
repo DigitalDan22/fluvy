@@ -150,7 +150,9 @@
     "repeat_off": "Wiederholen aus",
     "repeat_all": "Alle wiederholen",
     "repeat_one": "Titel wiederholen",
-    "artwork": "Albumcover"
+    "artwork": "Albumcover",
+    "editor_image_mode": "Eigenes Bild zeigen",
+    "o_fallback": "Ohne Cover"
   },
   "energy": {
     "solar": "Solar",
@@ -387,6 +389,7 @@
     "entities": "Entitäten",
     "name": "Name",
     "icon": "Symbol",
+    "image": "Eigenes Bild (Adresse oder Entität)",
     "tone": "Ton",
     "title": "Titel",
     "subtitle": "Untertitel",
@@ -2259,7 +2262,6 @@
     "o_inline": "Neben dem Text",
     "o_at_end": "Am Ende",
     "editor_picture": "Bild",
-    "editor_image": "Eigenes Bild (Adresse oder Entität)",
     "editor_show_power": "Ein/Aus-Taste anzeigen",
     "editor_power_action": "Ein/Aus-Taste",
     "editor_show_hero": "Werte anzeigen",

@@ -61,6 +61,7 @@ export const choices: EditorChoices = (config, hass) => {
 
 export const keys = configKeys<ThermostatCardConfig>()([
   'subtitle',
+  'image',
   'show_presets',
   'show_fan',
   'variant',
@@ -79,6 +80,8 @@ export function getConfigForm(): LovelaceConfigForm {
     schema: [
       entityField(['climate', 'water_heater', 'humidifier']),
       nameIconFields(),
+      // the person's own picture in the circle's place: an address, or an entity whose picture it is
+      textField('image'),
       fieldRow(textField('subtitle'), showIconField()),
       fieldRow(selectField('variant', ['dial', 'compact', 'ruler']), boolField('show_stepper')),
       fieldRow(boolField('show_modes'), selectField('modes_style', ['tiles', 'chips', 'full'])),

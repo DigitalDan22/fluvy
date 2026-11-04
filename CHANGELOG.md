@@ -24,6 +24,18 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The calendar card's week view rolls from today with `first_weekday: today`: today and the six days after it, named
   "Next 7 days", turning over at midnight without a reload, so a wall dashboard shows the days ahead on a Sunday too.
   Its editor shows each option with the view it acts on. Thanks to @theowneryaro (#111).
+### Added
+
+- A picture of your own on the thermostat card, in the circle's place beside its name, and on the media card, where
+  the player has no artwork or always (`image`, `image_mode`): an address, or an entity whose picture it is (an
+  integration's image entity, a camera, a person), as the appliance card takes one, loaded only from the web, a path in
+  Home Assistant or a `data:image` address. Thanks to @rammium (#99).
+
+### Fixed
+
+- A row of modes, presets or sources whose longest word would not hold beside its glyph even on a line of its own (an
+  air conditioner's Dry mode in Portuguese or Italian, in half a section) shows its words without their glyphs, where
+  the word was cut.
 
 ## [1.12.0] — 2026-11-04
 

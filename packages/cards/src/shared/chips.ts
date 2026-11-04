@@ -65,17 +65,26 @@ export function fittedColumns(
 export const defaultColumns = (count: number): number[] =>
   count < 3 ? [count] : count === 3 ? [3, 2] : count === 4 ? [4, 2] : [count, 3, 2];
 
+/** A chip's words without its glyph. */
+const wordsOnly = (item: ChipItem): ChipItem => {
+  const { glyph, ...words } = item;
+  return glyph ? words : item;
+};
+
 /**
  * A card's row of short choices (modes, presets, sources), in the style its config asks: `full` (the default) —
- * equal chips that fill the row, laid out so no label is cut where the card can measure — or `chips`,
- * content-sized ones. One call, so every card reads `<x>_style` alike.
+ * equal chips that fill the row, laid out so no label is cut where the card can measure (where not even a chip of its
+ * own line holds the widest word beside its glyph, as a dehumidifier's mode in Portuguese in half a section, the row's
+ * glyphs give way to the words) — or `chips`, content-sized ones. One call, so every card reads `<x>_style` alike.
  */
-export const chipRow = (
+export function chipRow(
   items: readonly ChipItem[],
   onSelect: (key: string) => void,
   style: RowStyle = 'full',
   fit?: ChipFit,
-): TemplateResult =>
-  style === 'full'
-    ? chips(items, onSelect, '', true, fit ? fittedColumns(items, fit) : undefined)
-    : chips(items, onSelect);
+): TemplateResult {
+  if (style !== 'full') return chips(items, onSelect);
+  if (!fit) return chips(items, onSelect, '', true);
+  const shown = fitsIn(1, widestOf(items, fit.ruler), fit.width) ? items : items.map(wordsOnly);
+  return chips(shown, onSelect, '', true, fittedColumns(shown, fit));
+}

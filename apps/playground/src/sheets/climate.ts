@@ -12,6 +12,16 @@ const HOMEMATIC = {
   target_temp_step: 0.5,
   hvac_modes: ['auto', 'heat', 'off'],
 };
+/**
+ * A wall air conditioner's product picture (#99), as an integration's image entity or a person's own address would
+ * give one: a data URI, so the playground never reaches out to the network.
+ */
+const AIR_CONDITIONER =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e3e6e4"/></linearGradient></defs><ellipse cx="32" cy="47" rx="24" ry="2.5" fill="#000" opacity="0.14"/><rect x="5" y="20" width="54" height="23" rx="7" fill="url(#b)" stroke="#c8cdca"/><rect x="11" y="36" width="42" height="3" rx="1.5" fill="#b9bfbc"/><rect x="44" y="25" width="9" height="4" rx="2" fill="#5fa8cf"/><circle cx="14" cy="27" r="1.5" fill="#9aa19d"/></svg>`,
+  );
+
 /** A compact thermostat in half a section, as #46's reporter has them. */
 const half = (entity: string, more: Record<string, unknown> = {}) => ({
   type: 'custom:fluvy-thermostat-card',
@@ -118,6 +128,22 @@ export const sheet: SheetSpec = {
       },
     ],
     ['climate.nulls', 'unavailable', { friendly_name: 'Bedroom AC' }],
+    // #99: an air conditioner pictured, its product picture an image entity's
+    [
+      'climate.living_ac',
+      'cool',
+      {
+        friendly_name: 'Living room AC',
+        ...THERMO,
+        hvac_modes: ['off', 'cool', 'heat', 'dry', 'fan_only'],
+        temperature: 23,
+        current_temperature: 25.4,
+        hvac_action: 'cooling',
+        fan_modes: ['auto', 'low', 'high'],
+        fan_mode: 'auto',
+      },
+    ],
+    ['image.living_ac', '2026-11-04T08:00:00+00:00', { entity_picture: AIR_CONDITIONER }],
     // the thermostats of #46: HomeMatic radiator valves, whose modes come as Auto, Heat, Off, from 5 to 30.5 by 0.5
     [
       'climate.garderobe',
@@ -275,6 +301,44 @@ export const sheet: SheetSpec = {
           entity: 'climate.living',
           show_stepper: false,
           show_current: false,
+        },
+      ],
+    },
+    // #99: the person's own picture in the circle's place — an image entity's, an address — and out of reach, greyed
+    {
+      title: 'Own picture (#99)',
+      cards: [
+        {
+          type: 'custom:fluvy-thermostat-card',
+          entity: 'climate.living_ac',
+          image: 'image.living_ac',
+          variant: 'compact',
+        },
+      ],
+    },
+    // a short name keeps the picture beside it in half a section; a long one takes its room, as the circle gives it
+    {
+      title: 'Own picture · half a section',
+      cards: [
+        half('climate.living_ac', { image: AIR_CONDITIONER, name: 'Lounge' }),
+        half('climate.nulls', { image: 'image.living_ac', name: 'Bedroom' }),
+      ],
+    },
+    {
+      title: 'Own picture · dial, long name',
+      cards: [
+        {
+          type: 'custom:fluvy-thermostat-card',
+          entity: 'climate.living_ac',
+          image: 'image.living_ac',
+          cols: 6,
+        },
+        {
+          type: 'custom:fluvy-thermostat-card',
+          entity: 'climate.living_ac',
+          image: 'image.living_ac',
+          name: 'AC',
+          cols: 6,
         },
       ],
     },
