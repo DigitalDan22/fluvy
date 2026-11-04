@@ -103,6 +103,37 @@ describe('what an appliance is doing', () => {
     expect(statusOfWord('0', 'hon')).toBe('offline');
   });
 
+  it('reads the words of an integration it does not know apart, then by the words within them (#115, a DE1’s)', () => {
+    const said: ReadonlyArray<readonly [string, ApplianceStatus]> = [
+      ['Sleep', 'off'],
+      ['GoingToSleep', 'off'],
+      ['Idle', 'idle'],
+      ['SchedIdle', 'idle'],
+      ['Init', 'idle'],
+      ['Refill', 'attention'],
+      ['FatalError', 'error'],
+      ['Espresso', 'running'],
+      ['Steam', 'running'],
+      ['HotWater', 'running'],
+      ['HotWaterRinse', 'running'],
+      ['SteamRinse', 'running'],
+      ['Flush', 'running'],
+      ['Descale', 'running'],
+      ['Clean', 'running'],
+      // a substate's fault, its words apart already
+      ['error_wlevel', 'error'],
+      // hcpy's, Bosch's own words over MQTT: Home Connect's, read as they are
+      ['DelayedStart', 'scheduled'],
+      ['ActionRequired', 'attention'],
+      ['Run', 'running'],
+      ['Finished', 'finished'],
+    ];
+    for (const [word, expected] of said) expect(statusOfWord(word, 'mqtt'), word).toBe(expected);
+    // an integration the card reads keeps its own words: a word within one of them is not its say
+    expect(statusOfWord('GoingToSleep', 'lg_thinq')).toBe('running');
+    expect(statusOfWord('sched_idle', 'home_connect')).toBe('running');
+  });
+
   it('calls an LG washer that powered off within the done time of completing finished, and off after', () => {
     const completedAt = NOW - 40 * MINUTE;
     expect(status('power_off', { platform: 'lg_thinq', completedAt })).toBe('finished');

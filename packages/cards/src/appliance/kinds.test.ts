@@ -77,6 +77,24 @@ describe('what an appliance is', () => {
     expect(kindOf(signals({ name: 'Kettle' }), 'auto')).toEqual({ kind: 'kettle', by: 'words' });
   });
 
+  it('reads its maker’s words where its name and its model say nothing (#115), never over them', () => {
+    // the DE1 as its plugin names it, then renamed by its owner
+    const de1 = { platform: 'mqtt', model: 'DE1PRO', manufacturer: 'Decent Espresso' };
+    expect(kindOf(signals({ ...de1, name: 'Decent Espresso DE1PRO' }))).toEqual({
+      kind: 'coffee',
+      by: 'words',
+    });
+    expect(kindOf(signals({ ...de1, name: 'DE1' }))).toEqual({ kind: 'coffee', by: 'words' });
+    expect(kindOf(signals({ ...de1, name: 'Wasserkocher' }))).toEqual({
+      kind: 'kettle',
+      by: 'words',
+    });
+    // a maker of anything says nothing
+    expect(kindOf(signals({ platform: 'shelly', name: 'Plug 3', manufacturer: 'Shelly' }))).toBe(
+      undefined,
+    );
+  });
+
   it('reads LG’s type off its model, both integrations’ forms, and a WashTower’s half off its name', () => {
     expect(LG_MODEL.exec('WM4000HWA (DEVICE_WASHER)')?.[1]).toBe('WASHER');
     expect(LG_MODEL.exec('F4V5VYP0W (TOWER_DRYER)')?.[1]).toBe('TOWER_DRYER');

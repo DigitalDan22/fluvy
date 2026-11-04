@@ -2,8 +2,11 @@ import type { HomeAssistant } from '@fluvy/core';
 import { describe, expect, it } from 'vitest';
 import {
   allFixtures,
+  de1,
+  de1Moments,
   hcDishwasherDone,
   hcFridge,
+  hcpyDryer,
   houseOf,
   lgDryer,
   LOCALTHINGS_ROLES,
@@ -57,6 +60,64 @@ describe('an appliance read', () => {
     ]),
   )('says what %s is doing', (_, fixture) => {
     expect(read(fixture.device.id).status).toBe(fixture.expected.status);
+  });
+
+  it.each(de1Moments(NOW).map((fixture) => [fixture.title, fixture]))(
+    'reads the %s as its words say (#115)',
+    (_, fixture) => {
+      const house = houseOf([fixture], NOW);
+      const r = read(fixture.device.id, {}, house);
+      expect(r.kind).toBe('coffee');
+      expect(r.status).toBe(fixture.expected.status);
+      expect(r.roles).toMatchObject(fixture.expected.roles ?? {});
+      expect(r.counters).toEqual([
+        'sensor.decent_espresso_de1pro_de1_espresso_count',
+        'sensor.decent_espresso_de1pro_de1_steaming_count',
+      ]);
+    },
+  );
+
+  it('reads the DE1’s tank as what is left in its millilitres, its profile as its programme, its power its own (#115)', () => {
+    const r = read('de1');
+    expect(r.maintenance).toEqual([
+      {
+        key: 'water_tank',
+        entity: 'sensor.decent_espresso_de1pro_de1_water_level',
+        severity: 'ok',
+        amount: true,
+      },
+    ]);
+    expect(r.program).toBe('Blooming espresso');
+    expect(r.commands.map((command) => command.call)).toEqual([
+      {
+        domain: 'switch',
+        service: 'turn_off',
+        data: { entity_id: 'switch.decent_espresso_de1pro_de1_on' },
+      },
+    ]);
+    // an empty tank is due
+    const dry = houseOf([de1('refill')(NOW)], NOW);
+    dry.states['sensor.decent_espresso_de1pro_de1_water_level']!.state = '0';
+    expect(read('de1', {}, dry).maintenance[0]).toMatchObject({ severity: 'due', amount: true });
+  });
+
+  it('reads a washer and a dryer on hcpy by their own keys run together (#115): times, programme, door, buttons', () => {
+    const washer = read('hcpy-washer');
+    expect(washer.clock).toMatchObject({ left: 2820, total: 4560, progress: 38 });
+    expect(washer.program).toBe('Cotton');
+    expect(washer.door).toMatchObject({ open: false });
+    expect(washer.commands.map((command) => command.action)).toEqual([
+      'pause',
+      'stop',
+      'power_off',
+    ]);
+    const dryer = read('hcpy-dryer');
+    expect(dryer.status).toBe('finished');
+    expect(dryer.finishedAt).toBe(NOW - 20 * MINUTE);
+    // its door opened, in Bosch's own word
+    const opened = houseOf([hcpyDryer(NOW)], NOW);
+    opened.states['sensor.dryer_bsh_common_status_doorstate']!.state = 'Open';
+    expect(read('hcpy-dryer', {}, opened).door).toMatchObject({ open: true });
   });
 
   it('works its times out of whatever the integration says (findings 08 § D)', () => {

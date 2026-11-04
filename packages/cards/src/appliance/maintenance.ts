@@ -66,11 +66,12 @@ export const MAINTENANCE_KEYS: readonly MaintenanceKey[] = [
  * How an entity says it: `event` (Home Connect: present, confirmed, off), `level` (a percentage left), `used` (a
  * percentage used), `flag` (on when it is needed), `word` (a state that names it: Whirlpool's "empty", LG's "replace"),
  * `steps` (a dispenser's step, LG's "rinselevel_2" of its five), `count` (the cycles since it was last done, LG's
- * tub clean), `days` (the days a part has left: a pet device's desiccant and filters), `reset` (a button that says it
- * is done: SmartThings' filters, Matter's, a pet device's).
+ * tub clean), `days` (the days a part has left: a pet device's desiccant and filters), `amount` (what is left in its
+ * own unit: a tank's millilitres, due when there is none), `reset` (a button that says it is done: SmartThings'
+ * filters, Matter's, a pet device's).
  */
 export type MaintenanceForm =
-  'event' | 'level' | 'used' | 'flag' | 'word' | 'steps' | 'count' | 'days' | 'reset';
+  'event' | 'level' | 'used' | 'flag' | 'word' | 'steps' | 'count' | 'days' | 'amount' | 'reset';
 
 /** The cycles after which LG's washers and dishwashers ask for a tub clean (their own "tCL" reminder). */
 export const TUB_CLEAN_CYCLES = 30;
@@ -246,11 +247,23 @@ const BY_ID: Readonly<Record<string, ReadonlyArray<readonly [RegExp, Maintenance
   ],
 };
 
-/** What an entity asks to be looked after, and how it says it; none for anything else. */
+/** A tank's level by its id, on an integration that says none of its own: its water's, in percent or in its unit. */
+const TANK = /(^|_)(water_(tank_)?level|tank_level)$/;
+
+/**
+ * What an entity asks to be looked after, and how it says it; none for anything else. An integration that has no
+ * words of its own for it (a device picked by hand, #115) says its water tank's level by its id, as an amount where it
+ * says one in its unit (an espresso machine's millilitres).
+ */
 export function maintenanceOf(candidate: Candidate): MaintenanceSpec | undefined {
-  const { platform, key, object, domain } = candidate;
-  const keyed = key ? BY_KEY[platform ?? '']?.[key] : undefined;
-  const found = keyed ?? BY_ID[platform ?? '']?.find(([pattern]) => pattern.test(object))?.[1];
+  const { platform = '', key, object, domain, unit } = candidate;
+  const keyed = key ? BY_KEY[platform]?.[key] : undefined;
+  const found =
+    keyed ??
+    BY_ID[platform]?.find(([pattern]) => pattern.test(object))?.[1] ??
+    (!key && !BY_KEY[platform] && !BY_ID[platform] && TANK.test(object)
+      ? spec('water_tank', unit && unit !== '%' ? 'amount' : 'level')
+      : undefined);
   if (!found) return undefined;
   // a reset is a button; anything else is a reading (LG's fresh-air filter is a select too, a setting)
   const reading = domain === 'sensor' || domain === 'binary_sensor';
@@ -266,6 +279,8 @@ export interface MaintenanceItem {
   readonly level?: number;
   /** The days it has left, where the integration counts them (a desiccant's, a filter's). */
   readonly days?: number;
+  /** Whether it says what is left in its own unit (a tank's millilitres): said as it reads. */
+  readonly amount?: boolean;
   /** Since when it has been asked for (ms): the event's, or the flag's last change. */
   readonly since?: number;
   /** Home Connect's "confirmed": seen to on the appliance, still to do (drawn in the secondary ink). */
@@ -328,9 +343,11 @@ export function maintenanceItem(
     case 'level':
     case 'used':
     case 'count':
-    case 'days': {
+    case 'days':
+    case 'amount': {
       const value = Number(state.state);
       if (!/\d/.test(state.state) || !Number.isFinite(value)) return undefined;
+      if (found.form === 'amount') return { ...said(value <= 0 ? 'due' : 'ok'), amount: true };
       // a count of cycles since: due at LG's thirty, soon from four fifths of them; what is left as its level
       if (found.form === 'count')
         return {

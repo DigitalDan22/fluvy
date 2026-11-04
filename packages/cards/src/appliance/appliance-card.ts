@@ -448,6 +448,8 @@ interface Reminder {
   readonly level: number | undefined;
   /** The days it has left, where the integration counts them. */
   readonly days: number | undefined;
+  /** Whether it says what is left in its own unit (a tank's millilitres). */
+  readonly amount: boolean | undefined;
   readonly entry: MaintenanceEntry | undefined;
 }
 
@@ -3325,7 +3327,9 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
                 ? `${this.figure(reminder.level)} %`
                 : due
                   ? this.t(DUE_WORD[key])
-                  : s(this.hass, 'ok');
+                  : reminder.amount
+                    ? joined(this.valueText(entity))
+                    : s(this.hass, 'ok');
         glyphName = reminder?.entry?.icon ?? MAINTENANCE_GLYPH[key];
         // due, what to do says so in the warning's ink; its circle stays quiet, as the other rows'
         warn = due && !off;
@@ -4572,6 +4576,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         severity: view.unavailable ? 'unknown' : (item?.severity ?? 'unknown'),
         level: item?.level,
         days: item?.days,
+        amount: item?.amount,
         entry: entries.find((entry) => entry.key === key),
       };
     });

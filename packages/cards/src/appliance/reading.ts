@@ -49,6 +49,7 @@ import {
 } from './roles.js';
 import { refState, refView } from './refs.js';
 import {
+  apart,
   applianceStatus,
   busy,
   statusOfWord,
@@ -285,8 +286,8 @@ const s = strings('appliance');
 const SHARED: Readonly<Partial<Record<KeyOf<'appliance'>, string>>> = {
   status_off: 'off power_off sleep',
   status_idle: 'initial idle',
-  status_scheduled: 'reserved delay_wait',
-  status_running: 'running starting',
+  status_scheduled: 'reserved delay_wait delayedstart',
+  status_running: 'running starting run',
   status_paused: 'pause paused user_paused',
   status_finished: 'end done finished complete cleaning_is_done',
   status_error: 'error power_fail interrupted',
@@ -337,12 +338,14 @@ const plainOf = (text: string): string =>
 
 /**
  * What an entity says, in Home Assistant's words; where it has none for the word (the state came back as it is), the
- * card's own in the house's language, for the words the appliances share.
+ * card's own in the house's language, for the words the appliances share, else the word's own, run together in camel
+ * case said apart ("FatalError" is "Fatal error", an MQTT device's).
  */
 function spoken(hass: HomeAssistant | undefined, v: EntityView): string {
   const text = stateText(hass, v);
+  if (plainOf(text) !== plainOf(v.state)) return text;
   const key = WORD_KEYS.get(wordOf(v.state));
-  return key && plainOf(text) === plainOf(v.state) ? s(hass, key) : text;
+  return key ? s(hass, key) : apart(text);
 }
 
 /**
@@ -415,7 +418,13 @@ export function readAppliance(
   const heat = defaults.hero === 'heat' ? heatOf(hass, roles, view, !busy(status)) : null;
   const doorAlert = config.door_alert ?? defaults.doorAlert;
   const attention: Attention[] = [];
+  // what failed; else a failure or a call for a hand its state alone says (a DE1's "Fatal error"), in its words
   if (failure) attention.push(failure);
+  else if (status === 'error' || status === 'attention')
+    attention.push({
+      key: status === 'error' ? 'appliance.failure' : 'appliance.status_attention',
+      ...(word ? { text: word } : {}),
+    });
   if (door?.open && doorAlert > 0 && door.since !== null && now - door.since >= doorAlert * 1000)
     attention.push({ key: 'appliance.door_open', since: door.since });
   if (unload) attention.push({ key: 'appliance.unload', since: unload.since });
@@ -638,7 +647,8 @@ function doorOf(
     .filter((v): v is EntityView => v !== undefined && v.status === 'ok');
   if (!doors.length) return null;
   const changedOf = (v: EntityView): number => Date.parse(v.stateObj?.last_changed ?? '');
-  const open = doors.filter((v) => v.state === 'on' || v.state === 'open');
+  // a sensor's word in any case ("Open": hcpy's, Bosch's own)
+  const open = doors.filter((v) => v.state === 'on' || wordOf(v.state) === 'open');
   const since = open.map(changedOf).filter(Number.isFinite);
   const changed = doors.map(changedOf).filter(Number.isFinite);
   return {

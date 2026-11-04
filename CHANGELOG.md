@@ -8,6 +8,16 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 ### Added
 
 - Slovak (`sk`) translation for the Fluvy interface, panel and cards, appliance naming words, the demo and Home Assistant integration messages.
+- The Appliance card reads a device of an integration it does not know as the kind it is (#115): an espresso machine
+  over MQTT (the Decent DE1's plugin) says what it is doing in its own words, offers its profiles as its drinks and says
+  its last shot by its counters and its tank in millilitres, and a Bosch or Siemens washer or dryer on hcpy says its
+  state, time left, progress, programme and door and takes its pause and stop; a device whose name says nothing is
+  known by its maker's ("Decent Espresso").
+
+### Fixed
+
+- The Appliance card says an appliance's failure, or its call for a hand, in its alarm row where only its state says
+  it ("Fatal error"), where the row said "No alarm" under a head that said the error.
 
 ### Fixed
 

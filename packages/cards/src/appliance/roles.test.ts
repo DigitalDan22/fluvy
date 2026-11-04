@@ -13,6 +13,7 @@ import {
   applianceDevice,
   applianceEntities,
   deviceSlug,
+  gatheredOf,
   partOf,
   platformOf,
   roleOf,
@@ -215,6 +216,55 @@ describe('an appliance’s entities', () => {
     expect(applianceEntities(HOUSE, 'lg-fridge').maintenance).toEqual([
       'sensor.kuhlschrank_wasserfilter',
     ]);
+  });
+
+  it('reads an integration it does not know by the ends of ids it writes, never one it knows, never strictly (#115)', () => {
+    // hcpy's, Bosch's own keys run together; an espresso machine's profiles; its switch named "On" over a part's
+    const mqtt = (object: string): Candidate =>
+      candidate({
+        id: `${object.startsWith('on') ? 'switch' : 'sensor'}.x_${object}`,
+        object,
+        platform: 'mqtt',
+      });
+    expect(partOf(mqtt('bsh_common_status_operationstate'))).toEqual({ role: 'state', rank: 2 });
+    expect(partOf(mqtt('bsh_common_option_remainingprogramtime'))).toEqual({
+      role: 'remaining',
+      rank: 2,
+    });
+    expect(partOf(mqtt('on'))).toEqual({ role: 'power', rank: 2 });
+    expect(
+      partOf(
+        candidate({ id: 'switch.x_steam_heater_on', object: 'steam_heater_on', platform: 'mqtt' }),
+      ),
+    ).toEqual({ role: 'power', rank: 0 });
+    expect(
+      partOf(candidate({ id: 'select.x_profile', object: 'profile', platform: 'mqtt' })),
+    ).toEqual({ role: 'program', rank: 2 });
+    // LG's older integration's own power switch keeps its place under its device sensor
+    expect(
+      partOf(candidate({ id: 'switch.washer_on', object: 'on', platform: 'smartthinq_sensors' })),
+    ).toEqual({ role: 'power', rank: 0 });
+    expect(roleOf(mqtt('bsh_common_status_operationstate'), 'strict')).toBeUndefined();
+  });
+
+  it('gathers the counters and the tank of an integration it does not know by their ids (#115, the DE1’s)', () => {
+    const found = applianceEntities(HOUSE, 'de1');
+    expect(found.counters).toEqual([
+      'sensor.decent_espresso_de1pro_de1_espresso_count',
+      'sensor.decent_espresso_de1pro_de1_steaming_count',
+    ]);
+    expect(found.maintenance).toEqual(['sensor.decent_espresso_de1pro_de1_water_level']);
+    // one it knows keeps its own: Home Connect's counters by their keys alone
+    expect(
+      gatheredOf(
+        candidate({ id: 'sensor.x_cycle_count', object: 'cycle_count', platform: 'miele' }),
+      ),
+    ).toBeUndefined();
+    expect(
+      gatheredOf(
+        candidate({ id: 'sensor.x_cycle_count', object: 'cycle_count', platform: 'esphome' }),
+      ),
+    ).toBe('counters');
   });
 
   it('knows a device’s integration: one it reads by its words, else the one most of its entities are of, never a helper', () => {

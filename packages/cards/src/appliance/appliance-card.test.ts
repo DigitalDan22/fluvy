@@ -5,7 +5,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { applianceHeight, APPLIANCE_VARIANTS } from '../appliances-family.js';
 import { applianceHouseHeight, FluvyApplianceCard } from './appliance-card.js';
 import { appliancesHouseHeight, FluvyAppliancesCard } from './appliances-card.js';
-import { allFixtures, houseOf, laterFixtures, minutesFrom, plugFridge } from './fixtures/index.js';
+import {
+  allFixtures,
+  de1,
+  houseOf,
+  laterFixtures,
+  minutesFrom,
+  plugFridge,
+  type De1Moment,
+} from './fixtures/index.js';
 import { applianceDevices } from './kinds.js';
 import { forgetUnloaded } from './memory.js';
 import { SETTLE_MS } from './nudge.js';
@@ -563,6 +571,38 @@ describe('the appliance card', () => {
     // what it draws and what this cycle used are the hero's (#47): the rows say when it ends, how long it has run, its
     // alarm
     expect(rows).toEqual(['Ends —', 'Elapsed 42 min', 'No alarm']);
+  });
+
+  it('draws a device of an integration it does not know as its kind (#115): the DE1’s state, profiles, last brew, tank and alarm', async () => {
+    const at = (moment: De1Moment): HomeAssistant => houseOf([de1(moment)(NOW)], NOW, house());
+    const said = async (moment: De1Moment): Promise<[string, string[], string[]]> => {
+      const card = await mount({ device: 'de1' }, at(moment));
+      const drawn: [string, string[], string[]] = [
+        text(root(card).querySelector('.fv-card__head')),
+        [...root(card).querySelectorAll('.ap-drink')].map(text),
+        [...root(card).querySelectorAll('.ap-item')].map(text),
+      ];
+      card.remove();
+      return drawn;
+    };
+    const [head, drinks, rows] = await said('idle');
+    expect(head).toMatch(/^Decent Espresso DE1PRO Ready/);
+    expect(drinks).toEqual(['Default', 'Blooming espresso', 'Londinium', '']);
+    // its values at the rows' ends, as a coffee machine's are
+    expect(rows).toEqual(['Last brew11:35', 'Water1,240 mL', 'No alarm']);
+    // its own words, said apart; a failure its state alone says is its alarm's
+    expect((await said('espresso'))[0]).toMatch(/Espresso/);
+    expect((await said('sleep'))[0]).toMatch(/Off/);
+    expect((await said('refill'))[2]).toEqual(['Last brew11:35', 'Water60 mL', 'Refill']);
+    expect((await said('fatal'))[2]).toEqual(['Last brew11:35', 'Water1,240 mL', 'Fatal error']);
+    expect((await said('lost'))[2]).toEqual(['Last brew—', 'Water—', '—']);
+  });
+
+  it('draws a Bosch washer on hcpy by its own keys (#115): running, its time left of its whole, its programme', async () => {
+    const card = await mount({ device: 'hcpy-washer' });
+    expect(text(root(card).querySelector('.fv-card__head'))).toMatch(/^washer Running/);
+    expect(text(root(card).querySelector('.ap-figures'))).toMatch(/0:47 h of 1:16 h/);
+    expect([...root(card).querySelectorAll('.ap-item')].map(text)[0]).toBe('Cotton');
   });
 
   it('a fridge on a plug is in operation, its compressor resting or running: never done, no bell, and switching it off asks first (#47)', async () => {

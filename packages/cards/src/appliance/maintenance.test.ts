@@ -164,6 +164,31 @@ describe('what an appliance asks to be looked after', () => {
     });
   });
 
+  it('reads a tank’s level by its id on an integration that says none of its own (#115): its amount, or its percent', () => {
+    const tank = (platform: string, unit: string, key?: string): Candidate => ({
+      ...candidate('sensor.de1_water_level', platform, key),
+      object: 'water_level',
+      unit,
+    });
+    const amount = maintenanceOf(tank('mqtt', 'mL'));
+    expect(amount).toEqual({ key: 'water_tank', form: 'amount' });
+    expect(maintenanceItem(amount!, state('sensor.de1_water_level', '1240'))).toEqual({
+      key: 'water_tank',
+      entity: 'sensor.de1_water_level',
+      severity: 'ok',
+      amount: true,
+    });
+    // none left is due
+    expect(maintenanceItem(amount!, state('sensor.de1_water_level', '0'))).toMatchObject({
+      severity: 'due',
+      amount: true,
+    });
+    expect(maintenanceOf(tank('esphome', '%'))).toEqual({ key: 'water_tank', form: 'level' });
+    // an integration with words of its own, or an entity with a key, keeps them
+    expect(maintenanceOf(tank('miele', 'mL'))).toBeUndefined();
+    expect(maintenanceOf(tank('mqtt', 'mL', 'water_level'))).toBeUndefined();
+  });
+
   it('knows a reset by its button, never by a reading; a setting is not a flag', () => {
     expect(maintenanceOf(candidate('button.f_reset', 'smartthings', 'reset_water_filter'))).toEqual(
       {

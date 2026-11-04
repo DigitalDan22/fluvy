@@ -27,6 +27,7 @@ import {
 import { localthingsDishwasher, localthingsOven, localthingsWasher } from './localthings.js';
 import { matterDishwasher, matterFridge, matterNotAppliances, matterWasher } from './matter.js';
 import { mieleCoffee, mieleFridge, mieleHob, mieleNotAppliances, mieleWasher } from './miele.js';
+import { de1, de1Moments, hcpyDryer, hcpyWasher } from './mqtt.js';
 import { plainPlugs, plugWasher } from './plug.js';
 import { stDishwasher, stFridge, stOven, stWasher } from './smartthings.js';
 import { tuyaCoffee, tuyaKettle } from './tuya.js';
@@ -40,6 +41,7 @@ export * from './lg-thinq.js';
 export * from './localthings.js';
 export * from './matter.js';
 export * from './miele.js';
+export * from './mqtt.js';
 export * from './pets.js';
 export * from './plug.js';
 export * from './smartthings.js';
@@ -48,9 +50,10 @@ export * from './whirlpool.js';
 
 /**
  * Every appliance fixture at a moment — one device each, of every integration, the reporter's LG house as he dumped it
- * (#47), and what is never an appliance — for the house-wide tests (a printer is never one of them, and none of them a
- * printer) and the playground's sheet. The dishwasher done is the running one an hour on, the reporter's at work are
- * his at rest with a cycle under way: those are never in one house with these.
+ * (#47), devices of integrations the card does not know (#115), and what is never an appliance — for the house-wide
+ * tests (a printer is never one of them, and none of them a printer) and the playground's sheet. The dishwasher done is
+ * the running one an hour on, the reporter's at work are his at rest with a cycle under way, the DE1's moments its own
+ * at rest: those are never in one house with these.
  */
 export function allFixtures(now: number): readonly ApplianceFixture[] {
   return [
@@ -96,6 +99,9 @@ export function allFixtures(now: number): readonly ApplianceFixture[] {
     localthingsOven(now),
     plugWasher(now),
     ...plainPlugs(now),
+    de1()(now),
+    hcpyWasher(now),
+    hcpyDryer(now),
   ];
 }
 
@@ -103,4 +109,5 @@ export function allFixtures(now: number): readonly ApplianceFixture[] {
 export const laterFixtures = (now: number): readonly ApplianceFixture[] => [
   hcDishwasherDone(now),
   ...reporterAtWork(now),
+  ...de1Moments(now).slice(1),
 ];

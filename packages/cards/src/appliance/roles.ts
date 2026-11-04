@@ -719,6 +719,26 @@ const SUFFIXES: Ends = [
   [/(^|_)(remote_start|remote_control)$/, 'remote'],
 ];
 
+/**
+ * The ends of ids of an integration the card does not know, never when strict (a device picked by hand, #115): an
+ * appliance's own keys written whole and run together, as a bridge publishes them over MQTT (hcpy, Bosch's and
+ * Siemens': "bsh_common_status_operationstate"); an espresso machine's profiles, its programmes; a switch named "On"
+ * alone, its power over a part's own (a steam heater's).
+ */
+const UNKNOWN: Ends = [
+  [/(^|_)operation_?state$/, 'state'],
+  [/(^|_)door_?state$/, 'door'],
+  [/^on$|(^|_)power_?state$/, 'power'],
+  [/(^|_)remaining_?program_?time$/, 'remaining'],
+  [/(^|_)estimated_?total_?program_?time$/, 'total'],
+  [/(^|_)elapsed_?program_?time$/, 'elapsed'],
+  [/(^|_)program_?progress$/, 'progress'],
+  [/(^|_)selected_?program$|^profile$/, 'program'],
+  [/(^|_)pause_?program$/, 'pause'],
+  [/(^|_)resume_?program$/, 'resume'],
+  [/(^|_)abort_?program$/, 'stop'],
+];
+
 /** A loose guess at the end of an id, for an integration the card does not know: last, and never when strict. */
 const LOOSE: Ends = [[/(^|_)(state|status|operation_state|machine_state|run_state)$/, 'state']];
 
@@ -828,11 +848,14 @@ export function partOf(candidate: Candidate, rigour: Rigour = 'lenient'): Part |
   if (fits(own)) return { role: own, rank: RANK.platform, ...twin };
   const shared = keyed ? KEYS_COMMON[keyed] : undefined;
   if (fits(shared)) return { role: shared, rank: RANK.common, ...twin };
-  // the ends of ids in turn: the integration's own, the shared, the loose guesses; a `null` ends the search
+  // the ends of ids in turn: the integration's own, the shared, an unknown one's, the loose guesses; a `null` ends the
+  // search
+  const lenient = rigour === 'lenient' && !key;
   const tiers: ReadonlyArray<readonly [Ends, number]> = [
     [platform ? (SUFFIXES_BY_PLATFORM[platform] ?? []) : [], RANK.suffix],
     [key ? [] : SUFFIXES, RANK.suffix],
-    [rigour === 'lenient' && !key ? LOOSE : [], RANK.loose],
+    [lenient && !platform ? UNKNOWN : [], RANK.suffix],
+    [lenient ? LOOSE : [], RANK.loose],
   ];
   for (const [ends, rank] of tiers)
     for (const [pattern, word] of ends) {
@@ -885,7 +908,15 @@ export function gatheredOf(candidate: Candidate): Gathered | undefined {
   if (maintenanceOf(candidate)) return 'maintenance';
   if (boostOf(candidate)) return 'boosts';
   if (hobOf(candidate)) return 'hob';
-  if (/_counter$/.test(candidate.key ?? '') && candidate.domain === 'sensor') return 'counters';
+  // a counter by its integration's key (Home Connect's drinks), or by its id on one the card does not know (a DE1's
+  // "espresso_count")
+  const { key, object } = candidate;
+  if (
+    candidate.domain === 'sensor' &&
+    (/_counter$/.test(key ?? '') ||
+      (!key && !knownPlatform(candidate.platform) && /(^|_)count(er)?$/.test(object)))
+  )
+    return 'counters';
   return undefined;
 }
 

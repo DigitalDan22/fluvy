@@ -1,4 +1,5 @@
 import type { ApplianceKind } from './kinds.js';
+import { knownPlatform } from './roles.js';
 
 /*
  * What an appliance is doing, whatever its integration calls it: Home Connect's nine operation states, Miele's nineteen
@@ -182,14 +183,33 @@ export const wordOf = (state: string | undefined): string =>
     .replace(/[\s-]+/g, '_')
     .replace(/^_+|_+$/g, '');
 
+/** A word run together in camel case, said apart: "GoingToSleep" is "Going to sleep" (a DE1's, over MQTT). */
+export const apart = (text: string): string =>
+  text.replace(
+    /([a-z])([A-Z])/g,
+    (_, end: string, start: string) => `${end} ${start.toLowerCase()}`,
+  );
+
 /** A word that says nothing: none, unknown, LG's older integration's dash (nothing once read) and "N/A". */
 const NOTHING = new Set(['', 'unknown', 'n/a']);
 
 /**
+ * The words within an unknown integration's word that say what it is doing, by the status they say: a fault, a tank
+ * to refill, sleep, rest ("FatalError", "GoingToSleep", "SchedIdle", a DE1's).
+ */
+const WITHIN: ReadonlyArray<readonly [ApplianceStatus, RegExp]> = [
+  ['error', /(^|_)(error|fault|failure)(_|$)/],
+  ['attention', /(^|_)refill(_|$)/],
+  ['off', /(^|_)sleep(_|$)/],
+  ['idle', /(^|_)(idle|init)(_|$)/],
+];
+
+/**
  * The status one state word says. hOn's numbers by its own table (a dishwasher's differ); Miele's "reserved" is a
- * status of its own, at rest, and so is PetKit's lit litter box; anything not idle, finished or off that the appliance
- * says while it has a job is running — a washer washing, rinsing or spinning, an oven cooking, a kettle heating. An
- * empty word says nothing.
+ * status of its own, at rest, and so is PetKit's lit litter box; an integration the card does not know (#115) has its
+ * camel-cased words read apart ("GoingToSleep" is "going_to_sleep"), then by the words within them (`WITHIN`);
+ * anything not idle, finished or off that the appliance says while it has a job is running — a washer washing, rinsing
+ * or spinning, an oven cooking, a kettle heating, an espresso machine pulling a shot. An empty word says nothing.
  */
 export function statusOfWord(
   state: string | undefined,
@@ -206,6 +226,11 @@ export function statusOfWord(
   for (const [status, words] of STATUSES) if (words.includes(word)) return status;
   // a job paused and why (PetKit's litter box: "cleaning_paused_pet_entered")
   if (/(^|_)paused(_|$)/.test(word)) return 'paused';
+  if (!knownPlatform(platform)) {
+    const words = wordOf(apart(state ?? ''));
+    for (const [status, said] of STATUSES) if (said.includes(words)) return status;
+    for (const [status, within] of WITHIN) if (within.test(words)) return status;
+  }
   return 'running';
 }
 

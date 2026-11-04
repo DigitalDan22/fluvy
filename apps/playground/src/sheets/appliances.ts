@@ -10,11 +10,13 @@ import { FluvyAppliancesCard } from '../../../../packages/cards/src/appliance/ap
 import { FluvyAlertsCard } from '../../../../packages/cards/src/alerts/alerts-card.js';
 import {
   allFixtures,
+  de1,
   laterFixtures,
   LOCALTHINGS_ROLES,
   minutesFrom,
   plugFridge,
   reporterAtWork,
+  type De1Moment,
 } from '../../../../packages/cards/src/appliance/fixtures/index.js';
 import type { StateSeed } from '../hass.js';
 import { NOW } from '../now.js';
@@ -460,6 +462,24 @@ const AT_WORK: Readonly<Record<string, Partial<HassEntity>>> = Object.fromEntrie
     fixture.states.map(([id, state, attributes = {}]) => [id, { state, attributes }] as const),
   ),
 );
+
+/** The DE1 at a moment (#115): its states over the house's, where it rests. */
+const de1At = (moment: De1Moment): ((hass: HomeAssistant) => HomeAssistant) =>
+  changed(
+    Object.fromEntries(
+      de1(moment)(now).states.map(([id, state, attributes = {}]) => [id, { state, attributes }]),
+    ),
+  );
+
+/** The DE1's moments a frame shows, each its title. */
+const DE1_SHOWN: ReadonlyArray<readonly [De1Moment, string]> = [
+  ['idle', 'at rest'],
+  ['espresso', 'pulling a shot'],
+  ['sleep', 'asleep'],
+  ['refill', 'wanting water'],
+  ['fatal', 'failed'],
+  ['lost', 'out of reach'],
+];
 
 /** The reporter's four appliances on one of his integrations, each a card. */
 const reporter = (
@@ -1183,6 +1203,28 @@ export const sheet: SheetSpec = {
           _now: at,
         },
       ],
+    }),
+    // any device (#115): the reporter's DE1 over MQTT, picked by hand and read by its words, at rest, pulling a shot,
+    // asleep, wanting water, failed and out of reach, whole and compact; then as a row and compact on half a section,
+    // and a Bosch washer and dryer on hcpy, read by their own keys
+    ...DE1_SHOWN.map(([moment, title]) =>
+      frame({
+        title: `Any device · DE1 ${title}`,
+        hass: de1At(moment),
+        cards: [card('de1'), card('de1', { variant: 'compact' })],
+      }),
+    ),
+    frame({
+      title: 'Any device · DE1, half a section',
+      hass: de1At('espresso'),
+      cards: [
+        card('de1', { variant: 'compact', cols: 6 }),
+        card('de1', { variant: 'row', cols: 6 }),
+      ],
+    }),
+    frame({
+      title: 'Any device · a washer and a dryer on hcpy',
+      cards: [card('hcpy-washer'), card('hcpy-dryer')],
     }),
     // the meters of the machines' years, LocalThings' and SmartThings': what this cycle added, never a water row
     frame({

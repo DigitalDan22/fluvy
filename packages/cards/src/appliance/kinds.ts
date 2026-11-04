@@ -86,6 +86,8 @@ export interface KindSignals {
   readonly modelId?: string | null | undefined;
   /** Its name as the person sees it (theirs, else the integration's). */
   readonly name?: string | null | undefined;
+  /** Who made it ("Decent Espresso"): its words are read where its name and model say nothing. */
+  readonly manufacturer?: string | null | undefined;
   /** Its entities' translation keys. */
   readonly keys: ReadonlySet<string>;
   /** Its entities' ids without the device's name ("door_status"), and LG's older integration's attributes. */
@@ -466,7 +468,8 @@ export function byWords(
 
 /**
  * What an appliance is, in the order its signals are surest: the card's `kind`; a 3D printer is never one; the model
- * (Miele's type, LG's device type); the keys only one kind has; the words of its name. None where nothing says.
+ * (Miele's type, LG's device type); the keys only one kind has; the words of its name, then of its maker's (a device
+ * renamed "DE1" by "Decent Espresso"). None where nothing says.
  */
 export function kindOf(
   signals: KindSignals,
@@ -474,7 +477,12 @@ export function kindOf(
 ): KindVerdict | undefined {
   if (kind && kind !== 'auto' && APPLIANCE_KINDS.includes(kind)) return { kind, by: 'config' };
   if (signals.printer) return { excluded: 'printer' };
-  return byModel(signals) ?? byKeys(signals) ?? byWords(signals.name, signals.model);
+  return (
+    byModel(signals) ??
+    byKeys(signals) ??
+    byWords(signals.name, signals.model) ??
+    byWords(signals.manufacturer)
+  );
 }
 
 /** The programme select's options: Home Connect's selected or active programme, Matter's mode. */
@@ -508,6 +516,7 @@ export function signalsOf(hass: House | undefined, device: string, printer = fal
     model: entry?.model,
     modelId: entry?.model_id,
     name,
+    manufacturer: entry?.manufacturer,
     keys: new Set(
       candidates.map((candidate) => candidate.key).filter((key): key is string => Boolean(key)),
     ),
