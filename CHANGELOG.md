@@ -5,6 +5,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.14.0] — 2026-11-04
+
 ### Visible on upgrade
 
 - The Appliance card's device picker, and the Appliances card's, lists every device of the house with a sensor, a
