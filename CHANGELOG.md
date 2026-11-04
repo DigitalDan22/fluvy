@@ -5,6 +5,18 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Visible on upgrade
+
+- Slovak says Home Assistant's own words as its translator asked (#116): "Snímač" for a sensor, "Panel" for a
+  dashboard, "Vykurovanie a chladenie" for heating and cooling (a car's climate stays "Klimatizácia"), and the evening's
+  "Dobrý večer" from 18:00 until the morning, where it said "Dobrú noc" late in the evening.
+
+### Fixed
+
+- The dashboard editor's card picker ("Add card", "By card") no longer draws every Fluvy card's preview as it opens
+  (#117): a preview keeps its height and draws, and reads the house, only as it comes near the list's view, so the
+  picker opens without waiting for them and the previews still show as you scroll to them.
+
 ## [1.14.0] — 2026-11-04
 
 ### Visible on upgrade
