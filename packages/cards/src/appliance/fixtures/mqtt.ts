@@ -34,7 +34,7 @@ export const DE1_MOMENTS: readonly De1Moment[] = [
   'lost',
 ];
 
-/** What the machine says at each moment: its state, its substate, its tank, its group head, its power and the status read. */
+/** What the machine says at each moment: its state, substate, tank, group head and power, and the status read. */
 const SAID: Readonly<
   Record<De1Moment, readonly [string, string, string, string, string, ApplianceStatus]>
 > = {

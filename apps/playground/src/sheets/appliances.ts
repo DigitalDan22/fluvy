@@ -1216,6 +1216,7 @@ export const sheet: SheetSpec = {
     ),
     frame({
       title: 'Any device · DE1, half a section',
+      width: 360,
       hass: de1At('espresso'),
       cards: [
         card('de1', { variant: 'compact', cols: 6 }),
