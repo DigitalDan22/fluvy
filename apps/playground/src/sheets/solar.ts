@@ -116,6 +116,20 @@ export const sheet: SheetSpec = {
   states: [
     ['sensor.so_solar_power', '3200', { friendly_name: 'Solar power', ...W }],
     ['sensor.so_solar_power_night', '0', { friendly_name: 'Solar power', ...W }],
+    [
+      'sensor.so_daylight',
+      '12500',
+      { friendly_name: 'Daylight', unit_of_measurement: 'lx', device_class: 'illuminance' },
+    ],
+    [
+      'sensor.so_pressure',
+      '1013.2',
+      {
+        friendly_name: 'Pressure',
+        unit_of_measurement: 'hPa',
+        device_class: 'atmospheric_pressure',
+      },
+    ],
     ['sensor.so_solar_power_dead', 'unavailable', { friendly_name: 'Solar power', ...W }],
     ['sensor.so_solar_power_unknown', 'unknown', { friendly_name: 'Solar power', ...W }],
     ['sensor.so_solar_capacity', '5.4', { friendly_name: 'Rated power', ...KW }],
@@ -236,6 +250,8 @@ export const sheet: SheetSpec = {
     'sensor.so_living_humidity': [43, 43, 44, 44, 45, 45, 46],
     'sensor.so_cellar_humidity': [88, 87, 86, 85, 84, 83, 82],
     'sensor.so_study_humidity': [18, 18, 18, 18],
+    'sensor.so_daylight': [0, 1200, 23500, 64200, 98000, 12500],
+    'sensor.so_pressure': [1008.4, 1011.9, 1013.2],
   },
 
   ws: {
@@ -1178,6 +1194,14 @@ export const sheet: SheetSpec = {
           max_entity: 'sensor.so_solar_capacity',
           cols: 6,
         },
+      ],
+    },
+    // a unit no prefix shortens, past a thousand with no top: its row laid out for what it reaches (98,000 lx, 1,013 hPa)
+    {
+      title: 'Gauge · daylight and the air’s pressure',
+      cards: [
+        { type: 'custom:fluvy-gauge-card', entity: 'sensor.so_daylight', icon: 'sun' },
+        { type: 'custom:fluvy-gauge-card', entity: 'sensor.so_pressure', tone: 'cool' },
       ],
     },
   ],

@@ -176,6 +176,21 @@ export const statsOf = (config: Readonly<GaugeCardConfig> | undefined): GaugeSta
 
 const STAT_WORD = { min: 'common.min', max: 'common.max', average: 'common.average' } as const;
 
+/**
+ * The whole figures a unit no prefix shortens reaches in a house, where the card names no top: daylight (an outdoor
+ * sensor's 83,000 lx), the air's pressure (1,013 hPa; 101,325 Pa), the sun on a panel (1,050 W/m²), the air's carbon
+ * dioxide and its compounds (5,000 ppm; 12,000 ppb). Any other unit, three.
+ */
+const REACH: Readonly<Record<string, number>> = {
+  lx: 6,
+  hPa: 4,
+  mbar: 4,
+  Pa: 6,
+  'W/m²': 4,
+  ppm: 4,
+  ppb: 5,
+};
+
 /** The window's row under the gauge at a 360 column, as measured: one line of readouts and the room above it. */
 const STATS_ROW = 60;
 
@@ -395,8 +410,8 @@ export class FluvyGaugeCard extends Card<GaugeCardConfig> {
    * in (`widestFigure`): a W, Wh or VA figure in its own and in the larger one a house reads (kW, or the range's where
    * the config gives a larger), each under a thousand; one in the unit the config asks, as many whole figures as the
    * range the config gives — where it gives no top, three, and a house's five in the ladder's own unit, which is never
-   * scaled up ("88,888 W"); any other in the sensor's own, alike. `way` follows the unit (a power meter's direction,
-   * its wider word).
+   * scaled up ("88,888 W"); any other in the sensor's own, alike, a unit whose readings pass a thousand as many as it
+   * reaches (`REACH`: "1,013 hPa"). `way` follows the unit (a power meter's direction, its wider word).
    */
   private readings(view: EntityView, minus: boolean, way = ''): Reading[] {
     const config = this.config;
@@ -415,7 +430,7 @@ export class FluvyGaugeCard extends Card<GaugeCardConfig> {
         ? 3
         : typeof config?.max === 'number'
           ? Math.max(1, ...wholes)
-          : Math.max(scaled && scale.divisor < 1e3 ? 5 : 3, ...wholes);
+          : Math.max(scaled && scale.divisor < 1e3 ? 5 : (REACH[base.unit] ?? 3), ...wholes);
       return {
         value: widestFigure(this.hass, scale.digits, whole, minus),
         unit: way ? `${scale.unit} ${way}` : scale.unit,

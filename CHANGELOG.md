@@ -79,6 +79,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The tile card's tile of a muted player says "Muted · 30 %", as the Slider card's tile does, where it said
   "On · 30 %"; a number's compact or mini tile writes its figure as its large tile does ("−1.0 °C", with a minus),
   where it wrote a hyphen.
+- The gauge card lays a sensor out for what it reaches where its unit takes no prefix and its readings pass a
+  thousand (daylight in lx, the air's pressure in hPa, carbon dioxide in ppm), and the card names no `max`, where its
+  Min / Max / Average ran past their columns at 211 to 266 px.
 
 ## [1.13.1] — 2026-11-04
 

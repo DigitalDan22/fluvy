@@ -291,6 +291,49 @@ describe('the window’s row and the signed ring, laid out by what the card can 
     }
   }, 60_000);
 
+  it('lays a unit past a thousand out for what it reaches, where the card names no top: its row holds 98,000 lx', async () => {
+    const ruler = vi
+      .spyOn(TextRuler.prototype, 'width')
+      .mockImplementation(
+        (cls: string, text: string, _unit?: string, unit = '') =>
+          (text.length + (unit ? unit.length + 1 : 0)) * pace(cls),
+      );
+    try {
+      const sensors = [
+        ['daylight', { unit_of_measurement: 'lx', device_class: 'illuminance' }, [0, 12500, 98000]],
+        ['pressure', { unit_of_measurement: 'hPa' }, [987, 1013, 1041]],
+      ] as const;
+      for (const [prefix, attributes, values] of sensors)
+        for (const width of [211, 266, 328, 360]) {
+          const hass = readings('en', prefix, attributes, values);
+          const card = document.createElement('fluvy-gauge-card') as CardElement;
+          card.setConfig({
+            type: 'custom:fluvy-gauge-card',
+            entity: `sensor.${prefix}_${values[2]}`,
+          });
+          card.hass = hass;
+          document.body.append(card);
+          await card.updateComplete;
+          (card as unknown as { width: number }).width = width;
+          await new Promise((done) => setTimeout(done, 0)); // the window answers
+          await card.updateComplete;
+          const row = card.shadowRoot!.querySelector<HTMLElement>('.so-cols')!;
+          const columns = /repeat\((\d+)/.exec(row.style.gridTemplateColumns)?.[1];
+          const room = (width - 8 * (Number(columns) - 1)) / Number(columns);
+          for (const readout of row.querySelectorAll('.fv-readout')) {
+            const value = readout.querySelector('.fv-readout__value')!;
+            const unit = value.querySelector('.fv-unit')?.textContent ?? '';
+            const figure = (value.textContent ?? '').replace(unit, '').trim();
+            const drawn = (figure.length + unit.length + 1) * pace(readout.className);
+            expect(drawn, `${prefix} @${width}: ${figure} ${unit}`).toBeLessThanOrEqual(room);
+          }
+          card.remove();
+        }
+    } finally {
+      ruler.mockRestore();
+    }
+  });
+
   it('writes its widest figure by the figures’ rule: three and a separator, or the decimals fixed and a range’s whole figures', () => {
     const hass = house();
     expect(widestFigure(hass, undefined, 3, false)).toBe('88.8');
