@@ -202,7 +202,7 @@ describe('a select’s row', () => {
     expect(opened).toEqual(['select.oven']);
   });
 
-  it('out of reach, says "—" on a button that does nothing, and keeps its rows of 60', async () => {
+  it('out of reach, says "—" on a button that does nothing, opens its details from the row, keeps its rows of 60', async () => {
     const { hass: house_ } = house();
     const root = await mount({ title: 'Oven', rows: ['select.ghost', 'select.oven'] }, house_);
     const { row, button, menu } = parts(root);
@@ -211,6 +211,14 @@ describe('a select’s row', () => {
     expect(button?.disabled).toBe(true);
     // the list, not fetched yet, says it too
     expect(menu?.hasAttribute('disabled')).toBe(true);
+    // its details, as before it had a dropdown; a row that can be read is no button of its own
+    const opened: string[] = [];
+    root.host.addEventListener('hass-more-info', (event) =>
+      opened.push((event as CustomEvent<{ entityId: string }>).detail.entityId),
+    );
+    row.click();
+    expect(opened).toEqual(['select.ghost']);
+    expect(parts(root, 1).row.getAttribute('role')).toBeNull();
     const config = { type: 'custom:fluvy-entities-card', title: 'Oven' };
     expect(
       FluvyEntitiesCard.layoutHeight({ ...config, rows: ['select.ghost', 'select.oven'] }),

@@ -169,7 +169,7 @@ describe('a select’s row on a device card', () => {
       tap: row.getAttribute('role') === 'button',
     }));
 
-  it('opens the dropdown from its value and chooses with select_option, out of reach a "—" that does nothing', async () => {
+  it('opens the dropdown from its value and chooses with select_option, out of reach a "—" that does nothing beside a row that opens its details', async () => {
     callService.mockClear();
     const card = await draw('fluvy-lock-card', {
       entity: 'lock.front_door',
@@ -180,7 +180,7 @@ describe('a select’s row on a device card', () => {
     });
     expect(ends(card)).toEqual([
       { value: '2 min', disabled: false, menu: true, tap: false },
-      { value: '—', disabled: true, menu: true, tap: false },
+      { value: '—', disabled: true, menu: true, tap: true },
     ]);
     card
       .shadowRoot!.querySelector('fluvy-select')!

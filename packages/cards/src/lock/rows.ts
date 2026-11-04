@@ -423,8 +423,8 @@ export abstract class RowsCard<C extends RowsCardConfig = RowsCardConfig> extend
       valueTone: view.domain === 'binary_sensor' && on && tone === 'warning' ? 'warning' : '',
       unavailable: !usable,
       accent: this.accents.item(row.color),
-      // a dropdown's row is no button of its own: its value is
-      onTap: menu ? undefined : () => this.tap(view.id, row.tap_action ?? DETAILS),
+      // a dropdown's row is no button of its own: its value is; out of reach, the row opens its details
+      onTap: menu && usable ? undefined : () => this.tap(view.id, row.tap_action ?? DETAILS),
       onToggle: (next) => {
         if (!this.hass) return;
         this.expect(view.id, next ? 'on' : 'off');
