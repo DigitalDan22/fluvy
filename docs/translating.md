@@ -17,6 +17,7 @@ catalogue per language, and a person may choose theirs in the panel's *Preferenc
 | `tr` | Turkish | `packages/core/src/i18n/locales/tr.json` | — |
 | `ja` | Japanese | `packages/core/src/i18n/locales/ja.json` | [@vinjex](https://github.com/vinjex) |
 | `hu` | Hungarian | `packages/core/src/i18n/locales/hu.json` | [@wickdj](https://github.com/wickdj) |
+| `sk` | Slovak (Slovenčina) | `packages/core/src/i18n/locales/sk.json` | — |
 
 ## How a language works
 

@@ -1,0 +1,33 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Fluvy",
+        "description": "Nainštaluje tému Fluvy, jej karty a panel nastavení. Nie je potrebné nič konfigurovať."
+      }
+    },
+    "abort": {
+      "already_configured": "Fluvy je už nastavené.",
+      "single_instance_allowed": "Fluvy je už nastavené."
+    }
+  },
+  "exceptions": {
+    "frontend_missing": {
+      "message": "Súbory používateľského rozhrania Fluvy chýbajú v custom_components/fluvy/frontend. Preinštalujte Fluvy cez HACS (alebo spustite `pnpm build` vo vývojárskej kópii) a potom reštartujte Home Assistant."
+    }
+  },
+  "issues": {
+    "legacy_yaml": {
+      "title": "Odstráňte staré riadky Fluvy zo súboru configuration.yaml",
+      "description": "Fluvy je teraz integrácia, ktorá si sama registruje panel a modul. Odstráňte tieto riadky z configuration.yaml (ponechajte `frontend: themes: !include_dir_merge_named themes`), skontrolujte konfiguráciu a vo vhodnom čase reštartujte Home Assistant:\n\n{lines}"
+    },
+    "theme_not_loaded": {
+      "title": "Téma Fluvy nie je načítaná",
+      "description": "Fluvy zapísalo tému do `{path}`, ale Home Assistant neuvádza tému s názvom Fluvy. Pridajte do configuration.yaml nasledujúce nastavenie a spustite akciu `frontend.reload_themes` (Vývojárske nástroje → Akcie); reštart nie je potrebný:\n\n{yaml}\n\nAk tam riadky už sú, pozrite v Nastavenia → Systém → Protokoly, či sa téma nenačítala s chybou."
+    },
+    "resources_yaml_mode": {
+      "title": "Pridajte zdroj dashboardu Fluvy",
+      "description": "Zdroje dashboardov spravujete cez YAML, preto si Fluvy nemôže automaticky zaregistrovať vlastný zdroj. Pridajte do configuration.yaml pod `lovelace: resources:` tieto riadky a obnovte prehliadač:\n\n```yaml\n  - url: {url}\n    type: module\n```\n\nFluvy sa už načítava na každej stránke; tento zdroj umožní dashboardom načítať ho pred vykreslením."
+    }
+  }
+}

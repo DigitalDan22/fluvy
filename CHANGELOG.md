@@ -5,6 +5,10 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Slovak (`sk`) translation for the Fluvy interface, panel and cards, appliance naming words, the demo and Home Assistant integration messages.
+
 ## [1.13.1] — 2026-11-04
 
 ### Visible on upgrade

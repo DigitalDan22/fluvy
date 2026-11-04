@@ -389,6 +389,41 @@ const hu: Table = {
     'Az automatikus vezérlőpult a Home Assistanton belül épül fel; a Vezérlőpult lap ennek előnézetét mutatja',
 } as const;
 
+const sk: Table = {
+  'brand.sub': 'Živé demo',
+  'family.home': 'Domov',
+  'family.devices': 'Zariadenia',
+  'family.climate': 'Vykurovanie a chladenie',
+  'family.energy': 'Energia',
+  'family.charts': 'Grafy',
+  'family.media': 'Médiá',
+  'family.time': 'Čas',
+  'family.helpers': 'Pomocníci',
+  'family.vehicles': 'Autá',
+  'page.panel': 'Nastavenia',
+  'page.activity': 'Aktivita',
+  'page.history': 'História',
+  'mode.light': 'Svetlý',
+  'mode.dark': 'Tmavý',
+  'device.title': 'Zariadenie',
+  'device.phone': 'Telefón',
+  'device.phone-l': 'Veľký telefón',
+  'device.tablet': 'Tablet',
+  'device.desktop': 'Počítač',
+  'palette.title': 'Paleta',
+  'palette.custom': 'Vlastná zvýrazňujúca farba v paneli nastavení',
+  'language.title': 'Jazyk',
+  'links.install': 'Nainštalovať',
+  'links.github': 'GitHub',
+  'banner.text':
+    'Simulovaná domácnosť: byt Marty vo štvrtok večer. Každá karta, stránka a nastavenie je skutočné; Home Assistant nahrádza jednoduchá simulácia, ktorá zmení stav 140 ms po zavolaní služby. Nič nie je pripojené.',
+  'banner.ok': 'Rozumiem',
+  'notice.more_info': 'Otvorí podrobnosti entity {entity} v Home Assistante',
+  'notice.navigate': 'Otvorí {path} v Home Assistante',
+  'notice.auto':
+    'Automatický dashboard sa vytvára v Home Assistante; záložka Dashboardy zobrazuje jeho náhľad',
+};
+
 const TABLES: Readonly<Record<LanguageCode, Table>> = {
   en,
   es,
@@ -401,6 +436,7 @@ const TABLES: Readonly<Record<LanguageCode, Table>> = {
   tr,
   ja,
   hu,
+  sk,
 };
 
 /** A word of the demo in `language`. */
