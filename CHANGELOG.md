@@ -86,6 +86,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - An appliance whose machine runs while its cycle waits for its delayed start, preheats or has finished says
   Scheduled, Preheating or Done, where it said Running: a Samsung washer counting down to its start on SmartThings, an
   oven on SmartThings preheating. Thanks to @rammium (#97).
+- A dishwasher that drains before its wash begins (a Samsung's pre-drain, on SmartThings and LocalThings) is at the
+  first of its steps, Prewash, where its steps had it at Rinse.
 - A television on a media card that is on and plays nothing Home Assistant can name, a tuner's channel or an app its
   integration does not report as playing, is titled by its app or its input (else its name) where it read "Nothing
   playing", and its line no longer says the title again. Thanks to @rammium (#101).
