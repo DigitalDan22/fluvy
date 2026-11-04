@@ -1,6 +1,19 @@
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
 
 /**
+ * `document.fonts.ready`, read once for every card attached in one go: the browser lays the page out to answer it, so a
+ * view that opens many cards at once (a wall's) would be laid out again for every one before it is drawn.
+ */
+let ready: Promise<FontFaceSet> | undefined;
+function fontsReady(): Promise<FontFaceSet> {
+  if (!ready) {
+    ready = document.fonts.ready;
+    queueMicrotask(() => (ready = undefined));
+  }
+  return ready;
+}
+
+/**
  * Re-runs a card's text fitting when a web font may have changed its layout. A card measures laid-out
  * text (a greeting's size tier, a readout's label, a head's pills), so it measures again when a font
  * finishes loading — one frame later, because a face becomes usable for layout a frame after the event
@@ -28,7 +41,7 @@ export class FontsSettled implements ReactiveController {
   hostConnected(): void {
     if (typeof document === 'undefined' || !document.fonts) return;
     document.fonts.addEventListener('loadingdone', this.run);
-    void document.fonts.ready.then(this.run);
+    void fontsReady().then(this.run);
     this.timer = window.setTimeout(this.run, 1200);
   }
 

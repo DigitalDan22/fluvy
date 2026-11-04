@@ -124,8 +124,15 @@ export function setChartDefaults(next: HouseCharts): void {
 
 /** Every card on the page looks again for the theme: the look arrived, moved or left. */
 export function resyncCardThemes(): void {
-  for (const card of live) card.syncTheme();
+  FluvyCard.readLooks([...live]);
 }
+
+/**
+ * Cards attached and not drawn yet: what each reads off the page before its first frame, its look (#40) and its width
+ * (#104), is read for all of them as the first of them draws, so a view that opens many cards at once (a wall's)
+ * forces one style and one layout pass for them, not one or two each.
+ */
+const unread = new Set<FluvyCard>();
 
 /** What Home Assistant's card wrapper listens for: a card that hid or showed itself is laid out again. */
 export const VISIBILITY_EVENT = 'card-visibility-changed';
@@ -265,16 +272,23 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
     });
     this.resizeObserver.observe(this);
     if (this.renderRoot instanceof ShadowRoot) this.accents.adopt(this.renderRoot);
-    this.syncTheme();
+    // attached again (moved), it reads its look at once; not drawn yet, with the cards attached beside it (`unread`)
+    if (this.hasUpdated) this.syncTheme();
+    else unread.add(this);
   }
 
   /**
-   * The first frame is drawn to the card's own width, read off its box before it is drawn: the 360 it starts at stands
-   * in only while it has none. Drawn 360 wide in a narrower column, its controls would reach past the page's edge until
-   * the observer first reports, and a phone's page would scroll sideways meanwhile (#104).
+   * The first frame is drawn on the card's look and to its own width, read off its box before it is drawn (with every
+   * card not drawn yet: `unread`): the 360 it starts at stands in only while it has none. Drawn 360 wide in a narrower
+   * column, its controls would reach past the page's edge until the observer first reports, and a phone's page would
+   * scroll sideways meanwhile (#104).
    */
   protected override scheduleUpdate(): void | Promise<unknown> {
-    if (!this.hasUpdated) this.takeWidth(parseFloat(getComputedStyle(this).width));
+    if (unread.has(this)) {
+      const cards = [...unread];
+      unread.clear();
+      FluvyCard.readLooks(cards, true);
+    }
     return super.scheduleUpdate();
   }
 
@@ -287,6 +301,7 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
   override disconnectedCallback(): void {
     super.disconnectedCallback();
     live.delete(this);
+    unread.delete(this);
     this.resizeObserver?.disconnect();
     this.resizeObserver = undefined;
     for (const entry of this.optimistic.values()) clearTimeout(entry.timer);
@@ -334,7 +349,8 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
   }
 
   protected override willUpdate(changed: PropertyValues): void {
-    if (changed.has('hass')) {
+    // the first frame's look was read as it was scheduled, with the `hass` it is drawn with
+    if (changed.has('hass') && this.hasUpdated) {
       const previous = changed.get('hass') as HomeAssistant | undefined;
       if (previous?.themes !== this.hass?.themes) this.syncTheme();
     }
@@ -345,23 +361,39 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
    * does) and which palette it wears (its own colours are derived on it).
    */
   syncTheme(): void {
-    const dark = darkOverride ?? this.hass?.themes?.darkMode ?? false;
-    const computed = getComputedStyle(this);
-    // The theme carries a sentinel the fallback never defines, so this cannot feed back on itself.
-    this.wear(computed.getPropertyValue(THEME_SENTINEL).trim() === '', dark);
-    // `computed` is live: with the fallback's attributes on the host, the palette read is the one this card is
-    // drawn in from its first frame (#40) — never the default's until it is attached again
-    if (
-      this.accents.wears(computed.getPropertyValue(PALETTE_TOKEN).trim(), dark ? 'dark' : 'light')
-    )
-      this.requestUpdate();
+    FluvyCard.readLooks([this]);
+  }
+
+  /**
+   * The look of `cards` (`syncTheme`), and with `width` their width off their boxes: every read before any write, so
+   * cards read together force one style pass (and one layout) between them. The theme carries a sentinel the fallback
+   * never defines, so its read cannot feed back on itself; the rest is read live (`getComputedStyle`) once the
+   * fallback's attributes are on each host: the palette a card is drawn in from its first frame (#40), never the
+   * default's until it is attached again.
+   */
+  static readLooks(cards: readonly FluvyCard[], width = false): void {
+    const computed = cards.map((card) => getComputedStyle(card));
+    const bare = computed.map((style) => style.getPropertyValue(THEME_SENTINEL).trim() === '');
+    cards.forEach((card, i) => card.wear(bare[i] ?? false));
+    cards.forEach((card, i) => {
+      const style = computed[i] as CSSStyleDeclaration;
+      card.readLook(style);
+      if (width) card.takeWidth(parseFloat(style.width));
+    });
+  }
+
+  /** What the card reads of the look it is drawn in, the fallback's attributes on it: the palette it wears. */
+  protected readLook(computed: CSSStyleDeclaration): void {
+    const palette = computed.getPropertyValue(PALETTE_TOKEN).trim();
+    if (this.accents.wears(palette, this.dark ? 'dark' : 'light')) this.requestUpdate();
   }
 
   /**
    * `no-theme` and `dark` pick the token fallback (`:host([no-theme])`, `[dark]`): written at once, not at the next
    * update as a reflected property would be, so the tokens read after them are those the card is drawn in.
    */
-  private wear(noTheme: boolean, dark: boolean): void {
+  private wear(noTheme: boolean): void {
+    const dark = darkOverride ?? this.hass?.themes?.darkMode ?? false;
     this.noTheme = noTheme;
     this.dark = dark;
     this.toggleAttribute('no-theme', noTheme);

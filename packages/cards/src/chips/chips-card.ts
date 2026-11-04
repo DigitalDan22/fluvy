@@ -168,10 +168,10 @@ export class FluvyChipsCard extends Card<ChipsCardConfig> {
    */
   declare besideMark_: boolean;
 
-  override syncTheme(): void {
-    super.syncTheme();
+  protected override readLook(computed: CSSStyleDeclaration): void {
+    super.readLook(computed);
     // read after the base has put the fallback's attributes on the host: right on the first frame too
-    this.besideMark_ = getComputedStyle(this).getPropertyValue('--fluvy-mark').trim() !== '';
+    this.besideMark_ = computed.getPropertyValue('--fluvy-mark').trim() !== '';
   }
 
   /** Pills are sized after render and again when a web font arrives: the row follows their real width. */

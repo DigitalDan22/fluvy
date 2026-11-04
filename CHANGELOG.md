@@ -43,6 +43,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   alone, its key typed as a count; `pnpm i18n` fails a catalogue without a form its language gives a whole number up
   to 1000, and English with a form it never says.
 
+### Changed
+
+- A dashboard view of many cards (a wall's forty) is styled and laid out once for all of them as it opens, where
+  every card had the page styled and laid out again as it was attached, as its first frame was scheduled and as it
+  asked whether the fonts had loaded: on a tablet's slower processor the view draws sooner.
+
 ### Fixed
 
 - An appliance card on a SmartThings or LocalThings machine, or on a plug, asks Home Assistant's recorder for its
