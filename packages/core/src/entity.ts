@@ -163,11 +163,6 @@ const ACTIVE_OFF = new Set([
 ]);
 
 /**
- * Whether a state of a domain reads as "on/active" (what takes a filled tone): a state a history holds, without the
- * entity it belonged to.
- */
-/** The house's weather entity, the first there is: the wall's screensaver and its preview show the same one. */
-/**
  * A user's person: the `person.` entity that carries their user id, as every person of the house does (anyone may
  * read it, not only an administrator). Undefined for a user who is no one's person (a wall tablet's own account).
  */
@@ -182,19 +177,31 @@ export function personOf(
   return undefined;
 }
 
+/** The house's weather entity, the first there is: the wall's screensaver and its preview show the same one. */
 export const firstWeather = (hass: HomeAssistant | undefined): string | undefined =>
   Object.keys(hass?.states ?? {}).find((id) => id.startsWith('weather.'));
 
+/**
+ * The domains whose state is never on: a measure ("21.5 °C"; the weather's "rainy", which would count a device on all
+ * day in an area that holds it) or the moment it last happened (a button pressed, a scene applied, an event fired).
+ */
+const NEVER_ON: ReadonlySet<string> = new Set([
+  'sensor',
+  'number',
+  'input_number',
+  'weather',
+  'button',
+  'input_button',
+  'scene',
+  'event',
+]);
+
+/**
+ * Whether a state of a domain reads as "on/active" (what takes a filled tone): a state a history holds, without the
+ * entity it belonged to.
+ */
 export function isActiveState(domain: string, state: string): boolean {
-  // A sensor only measures: "21.5 °C" is not an on state, so it never takes the active fill. Nor does the weather:
-  // "rainy" or "sunny" is what it reports, and an area with a weather entity would count a device "on" all day.
-  if (
-    domain === 'sensor' ||
-    domain === 'number' ||
-    domain === 'input_number' ||
-    domain === 'weather'
-  )
-    return false;
+  if (NEVER_ON.has(domain)) return false;
   if (domain === 'climate' || domain === 'water_heater') return state !== 'off';
   return !ACTIVE_OFF.has(state);
 }

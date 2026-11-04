@@ -425,6 +425,24 @@ export const sheet: SheetSpec = {
         { type: 'custom:fluvy-timer-card', entity: 'timer.idle', cols: 6 },
       ],
     },
+    // a button pressed, a scene applied, an event fired: their state is when, never on (#75)
+    {
+      title: 'A button, a scene, an event · at rest',
+      cards: [
+        {
+          type: 'custom:fluvy-entities-card',
+          title: 'Moments',
+          show_count: true,
+          rows: ['button.restart_ha', 'input_button.doorbell', 'scene.off', 'event.doorbell'],
+        },
+        {
+          type: 'custom:fluvy-tiles-card',
+          size: 'compact',
+          columns: 2,
+          tiles: ['scene.morning', 'event.doorbell'],
+        },
+      ],
+    },
   ],
 };
 
@@ -470,6 +488,16 @@ const STATES = (): SheetSpec['states'] => [
   ['script.lock_up', 'off', { friendly_name: 'Lock up', icon: 'lock', last_triggered: at(-90000) }],
   ['input_button.doorbell', at(-300), { friendly_name: 'Chime', icon: 'note' }],
   ['scene.bedtime', 'unknown', { friendly_name: 'Bedtime', icon: 'moon' }],
+  [
+    'event.doorbell',
+    at(-600),
+    {
+      friendly_name: 'Doorbell',
+      event_type: 'ring',
+      event_types: ['ring'],
+      device_class: 'doorbell',
+    },
+  ],
 
   /* Updates */
   [

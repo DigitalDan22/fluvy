@@ -253,6 +253,18 @@ describe('isActive', () => {
     expect(isActive(resolveEntity(h, 'weather.home'))).toBe(false);
     expect(isActive(resolveEntity(h, 'weather.away'))).toBe(false);
   });
+
+  it('never reads the moment a button was pressed, a scene applied or an event fired as on', () => {
+    const at = '2026-10-28T10:00:00+00:00';
+    const h = hass({
+      'button.restart': { state: at },
+      'input_button.doorbell': { state: at },
+      'scene.evening': { state: at },
+      'event.doorbell': { state: at },
+    });
+    for (const id of ['button.restart', 'input_button.doorbell', 'scene.evening', 'event.doorbell'])
+      expect(isActive(resolveEntity(h, id)), id).toBe(false);
+  });
 });
 
 describe('domainOf', () => {

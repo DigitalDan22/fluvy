@@ -17,6 +17,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - In dark mode the lit ticks of every ruler and dial glow as the design draws them (the light card's, the
   thermostat's, a tile's, the Slider's), a colour temperature's ruler wears its dark ends and the thermostat's disc is
   lifted off the card, where the dark mode's rules never reached inside the ruler and the dial.
+- A button, a scene or an event is never on: its state is the moment it was last pressed, applied or fired, and a
+  tile, a row and the entities card's count took it for on, filled and counted it (as #75 left them to decide).
 
 ### Added
 
