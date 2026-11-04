@@ -1,6 +1,12 @@
 // @vitest-environment happy-dom
 import { afterAll, afterEach, describe, expect, it } from 'vitest';
-import { areaEntities, localize, preloadLanguages, type HomeAssistant } from '@fluvy/core';
+import {
+  areaEntities,
+  LANGUAGE_CODES,
+  localize,
+  preloadLanguages,
+  type HomeAssistant,
+} from '@fluvy/core';
 import { familiesDefined } from '../index.js';
 import { cardForm, drawEditor, listTitles, shownNames } from '../shared/fixtures/editor.js';
 import { FluvyRoomCard, type RoomCardConfig } from './room-card.js';
@@ -423,7 +429,7 @@ describe('a room in a narrow column', () => {
       width: (cls: string, text: string) =>
         (cls === 'fv-empty-state__hint' ? Math.min(glyphs(text), 380) : glyphs(text)) + 1,
     };
-    for (const language of ['en', 'de', 'es', 'fr', 'it', 'nl', 'pt-BR', 'tr', 'ja']) {
+    for (const language of LANGUAGE_CODES) {
       const hass = { ...house(), language, locale: { language, number_format: 'language' } };
       const full = localize(hass as HomeAssistant, 'room.kept_out', { n: 2 });
       const why = full.split(' · ')[0]!;

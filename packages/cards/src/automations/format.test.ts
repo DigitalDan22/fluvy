@@ -1,4 +1,4 @@
-import type { HomeAssistant } from '@fluvy/core';
+import { LANGUAGE_CODES, type HomeAssistant } from '@fluvy/core';
 import { describe, expect, it } from 'vitest';
 import {
   changeText,
@@ -188,7 +188,7 @@ describe('the next and the last run', () => {
     expect(lastText(en, at(21, 47, -3), NOW)).toBe('3 days ago');
   });
 
-  it.each(['de', 'es', 'fr', 'it', 'nl', 'pt-BR', 'tr', 'ja'])(
+  it.each(LANGUAGE_CODES.filter((code) => code !== 'en'))(
     'speaks %s for the next and the last run, with the words in place',
     (language) => {
       const hass = house(language);
@@ -217,7 +217,7 @@ describe('what a target does next', () => {
     expect(changeText(en, 'run', at(23, 0), NOW)).toBe('Runs in 1 h');
   });
 
-  it.each(['de', 'es', 'fr', 'it', 'nl', 'pt-BR', 'tr', 'ja'])(
+  it.each(LANGUAGE_CODES.filter((code) => code !== 'en'))(
     'speaks %s, the wait where the language puts it',
     (language) => {
       const words = changeText(house(language), 'on', at(6, 45, 1), NOW);
