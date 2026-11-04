@@ -179,6 +179,13 @@ describe('an appliance’s entities', () => {
     );
   });
 
+  it('takes no meter of a SmartThings machine’s years for its programme’s: no water, its energy the meter a cycle is read from', () => {
+    // its water is its cumulative amount; its report's power energy, a window's (0 on Samsung's appliances)
+    const { roles } = applianceEntities(HOUSE, 'st-washer');
+    expect(roles.water).toBeUndefined();
+    expect(roles.energy).toBe('sensor.samsung_waschmaschine_energie');
+  });
+
   it('gathers the rest in kind: compartments, maintenance, quick modes, plates and counters', () => {
     expect(applianceEntities(HOUSE, 'hc-fridge')).toMatchObject({
       zones: [

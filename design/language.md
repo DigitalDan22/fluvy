@@ -1724,7 +1724,9 @@ temperature on its way, a hob's plates, a fridge's compartments, a state and its
   slot; beside the card's own `rows` it is one more. `rows` (the rows editor) names them and their order: a reading
   (`program`, `temperature`, `target`, `water`, `energy`, `power`, `remaining`, `end`, `elapsed`, `mode`, `alarm`,
   `last_brew`, `zones`, `spin`, `dryness`), a reminder, or any `entity` (a span in hours and minutes), each with its
-  name (empty: the value alone, "200 °C"), icon, colour and actions.
+  name (empty: the value alone, "200 °C"), icon, colour and actions. A meter of the machine's years is never its
+  programme's (LocalThings', 1.13; SmartThings', 1.13.1): its energy row and readout say what this cycle added to it,
+  as a plug's do, and its water meter has no row.
 - **Reminders** beyond the rows (`maintenance_style`): as chips that fill the row (as many a row as hold their words
   with their glyphs, down to one, the glyphs alone only where not even one does), or as rows (what to do whole, on
   the lines it needs; its level or "Due · Soon · Fine" at the end). One item a thing, by the entity that says it, in

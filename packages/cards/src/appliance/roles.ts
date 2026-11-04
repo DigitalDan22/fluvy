@@ -196,7 +196,7 @@ export const COMMUNITY_PLATFORMS = ['hon', 'electrolux_status', 'smartthinq_sens
  * The integrations whose energy reading is a meter of the machine's years, not its programme's: what a cycle used is
  * its gain since the cycle started, as a plug's meter is read.
  */
-export const METER_ENERGY: ReadonlySet<string> = new Set(['localthings']);
+export const METER_ENERGY: ReadonlySet<string> = new Set(['localthings', 'smartthings']);
 /**
  * The pet devices' integrations, from HACS (#112): read by their translation keys, as Home Assistant's own are, and
  * written to only through the buttons, texts and switches their source pins (`commands.ts`).
@@ -447,7 +447,6 @@ const KEYS_BY_PLATFORM: Readonly<
     cancel: 'cancel',
     water_temperature: 'wash_temperature',
     spin_level: 'spin',
-    power_energy: 'energy',
     hood: 'fan',
     // the second cavity's temperature (`oven_temperature_cavity_01`), read as the first's would be
     oven_temperature: 'temperature',
@@ -458,6 +457,11 @@ const KEYS_BY_PLATFORM: Readonly<
     energy_difference: null,
     energy_saved: null,
     oven_cavity_status: null,
+    // its meters count the machine's years (sensor.py: the power report's `energy`, read by its class, and the water
+    // report's `cumulativeAmount`): the energy row says what this cycle added to the first (`METER_ENERGY`); its water
+    // is never a programme's, nor the report's power energy, a window's (0 on Samsung's appliances)
+    water_consumption: null,
+    power_energy: null,
   },
   // localthings (mbillow/localthings@0b268a9) registry/capabilities/operational.py, common.py, washer.py, dryer.py,
   // oven.py, microwave.py: each entity's key is its descriptor's (entity.py:139-160)

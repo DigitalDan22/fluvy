@@ -487,12 +487,24 @@ describe('the appliance card', () => {
     }
   });
 
-  it('never says LocalThings’ lifetime meters as its programme’s: no water row, and its energy is what this cycle used', async () => {
-    const card = await mount({ device: 'lt-washer' });
-    const text = root(card).textContent?.replace(/\s+/g, ' ') ?? '';
-    expect(text).not.toContain('9,121');
-    expect(text).not.toContain('214.7');
-  });
+  it.each([
+    ['LocalThings', 'lt-washer', /9,121/, /214\.7|215/],
+    ['SmartThings', 'st-washer', /1,642/, /312/],
+  ] as const)(
+    'never says %s’ lifetime meters as its programme’s: no water, and its energy is what this cycle used',
+    async (_, device, water, energy) => {
+      const card = await mount({ device });
+      const said = text(root(card).querySelector('article'));
+      expect(said).not.toMatch(water);
+      expect(said).not.toMatch(energy);
+      expect(said).not.toMatch(/Water/);
+      // its readouts the same
+      const compact = await mount({ device, variant: 'compact', readouts: ['energy', 'water'] });
+      expect(root(compact).querySelector('[data-readout="water"]')).toBeNull();
+      expect(text(root(compact).querySelector('[data-readout="energy"]'))).toMatch(/^Energy/);
+      expect(text(root(compact).querySelector('[data-readout="energy"]'))).not.toMatch(energy);
+    },
+  );
 
   it('reads no device where it names `device: none` (#98), as before 1.13: its entity’s name, or its roles alone', async () => {
     const entity = 'switch.geschirrspuler_kuche_ein_aus';

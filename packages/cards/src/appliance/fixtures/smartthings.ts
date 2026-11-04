@@ -5,13 +5,15 @@ import { device, entriesFor, minutesFrom, type FixtureAt } from './house.js';
  * (sensor.py:395-449, :1197-1240), the operating-state select that runs, pauses and stops a washer, a dryer or a
  * dishwasher, named for the device alone and needing its remote control on (select.py:170-197), the dishwasher's and
  * the oven's buttons (button.py:33-91), a fridge's compartments as numbers and sensors of the same keys
- * (number.py:203-206), the upper washer of a Flex washer and an oven's second cavity on the same device.
+ * (number.py:203-206), the upper washer of a Flex washer and an oven's second cavity on the same device. A washer's
+ * energy and water meters count the machine's years (sensor.py:765-778, :1237-1247: `energy`, `cumulativeAmount`), and
+ * its report's power energy (:814-828) says 0 on Samsung's appliances, as Home Assistant's own fixtures have it.
  */
 
 const PLATFORM = 'smartthings';
 const OPERATING = { options: ['pause', 'run', 'stop'] };
 
-/** A washer spinning, its upper drum (a Flex washer's) at rest; its remote control on. */
+/** A washer spinning, its upper drum (a Flex washer's) at rest; its remote control on; its meters of 312 kWh and 1,642 L. */
 export const stWasher: FixtureAt = (now) => {
   const e = entriesFor(PLATFORM, 'st-washer');
   return {
@@ -41,6 +43,8 @@ export const stWasher: FixtureAt = (now) => {
       ),
       e('sensor.samsung_waschmaschine_energie', undefined),
       e('sensor.samsung_waschmaschine_leistung', undefined),
+      e('sensor.samsung_waschmaschine_leistungsenergie', 'power_energy'),
+      e('sensor.samsung_waschmaschine_wasserverbrauch', 'water_consumption'),
     ],
     states: [
       ['sensor.samsung_waschmaschine_maschinenstatus', 'run', {}, 47 * 60],
@@ -71,6 +75,16 @@ export const stWasher: FixtureAt = (now) => {
         'sensor.samsung_waschmaschine_leistung',
         '480',
         { device_class: 'power', unit_of_measurement: 'W' },
+      ],
+      [
+        'sensor.samsung_waschmaschine_leistungsenergie',
+        '0.0',
+        { device_class: 'energy', unit_of_measurement: 'kWh' },
+      ],
+      [
+        'sensor.samsung_waschmaschine_wasserverbrauch',
+        '1642.2',
+        { device_class: 'water', unit_of_measurement: 'L', state_class: 'total_increasing' },
       ],
     ],
     expected: {

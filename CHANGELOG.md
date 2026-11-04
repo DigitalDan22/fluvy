@@ -13,6 +13,10 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - A select's row on the entities card, and among the rows of the lock, alarm and camera cards, ends in its value,
   which opens Fluvy's own dropdown as the helpers card's does, where it opened Home Assistant's dialog: the keys, a
   letter to find a name, the option chosen at once. A row with a `tap_action` of its own keeps it.
+- A SmartThings washer or dishwasher has no water row any more, where it said the water of all the machine's years as
+  its programme's ("Water 1,642 L"); its energy, and a dryer's, says what this cycle added to the machine's meter,
+  where it said its report's power energy (0 kWh on Samsung's machines) or the meter's count of years. Its readouts
+  say the same.
 
 ### Added
 
@@ -68,6 +72,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - A PetKit litter box whose light is on is at rest and says "Light on", where it said "light" and ran with a Pause
   that had nothing to pause; one calibrating, resetting itself, levelling or deodorizing offers no Pause either: only a
   clean, a dump and its maintenance pause.
+- A LocalThings washer's or dishwasher's energy readout (the compact card's) says what this cycle used, as its row
+  does, where it said the machine's count of years.
 
 ### Development
 

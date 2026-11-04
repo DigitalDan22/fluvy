@@ -107,13 +107,28 @@ const POWER: Readonly<Record<string, ReadonlyArray<readonly [number, number]>>> 
   ],
 };
 
-/** The washer's meter over the same hours, kWh: what this cycle used is its gain since the cycle started. */
+/**
+ * The meters over the same hours, kWh: what this cycle used is its gain since the cycle started. The plug's washer's,
+ * and the meters of their machines' years that LocalThings' and SmartThings' washers keep (running 52 and 47 minutes).
+ */
 const METER: Readonly<Record<string, ReadonlyArray<readonly [number, number]>>> = {
   'sensor.waschmaschine_keller_energie': [
     [600, 181.56],
     [42, 181.56],
     [30, 181.98],
     [6, 182.31],
+  ],
+  'sensor.waschmaschine_flur_energie': [
+    [600, 214.15],
+    [52, 214.15],
+    [25, 214.42],
+    [5, 214.7],
+  ],
+  'sensor.samsung_waschmaschine_energie': [
+    [600, 311.81],
+    [47, 311.81],
+    [20, 312.12],
+    [4, 312.4],
   ],
 };
 
@@ -1160,6 +1175,16 @@ export const sheet: SheetSpec = {
           _now: at,
         },
       ],
+    }),
+    // the meters of the machines' years, LocalThings' and SmartThings': what this cycle added, never a water row
+    frame({
+      title: 'Meters of the machine’s years · what this cycle used',
+      cards: ['lt-washer', 'st-washer'].map((device) =>
+        card(device, {
+          variant: 'compact',
+          readouts: ['program', 'energy', 'water', 'this_cycle'],
+        }),
+      ),
     }),
   ],
 };

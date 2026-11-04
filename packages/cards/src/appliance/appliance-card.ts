@@ -1875,6 +1875,20 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     return formatNumber(this.hass, n, { digits: 2, minDigits: 2 });
   }
 
+  /**
+   * What the appliance used, as its energy row and readout say it: its own reading of its programme's energy; a
+   * plug's meter counts the house's years, and so does a machine's own where its integration's does (`METER_ENERGY`),
+   * so what this cycle used. A dash out of reach, and until that is known.
+   */
+  private energyText(view: View): { readonly value: string; readonly unit: string } {
+    const { r } = view;
+    if (view.unavailable) return { value: '—', unit: '' };
+    if (r.readouts.energy && !meterEnergy(r)) return this.valueText(r.readouts.energy);
+    return view.used !== null
+      ? { value: this.kwh(view.used), unit: 'kWh' }
+      : { value: '—', unit: '' };
+  }
+
   /** An entity's value as a readout says it: its figure and unit, else Home Assistant's words; a dash out of reach. */
   private valueText(id: string | undefined): { readonly value: string; readonly unit: string } {
     const v = id ? this.entity(id) : undefined;
@@ -3137,15 +3151,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       case 'energy':
         entity = r.readouts.energy ?? r.roles.energy;
         label = s(this.hass, 'electricity');
-        // an appliance's own reading of its programme's energy; a plug's meter counts the house's years, and so does
-        // a machine's own where its integration's does (`METER_ENERGY`), so what this cycle used
-        value = off
-          ? dash
-          : r.readouts.energy && !meterEnergy(r)
-            ? joined(this.valueText(r.readouts.energy))
-            : view.used !== null
-              ? joined({ value: this.kwh(view.used), unit: 'kWh' })
-              : dash;
+        value = joined(this.energyText(view));
         break;
       case 'power':
         entity = r.roles.watts;
@@ -4439,6 +4445,9 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
               durationText(this.hass, shown.clock.total ?? null),
               id,
             );
+          break;
+        case 'energy':
+          if (id) add(key, s(this.hass, 'r_energy'), this.energyText(view), id);
           break;
         case 'this_cycle':
           if (id)
