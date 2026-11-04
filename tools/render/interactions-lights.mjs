@@ -760,8 +760,8 @@ const ids = (call) => [].concat(call?.d?.entity_id ?? call?.t?.entity_id ?? []);
     .locator('fluvy-light-card')
     .evaluate((el) => getComputedStyle(el.shadowRoot.querySelector('article')).transitionDuration);
   check(
-    'under reduced motion it changes at once (1 ms)',
-    reduced.split(',').every((d) => d.trim() === '0.001s'),
+    'under reduced motion it changes at once (no transition)',
+    reduced.split(',').every((d) => d.trim() === '0s'),
     reduced,
   );
   await page.close();

@@ -173,8 +173,8 @@ export class FluvyHelloCard extends Card<HelloCardConfig> {
         display: inline;
       }
 
-      /* the fit measures right after it flips a tier: nothing here may be mid-transition (reduced motion gives
-         every property a 1 ms one, and a measurement taken inside it reads the previous size) */
+      /* the fit measures right after it flips a tier: nothing here may be mid-transition (a measurement taken
+         inside one reads the previous size) */
       .hm-hello,
       .hm-hello * {
         transition-property: none;

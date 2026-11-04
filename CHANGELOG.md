@@ -68,6 +68,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 - The stat tiles card's highlighted tile firms its hairline in its own colour under the pointer, as a lit tile does,
   where it took the neutral one.
+- Under reduced motion nothing on a card or the settings panel eases any more, where every property of every element
+  eased for a millisecond, so a change of layout showed its old value for a frame.
 
 ## [1.13.1] — 2026-11-04
 

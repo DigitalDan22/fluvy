@@ -1,7 +1,8 @@
 /*
  * fluvy — the interaction layer. Production only: the review sheets are stills, the cards move.
  * Rules: only transform / opacity / colour are animated; hover exists only where a pointer can hover;
- * every pressable answers a press within 120 ms; reduced motion collapses everything to 1 ms.
+ * every pressable answers a press within 120 ms; reduced motion collapses every animation to 1 ms and lets nothing
+ * transition.
  */
 
 :host {
@@ -547,6 +548,9 @@
 }
 
 /* ---------- reduced motion ---------- */
+/* An animation runs for 1 ms, so the cards that wait for its end (a sheet leaving, a menu closing) still hear it; a
+   transition runs not at all: a duration on every element, whose `transition-property` is `all` by default, would ease
+   every property of every element, and a layout change would show its old value for a frame */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -554,7 +558,7 @@
     animation-duration: 1ms !important;
     animation-delay: 0ms !important;
     animation-iteration-count: 1 !important; /* an infinite 1 ms loop would still run every frame */
-    transition-duration: 1ms !important;
+    transition-duration: 0s !important;
   }
 
   .fv-skeleton {
@@ -569,7 +573,7 @@
   animation-duration: 1ms !important;
   animation-delay: 0ms !important;
   animation-iteration-count: 1 !important;
-  transition-duration: 1ms !important;
+  transition-duration: 0s !important;
 }
 
 [data-motion='reduced'] .fv-skeleton {

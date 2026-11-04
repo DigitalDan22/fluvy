@@ -31,9 +31,6 @@ export const panelStyles = css`
     margin: 0 auto;
     padding: 12px 16px 16px;
     box-sizing: border-box;
-    /* the layout never eases: under reduced motion every property's 1 ms would hold the side column's grid at the
-       phone's 760 for a frame, and the open tab would be laid out (its drawings drawn) for a 288 column first */
-    transition-property: none;
   }
   @container pn (min-width: 648px) {
     .pn {

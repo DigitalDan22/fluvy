@@ -120,8 +120,8 @@ export class FluvyReadoutsCard extends Card<ReadoutsCardConfig> {
       .fv-readout__value {
         white-space: nowrap;
       }
-      /* the fit measures right after it flips a size: nothing in the value may be mid-transition (reduced
-         motion gives every property a 1 ms one, and a measurement taken inside it reads the previous size) */
+      /* the fit measures right after it flips a size: nothing in the value may be mid-transition (a measurement
+         taken inside one reads the previous size) */
       .fv-readout__value,
       .fv-readout__value * {
         transition-property: none;
