@@ -9,7 +9,8 @@ import type {
  * The house by its rooms: which area an entity is in, what an area holds, and the order floors and areas read
  * in. One rule for every reader (a card, the automatic dashboard): an entity is in its own area, else its
  * device's; a dashboard shows the entities that have a state, are not hidden and are not a config or diagnostic
- * entity unless asked for; a room counts its devices among them (`isRoomDevice`).
+ * entity unless asked for; a room counts its devices among them (`isRoomDevice`), as its own `include` and `exclude`
+ * tune it (`RoomTuning`).
  */
 
 /** The registries this module reads; `floors` is absent on a Home Assistant without them. */
@@ -140,19 +141,36 @@ const APPLIANCE_CONTROLS: ReadonlySet<string> = new Set([
   'datetime',
 ]);
 
+/** What a plug may file as no setting beside its switch (Tuya's, Zigbee2MQTT's): its timer, its power-on behaviour. */
+const PLUG_CONTROLS: ReadonlySet<string> = new Set(['select', 'number']);
+
 /**
  * Whether a switch is a load, something it powers: Home Assistant says so (an outlet, a switch), it is on no device
  * (a template's, a group's), or its device is a plug or a relay — one with none of an appliance's controls
- * (`APPLIANCE_CONTROLS`, hidden or not; a setting is not one). A dishwasher's option switches, beside its programme
- * select and its start button, are its settings.
+ * (`APPLIANCE_CONTROLS`, hidden or not; a setting is not one), or a plug that files its timer or its power-on
+ * behaviour as none: its one switch beside a power or energy reading, and no other control. A dishwasher's option
+ * switches, beside its programme select and its start button, are its settings.
  */
 export function isLoad(hass: Registries, entityId: string): boolean {
   const deviceClass = hass.states[entityId]?.attributes['device_class'];
   if (deviceClass === 'outlet' || deviceClass === 'switch') return true;
   const device = hass.entities?.[entityId]?.device_id;
   if (!device) return true;
-  return !(indexOf(hass).byDevice.get(device) ?? []).some(
+  const own = (indexOf(hass).byDevice.get(device) ?? []).filter((id) =>
+    usableEntity(hass, id, { hidden: true, diagnostic: true }),
+  );
+  const controls = own.filter(
     (id) => APPLIANCE_CONTROLS.has(domainOf(id)) && usableEntity(hass, id, { hidden: true }),
+  );
+  return (
+    !controls.length ||
+    (controls.every((id) => PLUG_CONTROLS.has(domainOf(id))) &&
+      own.filter((id) => domainOf(id) === 'switch').length === 1 &&
+      own.some(
+        (id) =>
+          id.startsWith('sensor.') &&
+          ['power', 'energy'].includes(String(hass.states[id]?.attributes['device_class'])),
+      ))
   );
 }
 
@@ -237,7 +255,10 @@ export const areaClimate = (hass: Registries, areaId: string): AreaClimate =>
 export interface AreaContents {
   /** The entities it shows, in id order: what its page reaches. */
   readonly entities: readonly string[];
-  /** Its devices among them (`isRoomDevice`), in id order: what its card counts and fills by. */
+  /**
+   * Its devices among them (`isRoomDevice`, and what the room includes), in id order: what its card counts and
+   * fills by.
+   */
   readonly devices: readonly string[];
   /** Its controls among its devices: the lights, then the switches, covers and fans. */
   readonly controls: readonly string[];
@@ -248,9 +269,63 @@ export interface AreaContents {
   readonly keptOut: number;
 }
 
-export function areaContents(hass: Registries, areaId: string): AreaContents {
-  const entities = areaEntities(hass, areaId);
-  const devices = entities.filter((id) => isRoomDevice(hass, id));
+/**
+ * A room's own say over what it holds (#95): `include` counts what the rule leaves out, `exclude` leaves out what it
+ * shows. An entry is an entity's id, a pattern of ids (`*` any run of characters: `switch.dishwasher_*`), a device's
+ * id or a domain (`media_player`); an entity or a device named whole is in the room wherever its area is, a pattern or
+ * a domain reads the room's own. What a room includes it keeps, whatever it excludes.
+ */
+export interface RoomTuning {
+  readonly include?: readonly string[] | undefined;
+  readonly exclude?: readonly string[] | undefined;
+}
+
+/** The entries of a room's list that can name something: words, never a config's blank, stray number or object. */
+const entriesOf = (list: readonly unknown[] | undefined): string[] =>
+  Array.isArray(list)
+    ? list.filter((entry): entry is string => typeof entry === 'string' && entry !== '')
+    : [];
+
+/**
+ * Whether an entity answers a room's entries: its id (an entry's `*` any run of characters, every other character
+ * itself: nothing from a config is read as an expression), its domain, its device's id.
+ */
+function answers(hass: Registries, entries: readonly string[]): (id: string) => boolean {
+  const named = new Set(entries);
+  const ids = entries.map(
+    (entry) =>
+      new RegExp(
+        `^${entry
+          .split('*')
+          .map((part) => part.replace(/[\\^$.+?()[\]{}|]/g, '\\$&'))
+          .join('.*')}$`,
+      ),
+  );
+  return (id) =>
+    named.has(domainOf(id)) ||
+    named.has(hass.entities?.[id]?.device_id ?? '') ||
+    ids.some((pattern) => pattern.test(id));
+}
+
+export function areaContents(
+  hass: Registries,
+  areaId: string,
+  tuning: RoomTuning = {},
+): AreaContents {
+  const shown = areaEntities(hass, areaId);
+  const include = entriesOf(tuning.include);
+  const included = answers(hass, include);
+  const excluded = answers(hass, entriesOf(tuning.exclude));
+  // an entity or a device named whole comes from wherever it is (an entity even hidden: the room names it)
+  const named = include.flatMap((entry) =>
+    hass.states[entry]
+      ? [entry]
+      : (indexOf(hass).byDevice.get(entry) ?? []).filter((id) => usableEntity(hass, id)),
+  );
+  const entities = (named.length ? [...new Set([...shown, ...named])].sort() : shown).filter(
+    (id) => included(id) || !excluded(id),
+  );
+  const devices = entities.filter((id) => included(id) || isRoomDevice(hass, id));
   const controls = CONTROL_DOMAINS.flatMap((domain) =>
     devices.filter((id) => id.startsWith(`${domain}.`)),
   );
@@ -262,7 +337,7 @@ export function areaContents(hass: Registries, areaId: string): AreaContents {
     controls,
     on,
     climate: climateOf(hass, areaId, entities),
-    keptOut: all.length - entities.length,
+    keptOut: all.length - shown.length,
   };
 }
 

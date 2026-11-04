@@ -473,7 +473,19 @@ Rectangular tappables share **one radius: 12** (option tiles, buttons, keys, fie
   a content-sized pill never cuts what it holds).
 - **The category rows** give their circles to their words where a word would not hold beside its chevron (fr
   "Lumières" at 211), every row with them, as every list does (`rowsKeepIcon`); so do the fan's Oscillate and
-  Direction rows beside their switch and chevron.
+  Direction rows beside their switch and chevron. "All devices" is a row only where the room has a device: a room of
+  sensors alone shows its readings and no rows (its photo stands 244 tall, its tile 84: its height says so too).
+- **A plug that files its settings as none (1.13).** A switch counts where its device is a plug: Home Assistant calls it
+  an outlet, or its device has none of an appliance's controls — or (some Tuya and Zigbee2MQTT plugs, which leave a
+  countdown `number` or a power-on `select` without a category) its one switch stands beside a power or energy reading
+  with no control but numbers and selects. An appliance's option switches stay out: it has several switches, or a
+  start button.
+- **A room's own say (1.13, #95).** `include` counts what the rule leaves out, `exclude` leaves out what the room shows
+  (its count, its rows, its readings, its default tiles): entity ids, patterns of ids (`*`, matched as
+  characters, never as an expression), device ids, domains. An entity or a device named whole comes from wherever its
+  area is; a pattern or a domain reads the room's own; what a room includes it keeps whatever it excludes. The
+  automatic dashboards take the same per room (`rooms: { <area>: { include, exclude } }`): the room's card, whether it
+  is shown, and its page.
 
 ## Map
 

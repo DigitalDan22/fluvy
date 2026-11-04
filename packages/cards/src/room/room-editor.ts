@@ -1,8 +1,12 @@
 import {
-  areaClimate,
+  addEnglish,
+  areaContents,
+  areaEntities,
   lightDefaults,
+  resolveEntity,
   type ClimateKind,
   type HaFormSchemaItem,
+  type HomeAssistant,
   type LovelaceConfigForm,
 } from '@fluvy/core';
 import { configKeys } from '../shared/config.js';
@@ -27,6 +31,10 @@ import type { BaseKey } from '../shared/base.js';
 import type { EditorChoices, EditorDefaults, RowsListSpec } from '../shared/rows-editor.js';
 import { lists as tilesLists } from '../tiles/tiles-editor.js';
 import type { RoomCardConfig } from './room-card.js';
+import words from '@fluvy/core/locales/en/room-editor.json';
+
+// the editor's own English, in its chunk: its words are said once it is drawn, never by a dashboard
+addEnglish(words);
 
 /** The room card's editor: fetched by its `editor()` the first time the card is edited, never by a dashboard. */
 
@@ -70,6 +78,8 @@ export const keys = configKeys<RoomCardConfig>()([
   'path',
   'temperature_entity',
   'humidity_entity',
+  'include',
+  'exclude',
   'tint',
   'name_lines',
   'light_colors',
@@ -86,13 +96,51 @@ export const lists: readonly RowsListSpec[] = [
   },
 ];
 
-/** A tile's `since` offers the house's timestamp sensors, as the tiles card's do. */
-export const choices: EditorChoices = sinceChoices;
+/**
+ * What a room's `include` and `exclude` offer (#95), each with its words: its entities, its devices and its domains,
+ * any other entry typed (an entity elsewhere, a pattern of ids).
+ */
+function roomEntries(config: Readonly<Record<string, unknown>>, hass?: HomeAssistant) {
+  const area = String(config['area'] ?? '');
+  if (!hass?.states || !area) return [];
+  const ids = areaEntities(hass, area);
+  const devices = [...new Set(ids.map((id) => hass.entities?.[id]?.device_id ?? ''))].filter(
+    (device) => hass.devices?.[device],
+  );
+  return [
+    ...ids.map((id) => ({ value: id, label: `${resolveEntity(hass, id).name} (${id})` })),
+    ...devices.map((device) => ({
+      value: device,
+      label: hass.devices?.[device]?.name_by_user ?? hass.devices?.[device]?.name ?? device,
+    })),
+    ...[...new Set(ids.map((id) => id.slice(0, id.indexOf('.'))))].map((domain) => ({
+      value: domain,
+      label: domain,
+    })),
+  ];
+}
 
-/** What the editor shows where the config says nothing: what the card does then — its variant, the readings it found. */
+/** A tile's `since` offers the house's timestamp sensors, as the tiles card's do; `include`, `exclude` the room's own. */
+export const choices: EditorChoices = (config, hass) => {
+  const entries = roomEntries(config, hass);
+  return { ...sinceChoices(config, hass), include: entries, exclude: entries };
+};
+
+/** A room's `include` or `exclude`: its entities, devices and domains to choose, or a pattern typed (#95). */
+const entriesField = (name: 'include' | 'exclude'): HaFormSchemaItem => ({
+  name,
+  selector: { select: { multiple: true, custom_value: true, mode: 'dropdown', options: [] } },
+  helper: 'room-editor.entries_help',
+});
+
+/**
+ * What the editor shows where the config says nothing: what the card does then — its variant, the readings it found
+ * in the room as its `include` and `exclude` say.
+ */
 export const defaults: EditorDefaults = (config, hass) => {
   const area = hass?.areas?.[String(config['area'] ?? '')];
-  const found = hass && area ? areaClimate(hass, area.area_id) : {};
+  const found =
+    hass && area ? areaContents(hass, area.area_id, config as RoomCardConfig) : undefined;
   return {
     variant: config['picture'] || area?.picture ? 'photo' : 'tile',
     controls: 'rows',
@@ -102,8 +150,8 @@ export const defaults: EditorDefaults = (config, hass) => {
     tint: 'on',
     light_colors: lightDefaults().colors,
     light_whites: 'temperature',
-    temperature_entity: found.temperature,
-    humidity_entity: found.humidity,
+    temperature_entity: found?.climate.temperature,
+    humidity_entity: found?.climate.humidity,
   };
 };
 
@@ -127,6 +175,8 @@ export function getConfigForm(): LovelaceConfigForm {
         readingField('temperature', 'climate'),
         readingField('humidity', 'climate', 'humidifier'),
       ),
+      entriesField('include'),
+      entriesField('exclude'),
       ...colourFields(),
       // its tiles' colour at rest; their names' lines, and the row's (a compact tile)
       fieldRow(
@@ -139,6 +189,8 @@ export function getConfigForm(): LovelaceConfigForm {
     ...formLabels({
       temperature_entity: 'editor.temperature_entity',
       humidity_entity: 'editor.humidity_entity',
+      include: 'room-editor.include',
+      exclude: 'room-editor.exclude',
     }),
   };
 }

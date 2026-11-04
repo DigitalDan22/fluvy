@@ -691,6 +691,11 @@
     "kept_out": "非表示または診断用のエンティティ{n}件 · エリアの設定でセンサーを選択してください",
     "kept_out_one": "非表示または診断用のエンティティ{n}件 · エリアの設定でセンサーを選択してください"
   },
+  "room-editor": {
+    "include": "追加でカウント",
+    "exclude": "除外",
+    "entries_help": "エンティティ、デバイス、ドメイン、またはswitch.dishwasher_*のようなIDのパターン"
+  },
   "readouts": {
     "rising": "上昇中",
     "falling": "下降中"

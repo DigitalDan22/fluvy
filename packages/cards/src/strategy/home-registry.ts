@@ -9,16 +9,19 @@ import {
 import { printerDevices } from '../printer/roles.js';
 import { says, type Rules } from '../shared/words.js';
 import {
+  areaContents,
   areaOf,
   areasInOrder,
   floorsInOrder,
   isLoad,
   localize,
   usableEntity,
+  type AreaContents,
   type AreaRegistryEntry,
   type FloorRegistryEntry,
   type HomeAssistant,
   type MessageKey,
+  type RoomTuning,
 } from '@fluvy/core';
 import {
   BATTERY_POWER,
@@ -115,7 +118,11 @@ export class HomeRegistry {
     return this.hass;
   }
 
-  constructor(private readonly hass: Registry) {
+  /** `rooms`: each room's own `include` and `exclude` by its area (the dashboard's `rooms`, #95). */
+  constructor(
+    private readonly hass: Registry,
+    private readonly rooms: Readonly<Record<string, RoomTuning>> = {},
+  ) {
     for (const id of Object.keys(hass.states).sort()) {
       const domain = id.slice(0, id.indexOf('.'));
       const list = this.byDomain.get(domain);
@@ -127,6 +134,27 @@ export class HomeRegistry {
   private memo<T>(key: string, compute: () => T): T {
     if (!this.cache.has(key)) this.cache.set(key, compute());
     return this.cache.get(key) as T;
+  }
+
+  /**
+   * A room's own `include` and `exclude`, as the dashboard names them: its card's, its count's and its page's. The
+   * raw configuration is read as written: anything but a room's two lists leaves the room as its area holds it.
+   */
+  tuning(areaId: string): RoomTuning {
+    const rooms: Readonly<Record<string, unknown>> = Object(this.rooms);
+    const own = (Object.hasOwn(rooms, areaId) ? rooms[areaId] : undefined) as
+      Partial<Record<keyof RoomTuning, unknown>> | null | undefined;
+    return {
+      ...(Array.isArray(own?.include) ? { include: own.include } : {}),
+      ...(Array.isArray(own?.exclude) ? { exclude: own.exclude } : {}),
+    };
+  }
+
+  /** What a room holds (`areaContents`, the room card's own rule), as the dashboard tunes it. */
+  contents(areaId: string): AreaContents {
+    return this.memo(`contents ${areaId}`, () =>
+      areaContents(this.hass, areaId, this.tuning(areaId)),
+    );
   }
 
   t(key: MessageKey): string {

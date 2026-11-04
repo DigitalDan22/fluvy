@@ -1426,6 +1426,11 @@
     "kept_out": "{n} gizli veya tanılama varlığı · sensörlerini alan ayarlarından seçin",
     "kept_out_one": "{n} gizli veya tanılama varlığı · sensörlerini alan ayarlarından seçin"
   },
+  "room-editor": {
+    "include": "Bunları da say",
+    "exclude": "Hariç tut",
+    "entries_help": "Varlıklar, cihazlar ya da alan adları veya switch.dishwasher_* gibi bir kimlik deseni"
+  },
   "production": {
     "production": "Üretim",
     "so_far": "Bugün şimdiye kadar",

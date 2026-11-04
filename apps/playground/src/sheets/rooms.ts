@@ -174,6 +174,53 @@ const GALLEY_DEVICE = {
 };
 const GALLEY_AREA = { area_id: 'rm_galley', name: 'Open kitchen', icon: 'mdi:stove' };
 
+/*
+ * The 1.12 judge's plug: a Tuya plug that files its countdown and its relay's power-on state as no setting, beside its
+ * power — the utility room counts it (its one switch, beside what it measures), with its light.
+ */
+const PLUG = (id: string, state: string, attributes: Record<string, unknown> = {}): StateSeed => [
+  id,
+  state,
+  attributes,
+];
+const UTILITY: readonly StateSeed[] = [
+  PLUG('switch.rm_utility_plug', 'on', { friendly_name: 'Dehumidifier plug' }),
+  PLUG('number.rm_utility_plug_countdown', '0', {
+    friendly_name: 'Dehumidifier plug Countdown',
+    min: 0,
+    max: 86400,
+    step: 1,
+    unit_of_measurement: 's',
+  }),
+  PLUG('select.rm_utility_plug_relay_status', 'memory', {
+    friendly_name: 'Dehumidifier plug Power-on behaviour',
+    options: ['off', 'on', 'memory'],
+  }),
+  PLUG('sensor.rm_utility_plug_power', '182', {
+    friendly_name: 'Dehumidifier plug Power',
+    device_class: 'power',
+    unit_of_measurement: 'W',
+  }),
+  ['light.rm_utility', 'off', { friendly_name: 'Utility light', supported_color_modes: ['onoff'] }],
+];
+const UTILITY_ENTITIES = Object.fromEntries(
+  UTILITY.map(([entity_id]) => [
+    entity_id,
+    entity_id.includes('plug')
+      ? { entity_id, device_id: 'rm-utility-plug', platform: 'tuya' }
+      : { entity_id, area_id: 'rm_utility' },
+  ]),
+);
+const UTILITY_DEVICE = {
+  id: 'rm-utility-plug',
+  name: 'Dehumidifier plug',
+  name_by_user: null,
+  area_id: 'rm_utility',
+  model: 'Smart plug',
+  manufacturer: 'Tuya',
+  via_device_id: null,
+};
+
 /**
  * A room's page as the automatic dashboard lays it out (#76), in the page's language: the way back, then what it
  * holds — in a column, in reading order. Read when the frame is drawn, once the page's words have landed.
@@ -296,6 +343,7 @@ export const sheet: SheetSpec = {
     ...READINGS,
     ...GARAGE,
     ...GALLEY,
+    ...UTILITY,
     [
       'climate.rm_study',
       'heat',
@@ -390,8 +438,13 @@ export const sheet: SheetSpec = {
       ]),
       ...GARAGE_ENTITIES,
       ...GALLEY_ENTITIES,
+      ...UTILITY_ENTITIES,
     },
-    devices: { [GARAGE_DEVICE.id]: GARAGE_DEVICE, [GALLEY_DEVICE.id]: GALLEY_DEVICE },
+    devices: {
+      [GARAGE_DEVICE.id]: GARAGE_DEVICE,
+      [GALLEY_DEVICE.id]: GALLEY_DEVICE,
+      [UTILITY_DEVICE.id]: UTILITY_DEVICE,
+    },
     areas: {
       rm_living: {
         area_id: 'rm_living',
@@ -430,6 +483,7 @@ export const sheet: SheetSpec = {
       rm_den: { area_id: 'rm_den', name: 'Den', icon: 'mdi:sofa' },
       rm_garage: GARAGE_AREA,
       rm_galley: GALLEY_AREA,
+      rm_utility: { area_id: 'rm_utility', name: 'Utility room', icon: 'mdi:washing-machine' },
     },
     floors: {
       rm_ground: { floor_id: 'rm_ground', name: 'Ground floor', level: 0 },
@@ -583,6 +637,32 @@ export const sheet: SheetSpec = {
         }),
         room({ area: 'rm_living', name: 'Technical Room', variant: 'row', name_lines: 2, cols: 6 }),
       ],
+    },
+    // #95, the promised tuning: the dishwasher's power counted (`include`), the counter light left out (`exclude`)
+    {
+      title: 'Room · a room’s own include and exclude (#95)',
+      cards: [
+        room({ area: 'rm_galley', variant: 'row', include: ['switch.rm_dishwasher_power'] }),
+        room({
+          area: 'rm_galley',
+          variant: 'tile',
+          exclude: ['light.rm_galley_counter'],
+          path: '/fluvy-auto/room-rm_galley',
+        }),
+      ],
+    },
+    // a room of sensors alone: its readings, and no row of devices it has none of
+    {
+      title: 'Room · sensors alone, no devices',
+      cards: [
+        room({ area: 'rm_garten', variant: 'photo', path: '/fluvy-auto/room-rm_garten' }),
+        room({ area: 'rm_garten', variant: 'tile', path: '/fluvy-auto/room-rm_garten' }),
+      ],
+    },
+    // a Tuya plug that files its countdown and power-on behaviour as no setting: its switch counts, as a plug's does
+    {
+      title: 'Room · a plug with a timer and a power-on behaviour',
+      cards: [room({ area: 'rm_utility', variant: 'tile', controls: 'tiles' })],
     },
   ],
 };

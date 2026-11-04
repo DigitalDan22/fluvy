@@ -1,10 +1,4 @@
-import {
-  areaClimate,
-  areaContents,
-  climateAttribute,
-  holdsSomething,
-  type AreaRegistryEntry,
-} from '@fluvy/core';
+import { areaClimate, climateAttribute, holdsSomething, type AreaRegistryEntry } from '@fluvy/core';
 import { applianceSections } from './appliances.js';
 import { byArea, capped, each, moreAfter, moreKeys } from './caps.js';
 import type { HomeRegistry } from './home-registry.js';
@@ -33,16 +27,18 @@ import type { Card, Section, StrategyContext, View } from './types.js';
 
 /** The areas a dashboard shows: those with something to show, by the room card's own rule, floor by floor. */
 export function roomsOf(home: HomeRegistry): AreaRegistryEntry[] {
-  return home.areas.filter((area) => holdsSomething(areaContents(home.registries, area.area_id)));
+  return home.areas.filter((area) => holdsSomething(home.contents(area.area_id)));
 }
 
 const roomPath = (base: string, area: AreaRegistryEntry): string => `${base}/room-${area.area_id}`;
 
+/** A room's card: its page as its path, the dashboard's style, and what the dashboard tunes it to hold (`rooms`). */
 export const roomCard = (ctx: StrategyContext, area: AreaRegistryEntry): Card => ({
   type: 'custom:fluvy-room-card',
   area: area.area_id,
   path: roomPath(ctx.base, area),
   ...(ctx.style.room ? { variant: ctx.style.room } : {}),
+  ...ctx.home.tuning(area.area_id),
   grid_options: { columns: 12 },
 });
 
@@ -88,8 +84,9 @@ export interface RoomBack {
 }
 
 /**
- * What a room holds, each entity it shows (`areaContents`: the room card's own rule) in one part of its page (#76):
- * every device its card counts is on it, and every reading, sensor and control its area shows besides (#95).
+ * What a room holds, each entity it shows (`areaContents`: the room card's own rule, as the dashboard tunes it) in one
+ * part of its page (#76): every device its card counts is on it, and every reading, sensor and control its area shows
+ * besides (#95).
  */
 export interface RoomParts {
   readonly thermostats: readonly string[];
@@ -117,7 +114,7 @@ export interface RoomParts {
 
 /** A room's parts, each in the house's order. */
 export function roomParts(home: HomeRegistry, areaId: string): RoomParts {
-  const shown = areaContents(home.registries, areaId).entities;
+  const shown = home.contents(areaId).entities;
   const has = new Set(shown);
   const of = (ids: readonly string[]): string[] => ids.filter((id) => has.has(id));
   const devices = home.applianceDevices.filter((device) => home.deviceArea(device) === areaId);

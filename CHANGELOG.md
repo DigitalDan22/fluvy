@@ -49,6 +49,16 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - A row of modes, presets or sources whose longest word would not hold beside its glyph even on a line of its own (an
   air conditioner's Dry mode in Portuguese or Italian, in half a section) shows its words without their glyphs, where
   the word was cut.
+- A room of sensors alone shows its readings and no "All devices" row, which said nothing under its title.
+- A plug whose integration files its countdown or its power-on behaviour as no setting (some Tuya and Zigbee2MQTT
+  plugs) counts on its room card again: its one switch beside a power or energy reading, where 1.12 took it for an
+  appliance's option.
+
+### Added
+
+- `include` and `exclude` on the room card, in its editor too: entity ids, patterns of ids (`switch.dishwasher_*`),
+  device ids or domains, to count what the room's rule leaves out or leave out what it shows. The automatic dashboards
+  take them per room (`rooms`), for the room's card and its page. Thanks to @rammium (#95).
 
 ## [1.12.0] — 2026-11-04
 

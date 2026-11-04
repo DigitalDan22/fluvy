@@ -1426,6 +1426,11 @@
     "kept_out": "{n} ausgeblendete oder Diagnose-Entitäten · wähle seine Sensoren in den Bereichseinstellungen",
     "kept_out_one": "{n} ausgeblendete oder Diagnose-Entität · wähle seine Sensoren in den Bereichseinstellungen"
   },
+  "room-editor": {
+    "include": "Auch zählen",
+    "exclude": "Weglassen",
+    "entries_help": "Entitäten, Geräte oder Domänen, oder ein Muster von IDs wie switch.dishwasher_*"
+  },
   "production": {
     "production": "Erzeugung",
     "so_far": "Heute bisher",

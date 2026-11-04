@@ -800,6 +800,35 @@ first_weekday: today
 calendars:
   - calendar.family
   - calendar.work
+## Rooms
+
+The room card draws a room from its area: its picture (`photo`), a head (`tile`) or a compact tile (`row`), its
+readings, how many of its devices are on, and its controls as rows or tiles. Its devices are what a person calls a
+room's devices: its lights, its switches that power something (a plug that says it is one, or one switch beside a
+power or energy reading), its fans, covers, players, thermostats and vacuums; never a sensor, nor an appliance's own
+options. `include` counts what that leaves out and `exclude` leaves out what it shows, each a list of entity ids,
+patterns of ids (`switch.dishwasher_*`), device ids or domains (`media_player`); an entity or a device you name comes
+from wherever its area is, and what a room includes it keeps whatever it excludes. What a room leaves out leaves its
+count, its rows and its readings.
+
+```yaml
+type: custom:fluvy-room-card
+area: kitchen
+exclude:
+  - switch.dishwasher_*
+include:
+  - switch.coffee_machine
+```
+
+The automatic dashboards take the same say per room: `rooms` in the dashboard's raw configuration, by area id, tunes
+that room's card, its count and its page.
+
+```yaml
+strategy:
+  type: custom:fluvy-home
+  rooms:
+    kitchen:
+      exclude: [switch.dishwasher_*]
 ```
 
 <!-- generated:cards -->
@@ -840,7 +869,7 @@ calendars:
 
 | Card | Type | What it is | Options | Reads |
 | --- | --- | --- | --- | --- |
-| **Room** | `custom:fluvy-room-card` | A room of the house from its area: its picture, its climate, what is on, and its controls. | `area`, `variant` (`photo`, `tile`, `row`), `controls` (`rows`, `tiles`, `none`), `show_climate`, `show_count`, `picture`, `path`, `temperature_entity`, `humidity_entity`, `tint` (`on`, `always`), `name_lines` (`1`, `2`), `light_colors`, `light_whites` (`palette`, `temperature`), `tiles` (a list: `entity`, `name`, `icon`, `tone`, `color`, `readouts`, `since`, `tap_action`, `hold_action`) | — |
+| **Room** | `custom:fluvy-room-card` | A room of the house from its area: its picture, its climate, what is on, and its controls. | `area`, `variant` (`photo`, `tile`, `row`), `controls` (`rows`, `tiles`, `none`), `show_climate`, `show_count`, `picture`, `path`, `temperature_entity`, `humidity_entity`, `include`, `exclude`, `tint` (`on`, `always`), `name_lines` (`1`, `2`), `light_colors`, `light_whites` (`palette`, `temperature`), `tiles` (a list: `entity`, `name`, `icon`, `tone`, `color`, `readouts`, `since`, `tap_action`, `hold_action`) | — |
 | **Map** | `custom:fluvy-map-card` | Where everyone is: the house’s zones as columns of faces, a row a person, or Home Assistant’s map on a plate. | `title`, `variant` (`zones`, `map`, `rows`), `map_shape` (`wide`, `square`), `hours_to_show`, `default_zoom`, `fit_zones`, `show_empty`, `show_distance`, `map_path`, `empty_text`, `hide_empty`, `zones` (a list: `entity`, `name`, `icon`) | — |
 
 ## Structure and navigation

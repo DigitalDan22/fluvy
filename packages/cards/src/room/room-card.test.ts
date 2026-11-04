@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { afterAll, afterEach, describe, expect, it } from 'vitest';
 import {
+  areaContents,
   areaEntities,
   LANGUAGE_CODES,
   localize,
@@ -9,7 +10,7 @@ import {
 } from '@fluvy/core';
 import { familiesDefined } from '../index.js';
 import { cardForm, drawEditor, listTitles, shownNames } from '../shared/fixtures/editor.js';
-import { FluvyRoomCard, type RoomCardConfig } from './room-card.js';
+import { FluvyRoomCard, roomHeight, type RoomCardConfig } from './room-card.js';
 import * as roomEditor from './room-editor.js';
 
 // the index fetches the lazy families: they land before this file's page goes
@@ -374,6 +375,33 @@ describe('a room counts its devices, never an appliance’s controls (#95)', () 
   });
 });
 
+describe('a room of sensors alone', () => {
+  afterEach(() => document.body.replaceChildren());
+
+  it('shows its readings and no row of the devices it has none of, and declares as much', async () => {
+    for (const variant of ['photo', 'tile'] as const) {
+      const card = await room({ area: 'garten', variant });
+      expect(root(card).querySelector('.am-rows'), variant).toBeNull();
+      expect(root(card).querySelector('.fv-empty-state'), variant).toBeNull();
+    }
+    const hass = house();
+    const found = areaContents(hass, 'garten');
+    // the house's height: the photo's hero and its readouts, the tile's head, and nothing under them
+    expect(
+      roomHeight(
+        { type: 'x', area: 'garten', variant: 'photo' },
+        { found, picture: false, admin: true },
+      ),
+    ).toBe(160 + 64 + 20);
+    expect(
+      roomHeight(
+        { type: 'x', area: 'garten', variant: 'tile' },
+        { found, picture: false, admin: true },
+      ),
+    ).toBe(20 + 44 + 20);
+  });
+});
+
 /** A room drawn at `width` on a stub ruler: what happy-dom cannot lay out. */
 async function roomAt(
   config: Partial<RoomCardConfig> & { area: string },
@@ -520,5 +548,55 @@ describe('the room card’s editor offers what acts in the room’s style (#58)'
     expect(names).not.toContain('readouts');
     expect(roomEditor.keys).not.toContain('size');
     expect(roomEditor.keys).not.toContain('readouts');
+  });
+});
+
+describe('a room’s own include and exclude (#95)', () => {
+  afterEach(() => document.body.replaceChildren());
+
+  it('counts what it includes and leaves out what it excludes, in its readout and its line alike', async () => {
+    const hass = house([...SEEDS, ['light.flur', 'on'], ['switch.flur_heater', 'on']]);
+    const tuned = {
+      ...hass,
+      entities: {
+        ...hass.entities,
+        'light.flur': { entity_id: 'light.flur', area_id: 'flur' },
+        'switch.flur_heater': { entity_id: 'switch.flur_heater', area_id: 'flur' },
+      },
+    } as HomeAssistant;
+    const card = await room({ area: 'flur', variant: 'photo', exclude: ['switch'] }, tuned);
+    expect(readouts(card).at(-1)).toBe('1of 1');
+    const row = await room(
+      { area: 'flur', variant: 'row', exclude: ['switch'], include: ['light.keller'] },
+      tuned,
+    );
+    expect(root(row).querySelector('.fv-tile__state')?.textContent?.trim()).toBe(
+      '1 of 2 on · 19.8°',
+    );
+  });
+
+  it('offers its entities, devices and domains to choose, and a pattern typed', async () => {
+    const element = await FluvyRoomCard.getConfigElement();
+    (element as HTMLElement & { hass: HomeAssistant }).hass = house();
+    const editor = await drawEditor(element, { type: 'custom:fluvy-room-card', area: 'flur' });
+    const selects = [...editor.shadowRoot!.querySelectorAll('ha-form')]
+      .flatMap(
+        (form) => (form as unknown as { schema: { name: string; selector?: unknown }[] }).schema,
+      )
+      .filter((item) => item.name === 'include' || item.name === 'exclude')
+      .map(
+        (item) =>
+          (item.selector as { select: { options: { value: string }[]; custom_value: boolean } })
+            .select,
+      );
+    expect(selects).toHaveLength(2);
+    for (const select of selects) {
+      expect(select.custom_value).toBe(true);
+      expect(select.options.map((option) => option.value)).toEqual([
+        'sensor.flur_a',
+        'sensor.flur_b',
+        'sensor',
+      ]);
+    }
   });
 });

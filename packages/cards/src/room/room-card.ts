@@ -22,6 +22,7 @@ import {
   type HomeAssistant,
   type LovelaceGridOptions,
   type Registries,
+  type RoomTuning,
   type ValueParts,
 } from '@fluvy/core';
 import {
@@ -53,7 +54,7 @@ const s = strings('room');
 export type RoomVariant = 'photo' | 'tile' | 'row';
 export type RoomControls = 'rows' | 'tiles' | 'none';
 
-export interface RoomCardConfig extends FluvyCardConfig, LightColours {
+export interface RoomCardConfig extends FluvyCardConfig, LightColours, RoomTuning {
   /** The area (its id). */
   area: string;
   /** `photo` (default where the area has a picture, else `tile`): the picture, the readouts and the controls. `tile`: the head and the controls. `row`: a compact tile. */
@@ -121,10 +122,10 @@ export interface RoomHolds {
 
 /**
  * The card's height at a 360 column, for the automatic dashboard's columns. The house says what the room holds
- * (`house-heights.ts`): its rows (the lights, the climate, the media, then every device: four where the house is not
- * there to say), its tiles (its controls, four at most), its readouts (the climate it reads and its count), its
- * picture (the photo card where the area has one, else the tile); a room with nothing to show is the panel (an
- * administrator reads why under it) where the rest would be.
+ * (`house-heights.ts`): its rows (the lights, the climate, the media, then every device where it has one: four where
+ * the house is not there to say), its tiles (its controls, four at most), its readouts (the climate it reads and its
+ * count), its picture (the photo card where the area has one, else the tile); a room with nothing to show is the
+ * panel (an administrator reads why under it) where the rest would be.
  */
 export function roomHeight(config: RoomCardConfig, room?: RoomHolds): number {
   const lines = twoLines(config) ? NAME_LINE.compact : 0;
@@ -138,14 +139,15 @@ export function roomHeight(config: RoomCardConfig, room?: RoomHolds): number {
   const hint = room?.admin && (found?.keptOut ?? 0) > 0 ? 32 : 0;
   const has = (domain: string): number =>
     found?.devices.some((id) => id.startsWith(`${domain}.`)) ? 1 : 0;
-  const rows = found ? has('light') + has('climate') + has('media_player') + 1 : 4;
-  const tiles = Math.max(
-    1,
-    Math.min(TILES, config.tiles?.length ?? found?.controls.length ?? TILES),
-  );
+  // every device's row only where it has one (a room of sensors alone has its readings, and no rows)
+  const rows = found
+    ? has('light') + has('climate') + has('media_player') + (found.devices.length ? 1 : 0)
+    : 4;
+  const tiles = Math.min(TILES, config.tiles?.length ?? found?.controls.length ?? TILES);
+  const drawn = config.controls === 'none' ? 0 : config.controls === 'tiles' ? tiles : rows;
   const controls = empty
     ? 16 + EMPTY + hint
-    : config.controls === 'none'
+    : !drawn
       ? 0
       : config.controls === 'tiles'
         ? 16 + rowsOf(tiles, 2) * (INNER + lines + 8) - 8
@@ -253,7 +255,7 @@ export class FluvyRoomCard extends FluvyTileCard {
     const { hass, room } = this;
     if (!hass || !room) return NOTHING;
     if (this.held?.hass === hass && this.held.config === room) return this.held.contents;
-    const found = areaContents(hass, room.area);
+    const found = areaContents(hass, room.area, room);
     const contents: RoomContents = {
       ...found,
       on: found.devices.filter((id) => isActive(this.entity(id))).length,
@@ -286,12 +288,16 @@ export class FluvyRoomCard extends FluvyTileCard {
   }
 
   protected override watched(): readonly string[] {
-    const { members, climate } = this.contents();
+    const { members, entities, climate } = this.contents();
     // every entity the area holds, shown or not: one whose state comes late fills the room, a hidden one moves the hint;
-    // a light group's members (its colour is theirs); and what a tile's last change is read from (`since`)
+    // what it includes from elsewhere; a light group's members (its colour is theirs); and what a tile's last change is
+    // read from (`since`)
     const tiles = this.tiles();
     return withMembers(
-      [...idsOf([...members, ...tiles, climate.temperature, climate.humidity]), ...sinceIds(tiles)],
+      [
+        ...idsOf([...members, ...entities, ...tiles, climate.temperature, climate.humidity]),
+        ...sinceIds(tiles),
+      ],
       this.hass,
     );
   }
@@ -419,13 +425,14 @@ export class FluvyRoomCard extends FluvyTileCard {
 
   /** The category rows: the lights, the climate, the media, then every device (its page reaches the rest). */
   private renderRows(): TemplateResult | typeof nothing {
-    const { entities, devices: ids } = this.contents();
-    if (!this.hass || !entities.length) return nothing;
+    const { devices: ids } = this.contents();
+    if (!this.hass) return nothing;
     const to = this.destination();
     const lights = ids.filter((id) => id.startsWith('light.'));
     const climate = ids.find((id) => id.startsWith('climate.'));
     const player = ids.find((id) => id.startsWith('media_player.'));
     const unavailable = ids.filter((id) => !isUsable(this.entity(id))).length;
+    // every device's row where the room has one: a room of sensors alone has its readings and no rows
     const rows: (readonly [glyph: string, title: string, sub: string, tone: Tone])[] = [
       ...(lights.length
         ? [
@@ -457,15 +464,20 @@ export class FluvyRoomCard extends FluvyTileCard {
             ] as const,
           ]
         : []),
-      [
-        'grid',
-        s(this.hass, 'all_devices'),
-        unavailable
-          ? plural(this.hass, 'room.unavailable', unavailable, { count: unavailable })
-          : counted(this.hass, ids, (id) => this.entity(id)),
-        'neutral',
-      ],
+      ...(ids.length
+        ? [
+            [
+              'grid',
+              s(this.hass, 'all_devices'),
+              unavailable
+                ? plural(this.hass, 'room.unavailable', unavailable, { count: unavailable })
+                : counted(this.hass, ids, (id) => this.entity(id)),
+              'neutral',
+            ] as const,
+          ]
+        : []),
     ];
+    if (!rows.length) return nothing;
     // a column too narrow for a word beside its chevron (its 44) gives every row's circle to the words, as every list does
     const keep = this.headFit.rowsKeepIcon(
       this.contentWidth,

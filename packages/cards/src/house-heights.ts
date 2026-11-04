@@ -176,7 +176,7 @@ function room(config: RoomCardConfig, hass: HomeAssistant): number {
     config,
     area
       ? {
-          found: areaContents(hass, areaId),
+          found: areaContents(hass, areaId, config),
           picture: Boolean(area.picture),
           admin: Boolean(hass.user?.is_admin),
         }

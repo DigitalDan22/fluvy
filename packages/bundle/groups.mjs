@@ -185,11 +185,12 @@ const EDITOR = /\/packages\/cards\/src\/shared\/rows-editor\.ts/;
 
 /**
  * The editors the cards every page carries keep in a module of their own (`tile/tile-editor.ts`: a card's form, its
- * lists, what it does by default — `Card.editor()`), and the template card's, which is built on the tile's: fetched
- * with the visual editor, the first time one of them is edited. Named before the families, so a family's folder never
- * keeps one.
+ * lists, what it does by default — `Card.editor()`), and the template card's, which is built on the tile's, with the
+ * English an editor registers of its own (the room's): fetched with the visual editor, the first time one of them is
+ * edited. Named before the families, so a family's folder never keeps one.
  */
-const FORMS = /\/packages\/cards\/src\/([\w-]+)\/\1-editor\.ts$/;
+const FORMS =
+  /\/packages\/(cards\/src\/([\w-]+)\/\2-editor\.ts$|core\/src\/i18n\/locales\/en\/room-editor\.json)/;
 
 /**
  * @typedef {object} Group

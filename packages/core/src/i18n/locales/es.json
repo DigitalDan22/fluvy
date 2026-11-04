@@ -1426,6 +1426,11 @@
     "kept_out": "{n} entidades ocultas o de diagnóstico · elige sus sensores en los ajustes del área",
     "kept_out_one": "{n} entidad oculta o de diagnóstico · elige sus sensores en los ajustes del área"
   },
+  "room-editor": {
+    "include": "Contar también",
+    "exclude": "Dejar fuera",
+    "entries_help": "Entidades, dispositivos o dominios, o un patrón de ID como switch.dishwasher_*"
+  },
   "production": {
     "production": "Producción",
     "so_far": "Hoy hasta ahora",

@@ -1426,6 +1426,11 @@
     "kept_out": "{n} verborgen of diagnostische entiteiten · kies de sensoren in de instellingen van de ruimte",
     "kept_out_one": "{n} verborgen of diagnostische entiteit · kies de sensoren in de instellingen van de ruimte"
   },
+  "room-editor": {
+    "include": "Ook meetellen",
+    "exclude": "Weglaten",
+    "entries_help": "Entiteiten, apparaten of domeinen, of een patroon van ID’s zoals switch.dishwasher_*"
+  },
   "production": {
     "production": "Opwek",
     "so_far": "Tot nu toe vandaag",

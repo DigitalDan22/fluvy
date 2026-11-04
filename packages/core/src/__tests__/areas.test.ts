@@ -249,6 +249,128 @@ describe('the house by its rooms', () => {
     expect(isLoad(hidden, 'switch.dishwasher_extra_dry')).toBe(false);
   });
 
+  /** A house of one area whose entities are seeded with their state, attributes and registry entry. */
+  type Seed = [id: string, state: string, attributes?: Record<string, unknown>, entry?: object];
+  const seeded = (seeds: readonly Seed[], more: Partial<Registries> = {}): Registries => ({
+    ...house(),
+    states: Object.fromEntries(
+      seeds.map(([id, value, attributes]) => state(id, value, attributes)),
+    ) as Registries['states'],
+    entities: Object.fromEntries(
+      seeds.map(([id, , , entry]) => [id, { entity_id: id, area_id: 'kitchen', ...entry }]),
+    ),
+    devices: {},
+    areas: { kitchen: { area_id: 'kitchen', name: 'Kitchen' } },
+    ...more,
+  });
+
+  it('counts a plug whose integration files its timer or power-on behaviour as no setting, never an appliance’s options', () => {
+    const on = (device: string) => ({ device_id: device });
+    const hass = seeded([
+      // Tuya: a countdown and the relay's power-on state, no category, beside its power and its energy
+      ['switch.tuya_plug', 'on', {}, on('tuya')],
+      ['number.tuya_plug_countdown', '0', {}, on('tuya')],
+      ['select.tuya_plug_relay_status', 'memory', {}, on('tuya')],
+      ['sensor.tuya_plug_power', '12', { device_class: 'power' }, on('tuya')],
+      ['sensor.tuya_plug_energy', '3.2', { device_class: 'energy' }, on('tuya')],
+      // Zigbee2MQTT: its power-on behaviour beside its energy, read as a diagnostic
+      ['switch.z2m_plug', 'off', {}, on('z2m')],
+      ['select.z2m_plug_power_on_behavior', 'off', {}, on('z2m')],
+      [
+        'sensor.z2m_plug_energy',
+        '1.1',
+        { device_class: 'energy' },
+        { ...on('z2m'), entity_category: 'diagnostic' },
+      ],
+      // a relay with a setting and nothing measured: nothing says it is a plug
+      ['switch.relay', 'off', {}, on('relay')],
+      ['select.relay_power_on', 'off', {}, on('relay')],
+      // a washer that measures its power: one option switch, its programme and its start
+      ['switch.washer_child_lock', 'off', {}, on('washer')],
+      ['select.washer_programme', 'cotton', {}, on('washer')],
+      ['button.washer_start', 'unknown', {}, on('washer')],
+      ['sensor.washer_power', '1900', { device_class: 'power' }, on('washer')],
+      // a dishwasher that measures its energy: its option switches beside its programme
+      ['switch.dishwasher_extra_dry', 'on', {}, on('dishwasher')],
+      ['switch.dishwasher_sanitize', 'off', {}, on('dishwasher')],
+      ['select.dishwasher_program', 'eco', {}, on('dishwasher')],
+      ['sensor.dishwasher_energy', '0.9', { device_class: 'energy' }, on('dishwasher')],
+    ]);
+    expect(isLoad(hass, 'switch.tuya_plug')).toBe(true);
+    expect(isLoad(hass, 'switch.z2m_plug')).toBe(true);
+    expect(isLoad(hass, 'switch.relay')).toBe(false);
+    expect(isLoad(hass, 'switch.washer_child_lock')).toBe(false);
+    expect(isLoad(hass, 'switch.dishwasher_extra_dry')).toBe(false);
+    expect(areaContents(hass, 'kitchen').devices).toEqual(['switch.tuya_plug', 'switch.z2m_plug']);
+  });
+
+  it('takes a room’s own say: what it includes counts, what it excludes leaves, by id, pattern, device or domain (#95)', () => {
+    const hass = seeded(
+      [
+        ['light.kitchen', 'on'],
+        ['media_player.kitchen_radio', 'playing'],
+        ['valve.kitchen_water', 'open'],
+        ['sensor.fridge_temperature', '4', { device_class: 'temperature' }],
+        ['sensor.kitchen_temperature', '21', { device_class: 'temperature' }],
+        ['switch.dishwasher_extra_dry', 'on', {}, { device_id: 'dishwasher' }],
+        ['switch.dishwasher_sanitize', 'off', {}, { device_id: 'dishwasher' }],
+        ['select.dishwasher_program', 'eco', {}, { device_id: 'dishwasher' }],
+        ['light.hall', 'off', {}, { area_id: 'hall' }],
+        ['switch.hall_hidden', 'off', {}, { area_id: 'hall', hidden: true }],
+      ],
+      {
+        devices: {
+          dishwasher: { id: 'dishwasher', area_id: null, name: 'Dishwasher', name_by_user: null },
+        },
+      },
+    );
+    const contents = (include?: unknown[], exclude?: unknown[]) =>
+      areaContents(hass, 'kitchen', {
+        include: include as string[] | undefined,
+        exclude: exclude as string[] | undefined,
+      });
+    expect(contents().devices).toEqual(['light.kitchen', 'media_player.kitchen_radio']);
+    // a domain, a pattern of ids, an entity: out of the count and out of the room, its reading taken from what is left
+    const tuned = contents(undefined, [
+      'media_player',
+      'switch.dishwasher_*',
+      'sensor.fridge_temperature',
+    ]);
+    expect(tuned.devices).toEqual(['light.kitchen']);
+    expect(tuned.entities).toEqual([
+      'light.kitchen',
+      'select.dishwasher_program',
+      'sensor.kitchen_temperature',
+      'valve.kitchen_water',
+    ]);
+    expect(contents().climate.temperature).toBe('sensor.fridge_temperature');
+    expect(tuned.climate.temperature).toBe('sensor.kitchen_temperature');
+    // a device: all of it out
+    expect(contents(undefined, ['dishwasher']).entities).not.toContain('select.dishwasher_program');
+    // counted where the rule leaves them out: the valve by its id, the dishwasher's every entity by its device; an
+    // entity named whole from another room, even hidden
+    expect(
+      contents(['valve.kitchen_water', 'dishwasher', 'light.hall', 'switch.hall_hidden']).devices,
+    ).toEqual([
+      'light.hall',
+      'light.kitchen',
+      'media_player.kitchen_radio',
+      'select.dishwasher_program',
+      'switch.dishwasher_extra_dry',
+      'switch.dishwasher_sanitize',
+      'switch.hall_hidden',
+      'valve.kitchen_water',
+    ]);
+    // what it includes it keeps, whatever it excludes; a pattern reads the room's own, never the house's
+    expect(
+      contents(['switch.dishwasher_sanitize', 'light.*'], ['switch', 'light']).devices,
+    ).toEqual(['light.kitchen', 'media_player.kitchen_radio', 'switch.dishwasher_sanitize']);
+    // nothing a config could stray into names anything, nor reads as an expression
+    expect(contents([42, null, '', { id: 'x' }], ['', 'light.(kitchen)', '.*']).devices).toEqual(
+      contents().devices,
+    );
+  });
+
   it('holds a room with a reading and nothing else, and none with only a config entity', () => {
     const base = house();
     const hass: Registries = {

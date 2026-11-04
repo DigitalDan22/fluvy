@@ -1426,6 +1426,11 @@
     "kept_out": "{n} entità nascoste o di diagnostica · scegli i suoi sensori nelle impostazioni dell’area",
     "kept_out_one": "{n} entità nascosta o di diagnostica · scegli i suoi sensori nelle impostazioni dell’area"
   },
+  "room-editor": {
+    "include": "Conta anche",
+    "exclude": "Escludi",
+    "entries_help": "Entità, dispositivi o domini, oppure uno schema di ID come switch.dishwasher_*"
+  },
   "production": {
     "production": "Produzione",
     "so_far": "Finora oggi",

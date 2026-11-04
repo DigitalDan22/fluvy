@@ -1426,6 +1426,11 @@
     "kept_out": "{n} entités masquées ou de diagnostic · choisissez ses capteurs dans les paramètres de la pièce",
     "kept_out_one": "{n} entité masquée ou de diagnostic · choisissez ses capteurs dans les paramètres de la pièce"
   },
+  "room-editor": {
+    "include": "Compter aussi",
+    "exclude": "Laisser de côté",
+    "entries_help": "Des entités, des appareils ou des domaines, ou un motif d’identifiants comme switch.dishwasher_*"
+  },
   "production": {
     "production": "Production",
     "so_far": "Jusqu’ici aujourd’hui",

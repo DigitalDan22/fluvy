@@ -14,6 +14,7 @@ import type items from './locales/en/items.json';
 import type job from './locales/en/job.json';
 import type media from './locales/en/media.json';
 import type panel from './locales/en/panel.json';
+import type roomEditor from './locales/en/room-editor.json';
 import type slider from './locales/en/slider.json';
 import type template from './locales/en/template.json';
 import type web from './locales/en/web.json';
@@ -41,6 +42,7 @@ export type Catalogue = typeof core &
   typeof job &
   typeof media &
   typeof panel &
+  typeof roomEditor &
   typeof slider &
   typeof template &
   typeof web;

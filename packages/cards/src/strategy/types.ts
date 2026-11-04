@@ -1,4 +1,10 @@
-import type { HomeAssistant, LanguageCode, LovelaceCardConfig, MessageKey } from '@fluvy/core';
+import type {
+  HomeAssistant,
+  LanguageCode,
+  LovelaceCardConfig,
+  MessageKey,
+  RoomTuning,
+} from '@fluvy/core';
 import type { FlowStyle } from '../energy-flow/energy-flow-card.js';
 import type { ThermostatVariant } from '../thermostat/thermostat-card.js';
 import type { HomeRegistry } from './home-registry.js';
@@ -85,6 +91,11 @@ export interface FluvyStrategyConfig {
   greeting_tabs?: 'show' | 'hide';
   /** How many of a long list a view shows (default: the house's caps, each with its "N more" row). */
   caps?: Caps;
+  /**
+   * A room's own `include` and `exclude` by its area's id (#95), as its card takes them: what its card counts and fills
+   * by, whether the dashboard shows it, and what its page holds.
+   */
+  rooms?: Readonly<Record<string, RoomTuning>>;
 }
 
 /** The home dashboard's config: the same keys, its views by name. */
