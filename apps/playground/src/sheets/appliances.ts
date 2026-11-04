@@ -829,6 +829,14 @@ export const sheet: SheetSpec = {
       ],
     }),
     frame({
+      title: 'Compact · its buttons asked for',
+      cards: [
+        card('lg-washer', { variant: 'compact', show_controls: true }),
+        card('hc-oven', { variant: 'compact', show_controls: true }),
+        card('lg-fridge', { variant: 'compact', show_controls: true }),
+      ],
+    }),
+    frame({
       title: 'Ring',
       cards: [
         card('hc-dish', { variant: 'ring' }),

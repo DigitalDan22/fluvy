@@ -851,6 +851,14 @@ describe('the whole card’s standard slot (#47)', () => {
     // a range's five burners as a hob, three a row: two rows of plates; compact, two rows of cells and its oven's line
     expect(height({ device: 'rep-oven', kind: 'hob' }, hass)).toBe(472);
     expect(height({ device: 'rep-oven', kind: 'hob', variant: 'compact' }, hass)).toBe(264);
+    // compact with its buttons asked for: their row under it, as a ring's; a fridge's none
+    const compact = height({ device: 'hc-dish', variant: 'compact' }, hass);
+    expect(height({ device: 'hc-dish', variant: 'compact', show_controls: true }, hass)).toBe(
+      compact + 60,
+    );
+    expect(height({ device: 'miele-fridge', variant: 'compact', show_controls: true }, hass)).toBe(
+      height({ device: 'miele-fridge', variant: 'compact' }, hass),
+    );
     // the kind the house says, not a washer's: a fridge's two dials, no buttons
     expect(height({ device: 'miele-fridge', variant: 'ring' }, hass)).toBe(288);
     // without the house, the family's from the config alone

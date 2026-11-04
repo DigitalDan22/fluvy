@@ -161,10 +161,12 @@ export const applianceHeight = (config: LovelaceCardConfig): number => {
           : DIAL + LINE;
     return FRAME + dial + buttons;
   }
-  // compact: one row of extra-small readouts, where it names some or its kind has them
+  // compact: one row of extra-small readouts, where it names some or its kind has them, and its buttons where asked
+  // for (`show_controls: true`), as a ring's under its dial
   const named = config['readouts'];
   const stats = Array.isArray(named) ? named.length > 0 : READOUTS.includes(kind);
-  return FRAME + heroHeight(hero, config, kind) + (stats ? CELLS : 0);
+  const asked = config['show_controls'] === true && !QUIET.includes(kind) ? CELLS : 0;
+  return FRAME + heroHeight(hero, config, kind) + (stats ? CELLS : 0) + asked;
 };
 
 /** Rows before a "{count} more" row takes the others, when the config says nothing. */
