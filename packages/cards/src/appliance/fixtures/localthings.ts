@@ -103,7 +103,6 @@ export const localthingsDishwasher: FixtureAt = () => {
         start: 'button.geschirrspuler_kuche_start',
         pause: 'button.geschirrspuler_kuche_pause',
         stop: 'button.geschirrspuler_kuche_stopp',
-        water: 'sensor.geschirrspuler_kuche_wasserverbrauch',
       },
     },
   };
@@ -208,7 +207,6 @@ export const localthingsWasher: FixtureAt = (now) => {
         pause: 'button.waschmaschine_flur_pause',
         stop: 'button.waschmaschine_flur_stopp',
         energy: 'sensor.waschmaschine_flur_energie',
-        water: 'sensor.waschmaschine_flur_wasserverbrauch',
       },
     },
   };

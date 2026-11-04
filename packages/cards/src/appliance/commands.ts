@@ -368,12 +368,15 @@ export function commandsOf(input: CommandInput): Command[] {
         : remoteOff
           ? 'remote_off'
           : undefined;
+    // a litter box's resume restarts a clean a pet paused (a cat stepped in): it asks as the clean does
     const confirm =
       action === 'stop' || action === 'feed' || action === 'clean' || action === 'level'
         ? action
-        : action === 'power_off'
-          ? offConfirm(status, kind)
-          : undefined;
+        : action === 'resume' && kind === 'litter_box'
+          ? 'clean'
+          : action === 'power_off'
+            ? offConfirm(status, kind)
+            : undefined;
     const value = call.data['value'];
     commands.push({
       control,

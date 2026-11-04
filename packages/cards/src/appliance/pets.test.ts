@@ -447,6 +447,16 @@ describe('the writes their source pins', () => {
     expect(litter.find((c) => c.action === 'clean')?.confirm).toBe('clean');
     expect(litter.find((c) => c.action === 'level')?.confirm).toBe('level');
     expect(litter.find((c) => c.action === 'deodorize')?.confirm).toBeUndefined();
+    // a clean a cat paused restarts the drum: its resume asks as the clean does
+    const paused = findAppliance(HOUSE, { device: 'pk-litter' });
+    const resume = commandsOf({
+      hass: HOUSE,
+      platform: paused.platform,
+      roles: paused.entities.roles,
+      status: 'paused',
+      kind: 'litter_box',
+    }).find((c) => c.action === 'resume');
+    expect(resume?.confirm).toBe('clean');
     // the PETLIBRO meal is its own amount: none said
     expect(commands('pl-feeder').find((c) => c.action === 'feed')?.amount).toBeUndefined();
   });
@@ -471,6 +481,25 @@ describe('the card', () => {
     // its food's ring: what is left
     expect(card.shadowRoot.querySelector('.ap-tile__ring svg')).not.toBeNull();
     expect(card.shadowRoot.querySelector('.ap-power')?.getAttribute('aria-label')).toBe('Feed now');
+  });
+
+  it('keeps its tiles two a row all day: a meal tomorrow says its time alone where its weekday would not hold', async () => {
+    const twelve = {
+      ...HOUSE,
+      locale: { ...HOUSE.locale, language: 'en', time_format: '12' },
+    } as HomeAssistant;
+    const columns = (card: Mounted): string | undefined =>
+      card.shadowRoot.querySelector<HTMLElement>('.ap-tiles')?.style.getPropertyValue('--ap-tiles');
+    const evening = await mount({ device: 'pk-feeder' }, twelve);
+    // past its last meal of the day: the next is tomorrow morning
+    const night = await mount(
+      { device: 'pk-feeder', _now: new Date(NOW + 100 * 60_000).toISOString() },
+      twelve,
+    );
+    expect(columns(evening)).toBe('2');
+    expect(columns(night)).toBe('2');
+    // its weekday where the tile holds it, else its time alone (the head says how long until it)
+    expect(tiles(night)[1]).toMatch(/^Next meal (Fri )?0?7:30\s?AM$/);
   });
 
   it('feeds only after Home Assistant’s dialog has asked, saying how much', async () => {

@@ -141,14 +141,51 @@ const APPLIANCE_CONTROLS: ReadonlySet<string> = new Set([
   'datetime',
 ]);
 
-/** What a plug may file as no setting beside its switch (Tuya's, Zigbee2MQTT's): its timer, its power-on behaviour. */
-const PLUG_CONTROLS: ReadonlySet<string> = new Set(['select', 'number']);
+/** The words of a plug's own selects (Tuya's, Zigbee2MQTT's): its power-on behaviour and its indicator's mode. */
+const PLUG_WORDS: ReadonlySet<string> = new Set([
+  'on',
+  'off',
+  'toggle',
+  'previous',
+  'last',
+  'memory',
+  'restore',
+  'power_on',
+  'power_off',
+  'none',
+  'relay',
+  'pos',
+  'on/off',
+  'off/on',
+]);
+
+/**
+ * What a plug may file as no setting beside its switch (Tuya's, Zigbee2MQTT's): its power-on behaviour or its
+ * indicator's mode, a select of those words alone (its options, else its state); its timer, a number that counts down
+ * (by its id, its key or a unit of time). An appliance's select says more (LG's start, stop and power off), and so is
+ * never one.
+ */
+function plugControl(hass: Registries, id: string): boolean {
+  const state = hass.states[id];
+  if (domainOf(id) === 'select') {
+    const options = state?.attributes['options'];
+    const words: readonly unknown[] =
+      Array.isArray(options) && options.length ? options : [state?.state];
+    return words.every((word) => typeof word === 'string' && PLUG_WORDS.has(word.toLowerCase()));
+  }
+  if (domainOf(id) !== 'number') return false;
+  const key = hass.entities?.[id]?.translation_key ?? '';
+  return (
+    /countdown|timer/.test(`${id} ${key}`) ||
+    ['s', 'min', 'h'].includes(String(state?.attributes['unit_of_measurement']))
+  );
+}
 
 /**
  * Whether a switch is a load, something it powers: Home Assistant says so (an outlet, a switch), it is on no device
  * (a template's, a group's), or its device is a plug or a relay — one with none of an appliance's controls
  * (`APPLIANCE_CONTROLS`, hidden or not; a setting is not one), or a plug that files its timer or its power-on
- * behaviour as none: its one switch beside a power or energy reading, and no other control. A dishwasher's option
+ * behaviour as none (`plugControl`): its one switch beside a power or energy reading, and no other control. A dishwasher's option
  * switches, beside its programme select and its start button, are its settings.
  */
 export function isLoad(hass: Registries, entityId: string): boolean {
@@ -164,7 +201,7 @@ export function isLoad(hass: Registries, entityId: string): boolean {
   );
   return (
     !controls.length ||
-    (controls.every((id) => PLUG_CONTROLS.has(domainOf(id))) &&
+    (controls.every((id) => plugControl(hass, id)) &&
       own.filter((id) => domainOf(id) === 'switch').length === 1 &&
       own.some(
         (id) =>
@@ -211,21 +248,28 @@ const numeric = (value: unknown): boolean => Number.isFinite(parseFloat(String(v
 
 /**
  * A room's temperature and humidity among what it shows (`shown`), as Home Assistant's own area card finds them:
- * 1. the sensor the area names, while it has a state — even hidden or diagnostic, as the area's settings offer them;
+ * 1. the sensor the area names, while it has a state — even hidden or diagnostic, as the area's settings offer them —
+ *    unless the room leaves it out (`leaves`: its `exclude`, #95);
  * 2. a sensor of that class, the first that reads a number (a dead one never hides a working one), else the first
  *    (its readout then a dash);
  * 3. a thermostat's own: its temperature (every thermostat says one), a thermostat's or a humidifier's humidity where
  *    it measures one — or where it cannot say, being unavailable: the room keeps that reading's place, a dash (1.9).
  * Never by a unit alone: a "%" is a battery as often as a humidity.
  */
-function climateOf(hass: Registries, areaId: string, shown: readonly string[]): AreaClimate {
+function climateOf(
+  hass: Registries,
+  areaId: string,
+  shown: readonly string[],
+  leaves: (id: string) => boolean = () => false,
+): AreaClimate {
   const area = hass.areas?.[areaId];
   const attributes = (id: string) => hass.states[id]?.attributes ?? {};
   const best = (ids: readonly string[], read: (id: string) => unknown): string | undefined =>
     ids.find((id) => numeric(read(id))) ?? ids[0];
   const find = (kind: ClimateKind): string | undefined => {
     const named = area?.[`${kind}_entity_id` as const];
-    if (named && hass.states[named]) return named;
+    // the sensor the area names, unless the room leaves it out (#95)
+    if (named && hass.states[named] && !leaves(named)) return named;
     const current = `current_${kind}`;
     return (
       best(
@@ -336,7 +380,7 @@ export function areaContents(
     devices,
     controls,
     on,
-    climate: climateOf(hass, areaId, entities),
+    climate: climateOf(hass, areaId, entities, (id) => !included(id) && excluded(id)),
     keptOut: all.length - shown.length,
   };
 }

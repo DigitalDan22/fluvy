@@ -1,5 +1,6 @@
 import {
   formatNumber,
+  localize,
   plural,
   stateSaid,
   stateText,
@@ -180,7 +181,7 @@ import {
   type ApplianceReading,
   type Attention,
 } from './reading.js';
-import type { ApplianceRole, ApplianceRoles } from './roles.js';
+import { METER_ENERGY, type ApplianceRole, type ApplianceRoles } from './roles.js';
 import { busy, stepsOf, wordOf } from './status.js';
 import {
   attentionText,
@@ -473,7 +474,12 @@ interface TileCell {
   readonly level?: number;
   /** Due or soon: its value in the danger's or the warning's ink. */
   readonly severity?: 'due' | 'soon';
+  /** Its value's shorter form, where the whole would not hold in its tile (a meal another day by its time alone). */
+  readonly short?: string;
 }
+
+/** Whether an appliance's energy reading is a meter of its years (a plug's, `METER_ENERGY`'s), not its programme's. */
+const meterEnergy = (r: ApplianceReading): boolean => r.plug || METER_ENERGY.has(r.platform ?? '');
 
 /** A tile's value with its unit. */
 const tileValue = (cell: TileCell): string => `${cell.value}${cell.unit ? ` ${cell.unit}` : ''}`;
@@ -536,6 +542,8 @@ interface Item {
   readonly phrase?: string;
   /** Its value as a tile says it, where that is shorter (a meal's time without its amount). */
   readonly brief?: string;
+  /** The brief's shorter form, for a tile it would not hold in: a moment another day by its time alone. */
+  readonly briefShort?: string;
   readonly entity: string | undefined;
   readonly entry: RowEntry | undefined;
   readonly reminder: Reminder | undefined;
@@ -1845,7 +1853,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         hob[0],
       now,
       unavailable: gone,
-      used: !cold && (wantsEnergy || r.plug) ? this.used(r, shown, cycle, now) : null,
+      used: !cold && (wantsEnergy || meterEnergy(r)) ? this.used(r, shown, cycle, now) : null,
     };
   }
 
@@ -2312,7 +2320,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       case 'pet': {
         const cells = c?.show_hero === false ? [] : this.tileCells(view);
         return cells.length
-          ? { parts: this.renderTileGrid(cells, cells.map(tileValue), true), fixed: true }
+          ? { parts: this.renderTileGrid(cells, this.tileForms(view), true, true), fixed: true }
           : nothing;
       }
       default: {
@@ -2607,24 +2615,36 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
   /**
    * The hero's tiles (84, radius 12, the page's fill), two a row: a soft circle 8 from the name over the value — a pet
    * device's 16 from them, ringed by what is left where its part says it in percent — what is due in the danger's ink,
-   * what is soon in the warning's. Two a row where they hold their words
-   * (and every form a value takes, `forms`) with their circles, then without them, else one a row: a word is never cut.
+   * what is soon in the warning's. Two a row where they hold their words and every form a value takes (`forms`), else
+   * one a row: never by what they say now, so the card keeps its height. Their circles go together where one would not
+   * hold beside its words: by every form too, or (`circlesByState`, a pet device's) by what the tiles say now, since a
+   * circle never moves the card's height. A value that would not hold in its tile says its shorter form; a word is
+   * never cut.
    */
   private renderTileGrid(
     cells: readonly TileCell[],
     forms: readonly string[],
     ringed: boolean,
+    circlesByState = false,
   ): TemplateResult {
-    const widest = Math.max(
+    const width = (text: string): number => this.head.ruler.width('ap-tile__value', text);
+    const labels = Math.max(
       0,
       ...cells.map((cell) => this.head.ruler.width('ap-tile__label', cell.label)),
-      ...forms.map((form) => this.head.ruler.width('ap-tile__value', form)),
     );
+    const widest = Math.max(labels, ...forms.map(width));
     // 12 in from a tile's sides; a ringed circle 16 from its words, its ring 6 out of it
     const n = Math.max(1, Math.min(2, cells.length));
     const each = (columns: number): number => (this.contentWidth - 12 * (columns - 1)) / columns;
     const columns = each(n) >= 12 + widest + 12 ? n : 1;
-    const circles = each(columns) >= 12 + 40 + (ringed ? 16 : 8) + widest + 12;
+    const circle = 40 + (ringed ? 16 : 8);
+    const say = (cell: TileCell, room: number): string =>
+      cell.short && width(tileValue(cell)) > room ? cell.short : tileValue(cell);
+    const words = circlesByState
+      ? Math.max(labels, ...cells.map((cell) => width(say(cell, each(columns) - 24 - circle))))
+      : widest;
+    const circles = each(columns) >= 12 + circle + words + 12;
+    const room = each(columns) - 24 - (circles ? circle : 0);
     const length = 2 * Math.PI * TILE_RADIUS;
     return html`<div
       class="ap-tiles ${ringed ? 'ap-tiles--ringed' : ''}"
@@ -2661,7 +2681,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
             }
             <span class="ap-tile__text"
               ><span class="ap-tile__label">${cell.label}</span
-              ><span class="ap-tile__value">${tileValue(cell)}</span></span
+              ><span class="ap-tile__value">${say(cell, room)}</span></span
             >
           </div>`,
       )}
@@ -2817,6 +2837,35 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     return (this.config?.tiles ?? KIND_TILES[view.kind] ?? []).map(rowEntry);
   }
 
+  /**
+   * Every form a pet device's tiles may say, by what each says, never today's (#112): a moment's time at its widest,
+   * a past one's days ago (a meal another day gives way to its time alone, `briefShort`); a part's due word, OK, its
+   * percent and its days at their widest; anything else as it reads. Two a row or one, and their circles, hold all
+   * day long, so the card keeps its height when a meal moves to tomorrow.
+   */
+  private tileForms(view: View): string[] {
+    const time = when(this.hass, Date.UTC(2026, 0, 1, 23, 58), 0).time;
+    const ago = [
+      localize(this.hass, 'time.yesterday'),
+      localize(this.hass, 'time.days_ago', { n: 6 }),
+    ];
+    return this.tiles(view).flatMap((item) => {
+      // the next meal is today's time, or another day's stepping down to it; a past one may be days ago
+      if (item.key === 'next_meal') return [time];
+      if (item.key === 'last_meal' || item.key === 'last_use') return [time, ...ago];
+      if (item.reminder) {
+        const due = DUE_WORD[item.reminder.key];
+        return [
+          ...(due ? [this.t(due)] : []),
+          s(this.hass, 'ok'),
+          `${this.figure(100)} %`,
+          `${this.figure(999)} ${unitWord(this.hass, 'd')}`,
+        ];
+      }
+      return [`${item.value || '—'}${item.unit ? ` ${item.unit}` : ''}`];
+    });
+  }
+
   /** A pet device's tiles as items: each what its row would say. */
   private tiles(view: View): Item[] {
     const reminders = this.reminders(view);
@@ -2853,6 +2902,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         label: item.label,
         value: item.brief ?? (item.value || '—'),
         unit: item.brief ? '' : item.unit,
+        ...(item.briefShort ? { short: item.briefShort } : {}),
         glyph: item.glyph,
         tone: this.tileTone(view, item),
         accent: this.accents.item(item.entry?.color),
@@ -3060,6 +3110,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     let reminder: Reminder | undefined;
     let phrase: string | undefined;
     let brief: string | undefined;
+    let briefShort: string | undefined;
     switch (key) {
       case 'program': {
         label = (off ? '' : r.program) || dash;
@@ -3088,11 +3139,11 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       case 'energy':
         entity = r.readouts.energy ?? r.roles.energy;
         label = s(this.hass, 'electricity');
-        // an appliance's own reading of its programme's energy; a plug's meter counts the house's years, so what
-        // this cycle used
+        // an appliance's own reading of its programme's energy; a plug's meter counts the house's years, and so does
+        // a machine's own where its integration's does (`METER_ENERGY`), so what this cycle used
         value = off
           ? dash
-          : r.readouts.energy && !r.plug
+          : r.readouts.energy && !meterEnergy(r)
             ? joined(this.valueText(r.readouts.energy))
             : view.used !== null
               ? joined({ value: this.kwh(view.used), unit: 'kWh' })
@@ -3192,6 +3243,9 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         label = s(this.hass, `row_${key}`);
         if (!off && meal) {
           brief = this.moment(meal.at, now);
+          // a meal another day ("Fri 07:30") by its time alone where a tile would not hold it; one before today says "yesterday"
+          const at = when(this.hass, meal.at, now);
+          if (at.days > 0) briefShort = at.time;
           value = [brief, this.amountText(meal, meals?.unit ?? '')].filter(Boolean).join(' · ');
         } else value = dash;
         break;
@@ -3288,6 +3342,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       reminder,
       ...(phrase && entry?.name === undefined ? { phrase } : {}),
       ...(brief ? { brief } : {}),
+      ...(briefShort && briefShort !== brief ? { briefShort } : {}),
     };
   }
 

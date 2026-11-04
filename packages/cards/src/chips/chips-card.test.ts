@@ -119,6 +119,18 @@ describe('chips whose words are templates (#87)', () => {
     expect(odd?.accent).toBeUndefined();
   });
 
+  it('draw a chip whose colour or icon is no text: a YAML `color: #ff8800` left unquoted reads as null', async () => {
+    const { hass } = house();
+    const card = await draw(
+      [
+        { name: 'Home', color: null, icon: null },
+        { name: 'Two', color: 2 },
+      ],
+      hass,
+    );
+    expect(chipsOf(card).map((chip) => chip.name)).toEqual(['Home', 'Two']);
+  });
+
   it('leave a chip its icon where the words render nothing, and leave out one with neither', async () => {
     const { hass } = house();
     const card = await draw(

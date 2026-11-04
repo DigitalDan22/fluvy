@@ -46,6 +46,9 @@ describe('a picture of the person’s own (#99)', () => {
       'vbscript:msgbox',
       'file:///etc/passwd',
       'blob:https://example.com/1',
+      'https://example.com/a.png\n);position:fixed;inset:0;x:(',
+      '/local/tv.png\r',
+      'https://example.com/\u0000.png',
     ])
       expect(safePicture(url), url).toBe('');
   });

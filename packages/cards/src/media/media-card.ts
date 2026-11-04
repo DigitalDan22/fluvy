@@ -83,7 +83,7 @@ import { configKeys, type RowStyle } from '../shared/config.js';
 import { iconOf } from '../shared/domain.js';
 import { chipRow } from '../shared/chips.js';
 import { fitLine } from '../shared/fit.js';
-import { imageOf, isEntityId } from '../shared/picture.js';
+import { imageOf, isControl, isEntityId } from '../shared/picture.js';
 import { isTemplate, TemplateTexts } from '../shared/templates.js';
 import type { EditorDefaults } from '../shared/rows-editor.js';
 
@@ -146,8 +146,12 @@ const MINI_ART = 44 + 12;
 const MINI_ROUND = 12 + 44;
 const TITLE_FLOOR = 96;
 
-/** A picture URL that is safe inside `url("…")` — quotes and backslashes can never reach the stylesheet. */
-const cssUrl = (url: string): string => url.replace(/["\\]/g, '');
+/**
+ * A picture URL that is safe inside `url("…")`: a quote, a backslash or a control character (a line break ends a CSS
+ * string) can never reach the stylesheet.
+ */
+const cssUrl = (url: string): string =>
+  [...url].filter((char) => char !== '"' && char !== '\\' && !isControl(char)).join('');
 
 /**
  * The media player: artwork, what is playing, the seek bar with its times, the five-round transport

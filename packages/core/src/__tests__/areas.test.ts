@@ -295,13 +295,64 @@ describe('the house by its rooms', () => {
       ['switch.dishwasher_sanitize', 'off', {}, on('dishwasher')],
       ['select.dishwasher_program', 'eco', {}, on('dishwasher')],
       ['sensor.dishwasher_energy', '0.9', { device_class: 'energy' }, on('dishwasher')],
+      // an LG ThinQ washer: its power switch, its operation select (start, stop, power off), its energy today
+      ['switch.lg_washer_power', 'on', {}, on('lg')],
+      [
+        'select.lg_washer_operation',
+        'start',
+        { options: ['start', 'stop', 'power_off'] },
+        on('lg'),
+      ],
+      ['sensor.lg_washer_energy_today', '0.4', { device_class: 'energy' }, on('lg')],
+      // a plug's indicator mode and its power-on state as options, a delay in seconds
+      ['switch.plug_b', 'on', {}, on('plug-b')],
+      ['select.plug_b_indicator', 'relay', { options: ['none', 'relay', 'pos'] }, on('plug-b')],
+      [
+        'select.plug_b_power_on',
+        'last',
+        { options: ['power_off', 'power_on', 'last'] },
+        on('plug-b'),
+      ],
+      ['number.plug_b_delay', '0', { unit_of_measurement: 's' }, on('plug-b')],
+      ['sensor.plug_b_power', '4', { device_class: 'power' }, on('plug-b')],
     ]);
+    expect(isLoad(hass, 'switch.lg_washer_power')).toBe(false);
+    expect(isLoad(hass, 'switch.plug_b')).toBe(true);
     expect(isLoad(hass, 'switch.tuya_plug')).toBe(true);
     expect(isLoad(hass, 'switch.z2m_plug')).toBe(true);
     expect(isLoad(hass, 'switch.relay')).toBe(false);
     expect(isLoad(hass, 'switch.washer_child_lock')).toBe(false);
     expect(isLoad(hass, 'switch.dishwasher_extra_dry')).toBe(false);
-    expect(areaContents(hass, 'kitchen').devices).toEqual(['switch.tuya_plug', 'switch.z2m_plug']);
+    expect(areaContents(hass, 'kitchen').devices).toEqual([
+      'switch.plug_b',
+      'switch.tuya_plug',
+      'switch.z2m_plug',
+    ]);
+  });
+
+  it('leaves out the reading the area names where the room excludes it, and keeps it where it includes it too (#95)', () => {
+    const hass = seeded(
+      [
+        ['sensor.k_temp', '24', { device_class: 'temperature' }],
+        ['sensor.k_wall', '21', { device_class: 'temperature' }],
+      ],
+      {
+        areas: {
+          kitchen: { area_id: 'kitchen', name: 'Kitchen', temperature_entity_id: 'sensor.k_temp' },
+        } as Registries['areas'],
+      },
+    );
+    expect(areaContents(hass, 'kitchen').climate.temperature).toBe('sensor.k_temp');
+    expect(areaContents(hass, 'kitchen', { exclude: ['sensor.k_*'] }).climate.temperature).toBe(
+      undefined,
+    );
+    expect(areaContents(hass, 'kitchen', { exclude: ['sensor.k_temp'] }).climate.temperature).toBe(
+      'sensor.k_wall',
+    );
+    expect(
+      areaContents(hass, 'kitchen', { exclude: ['sensor'], include: ['sensor.k_temp'] }).climate
+        .temperature,
+    ).toBe('sensor.k_temp');
   });
 
   it('takes a room’s own say: what it includes counts, what it excludes leaves, by id, pattern, device or domain (#95)', () => {

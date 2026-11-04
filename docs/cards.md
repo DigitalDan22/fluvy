@@ -847,6 +847,8 @@ first_weekday: today
 calendars:
   - calendar.family
   - calendar.work
+```
+
 ## Rooms
 
 The room card draws a room from its area: its picture (`photo`), a head (`tile`) or a compact tile (`row`), its
@@ -891,6 +893,8 @@ strategy:
   rooms:
     kitchen:
       exclude: [switch.dishwasher_*]
+```
+
 ## Vehicle
 
 The vehicle card (#84) draws an electric car from its device: give it the car's `device` (or any of its `entity`s) and

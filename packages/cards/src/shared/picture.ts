@@ -4,6 +4,12 @@ import type { ReactiveController, ReactiveControllerHost } from 'lit';
 /** An entity's id (`image.tv`, `camera.porch`, `sensor.tv_status`): what a field taking an entity or words tells apart. */
 export const isEntityId = (text: string): boolean => /^[a-z_]+\.[a-z0-9_]+$/.test(text);
 
+/** A control character: a line break, a tab, a NUL, a delete. */
+export const isControl = (char: string): boolean => {
+  const code = char.charCodeAt(0);
+  return code < 0x20 || code === 0x7f;
+};
+
 /** The scheme an address opens with (`https`, `data`), lower case; none for one relative to the page (`/local/tv.png`). */
 const schemeOf = (url: string): string | undefined =>
   /^([a-z][a-z\d+.-]*):/i.exec(url)?.[1]?.toLowerCase();
@@ -11,9 +17,10 @@ const schemeOf = (url: string): string | undefined =>
 /**
  * An address a picture may be loaded from, else '': the web's (`https:`, `http:`), one relative to Home Assistant
  * (`/local/tv.png`, `/api/image_proxy/…`), or a picture written out (`data:image/…`) — never another scheme's
- * (`javascript:`, `data:text/html`).
+ * (`javascript:`, `data:text/html`), nor one holding a control character (a line break would end a CSS string).
  */
 export function safePicture(url: string): string {
+  if ([...url].some(isControl)) return '';
   const scheme = schemeOf(url);
   return !scheme || scheme === 'http' || scheme === 'https' || /^data:image\//i.test(url)
     ? url

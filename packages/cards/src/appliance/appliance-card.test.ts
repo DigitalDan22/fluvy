@@ -453,6 +453,13 @@ describe('the appliance card', () => {
     }
   });
 
+  it('never says LocalThings’ lifetime meters as its programme’s: no water row, and its energy is what this cycle used', async () => {
+    const card = await mount({ device: 'lt-washer' });
+    const text = root(card).textContent?.replace(/\s+/g, ' ') ?? '';
+    expect(text).not.toContain('9,121');
+    expect(text).not.toContain('214.7');
+  });
+
   it('reads `device: none`, the way until now, as `scan: false` (#98)', () => {
     const aliases = FluvyApplianceCard.aliases;
     expect(

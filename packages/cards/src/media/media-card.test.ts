@@ -208,6 +208,17 @@ describe('a picture of the person’s own on the plate (#99)', () => {
     expect(plate(card).url).toBe('');
     expect(card.shadowRoot!.querySelector('.fv-art svg')).not.toBeNull();
   });
+
+  it('never lets a line break end the picture’s CSS string: what follows it is no declaration', async () => {
+    const card = await draw({
+      entity: 'media_player.den_tv',
+      image: 'https://example.com/tv.png\n);position:fixed;inset:0;x:(',
+      image_mode: 'always',
+    });
+    const style = card.shadowRoot!.querySelector('.fv-art__img')?.getAttribute('style') ?? '';
+    expect(style).not.toContain('position');
+    expect(plate(card).url).toBe('');
+  });
 });
 
 describe('a line of the person’s own (#101)', () => {

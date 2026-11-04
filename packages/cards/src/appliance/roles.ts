@@ -193,6 +193,11 @@ export const VERIFIED_PLATFORMS = [
 ] as const;
 export const COMMUNITY_PLATFORMS = ['hon', 'electrolux_status', 'smartthinq_sensors'] as const;
 /**
+ * The integrations whose energy reading is a meter of the machine's years, not its programme's: what a cycle used is
+ * its gain since the cycle started, as a plug's meter is read.
+ */
+export const METER_ENERGY: ReadonlySet<string> = new Set(['localthings']);
+/**
  * The pet devices' integrations, from HACS (#112): read by their translation keys, as Home Assistant's own are, and
  * written to only through the buttons, texts and switches their source pins (`commands.ts`).
  */
@@ -486,8 +491,10 @@ const KEYS_BY_PLATFORM: Readonly<
     cook_time: 'total',
     cook_time_remaining: 'remaining',
     cook_finish_time: 'finish',
+    // its meters count the machine's years (registry/capabilities/common.py: cumulativePower, cumulativeWater): the
+    // energy row says what this cycle added to it (`METER_ENERGY`); its water is never a programme's
     energy_kwh: 'energy',
-    water_liters: 'water',
+    water_liters: null,
     // a microwave's power level, in watts: never what it draws
     power_level: null,
   },

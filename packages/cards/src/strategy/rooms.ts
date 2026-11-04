@@ -1,4 +1,4 @@
-import { areaClimate, climateAttribute, holdsSomething, type AreaRegistryEntry } from '@fluvy/core';
+import { climateAttribute, holdsSomething, type AreaRegistryEntry } from '@fluvy/core';
 import { applianceSections } from './appliances.js';
 import { byArea, capped, each, moreAfter, moreKeys } from './caps.js';
 import type { HomeRegistry } from './home-registry.js';
@@ -157,7 +157,7 @@ export function roomSections(
 ): Section[] {
   const { home, t } = ctx;
   const parts = roomParts(home, area.area_id);
-  const found = areaClimate(home.registries, area.area_id);
+  const found = home.contents(area.area_id).climate;
   // the room's own readings, else the sensors its area names (a thermostat's or an appliance's reading is its card's)
   const named = (['temperature', 'humidity'] as const).flatMap((kind) => {
     const id = found[kind];

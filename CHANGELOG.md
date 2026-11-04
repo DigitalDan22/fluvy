@@ -93,6 +93,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- A picture address holding a line break or another control character is never loaded: on the media card it could
+  end the artwork's style and add declarations of its own to it (no script could run).
 - A row of modes, presets or sources whose longest word would not hold beside its glyph even on a line of its own (an
   air conditioner's Dry mode in Portuguese or Italian, in half a section) shows its words without their glyphs, where
   the word was cut.

@@ -3,8 +3,12 @@ import { isGlyph, type IconRef } from '@fluvy/ui';
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
 import { release, type Subscription } from './subscription.js';
 
-/** Whether a row's text is a Home Assistant template, rather than a keyword or words of its own. */
-export const isTemplate = (text: string): boolean => text.includes('{{') || text.includes('{%');
+/**
+ * Whether a row's text is a Home Assistant template, rather than a keyword or words of its own; never a value that is
+ * no text at all (a YAML `color: #ff8800` left unquoted reads as null, a number as a number).
+ */
+export const isTemplate = (text: unknown): text is string =>
+  typeof text === 'string' && (text.includes('{{') || text.includes('{%'));
 
 /** A value as a line of text: nothing for none, a list or a dict as JSON, anything else as it is said. */
 export const asText = (value: unknown): string =>
