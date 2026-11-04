@@ -27,9 +27,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Hungarian, the eleventh language: every card, page, dialog and the integration's own texts, with Hungarian's naming
+  words for the automatic dashboards and the appliances. Thanks to @wickdj (#110).
 - Lines in the sidebar: *Appearance → Lines in the sidebar* (with *Scope → Everywhere*) draws a line after each item
   the house switches on, the hairline under the sidebar's name, to set a group apart (the dashboards from the tools).
-  The line follows its item wherever a person's own order puts it; a person's own look keeps its own lines.
+  The line follows its item wherever a person's own order puts it; a person's own look keeps its own lines. Thanks to
+  @DennyWeinberg (#106, #107).
 
 ### Fixed
 
@@ -66,6 +69,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - On a phone the automatic dashboard no longer scrolls sideways to an empty strip: a card was drawn 360 wide for its
   first frame, wherever it stood, until it had measured its column, and a half-width card reached past the screen
   meanwhile. Every card now draws to its own width from its first frame. Thanks to @JavierSegoviaCordoba (#104).
+- The Energy period card's date keeps a 44 px target when its word is short (Hungarian's "Ma" for today), where it
+  drew 40 px wide.
 
 ## [1.11.3] — 2026-10-28
 
