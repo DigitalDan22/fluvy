@@ -20,38 +20,58 @@ interface Node {
   readonly quasi?: { readonly quasis: readonly Quasi[] };
 }
 
-/** The static parts of every template tagged `tag` in a module's syntax tree, one list a template. */
-function taggedQuasis(node: unknown, tag: string, found: (readonly Quasi[])[] = []) {
-  if (Array.isArray(node)) for (const child of node) taggedQuasis(child, tag, found);
+/** A template tagged with one of the tags asked for: its tag, and its static parts in order. */
+interface Tagged {
+  readonly tag: string;
+  readonly quasis: readonly Quasi[];
+}
+
+/** Every template in a module's syntax tree tagged with one of `tags`. */
+function taggedTemplates(node: unknown, tags: ReadonlySet<string>, found: Tagged[] = []): Tagged[] {
+  if (Array.isArray(node)) for (const child of node) taggedTemplates(child, tags, found);
   else if (node && typeof node === 'object') {
-    const { type, tag: name, quasi } = node as Node;
-    if (type === 'TaggedTemplateExpression' && name?.type === 'Identifier' && name.name === tag)
-      found.push(quasi!.quasis);
-    for (const child of Object.values(node)) taggedQuasis(child, tag, found);
+    const { type, tag, quasi } = node as Node;
+    if (type === 'TaggedTemplateExpression' && tag?.type === 'Identifier' && tags.has(tag.name!))
+      found.push({ tag: tag.name!, quasis: quasi!.quasis });
+    for (const child of Object.values(node)) taggedTemplates(child, tags, found);
   }
   return found;
 }
 
+/** A `css` literal's static part, compact: comments go, a whitespace run is one space, none beside `{`, `}`, `;`. */
+const compactCss = (text: string): string =>
+  text
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s*([{};])\s*/g, '$1');
+
+/** An `html` literal's static part, compact: each line's indentation goes, its line break stays. */
+const compactHtml = (text: string): string => text.replace(/\n[ \t]+/g, '\n');
+
+/** The tags whose literals the bundle compacts, and a quick test for a module that may hold one. */
+const TAGS: ReadonlySet<string> = new Set(['css', 'html']);
+const MAY_HOLD = /\b(css|html)`/;
+
 /**
- * Lit `css` literals are written for reading (Prettier lays them out rule by rule); the bundle carries them
- * compact. Only their static text changes — comments go, whitespace runs become one space, none is kept
- * beside `{`, `}` or `;`, none opens or closes the literal — never an interpolation, and only in fluvy's own
- * sources. The literals are found by the parser, so a `.css` named in a comment or a string is never taken for one.
+ * Lit's literals are written for reading (Prettier lays them out); the bundle carries them compact. Only their static
+ * text changes, never an interpolation, and only in fluvy's own sources; the parser finds them, so a `.css` named in a
+ * comment or a string is never taken for one. A `css` literal is compacted whole (`compactCss`), nothing opening or
+ * closing it. An `html` literal loses its indentation alone (`compactHtml`): wherever white space collapses (between
+ * attributes, between tags, in a card's text) a line break and the spaces after it draw as the line break does, and
+ * the templates hold a line break nowhere else: never in a quoted value, and a `white-space: pre` box holds an
+ * interpolation or one line of text.
  */
-function compactCssLiterals(): Plugin {
-  const compact = (text: string): string =>
-    text
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .replace(/\s+/g, ' ')
-      .replace(/\s*([{};])\s*/g, '$1');
+function compactLiterals(): Plugin {
   return {
-    name: 'fluvy-compact-css-literals',
+    name: 'fluvy-compact-literals',
     transform(code, id) {
-      if (!id.includes('/packages/') || id.includes('/node_modules/') || !code.includes('css`'))
+      if (!id.includes('/packages/') || id.includes('/node_modules/') || !MAY_HOLD.test(code))
         return null;
-      const edits = taggedQuasis(this.parse(code), 'css').flatMap((quasis) =>
+      const edits = taggedTemplates(this.parse(code), TAGS).flatMap(({ tag, quasis }) =>
         quasis.map(({ start, end }, i) => {
-          let text = compact(code.slice(start, end));
+          const raw = code.slice(start, end);
+          if (tag === 'html') return { start, end, text: compactHtml(raw) };
+          let text = compactCss(raw);
           if (i === 0) text = text.trimStart();
           if (i === quasis.length - 1) text = text.trimEnd();
           return { start, end, text };
@@ -74,7 +94,7 @@ function compactCssLiterals(): Plugin {
  * go stale. Lit is bundled (pinned to Home Assistant's 3.3.3).
  */
 export default defineConfig({
-  plugins: [compactCssLiterals()],
+  plugins: [compactLiterals()],
   define: { __FLUVY_VERSION__: JSON.stringify(version) },
   build: {
     target: 'es2022',
