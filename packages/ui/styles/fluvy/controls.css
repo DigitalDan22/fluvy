@@ -53,6 +53,16 @@
 }
 
 /* ---------- ruler ---------- */
+/* What dark mode changes in the ruler and the dial: custom properties, which reach inside the control's own shadow
+   root, where a rule of the mode cannot (there `:host` is the control, never the dark card) */
+[data-mode='dark'] {
+  --fv-tick-glow: 3px;
+  --fv-tint-warm: #d9ad5c;
+  --fv-tint-cool: #7f96ad;
+  --fv-disc: var(--fluvy-card-elevated);
+  --fv-disc-shadow: 0 16px 40px -16px rgb(0 0 0 / 0.8), inset 0 0 0 1px var(--fluvy-border);
+}
+
 .fv-ruler {
   position: relative;
 }
@@ -72,37 +82,36 @@
   stroke: var(--fluvy-border-strong);
 }
 
+/* a lit tick glows in dark mode (`--fv-tick-glow`, the mode's); in light it is not set, and the filter with it none */
 .fv-ruler .tk-on,
 .fv-dial .tk-on {
   stroke: var(--tone-ink);
-}
-
-[data-mode='dark'] .fv-ruler .tk-on,
-[data-mode='dark'] .fv-dial .tk-on {
-  filter: drop-shadow(0 0 3px var(--tk-glow, var(--tone-ink)));
+  filter: drop-shadow(0 0 var(--fv-tick-glow) var(--tk-glow, var(--tone-ink)));
 }
 
 /* a tinted ruler (colour temperature): every tick takes the warm → cool gradient, faintly, instead of lighting up to the knob */
 .fv-ruler .tint-a {
-  stop-color: var(--fluvy-tint-warm, #d1a24c);
+  stop-color: var(--fluvy-tint-warm, var(--fv-tint-warm, #d1a24c));
 }
 .fv-ruler .tint-b {
-  stop-color: var(--fluvy-tint-cool, #a9bdd0);
-}
-[data-mode='dark'] .fv-ruler .tint-a {
-  stop-color: var(--fluvy-tint-warm, #d9ad5c);
-}
-[data-mode='dark'] .fv-ruler .tint-b {
-  stop-color: var(--fluvy-tint-cool, #7f96ad);
+  stop-color: var(--fluvy-tint-cool, var(--fv-tint-cool, #a9bdd0));
 }
 
 /* on a lit fill (a light card lit as a tile) the warm and the cool ends take half the fill's ink, so they stand off
    a fill of their own colour */
 :host([on-fill]) .fv-ruler .tint-a {
-  stop-color: color-mix(in oklab, var(--fluvy-tint-warm, #d1a24c) 50%, var(--tone-on));
+  stop-color: color-mix(
+    in oklab,
+    var(--fluvy-tint-warm, var(--fv-tint-warm, #d1a24c)) 50%,
+    var(--tone-on)
+  );
 }
 :host([on-fill]) .fv-ruler .tint-b {
-  stop-color: color-mix(in oklab, var(--fluvy-tint-cool, #a9bdd0) 50%, var(--tone-on));
+  stop-color: color-mix(
+    in oklab,
+    var(--fluvy-tint-cool, var(--fv-tint-cool, #a9bdd0)) 50%,
+    var(--tone-on)
+  );
 }
 
 .fv-ruler .tk-tint {
@@ -164,18 +173,13 @@
   justify-content: center;
   padding-bottom: 2px; /* the figure carries more air above its caps than the sub below its baseline: ink centre on the disc centre */
   border-radius: 50%;
-  background: var(--fluvy-card);
-  box-shadow:
+  background: var(--fv-disc, var(--fluvy-card));
+  box-shadow: var(
+    --fv-disc-shadow,
     0 16px 40px -16px rgb(0 0 0 / 0.35),
     0 2px 6px -2px rgb(0 0 0 / 0.12),
-    inset 0 0 0 1px var(--fluvy-border);
-}
-
-[data-mode='dark'] .fv-dial__disc {
-  background: var(--fluvy-card-elevated);
-  box-shadow:
-    0 16px 40px -16px rgb(0 0 0 / 0.8),
-    inset 0 0 0 1px var(--fluvy-border);
+    inset 0 0 0 1px var(--fluvy-border)
+  );
 }
 
 .fv-frame .fv-dial--gauge .fv-dial__disc {

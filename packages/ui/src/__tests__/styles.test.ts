@@ -15,6 +15,12 @@ describe('stylesheet transform', () => {
     expect(css).toBe(':host{color:red}*{margin:0}:host([dark]) .fv-knob{opacity:1}');
   });
 
+  it('sets the dark mode’s custom properties on the dark host, where they reach inside a control’s shadow root', () => {
+    expect(transformStylesheet(`[data-mode='dark'] { --fv-tick-glow: 3px; }`)).toBe(
+      ':host([dark]){--fv-tick-glow:3px}',
+    );
+  });
+
   it('drops frame widths and makes full-width px grids proportional', () => {
     expect(transformStylesheet('.cl-card { width: 360px; height: 10px; }')).toBe(
       '.cl-card{height:10px}',

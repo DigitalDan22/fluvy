@@ -14,6 +14,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   of them (its state, its power, its programme and times first), where it offered every role of every kind; its
   lists of roles, rows, readouts and compartments offer the appliance's own entities, and a switch over each offers
   every entity of the house again. A role the card names already stays offered.
+- In dark mode the lit ticks of every ruler and dial glow as the design draws them (the light card's, the
+  thermostat's, a tile's, the Slider's), a colour temperature's ruler wears its dark ends and the thermostat's disc is
+  lifted off the card, where the dark mode's rules never reached inside the ruler and the dial.
 
 ### Added
 
@@ -25,24 +28,6 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   known by its maker's ("Decent Espresso").
 - The Appliance card's editor says what its roles are for: "Name the entities the card did not find."
 
-### Fixed
-
-- The Appliance card's device picker offers PetKit's and PETLIBRO's feeders, fountains and litter boxes, which the
-  card reads since 1.13.0 but its editor left out.
-- The Appliance card says an appliance's failure, or its call for a hand, in its alarm row where only its state says
-  it ("Fatal error"), where the row said "No alarm" under a head that said the error.
-
-### Fixed
-
-- The calendar card's upcoming list of a single day (`days: 1`) says Tomorrow under its title, where it said "Next 1
-  days".
-
-### Development
-
-- A count is a key in its forms by number (`devices_one`, `devices`, Slovak's `devices_few`), said by `plural()`
-  alone, its key typed as a count; `pnpm i18n` fails a catalogue without a form its language gives a whole number up
-  to 1000, and English with a form it never says.
-
 ### Changed
 
 - A dashboard view of many cards (a wall's forty) is styled and laid out once for all of them as it opens, where
@@ -51,6 +36,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The Appliance card's device picker offers PetKit's and PETLIBRO's feeders, fountains and litter boxes, which the
+  card reads since 1.13.0 but its editor left out.
+- The Appliance card says an appliance's failure, or its call for a hand, in its alarm row where only its state says
+  it ("Fatal error"), where the row said "No alarm" under a head that said the error.
+- The calendar card's upcoming list of a single day (`days: 1`) says Tomorrow under its title, where it said "Next 1
+  days".
 - An appliance card on a SmartThings or LocalThings machine, or on a plug, asks Home Assistant's recorder for its
   energy meter's history only where it says what this cycle used (its energy row or readout, a plug's hero), where
   every such card asked for it, and for its power's too, while its machine ran; the appliances card reads a plug's
@@ -66,6 +57,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - A card, the sheets it opens, Fluvy's settings panel, its Activity and History pages and a wall's own buttons say they
   speak the language chosen for Fluvy (`lang`) where it is not Home Assistant's, so the browser draws Japanese kanji
   in their Japanese forms and hyphenates by that language's rules, where it drew them as the page's language.
+
+### Development
+
+- A count is a key in its forms by number (`devices_one`, `devices`, Slovak's `devices_few`), said by `plural()`
+  alone, its key typed as a count; `pnpm i18n` fails a catalogue without a form its language gives a whole number up
+  to 1000, and English with a form it never says.
 
 ## [1.13.1] — 2026-11-04
 

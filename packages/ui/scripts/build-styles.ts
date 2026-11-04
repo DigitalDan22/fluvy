@@ -5,6 +5,7 @@
  *   .fv-frame { … }            → :host { … }            (the frame reset becomes the host reset)
  *   .fv-frame <descendant>     → <descendant>
  *   [data-mode='dark'] <sel>   → :host([dark]) <sel>    (cards reflect Home Assistant's dark mode on the host)
+ *   [data-mode='dark']         → :host([dark])          (the mode's custom properties, which reach into a control's shadow root)
  *   [data-motion='reduced'] <sel> → :host([reduced-motion]) <sel>  (a person chose reduced motion in fluvy's settings)
  *   .lab-* rules               → dropped                (sheet scaffolding, never shipped)
  *
@@ -70,6 +71,7 @@ function transformSelector(selector: string): string | null {
   if (s === '.fv-frame .fv-card + .fv-card') return null; // stacking inside a lab frame; the dashboard grid owns the gaps
   if (s === '.fv-frame') return ':host';
   s = s.replace(/^\.fv-frame (?=[*:.\w[])/, '');
+  if (/^\[data-mode=['"]dark['"]\]$/.test(s)) return ':host([dark])';
   s = s.replace(/^\[data-mode=['"]dark['"]\] /, ':host([dark]) ');
   s = s.replace(/^\[data-mode=['"]light['"]\] /, ':host(:not([dark])) ');
   s = s.replace(/^\[data-motion=['"]reduced['"]\] /, ':host([reduced-motion]) ');
