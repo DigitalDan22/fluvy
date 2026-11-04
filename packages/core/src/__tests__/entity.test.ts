@@ -263,7 +263,7 @@ describe('domainOf', () => {
 });
 
 describe('isEntityId', () => {
-  it('tells an entity’s id from words, addresses and another integration’s statistic', () => {
+  it('tells an entity’s id from words, figures, addresses and another integration’s statistic', () => {
     for (const id of [
       'sensor.tv_status',
       'image.lounge_tv',
@@ -279,6 +279,8 @@ describe('isEntityId', () => {
       '.tv',
       'sensor.tv status',
       'tibber:energy_consumption_home',
+      '5.1',
+      '2.4_ghz',
       undefined,
       42,
     ])

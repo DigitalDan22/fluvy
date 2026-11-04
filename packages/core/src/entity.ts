@@ -52,11 +52,11 @@ export const domainOf = (entityId: string): string =>
   entityId.slice(0, Math.max(0, entityId.indexOf('.')));
 
 /**
- * An entity's id as Home Assistant writes one (`sensor.tv_status`, `image.lounge_tv`): what tells it from words, an
- * address, or a statistic of another integration (`tibber:energy_…`).
+ * An entity's id as Home Assistant writes one (`sensor.tv_status`, `image.lounge_tv`): what tells it from words, a
+ * figure (`5.1`: no domain begins with one), an address, or a statistic of another integration (`tibber:energy_…`).
  */
 export const isEntityId = (id: unknown): id is string =>
-  typeof id === 'string' && /^[a-z0-9_]+\.[a-z0-9_]+$/.test(id);
+  typeof id === 'string' && /^[a-z_][a-z0-9_]*\.[a-z0-9_]+$/.test(id);
 
 const titleCase = (id: string): string => {
   const object = id.slice(id.indexOf('.') + 1).replace(/_/g, ' ');

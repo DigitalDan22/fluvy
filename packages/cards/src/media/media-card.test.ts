@@ -240,6 +240,8 @@ describe('a line of the person’s own (#101)', () => {
       });
       expect(lines(card)[0], variant).toBe('Kitchen · Sonos');
     }
+    // a figure is words, never an entity's id
+    expect(lines(await draw({ entity: 'media_player.kitchen', secondary: '5.1' }))[0]).toBe('5.1');
     expect(
       lines(await draw({ entity: 'media_player.den_tv', secondary: 'sensor.tv_status' }))[0],
     ).toBe('On · TV · Volume 7 · Soundbar');
