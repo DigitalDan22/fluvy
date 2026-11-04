@@ -1,10 +1,38 @@
 /** Motion primitives. CSS animates only transform / opacity / colour; these drive values frame by frame. */
 
+import type { ReactiveController, ReactiveControllerHost } from 'lit';
+
 let preference: 'system' | 'reduced' = 'system';
+
+/**
+ * The controls drawn in a shadow root of their own (a ruler, a dial), where a card's `reduced-motion` rules never
+ * reach: each carries the mark itself, as the card does, from the moment it is attached.
+ */
+const marked = new Set<HTMLElement>();
+const mark = (host: HTMLElement): void => {
+  host.toggleAttribute('reduced-motion', preference === 'reduced');
+};
 
 /** A person's own choice (fluvy's settings) on top of the system's: `reduced` holds everywhere, `system` asks the OS. */
 export function setMotionPreference(value: 'system' | 'reduced'): void {
   preference = value;
+  marked.forEach(mark);
+}
+
+/** Marks its host `reduced-motion` while the person chose reduced motion, from its connection on. */
+export class MotionMark implements ReactiveController {
+  constructor(private readonly host: ReactiveControllerHost & HTMLElement) {
+    host.addController(this);
+  }
+
+  hostConnected(): void {
+    marked.add(this.host);
+    mark(this.host);
+  }
+
+  hostDisconnected(): void {
+    marked.delete(this.host);
+  }
 }
 
 export const motionPreference = (): 'system' | 'reduced' => preference;

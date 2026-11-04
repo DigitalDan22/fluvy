@@ -1,6 +1,6 @@
 import { LitElement, css, html, nothing, svg, type PropertyValues, type TemplateResult } from 'lit';
 import { glyph } from '../glyphs.js';
-import { Pending, spring, type SpringHandle } from '../motion.js';
+import { MotionMark, Pending, spring, type SpringHandle } from '../motion.js';
 import { baseStyles } from '../styles/index.js';
 import {
   clamp,
@@ -155,6 +155,8 @@ export class FluvyDial extends LitElement {
 
   constructor() {
     super();
+    // the person's reduced motion reaches inside this control's own shadow root
+    new MotionMark(this);
     this.min = 0;
     this.max = 1;
     this.step = 0.5;

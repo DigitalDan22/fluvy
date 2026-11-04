@@ -22,7 +22,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- Slovak (`sk`) translation for the Fluvy interface, panel and cards, appliance naming words, the demo and Home Assistant integration messages.
+- Slovak (`sk`) translation for the Fluvy interface, panel and cards, appliance naming words, the demo and Home
+  Assistant integration messages.
 - The Appliance card reads a device of an integration it does not know as the kind it is (#115): an espresso machine
   over MQTT (the Decent DE1's plugin) says what it is doing in its own words, offers its profiles as its drinks and says
   its last shot by its counters and its tank in millilitres, and a Bosch or Siemens washer or dryer on hcpy says its
@@ -59,15 +60,6 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - A card, the sheets it opens, Fluvy's settings panel, its Activity and History pages and a wall's own buttons say they
   speak the language chosen for Fluvy (`lang`) where it is not Home Assistant's, so the browser draws Japanese kanji
   in their Japanese forms and hyphenates by that language's rules, where it drew them as the page's language.
-
-### Development
-
-- A count is a key in its forms by number (`devices_one`, `devices`, Slovak's `devices_few`), said by `plural()`
-  alone, its key typed as a count; `pnpm i18n` fails a catalogue without a form its language gives a whole number up
-  to 1000, and English with a form it never says.
-
-### Fixed
-
 - The stat tiles card's highlighted tile firms its hairline in its own colour under the pointer, as a lit tile does,
   where it took the neutral one.
 - Under reduced motion nothing on a card or the settings panel eases any more, where every property of every element
@@ -85,9 +77,19 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - A room's page on the automatic dashboards names its readings by what they measure ("Temperature", "Humidity"), as
   the room card does, where both said the room's own name, and the openings card counts the rooms only where there
   are several, where it said "· 1 room" on the room's own page.
+- A dishwasher's steps say a dishwasher's words where its language says dishes apart from laundry (Vorspülen, Reinigen,
+  Klarspülen in German; Hungarian, Dutch, Japanese and Slovak too), where they said a washer's (Vorwäsche, Waschen,
+  Spülen).
+- The Chart card's editor names a series drawn as an area by the chart's word for it (Fläche, Aire, Plocha), where it
+  said the house's area (Bereich, Zone, Oblasť).
+- A ruler, a dial and the time controls keep still when reduced motion is chosen in Fluvy's settings, as they do when
+  the system asks for it, where their knob, ticks and bubble still eased.
 
 ### Development
 
+- A count is a key in its forms by number (`devices_one`, `devices`, Slovak's `devices_few`), said by `plural()`
+  alone, its key typed as a count; `pnpm i18n` fails a catalogue without a form its language gives a whole number up
+  to 1000, and English with a form it never says.
 - `heights.mjs` reads the playground under reduced motion, as the measurer does: under load it could read a card
   mid-entrance, at its 0.985 scale, which its width check then left out.
 

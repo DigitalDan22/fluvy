@@ -1,7 +1,7 @@
 import { LitElement, css, html, nothing, svg, type PropertyValues, type TemplateResult } from 'lit';
 import { baseStyles } from '../styles/index.js';
 import { clamp, keyValue, precisionGain, saneRange, snap, stepOf, trackDrag } from './pointer.js';
-import { Pending, spring, type SpringHandle } from '../motion.js';
+import { MotionMark, Pending, spring, type SpringHandle } from '../motion.js';
 import { haptic } from '../haptics.js';
 
 export interface RulerChangeDetail {
@@ -148,6 +148,8 @@ export class FluvyRuler extends LitElement {
 
   constructor() {
     super();
+    // the person's reduced motion reaches inside this control's own shadow root
+    new MotionMark(this);
     this.value = 0;
     this.min = 0;
     this.max = 100;

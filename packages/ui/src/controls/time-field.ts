@@ -1,4 +1,5 @@
 import { css, html, LitElement, nothing, type PropertyValues, type TemplateResult } from 'lit';
+import { MotionMark } from '../motion.js';
 import { baseStyles } from '../styles/index.js';
 
 /** A time picked in the field, in minutes since midnight (1440: the end of the day). */
@@ -104,6 +105,8 @@ export class FluvyTimeField extends LitElement {
 
   constructor() {
     super();
+    // the person's reduced motion reaches inside this control's own shadow root
+    new MotionMark(this);
     this.value = 0;
     this.step = 1;
     this.hour12 = false;

@@ -2,7 +2,7 @@ import { css, html, LitElement, nothing, svg, type PropertyValues, type Template
 import { keyed } from 'lit/directives/keyed.js';
 import { repeat } from 'lit/directives/repeat.js';
 import { haptic } from '../haptics.js';
-import { spring, type SpringHandle } from '../motion.js';
+import { MotionMark, spring, type SpringHandle } from '../motion.js';
 import { baseStyles } from '../styles/index.js';
 import { clamp, trackDrag } from './pointer.js';
 import { localPoint } from './zoom.js';
@@ -325,6 +325,8 @@ export class FluvyTimeRail extends LitElement {
 
   constructor() {
     super();
+    // the person's reduced motion reaches inside this control's own shadow root
+    new MotionMark(this);
     this.start = 0;
     this.end = HOUR;
     this.value = HOUR;
