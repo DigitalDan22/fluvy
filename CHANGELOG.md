@@ -5,6 +5,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.12.0] — 2026-11-04
+
 ### Visible on upgrade
 
 - The alerts card tells apart the rows that share a name by their areas, else their devices, and says how many share
