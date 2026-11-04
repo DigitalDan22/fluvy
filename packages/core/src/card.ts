@@ -17,6 +17,7 @@ import {
   onWords,
   type MessageKey,
 } from './i18n/index.js';
+import { layoutHeightOf } from './layout-heights.js';
 import { idsOf, type EntityEntry } from './lists.js';
 import { AccentSheet } from './look/accent.js';
 import { CHART_DEFAULTS, type ChartSettings, type SavedSeries } from './settings/charts.js';
@@ -155,6 +156,12 @@ export function selfHide(card: FluvyCard, hidden: boolean): void {
   );
 }
 
+/** Whether a card is one of the previews Home Assistant's card picker lists ("Add card", "By card"). */
+function inCardPicker(card: HTMLElement): boolean {
+  const root = card.getRootNode();
+  return root instanceof ShadowRoot && root.host.localName === 'hui-card-picker';
+}
+
 /** Cards that connect within the same beat enter in sequence (30 ms apart, capped) instead of all at once. */
 let enterBeat = 0;
 let enterIndex = 0;
@@ -227,6 +234,9 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
   declare connectedWhileHidden?: boolean;
 
   private resizeObserver: ResizeObserver | undefined;
+  /** In the card picker, the card's first frame waits until it comes near the list's view (`waitForSight`). */
+  private sight: IntersectionObserver | undefined;
+  private sighted: { readonly promise: Promise<void>; readonly resolve: () => void } | undefined;
   /** The card's own colour and its items', derived on the palette the card wears. */
   protected readonly accents = new AccentSheet();
 
@@ -275,6 +285,40 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
     // attached again (moved), it reads its look at once; not drawn yet, with the cards attached beside it (`unread`)
     if (this.hasUpdated) this.syncTheme();
     else unread.add(this);
+    if (!this.hasUpdated && (this.sighted || inCardPicker(this))) this.waitForSight();
+  }
+
+  /**
+   * Home Assistant's card picker builds a live preview of every card it lists, all at once, Fluvy's at the
+   * foot of the list (#117): a preview not yet drawn keeps its declared height and draws, and reads the house, only as
+   * it comes within a screen of the list's view.
+   */
+  private waitForSight(): void {
+    if (typeof IntersectionObserver !== 'function' || !this.config) return;
+    // one wait for the card's life: taken away and put back (the picker's search), it waits on
+    if (!this.sighted) {
+      let resolve = (): void => undefined;
+      const promise = new Promise<void>((done) => (resolve = done));
+      this.sighted = { promise, resolve };
+    }
+    this.style.minHeight = `${layoutHeightOf(this.config, 0)}px`;
+    this.sight = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        this.stopWaiting();
+        this.style.minHeight = '';
+        const sighted = this.sighted;
+        this.sighted = undefined;
+        sighted?.resolve();
+      },
+      { rootMargin: '600px 0px' },
+    );
+    this.sight.observe(this);
+  }
+
+  private stopWaiting(): void {
+    this.sight?.disconnect();
+    this.sight = undefined;
   }
 
   /**
@@ -284,6 +328,9 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
    * scroll sideways meanwhile (#104).
    */
   protected override scheduleUpdate(): void | Promise<unknown> {
+    // a picker's preview out of sight: its first update waits (`waitForSight`), later asks joining it
+    const sighted = this.sighted;
+    if (sighted) return sighted.promise.then(() => this.scheduleUpdate());
     if (unread.has(this)) {
       const cards = [...unread];
       unread.clear();
@@ -302,6 +349,7 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
     super.disconnectedCallback();
     live.delete(this);
     unread.delete(this);
+    this.stopWaiting();
     this.resizeObserver?.disconnect();
     this.resizeObserver = undefined;
     for (const entry of this.optimistic.values()) clearTimeout(entry.timer);
