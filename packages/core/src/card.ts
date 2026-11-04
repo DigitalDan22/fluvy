@@ -311,7 +311,8 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
         this.sighted = undefined;
         sighted?.resolve();
       },
-      { rootMargin: '600px 0px' },
+      // the picker scrolls its own list, which clips its cards: the margin reaches into that list too (`scrollMargin`)
+      { rootMargin: '600px 0px', scrollMargin: '600px 0px' },
     );
     this.sight.observe(this);
   }

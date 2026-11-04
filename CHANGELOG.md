@@ -7,9 +7,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ### Visible on upgrade
 
-- Slovak says Home Assistant's own words as its translator asked (#116): "Snímač" for a sensor, "Panel" for a
-  dashboard, "Vykurovanie a chladenie" for heating and cooling (a car's climate stays "Klimatizácia"), and the evening's
-  "Dobrý večer" from 18:00 until the morning, where it said "Dobrú noc" late in the evening.
+- Slovak says the words its translator asked for (#116): "Snímač" for a sensor, "Panel" for a dashboard,
+  "Vykurovanie a chladenie" for heating and cooling (a car's climate stays "Klimatizácia"), and the evening's "Dobrý
+  večer" from 18:00 until the morning, where it said "Dobrú noc" late in the evening.
 
 ### Fixed
 
