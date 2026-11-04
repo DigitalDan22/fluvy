@@ -770,5 +770,13 @@ export const sheet: SheetSpec = {
         }),
       ],
     },
+    // an empty list of tiles (an editor that cleared it) is the room's controls, as no list is: declared as drawn
+    {
+      title: 'Room · an empty list of tiles',
+      cards: [
+        room({ area: 'rm_living', variant: 'tile', controls: 'tiles', tiles: [] }),
+        room({ area: 'rm_kitchen', controls: 'tiles', tiles: [] }),
+      ],
+    },
   ],
 };

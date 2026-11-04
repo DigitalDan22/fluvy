@@ -129,6 +129,13 @@ const NOTHING: RoomContents = {
 };
 
 /**
+ * The tiles a room's config asks for, where its list names any: an empty list asks for none, as no list does, and its
+ * controls stand in (what it declares and what it draws read them alike).
+ */
+const askedTiles = (config: RoomCardConfig | undefined): readonly TileItem[] | undefined =>
+  Array.isArray(config?.tiles) && config.tiles.length ? config.tiles : undefined;
+
+/**
  * A room as the house describes it: what it holds (`areaContents`), whether it has a picture, and whether the person
  * reading is an administrator.
  */
@@ -151,10 +158,11 @@ export function roomHeight(config: RoomCardConfig, room?: RoomHolds): number {
   if (config.variant === 'row') return 76 + lines;
   const found = room?.found;
   const climate = config.show_climate === false ? {} : (found?.climate ?? {});
+  const asked = askedTiles(config)?.length;
   const empty =
     found !== undefined &&
     !holdsSomething({ entities: found.entities, climate }) &&
-    !(config.controls === 'tiles' && (config.tiles?.length ?? found.controls.length) > 0);
+    !(config.controls === 'tiles' && (asked ?? found.controls.length) > 0);
   const hint = room?.admin && (found?.keptOut ?? 0) > 0 ? 32 : 0;
   const has = (domain: string): number =>
     found?.devices.some((id) => id.startsWith(`${domain}.`)) ? 1 : 0;
@@ -162,7 +170,7 @@ export function roomHeight(config: RoomCardConfig, room?: RoomHolds): number {
   const rows = found
     ? has('light') + has('climate') + has('media_player') + (found.devices.length ? 1 : 0)
     : 4;
-  const tiles = Math.min(TILES, config.tiles?.length ?? found?.controls.length ?? TILES);
+  const tiles = Math.min(TILES, asked ?? found?.controls.length ?? TILES);
   const drawn = config.controls === 'none' ? 0 : config.controls === 'tiles' ? tiles : rows;
   const controls = empty
     ? 16 + EMPTY + hint
@@ -292,8 +300,8 @@ export class FluvyRoomCard extends FluvyTileCard {
 
   /** The tiles the room offers: those asked for, else its lights then its other controls, four at most. */
   private tiles(): TileItem[] {
-    const asked = this.room?.tiles;
-    if (asked?.length) return asked.slice(0, TILES);
+    const asked = askedTiles(this.room);
+    if (asked) return asked.slice(0, TILES);
     return this.contents()
       .controls.slice(0, TILES)
       .map((entity) => ({ entity }));

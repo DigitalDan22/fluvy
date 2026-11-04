@@ -208,6 +208,35 @@ describe('a room finds what is in it (#39)', () => {
     expect(root(rows).querySelector('.fv-empty-state')).not.toBeNull();
   });
 
+  it('declares the tiles it draws: an empty list of them is its controls, as no list is', async () => {
+    const hass = house();
+    const holds = (area: string) => ({
+      found: areaContents(hass, area),
+      picture: false,
+      admin: true,
+    });
+    for (const area of ['keller', 'leer'])
+      for (const variant of ['photo', 'tile'] as const) {
+        const config = { type: 'x', area, variant, controls: 'tiles' } as const;
+        const says = `${area} ${variant}`;
+        expect(roomHeight({ ...config, tiles: [] }, holds(area)), says).toBe(
+          roomHeight(config, holds(area)),
+        );
+        expect(roomHeight({ ...config, tiles: [] }), says).toBe(roomHeight(config));
+      }
+    // the cellar's one light, a tile under its head (20 + 44 + 16 + 84 + 20); the empty room's panel
+    expect(
+      roomHeight(
+        { type: 'x', area: 'keller', variant: 'tile', controls: 'tiles', tiles: [] },
+        holds('keller'),
+      ),
+    ).toBe(184);
+    const cellar = await room({ area: 'keller', variant: 'tile', controls: 'tiles', tiles: [] });
+    expect(root(cellar).querySelectorAll('.rm-controls .fv-tile').length).toBe(1);
+    const empty = await room({ area: 'leer', variant: 'tile', controls: 'tiles', tiles: [] });
+    expect(root(empty).querySelector('.fv-empty-state')).not.toBeNull();
+  });
+
   it('reads a thermostat-only room from the thermostat', async () => {
     const card = await room({ area: 'buero', ...REPORTER });
     expect(readouts(card)).toEqual(['20.5°C', '44%']);

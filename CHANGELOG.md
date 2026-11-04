@@ -46,6 +46,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - A room card's quick action for a set asks first where its tap has a `confirmation` and then turns the set on or
   off, and opens its details where its tap or hold is `more-info` (its one member's, else where the room opens), where
   either did nothing.
+- A room card whose tiles are an empty list (as the editor leaves it once the last is removed) declares the height of
+  the controls it draws as its tiles, where it declared none and a column laid out by its height left it short.
 
 ### Development
 
