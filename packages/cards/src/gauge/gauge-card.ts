@@ -817,11 +817,9 @@ export class FluvyGaugeCard extends Card<GaugeCardConfig> {
           ...said(raw === undefined ? null : raw * base.value, ways),
         };
       });
-      // the words hold while the widest figure fits its ring, the two ends their line and a statistic the column
-      const holds =
-        fits(widest, 'm') &&
-        leftW + 8 + rightW <= width &&
-        r.width(XS, widest.value, 'fv-unit', widest.unit ?? '') <= width;
+      // the words hold while the widest figure fits its ring and the two ends their line (a figure the ring holds at
+      // 24 px, the column holds at the row's 16, with or without a row)
+      const holds = fits(widest, 'm') && leftW + 8 + rightW <= width;
       const size: ValueSize = fits(shown, 'l') ? 'l' : 'm';
       return { left, right, g, shown, size, stats, widest, holds };
     };
