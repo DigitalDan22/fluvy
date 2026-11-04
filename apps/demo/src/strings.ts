@@ -393,7 +393,7 @@ const sk: Table = {
   'brand.sub': 'Živé demo',
   'family.home': 'Domov',
   'family.devices': 'Zariadenia',
-  'family.climate': 'Vykurovanie a chladenie',
+  'family.climate': 'Klimatizácia',
   'family.energy': 'Energia',
   'family.charts': 'Grafy',
   'family.media': 'Médiá',
