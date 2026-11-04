@@ -707,6 +707,7 @@
     "increase": "Zvýšiť",
     "decrease": "Znížiť",
     "volume": "Hlasitosť",
+    "muted": "Stlmené",
     "previous": "Predchádzajúce",
     "next": "Nasledujúce",
     "no_entity": "Vyberte entitu",
@@ -2624,7 +2625,6 @@
   "slider": {
     "mute": "Stlmiť",
     "unmute": "Zrušiť stlmenie",
-    "muted": "Stlmené",
     "muted_after": "stlmené",
     "editor.control": "Ovládanie v hlavičke",
     "editor.control_helper": "Automaticky: stlmenie prehrávača, vypínač ventilátora alebo prepínač nižšie uvedenej entity",

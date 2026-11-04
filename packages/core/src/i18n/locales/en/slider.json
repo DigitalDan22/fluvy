@@ -2,7 +2,6 @@
   "slider": {
     "mute": "Mute",
     "unmute": "Unmute",
-    "muted": "Muted",
     "muted_after": "muted",
     "editor.control": "Control in the head",
     "editor.control_helper": "Automatic: a player’s mute, a fan’s switch, or the switch of the entity below",

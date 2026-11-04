@@ -329,5 +329,22 @@ export const sheet: SheetSpec = {
         },
       ],
     },
+    // the tile card says what the Slider's tile says: a muted player "Muted · 30 %", a number its ruler's "−1.0 °C" on
+    // a compact and a mini tile too
+    {
+      title: 'Tile card · muted, and a number small',
+      cards: [
+        { type: 'custom:fluvy-tile-card', entity: 'media_player.sl_muted', cols: 6 },
+        { type: SLIDER, entity: 'media_player.sl_muted', variant: 'tile', cols: 6 },
+        {
+          type: 'custom:fluvy-tile-card',
+          entity: 'media_player.sl_muted',
+          size: 'compact',
+          cols: 6,
+        },
+        { type: 'custom:fluvy-tile-card', entity: 'number.sl_offset', size: 'compact', cols: 6 },
+        { type: 'custom:fluvy-tile-card', entity: 'number.sl_offset', size: 'mini', cols: 6 },
+      ],
+    },
   ],
 };

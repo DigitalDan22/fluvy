@@ -16,6 +16,7 @@
     "increase": "Növelés",
     "decrease": "Csökkentés",
     "volume": "Hangerő",
+    "muted": "Némítva",
     "previous": "Előző",
     "next": "Következő",
     "no_entity": "Válassz egy entitást",
@@ -2615,7 +2616,6 @@
   "slider": {
     "mute": "Némítás",
     "unmute": "Némítás feloldása",
-    "muted": "Némítva",
     "muted_after": "némítva",
     "editor.control": "Vezérlő a fejlécben",
     "editor.control_helper": "Automatikus: egy lejátszó némítása, egy ventilátor kapcsolója, vagy az alábbi entitás kapcsolója",

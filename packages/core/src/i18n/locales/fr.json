@@ -16,6 +16,7 @@
     "increase": "Augmenter",
     "decrease": "Diminuer",
     "volume": "Volume",
+    "muted": "Muet",
     "previous": "Précédent",
     "next": "Suivant",
     "no_entity": "Choisissez une entité",
@@ -2646,7 +2647,6 @@
   "slider": {
     "mute": "Muet",
     "unmute": "Son",
-    "muted": "Muet",
     "muted_after": "muet",
     "editor.control": "Commande de l’en-tête",
     "editor.control_helper": "Automatique : la sourdine d’un lecteur, l’interrupteur d’un ventilateur ou celui de l’entité ci-dessous",

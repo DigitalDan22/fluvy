@@ -416,9 +416,11 @@ export class FluvyTileCard extends Card<TileCardConfig> {
   /**
    * The line under the name. State is said once: when the head already shows the reading (a sensor
    * on a large tile), this line carries context — the room, or when it last moved — never the same
-   * figure again. A small tile has no head figure, so there the reading IS the line. A large tile's number is set on
-   * its ruler, and its line says the room and the figure ("Living room · −1.0 °C"; the figure alone where both do not
-   * hold, `keepsFigure`). `on`: the entity is on (what its switch says, whatever the tile's fill does).
+   * figure again. A small tile has no head figure, so there the reading IS the line. A number's figure is its
+   * ruler's ("−1.0 °C", with a minus): a large tile's line says the room and it ("Living room · −1.0 °C"; the figure
+   * alone where both do not hold, `keepsFigure`), a small tile's the figure. A muted player says so before its volume
+   * ("Muted · 30 %"), as the Slider card's tile does. `on`: the entity is on (what its switch says, whatever the
+   * tile's fill does).
    */
   protected tileLine(
     item: TileItem,
@@ -439,8 +441,9 @@ export class FluvyTileCard extends Card<TileCardConfig> {
       if (view.areaName) return view.areaName;
       return changed ? relativeTime(this.hass, changed) : '';
     }
-    if (level && !small && NUMBERS.has(view.domain))
-      return [view.areaName, level.text].filter(Boolean).join(' · ');
+    if (level && NUMBERS.has(view.domain))
+      return small ? level.text : [view.areaName, level.text].filter(Boolean).join(' · ');
+    if (on && level?.quiet) return `${this.t('common.muted')} · ${level.text}`;
     const text = stateText(this.hass, view);
     return on && level && level.value > 0 && this.showsLevel() ? `${text} · ${level.text}` : text;
   }
@@ -493,8 +496,9 @@ export class FluvyTileCard extends Card<TileCardConfig> {
       : line.split(' · ').map((text, index) => ({ text, optional: index > 0 }));
     const fitted = fitLine(segments, room, measure);
     if (fitted && (words || measure(fitted) <= room)) return fitted;
-    // the reading the line begins with, shorter; none for a line that begins with anything else (a room, a time)
-    const text = stateText(this.hass, view);
+    // the reading the line begins with (the figure it keeps, else the state), shorter; none for a line that begins
+    // with anything else (a room, a time)
+    const text = figure ?? stateText(this.hass, view);
     const shorter = segments[0]?.text === text ? shorterForms(this.hass, view, text) : [];
     return shorter.find((form) => measure(form) <= room) ?? (dash ? '—' : '');
   }
@@ -638,6 +642,9 @@ export class FluvyTileCard extends Card<TileCardConfig> {
     // its colour sits on its article, where the card's own (written by the base) is not already it
     const accent = this.accents.item(colour === this.config?.color ? undefined : colour);
     const level = this.level(view, lit);
+    // a number's line (the Slider's tile's) gives way from its words, never its figure: where it does not hold whole,
+    // the figure alone
+    const figure = level && !words && this.keepsFigure(view) ? level.text : undefined;
     const canToggle = TOGGLE_DOMAINS.has(view.domain);
     const sensorLike = view.domain === 'sensor' || view.domain === 'binary_sensor' || !canToggle;
     const iconTone =
@@ -666,7 +673,7 @@ export class FluvyTileCard extends Card<TileCardConfig> {
       let line = this.tileLine(item, view, lit, level, false, true);
       const reading = usable ? this.readoutText(item) : '';
       if (reading) line = `${line} · ${reading}`;
-      line = this.fitState(line, size, view, { dash: !usable, inside, words });
+      line = this.fitState(line, size, view, { dash: !usable, inside, words, figure });
       return html`<article
         class=${classes}
         data-card
@@ -789,9 +796,6 @@ export class FluvyTileCard extends Card<TileCardConfig> {
     const tapAction = item.tap_action ?? MORE_INFO;
     const tapNow = actionRuns(tapAction, view.id) ? () => this.tap(view.id, tapAction) : undefined;
     const line = this.tileLine(item, view, lit, level, valueInHead);
-    // a number's line (the Slider's tile's) gives way from its words, never its figure: where it does not hold whole,
-    // the figure alone
-    const figure = level && !words && this.keepsFigure(view) ? level.text : undefined;
     return html`<article
       class=${`${classes}${foot === nothing ? ' fv-tile--footless' : this.nameFits(name) ? '' : ' fv-tile--tight'}`}
       data-card

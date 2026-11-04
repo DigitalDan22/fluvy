@@ -16,6 +16,7 @@
     "increase": "Verhogen",
     "decrease": "Verlagen",
     "volume": "Volume",
+    "muted": "Gedempt",
     "previous": "Vorige",
     "next": "Volgende",
     "no_entity": "Kies een entiteit",
@@ -2646,7 +2647,6 @@
   "slider": {
     "mute": "Dempen",
     "unmute": "Geluid aan",
-    "muted": "Gedempt",
     "muted_after": "gedempt",
     "editor.control": "Bediening in de kop",
     "editor.control_helper": "Automatisch: dempen bij een speler, de schakelaar van een ventilator of die van de entiteit hieronder",

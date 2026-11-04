@@ -16,6 +16,7 @@
     "increase": "Erhöhen",
     "decrease": "Verringern",
     "volume": "Lautstärke",
+    "muted": "Stumm",
     "previous": "Zurück",
     "next": "Weiter",
     "no_entity": "Wähle eine Entität",
@@ -2646,7 +2647,6 @@
   "slider": {
     "mute": "Stumm",
     "unmute": "Ton an",
-    "muted": "Stumm",
     "muted_after": "stumm",
     "editor.control": "Bedienelement im Kopf",
     "editor.control_helper": "Automatisch: die Stummschaltung eines Players, der Schalter eines Ventilators oder der der Entität darunter",

@@ -16,6 +16,7 @@
     "increase": "増やす",
     "decrease": "減らす",
     "volume": "音量",
+    "muted": "ミュート中",
     "previous": "前へ",
     "next": "次へ",
     "no_entity": "エンティティを選択",
@@ -2646,7 +2647,6 @@
   "slider": {
     "mute": "ミュート",
     "unmute": "ミュート解除",
-    "muted": "ミュート中",
     "muted_after": "ミュート中",
     "editor.control": "見出しの操作",
     "editor.control_helper": "自動：プレーヤーはミュート、ファンはスイッチ、または下のエンティティのスイッチ",

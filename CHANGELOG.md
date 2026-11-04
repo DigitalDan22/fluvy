@@ -76,6 +76,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   appliance, distribution, stat tiles, balance, alerts, cameras, energy flow, batteries, bars, energy devices,
   calendar, people, openings, sensor and history bars cards, where it showed Primary chosen while the item wore its
   kind's, its source's, its severity's or a neutral colour.
+- The tile card's tile of a muted player says "Muted · 30 %", as the Slider card's tile does, where it said
+  "On · 30 %"; a number's compact or mini tile writes its figure as its large tile does ("−1.0 °C", with a minus),
+  where it wrote a hyphen.
 
 ## [1.13.1] — 2026-11-04
 

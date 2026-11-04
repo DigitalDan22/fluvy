@@ -16,6 +16,7 @@
     "increase": "Artır",
     "decrease": "Azalt",
     "volume": "Ses",
+    "muted": "Sessiz",
     "previous": "Önceki",
     "next": "Sonraki",
     "no_entity": "Bir varlık seçin",
@@ -2646,7 +2647,6 @@
   "slider": {
     "mute": "Sessize al",
     "unmute": "Sesi aç",
-    "muted": "Sessiz",
     "muted_after": "sessiz",
     "editor.control": "Başlıktaki denetim",
     "editor.control_helper": "Otomatik: oynatıcıda sessize alma, vantilatörde anahtar ya da aşağıdaki varlığın anahtarı",

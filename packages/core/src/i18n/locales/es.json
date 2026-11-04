@@ -16,6 +16,7 @@
     "increase": "Subir",
     "decrease": "Bajar",
     "volume": "Volumen",
+    "muted": "Silenciado",
     "previous": "Anterior",
     "next": "Siguiente",
     "no_entity": "Elige una entidad",
@@ -2646,7 +2647,6 @@
   "slider": {
     "mute": "Silenciar",
     "unmute": "Activar sonido",
-    "muted": "Silenciado",
     "muted_after": "silenciado",
     "editor.control": "Control de la cabecera",
     "editor.control_helper": "Automático: silenciar en un reproductor, el interruptor en un ventilador o el de la entidad de abajo",

@@ -368,7 +368,7 @@ export class FluvySliderCard extends FluvyTileCard {
   /** The line of the compact card and the tile: what plays, the room, "Muted", with the figure after; or "Off". */
   private line(view: EntityView, stance: Stance, figure: string): string {
     if (!stance.usable) return this.outOfReach(view);
-    if (stance.muted) return `${s(this.hass, 'muted')} · ${figure}`;
+    if (stance.muted) return `${this.t('common.muted')} · ${figure}`;
     if (stance.off && this.setting.preview === null) return stateText(this.hass, view);
     return [this.context(view), figure].filter(Boolean).join(' · ');
   }

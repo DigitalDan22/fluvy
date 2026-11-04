@@ -332,7 +332,40 @@ describe('a number’s large tile keeps its figure: the room gives way where bot
       );
       expect(lines(tiles)).toEqual([`${ROOM[language]} · ${FIGURE[language]}`]);
     });
+
+    it.each(['compact', 'mini'] as const)(
+      'a %s tile writes the large tile’s figure, its minus a minus',
+      async (size) => {
+        const tiles = await drawn(
+          { type: 'custom:fluvy-tile-card', entity: 'number.offset', size },
+          NUMBER,
+          172,
+          speaking(language),
+        );
+        expect(lines(tiles)).toEqual([FIGURE[language]]);
+      },
+    );
   });
+
+  it.each(['large', 'compact'] as const)(
+    'a muted player’s %s tile says so before its volume, as the Slider card’s tile does',
+    async (size) => {
+      const PLAYER = {
+        'media_player.soundbar': state('media_player.soundbar', 'on', {
+          friendly_name: 'Soundbar',
+          supported_features: 4 | 8, // its volume set and muted
+          volume_level: 0.3,
+          is_volume_muted: true,
+        }),
+      };
+      const tiles = await drawn(
+        { type: 'custom:fluvy-tile-card', entity: 'media_player.soundbar', size },
+        PLAYER,
+        360,
+      );
+      expect(lines(tiles)).toEqual(['Muted · 30 %']);
+    },
+  );
 
   it('a lit light’s line is as it was: its state first, its level after where it holds', async () => {
     const tiles = await drawn(

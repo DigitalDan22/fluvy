@@ -16,6 +16,7 @@
     "increase": "Aumenta",
     "decrease": "Diminuisci",
     "volume": "Volume",
+    "muted": "Silenziato",
     "previous": "Precedente",
     "next": "Successivo",
     "no_entity": "Scegli un’entità",
@@ -2646,7 +2647,6 @@
   "slider": {
     "mute": "Silenzia",
     "unmute": "Riattiva audio",
-    "muted": "Silenziato",
     "muted_after": "silenziato",
     "editor.control": "Controllo nell’intestazione",
     "editor.control_helper": "Automatico: il silenziamento di un lettore, l’interruttore di un ventilatore o quello dell’entità qui sotto",
