@@ -40,6 +40,7 @@ import {
   applianceEntities,
   candidatesOf,
   entriesOf,
+  knownPlatform,
   platformOf,
   type ApplianceEntities,
   type ApplianceRoles,
@@ -338,14 +339,16 @@ const plainOf = (text: string): string =>
 
 /**
  * What an entity says, in Home Assistant's words; where it has none for the word (the state came back as it is), the
- * card's own in the house's language, for the words the appliances share, else the word's own, run together in camel
- * case said apart ("FatalError" is "Fatal error", an MQTT device's).
+ * card's own in the house's language, for the words the appliances share, else the word's own; an integration the card
+ * does not know has its words run together in camel case said apart ("FatalError" is "Fatal error", an MQTT device's),
+ * one it reads keeps its own ("TurboWash").
  */
 function spoken(hass: HomeAssistant | undefined, v: EntityView): string {
   const text = stateText(hass, v);
   if (plainOf(text) !== plainOf(v.state)) return text;
   const key = WORD_KEYS.get(wordOf(v.state));
-  return key ? s(hass, key) : apart(text);
+  if (key) return s(hass, key);
+  return knownPlatform(hass?.entities?.[v.id]?.platform) ? text : apart(text);
 }
 
 /**

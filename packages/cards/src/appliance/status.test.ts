@@ -127,6 +127,12 @@ describe('what an appliance is doing', () => {
       ['ActionRequired', 'attention'],
       ['Run', 'running'],
       ['Finished', 'finished'],
+      // a word within denied or made something else says no status of its own: an ESPHome monitor's "NoError"
+      ['NoError', 'running'],
+      ['no_error', 'running'],
+      ['ErrorCleared', 'running'],
+      ['SleepTimer', 'running'],
+      ['not_idle', 'running'],
     ];
     for (const [word, expected] of said) expect(statusOfWord(word, 'mqtt'), word).toBe(expected);
     // an integration the card reads keeps its own words: a word within one of them is not its say

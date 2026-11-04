@@ -197,12 +197,27 @@ const NOTHING = new Set(['', 'unknown', 'n/a']);
  * The words within an unknown integration's word that say what it is doing, by the status they say: a fault, a tank
  * to refill, sleep, rest ("FatalError", "GoingToSleep", "SchedIdle", a DE1's).
  */
-const WITHIN: ReadonlyArray<readonly [ApplianceStatus, RegExp]> = [
-  ['error', /(^|_)(error|fault|failure)(_|$)/],
-  ['attention', /(^|_)refill(_|$)/],
-  ['off', /(^|_)sleep(_|$)/],
-  ['idle', /(^|_)(idle|init)(_|$)/],
+const WITHIN: ReadonlyArray<readonly [ApplianceStatus, ReadonlySet<string>]> = [
+  ['error', new Set(['error', 'fault', 'failure'])],
+  ['attention', new Set(['refill'])],
+  ['off', new Set(['sleep'])],
+  ['idle', new Set(['idle', 'init'])],
 ];
+
+/** A word before that denies it ("NoError") or one after that makes it something else ("ErrorCleared", "SleepTimer"). */
+const DENIED = new Set(['no', 'not', 'non', 'without', 'zero']);
+const QUALIFIED = new Set(['cleared', 'ok', 'resolved', 'free', 'none', 'timer', 'mode', 'count']);
+
+/** The status the words within an unknown integration's word say, none where each is denied or qualified. */
+function statusWithin(words: string): ApplianceStatus | undefined {
+  const parts = words.split('_');
+  const says = (said: ReadonlySet<string>): boolean =>
+    parts.some(
+      (part, at) =>
+        said.has(part) && !DENIED.has(parts[at - 1] ?? '') && !QUALIFIED.has(parts[at + 1] ?? ''),
+    );
+  return WITHIN.find(([, said]) => says(said))?.[0];
+}
 
 /**
  * The status one state word says. hOn's numbers by its own table (a dishwasher's differ); Miele's "reserved" is a
@@ -229,7 +244,8 @@ export function statusOfWord(
   if (!knownPlatform(platform)) {
     const words = wordOf(apart(state ?? ''));
     for (const [status, said] of STATUSES) if (said.includes(words)) return status;
-    for (const [status, within] of WITHIN) if (within.test(words)) return status;
+    const within = statusWithin(words);
+    if (within) return within;
   }
   return 'running';
 }

@@ -173,6 +173,16 @@ describe('an appliance read', () => {
     expect(read('st-dish')).toMatchObject({ word: '', statusWord: 'appliance.status_finished' });
   });
 
+  it('says an untranslated word run together as it is on an integration it reads, apart on one it does not (#115)', () => {
+    const state = findAppliance(HOUSE, { device: 'lg-washer' }).entities.roles.state;
+    expect(state).toBeDefined();
+    const hass = {
+      ...HOUSE,
+      states: { ...HOUSE.states, [state!]: { ...HOUSE.states[state!]!, state: 'TurboWash' } },
+    } as HomeAssistant;
+    expect(read('lg-washer', {}, hass).word).toBe('TurboWash');
+  });
+
   it('waits to be unloaded from half an hour after a finish, until its door opens', () => {
     // done an hour ago, its door shut since before: waiting
     const done = houseOf([hcDishwasherDone(NOW)], NOW);

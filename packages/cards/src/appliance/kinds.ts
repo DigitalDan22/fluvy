@@ -469,7 +469,8 @@ export function byWords(
 /**
  * What an appliance is, in the order its signals are surest: the card's `kind`; a 3D printer is never one; the model
  * (Miele's type, LG's device type); the keys only one kind has; the words of its name, then of its maker's (a device
- * renamed "DE1" by "Decent Espresso"). None where nothing says.
+ * renamed "DE1" by "Decent Espresso"), which may give a kind but never rule one out (a plug "Plug 3" made by
+ * "Allterco Robotics" powers a washer all the same). None where nothing says.
  */
 export function kindOf(
   signals: KindSignals,
@@ -481,8 +482,14 @@ export function kindOf(
     byModel(signals) ??
     byKeys(signals) ??
     byWords(signals.name, signals.model) ??
-    byWords(signals.manufacturer)
+    makerKind(signals.manufacturer)
   );
+}
+
+/** The kind a maker's name gives (an espresso maker's), never one it rules out. */
+function makerKind(manufacturer: string | null | undefined): KindVerdict | undefined {
+  const verdict = byWords(manufacturer);
+  return verdict && 'kind' in verdict ? verdict : undefined;
 }
 
 /** The programme select's options: Home Connect's selected or active programme, Matter's mode. */

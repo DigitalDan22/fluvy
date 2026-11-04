@@ -93,6 +93,12 @@ describe('what an appliance is', () => {
     expect(kindOf(signals({ platform: 'shelly', name: 'Plug 3', manufacturer: 'Shelly' }))).toBe(
       undefined,
     );
+    // nor does one whose name says a robot or a charger: it rules out no appliance its plug powers
+    for (const manufacturer of ['Allterco Robotics', 'Ecovacs Robotics', 'Wallbox'])
+      expect(
+        kindOf(signals({ platform: 'shelly', name: 'Plug 3', manufacturer })),
+        manufacturer,
+      ).toBe(undefined);
   });
 
   it('reads LG’s type off its model, both integrations’ forms, and a WashTower’s half off its name', () => {
