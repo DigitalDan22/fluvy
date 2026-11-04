@@ -60,6 +60,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - A room's `include` or `exclude` pattern with many stars (`*`) is read at once on any id, where one that did not
   match a long id could hold the page for seconds or more (#95). The alerts card reads its id and device patterns
   (`sensor.*_battery`, `hall ?`) the same way.
+- An appliance card with `device: none` reads no device again, as before 1.13.0: it is named after its entity and is
+  what its `kind` or its entity's name says, where 1.13.0 took the name and the kind of its entity's device, and one
+  that names only its roles shows them, where it showed nothing (#98).
 
 ### Development
 

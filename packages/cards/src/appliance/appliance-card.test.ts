@@ -3,7 +3,6 @@ import type { HassEntity, HomeAssistant, LovelaceCardConfig } from '@fluvy/core'
 import { OUT_OF_REACH, outOfReachStates } from '@fluvy/demo-home/out-of-reach';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { applianceHeight, APPLIANCE_VARIANTS } from '../appliances-family.js';
-import { normaliseConfig } from '../shared/config.js';
 import { applianceHouseHeight, FluvyApplianceCard } from './appliance-card.js';
 import { appliancesHouseHeight, FluvyAppliancesCard } from './appliances-card.js';
 import { allFixtures, houseOf, laterFixtures, minutesFrom, plugFridge } from './fixtures/index.js';
@@ -483,15 +482,25 @@ describe('the appliance card', () => {
     expect(text).not.toContain('214.7');
   });
 
-  it('reads `device: none`, the way until now, as `scan: false` (#98)', () => {
-    const aliases = FluvyApplianceCard.aliases;
-    expect(
-      aliases && normaliseConfig({ type: 'x', device: 'none', entity: 'switch.a' }, aliases),
-    ).toEqual({ type: 'x', entity: 'switch.a', scan: false });
-    expect(aliases && normaliseConfig({ type: 'x', device: 'abc' }, aliases)).toEqual({
-      type: 'x',
-      device: 'abc',
-    });
+  it('reads no device where it names `device: none` (#98), as before 1.13: its entity’s name, or its roles alone', async () => {
+    const entity = 'switch.geschirrspuler_kuche_ein_aus';
+    const hass = house({ [entity]: { attributes: { friendly_name: 'Spülmaschine' } } });
+    const card = await mount({ device: 'none', entity, kind: 'dishwasher' }, hass);
+    expect(text(root(card).querySelector('[data-name]'))).toBe('Spülmaschine');
+    const roles = [
+      { role: 'state', entity: 'sensor.waschmaschine_flur_maschinenzustand' },
+    ] as const;
+    const alone = await mount({ device: 'none', kind: 'washer', roles }, hass);
+    expect(root(alone).querySelector('.fv-card--empty')).toBeNull();
+    expect(applianceHouseHeight({ type: 'x', device: 'none', kind: 'washer', roles }, hass)).toBe(
+      applianceHouseHeight({ type: 'x', device: 'lt-washer', scan: false, roles }, hass),
+    );
+    // it has no device to search: the editor's switch for it steps out
+    const scan = FluvyApplianceCard.getConfigForm()
+      .schema.flatMap((item) => item.schema ?? [item])
+      .find((item) => item.name === 'scan');
+    expect(scan?.when?.({ device: 'none' })).toBe(false);
+    expect(scan?.when?.({ device: 'lt-washer' })).toBe(true);
   });
 
   it('a washer on a plug says what it draws and what this cycle used, from its power’s history; its rows never again', async () => {

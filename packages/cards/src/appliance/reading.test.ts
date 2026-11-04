@@ -347,6 +347,39 @@ describe('an appliance read', () => {
     ).toBe('Geschirrspüler Küche');
   });
 
+  it('reads no device at all where a card names `device: none` (#98), as before 1.13: what it names, and its words', () => {
+    const entity = 'switch.geschirrspuler_kuche_ein_aus';
+    const phase = 'sensor.geschirrspuler_kuche_fortschritt';
+    const hass: HomeAssistant = {
+      ...HOUSE,
+      states: {
+        ...HOUSE.states,
+        [entity]: { ...HOUSE.states[entity]!, attributes: { friendly_name: 'Spülmaschine' } },
+      },
+    };
+    const found = findAppliance(hass, {
+      device: 'none',
+      entity,
+      roles: [{ role: 'phase', entity: phase }],
+    });
+    // never its entity's device: neither its entities, nor what the device says it is
+    expect(found).toMatchObject({ device: undefined, platform: 'localthings', candidates: [] });
+    expect(found.entities.roles).toEqual({ power: entity, phase });
+    expect(found.verdict).toEqual({ kind: 'dishwasher', by: 'words' });
+    expect(read('none', { entity }, hass).name).toBe('Spülmaschine');
+    expect(findAppliance(hass, { device: 'none', entity, kind: 'washer' }).verdict).toEqual({
+      kind: 'washer',
+      by: 'config',
+    });
+    // one naming only its roles reads them, under no name of a device's
+    const roles = [{ role: 'state', entity: 'sensor.waschmaschine_flur_maschinenzustand' }];
+    expect(findAppliance(hass, { device: 'none', roles })).toMatchObject({
+      device: undefined,
+      entities: { roles: { state: 'sensor.waschmaschine_flur_maschinenzustand' } },
+    });
+    expect(read('none', { roles }, hass)).toMatchObject({ name: '', status: 'running' });
+  });
+
   it('says a fridge’s door has stood open after a minute, with when it opened', () => {
     const fridge = later(hcFridge, 0);
     expect(fridge.door).toEqual({ open: true, since: NOW - 180_000, changed: NOW - 180_000 });

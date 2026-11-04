@@ -117,8 +117,9 @@ export interface ApplianceFound {
 /**
  * The appliance a card is about: the device it names (or its entity's), its entities, what it is. A card that scans
  * nothing (`scan: false`) reads only the entities it names, `entity` and `roles`: its device still says what the
- * appliance is, what it is called and whose it is. Costly on a large house: a card keeps it while the registries and
- * its config stay the same, as the printer card keeps its printer.
+ * appliance is, what it is called and whose it is. One that names `device: none` reads no device at all: it is what
+ * its `kind` or its entity's name says, called by its entity's name, its entity's integration's. Costly on a large
+ * house: a card keeps it while the registries and its config stay the same, as the printer card keeps its printer.
  */
 export function findAppliance(hass: House | undefined, config: ApplianceConfig): ApplianceFound {
   const device = applianceDevice(hass, config.device, config.entity);
@@ -144,6 +145,13 @@ export function findAppliance(hass: House | undefined, config: ApplianceConfig):
     verdict: verdict ?? byWords(named, config.entity),
   };
 }
+
+/**
+ * What an appliance is known by (its unloaded finish, its notice): its device, else the entity its card names, else
+ * the first a role names (`device: none`'s); none where it names nothing, and there is no appliance to show.
+ */
+export const applianceKey = (found: ApplianceFound, config: ApplianceConfig): string | undefined =>
+  found.device || config.entity || config.roles?.find((named) => named.entity)?.entity;
 
 /** Something the card says under the head, most pressing first: why it failed, a door left open, a load to take out, what to look after. */
 export interface Attention {

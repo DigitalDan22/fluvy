@@ -1152,12 +1152,19 @@ const rolesOf = (held: Partial<Record<ApplianceRole, Holder>>): ApplianceRoles =
   return roles;
 };
 
-/** The device the card is about: the one it names, else the device of the entity it names. */
+/**
+ * `device: none`: no device at all, not even its entity's (#98). The way to read only the entities a card names
+ * before `scan: false`, which still reads its device's name and kind.
+ */
+export const NO_DEVICE = 'none';
+
+/** The device the card is about: the one it names, else the device of the entity it names; none for `NO_DEVICE`. */
 export function applianceDevice(
   hass: Pick<HomeAssistant, 'entities'> | undefined,
   device: string | undefined,
   entity: string | undefined,
 ): string | undefined {
+  if (device === NO_DEVICE) return undefined;
   if (device) return device;
   return entity ? hass?.entities?.[entity]?.device_id : undefined;
 }

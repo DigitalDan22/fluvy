@@ -772,7 +772,8 @@ export const sheet: SheetSpec = {
     }),
     frame({ title: 'LocalThings · as #91’s owner named its roles', cards: [localthings()] }),
     // a card that scans nothing (#98): the washer's state, phase, time left and buttons named, nothing else of its
-    // device (no programme, no softener to refill, no energy); `device: none`, the way until now, reads the same
+    // device (no programme, no softener to refill, no energy); `device: none`, the way until then, reads no device at
+    // all: named after its entity, a washer by its entity's words
     frame({
       title: 'Scan off · only the roles named',
       cards: [
@@ -1145,6 +1146,20 @@ export const sheet: SheetSpec = {
       title: 'Statuses · a warning of the house’s own',
       statuses: { warning: '#dc630b' },
       cards: STATUSES,
+    }),
+    // `device: none` naming only its roles (#98): no device, no entity, its roles alone, as before 1.13
+    frame({
+      title: 'Device none · its roles alone',
+      cards: [
+        {
+          type: 'custom:fluvy-appliance-card',
+          device: 'none',
+          kind: 'washer',
+          show_controls: true,
+          roles: WASHER_ROLES,
+          _now: at,
+        },
+      ],
     }),
   ],
 };

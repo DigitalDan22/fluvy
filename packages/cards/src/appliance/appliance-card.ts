@@ -57,7 +57,7 @@ import { sharedGap } from '../cover/common.js';
 import { HeadFit } from '../energy/head.js';
 import { Card, HEAD_BASE, type HeadConfig } from '../shared/base.js';
 import { statusToneOf, toneOf } from '../shared/colour.js';
-import { configKeys, type AliasSpec } from '../shared/config.js';
+import { configKeys } from '../shared/config.js';
 import { unitWord, widestDuration } from '../shared/duration.js';
 import { fitLine, type Segment } from '../shared/fit.js';
 import { COLUMN, textWidth } from '../shared/heights.js';
@@ -173,6 +173,7 @@ import {
   type PlugCycle,
 } from './plug.js';
 import {
+  applianceKey,
   DONE_FOR,
   findAppliance,
   isPlug,
@@ -181,7 +182,7 @@ import {
   type ApplianceReading,
   type Attention,
 } from './reading.js';
-import { METER_ENERGY, type ApplianceRole, type ApplianceRoles } from './roles.js';
+import { METER_ENERGY, NO_DEVICE, type ApplianceRole, type ApplianceRoles } from './roles.js';
 import { busy, stepsOf, wordOf } from './status.js';
 import {
   attentionText,
@@ -1362,11 +1363,6 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     'roles',
     'scan',
   ]);
-  /** `device: none` was the way to read only the roles named by hand: it reads as `scan: false` (#98). */
-  static override aliases: AliasSpec = {
-    keys: [{ from: 'device', to: 'scan', when: (value) => value === 'none', map: () => false }],
-  };
-
   static override lists: readonly RowsListSpec[] = [
     rowsList('rows', 'appliance.editor_rows'),
     // a pet device's tiles, said as its rows are
@@ -1566,8 +1562,11 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         fieldRow(toneField(), accentField()),
         accentField('card_color', { none: true }),
         actionFields(),
-        // drawn in the roles' section
-        { ...boolField('scan'), helper: 'appliance.editor_scan_helper' },
+        // drawn in the roles' section; `device: none` has no device to search
+        onlyWhen(({ device }) => device !== NO_DEVICE, {
+          ...boolField('scan'),
+          helper: 'appliance.editor_scan_helper',
+        }),
       ],
       ...editorLabels(s, {
         device: 'editor_device',
@@ -1717,7 +1716,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
 
   /** The automation of this appliance's "Tell me when it's done", where an administrator looks at its whole card. */
   private noticeAutomation(): string | undefined {
-    const key = this.appliance().device ?? this.config?.entity;
+    const key = applianceKey(this.appliance(), this.config ?? {});
     if (!key || !this.hass?.user?.is_admin || this.variant !== 'full') return undefined;
     return automationEntity(this.hass, noticeId(key))?.entity_id;
   }
@@ -1747,9 +1746,9 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     );
   }
 
-  /** The key this appliance's "Unloaded" is remembered by: its device, else its entity. */
+  /** The key this appliance's "Unloaded" is remembered by: what it is known by (`applianceKey`). */
   private memoryKey(found: ApplianceFound): string {
-    return found.device ?? this.config?.entity ?? '';
+    return applianceKey(found, this.config ?? {}) ?? '';
   }
 
   /** A plug's cycle, from its threshold sensor, else its power's history and live states. */
@@ -1795,9 +1794,8 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
   private read(): View | null {
     const found = this.appliance();
     const { roles, zones, hob } = found.entities;
-    if (found.verdict && 'excluded' in found.verdict) return null;
-    if (!found.device && !this.config?.entity) return null;
     const config = this.config ?? { type: '' };
+    if ((found.verdict && 'excluded' in found.verdict) || !applianceKey(found, config)) return null;
     const now = this.now();
     const cycle = isPlug(roles) ? this.cycle(roles, now) : undefined;
     const r = readAppliance(
@@ -2414,7 +2412,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
    */
   private renderNotice(view: View, words: readonly string[]): TemplateResult | typeof nothing {
     const hass = this.hass;
-    const key = view.found.device ?? this.config?.entity;
+    const key = applianceKey(view.found, this.config ?? {});
     if (!hass?.user?.is_admin || this.config?.show_notify === false || !key) return nothing;
     const room = this.contentWidth - 44 - 12;
     const fits = words.every(
@@ -4959,7 +4957,7 @@ export function applianceHouseHeight(
   hass: HomeAssistant,
   found = findAppliance(hass, config),
 ): number {
-  if ((found.verdict && 'excluded' in found.verdict) || (!found.device && !config.entity))
+  if ((found.verdict && 'excluded' in found.verdict) || !applianceKey(found, config))
     return applianceHeight(config);
   const r = readAppliance(hass, found, config, Date.now());
   const variant = variantOf(config);

@@ -69,6 +69,7 @@ import {
   type PlugCycle,
 } from './plug.js';
 import {
+  applianceKey,
   DONE_FOR,
   findAppliance,
   isPlug,
@@ -112,6 +113,15 @@ export interface ApplianceItem {
   readonly variant?: ApplianceVariant;
   readonly [key: string]: unknown;
 }
+
+/** An item as its whole card reads its appliance: its device, its entity, its kind, its roles and its scan. */
+const itemConfig = (item: ApplianceItem): ApplianceConfig => ({
+  device: item.device,
+  entity: item.entity,
+  kind: item.kind,
+  ...(Array.isArray(item['roles']) ? { roles: item['roles'] as ApplianceConfig['roles'] } : {}),
+  ...(item['scan'] === false ? { scan: false } : {}),
+});
 
 export interface AppliancesCardConfig extends FluvyCardConfig, HeadConfig {
   title?: string;
@@ -523,16 +533,7 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
     const list = items
       .filter((item) => item.device || item.entity)
       .map((item) => {
-        // an item's roles and its scan, as its whole card reads them
-        const found = findAppliance(this.hass, {
-          device: item.device,
-          entity: item.entity,
-          kind: item.kind,
-          ...(Array.isArray(item['roles'])
-            ? { roles: item['roles'] as ApplianceConfig['roles'] }
-            : {}),
-          ...(item['scan'] === false ? { scan: false } : {}),
-        });
+        const found = findAppliance(this.hass, itemConfig(item));
         return [item.device ?? item.entity ?? '', item, found] as const;
       });
     this.found = { key, at, list };
@@ -597,12 +598,13 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
     const now = this.now();
     const lines = this.appliances().flatMap(([key, item, found]): Line[] => {
       if (found.verdict && 'excluded' in found.verdict && !item.kind) return [];
+      const config = itemConfig(item);
       const r = readAppliance(
         this.hass,
         found,
-        { device: item.device, entity: item.entity, kind: item.kind },
+        config,
         now,
-        unloadedAt(found.device ?? item.entity ?? ''),
+        unloadedAt(applianceKey(found, config) ?? ''),
         this.cycle(key, found, now),
       );
       const shown = shownOf(this.hass, r, 'main');

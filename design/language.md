@@ -1587,8 +1587,10 @@ temperature on its way, a hob's plates, a fridge's compartments, a state and its
   taken for a system's. A system entity (firmware, reboot, identify, wifi) is never a role; nothing filed under
   diagnostics acts. A second drum or cavity on one device (SmartThings' upper washer and second cavity, Whirlpool's
   lower oven) is read apart, never silently left out. A card that scans nothing (`scan: false`, #98) reads only the
-  entities it names (`entity` and `roles`): its device still names it and says what it is and whose it is
-  (`device: none`, the way until then, reads the same).
+  entities it names (`entity` and `roles`): its device still names it and says what it is and whose it is.
+  `device: none`, the way until then, reads no device at all, as it always did: the card is named after its entity and
+  is what its `kind` or its entity's name says (1.13.1; 1.13.0 read its entity's device), and one that names only its
+  roles shows them, known by the first of them. Its editor has no scan switch then: there is nothing to search.
 - **What it is doing** folds every integration's words into the card's few: off, ready, scheduled, running,
   preheating, paused, needs attention, done, error, offline. The words shown stay Home Assistant's (its translation of
   the state: "Spülen", "Rinsing"); where they say nothing (hOn's numbers, the older LG integration's plain English),
