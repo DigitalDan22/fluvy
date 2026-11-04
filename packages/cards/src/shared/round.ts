@@ -13,7 +13,8 @@ export interface LevelRound {
   /** What a reader hears it is, and reads on hover. */
   readonly name: string;
   readonly glyph: IconRef | string;
-  /** It can be read; else the dashed ring, which takes no tap (a hold still opens it). */
+  /** It can be read; else the dashed ring, which takes no tap (a hold still opens it). One with no tap is drawn as it
+   * reads, its tap off. */
   readonly usable: boolean;
   readonly on: boolean;
   /** Its ring while on, in % from the top: 100 all the way round. */
@@ -51,7 +52,7 @@ export function levelRound(round: LevelRound): TemplateResult {
     data-accent=${round.on ? (round.accent ?? nothing) : nothing}
     role=${round.switches ? 'switch' : nothing}
     aria-checked=${round.switches ? String(round.on) : nothing}
-    aria-disabled=${round.usable ? nothing : 'true'}
+    aria-disabled=${round.usable && round.onTap ? nothing : 'true'}
     aria-label=${round.name}
     title=${round.name}
     .fvTap=${round.usable ? round.onTap : undefined}

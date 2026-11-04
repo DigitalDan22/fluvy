@@ -343,13 +343,18 @@ function roundOf(host: QuickHost, item: QuickAction): LevelRound {
   return {
     name: item.name ?? (group ? localize(hass, LOOKS[group][0]) : first.name),
     glyph: item.icon ?? (group && !single ? LOOKS[group][1] : iconOf(first)),
-    usable: flip ? flip.calls.length > 0 : views.some(isUsable),
+    usable: views.some(isUsable),
     on,
     level: on ? Math.max(1, Math.round(level)) : 0,
     tone,
     accent: host.accent(colour),
     switches: flip !== undefined,
-    onTap: flip ? () => runFlip(host, flip, tap.confirmation) : runs(tap),
+    // a set none of whose members takes its call reads as it is and takes no tap
+    onTap: flip
+      ? flip.calls.length > 0
+        ? () => runFlip(host, flip, tap.confirmation)
+        : undefined
+      : runs(tap),
     onHold: runs(item.hold_action ?? MORE_INFO),
   };
 }

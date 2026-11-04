@@ -791,13 +791,15 @@ describe('a room’s quick actions (#113)', () => {
     ).toEqual(['media_player.turn_on media_player.lounge']);
   });
 
-  it('takes no tap where none of its members can act, and is drawn as one that cannot', async () => {
-    // a speaker that plays and can only have its volume set
+  it('takes no tap where none of its members can act, and is drawn as it reads', async () => {
+    // a speaker that plays and can only have its volume set: on, in its colour, its tap off
     const hass = lounge([of('media_player.lounge', 'playing', 4)]);
     sent.length = 0;
     const card = await room({ area: 'lounge', quick_actions: ['media', 'lights'] }, hass);
     const [media, lights] = rounds(card);
     expect(media?.getAttribute('aria-disabled')).toBe('true');
+    expect(media?.classList.contains('is-on')).toBe(true);
+    expect(media?.classList.contains('fv-ico--off')).toBe(false);
     expect(lights?.getAttribute('aria-disabled')).toBeNull();
     media!.click();
     expect(sent).toEqual([]);
