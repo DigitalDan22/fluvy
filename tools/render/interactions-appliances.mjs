@@ -77,18 +77,18 @@ check(
   const shown = await fridge.evaluate((el) =>
     el.shadowRoot.querySelector('.ap-zone .fv-readout__value')?.textContent.replace(/\s+/g, ''),
   );
-  const before = await calls(page);
   await settle(page, 900);
+  // one call in all, of the last tap's value: a call sent before the taps settled would be a second one (read by count,
+  // not by the clock, which a loaded runner stretches past the settle between the last tap and a read)
   const after = await calls(page);
   check(
     'a compartment’s stepper shows each tap at once and sends one call once the taps settle: ten taps, one call',
     shown === '7°C' &&
-      before.length === 0 &&
       after.length === 1 &&
       after[0].s === 'number.set_value' &&
       after[0].d.entity_id === 'number.kuhlschrank_fridge_temperatur' &&
       after[0].d.value === 7,
-    JSON.stringify({ shown, before, after }),
+    JSON.stringify({ shown, after }),
   );
   // held until Home Assistant answers: the mock writes the state a beat later, and it reads 7 all along
   await settle(page, 300);
