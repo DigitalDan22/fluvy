@@ -774,6 +774,21 @@ describe('a room’s quick actions (#113)', () => {
     expect(sent).toEqual([]);
   });
 
+  it('says what is wrong with quick actions that are not a list, and reads none written as its own', async () => {
+    const card = document.createElement('fluvy-room-card') as RoomElement;
+    for (const quick_actions of [{ group: 'lights' }, 'lights', 3])
+      expect(() =>
+        card.setConfig({
+          type: 'custom:fluvy-room-card',
+          area: 'lounge',
+          quick_actions: quick_actions as never,
+        }),
+      ).toThrow('fluvy-room-card: "quick_actions" must be a list');
+    // `quick_actions:` with nothing after it: the room's lights and blinds, as with none
+    const bare = await room({ area: 'lounge', quick_actions: null as never }, lounge());
+    expect(names(bare)).toEqual(['Lights', 'Blinds']);
+  });
+
   it('pauses what plays, toggles a lock as Home Assistant does, and runs an action of its own', async () => {
     sent.length = 0;
     const card = await room(

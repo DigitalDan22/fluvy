@@ -10,6 +10,7 @@ import {
   isActive,
   isUsable,
   lightDefaults,
+  listOf,
   navigate,
   numberAttr,
   plural,
@@ -237,6 +238,8 @@ export class FluvyRoomCard extends FluvyTileCard {
 
   protected override prepare(config: RoomCardConfig): RoomCardConfig {
     if (!config.area) throw new Error('fluvy-room-card: "area" is required');
+    // its rounds a list, or none: what it watches and what it draws read them as one
+    listOf(config, 'quick_actions');
     return config;
   }
 

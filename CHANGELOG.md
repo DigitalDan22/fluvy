@@ -10,6 +10,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The Vehicle card lays its row of rounds out for Home Assistant's word for each state its lock can be in (Locking,
   Unlocking, Jammed), where it measured Fluvy's Locked and Unlocked, which a lock's round never says: in a language
   whose words for them differ in length, the car's own row can hold one round more, or one fewer, at the same width.
+- A room card whose `quick_actions` is not a list (`quick_actions: lights`, without its dash) says so in its error,
+  where it drew the room's lights and blinds instead, or broke on an entry written as one object.
 
 ### Fixed
 
