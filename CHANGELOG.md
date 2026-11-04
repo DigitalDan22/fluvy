@@ -5,6 +5,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.13.1] — 2026-11-04
+
 ### Visible on upgrade
 
 - The Vehicle card lays its row of rounds out for Home Assistant's word for each state its lock can be in (Locking,
