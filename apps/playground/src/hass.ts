@@ -1,7 +1,7 @@
 import type { HassEntity, HomeAssistant, UnsubscribeFunc } from '@fluvy/core';
 import { simulate } from '@fluvy/demo-home/simulate';
 import { mockCollection, presetRange, stubCardHelpers, type MockPeriod } from './collection.js';
-import { renderTemplate } from './template.js';
+import { renderTemplate, type AreaOf } from './template.js';
 import {
   ADMIN_ONLY,
   houseWs,
@@ -342,6 +342,7 @@ export function createHass(seeds: readonly StateSeed[], options: MockOptions = {
         states,
         (watch.message['variables'] as Record<string, unknown> | undefined) ?? {},
         (message) => warnings.push(message),
+        areaOf,
       );
       event = { result, listeners: { all: false, domains: [], entities: [], time: false } };
     } catch (error) {
@@ -385,6 +386,13 @@ export function createHass(seeds: readonly StateSeed[], options: MockOptions = {
   const entities = options.registry?.entities ?? {};
   const devices = options.registry?.devices ?? {};
   const areas = options.registry?.areas ?? {};
+  /** An entity's area as a template reads it: its own, else its device's. */
+  const areaOf = (id: string): AreaOf | undefined => {
+    const entry = entities[id];
+    const areaId = entry?.area_id ?? (entry?.device_id ? devices[entry.device_id]?.area_id : null);
+    const area = areaId ? areas[areaId] : undefined;
+    return area ? { id: area.area_id, name: area.name } : undefined;
+  };
   const floors = options.registry?.floors;
 
   const build = (): HomeAssistant =>

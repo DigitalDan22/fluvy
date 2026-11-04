@@ -30,7 +30,8 @@ export const lists: readonly RowsListSpec[] = [
     title: 'editor.tabs',
     keys: ['name', 'icon', 'path', 'entity', 'action', 'color'],
     schema: [
-      textField('name'),
+      // its words, or a template rendered live (a count, a state); its icon and colour take one in YAML
+      { ...textField('name'), helper: 'editor.template_helper' },
       fieldRow(iconField(), textField('path')),
       entityField(undefined, 'entity', false),
       accentField('color', { item: true }),

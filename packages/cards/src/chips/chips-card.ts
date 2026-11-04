@@ -14,15 +14,23 @@ import {
   type PropertyValues,
   type TemplateResult,
 } from 'lit';
+import { keyed } from 'lit/directives/keyed.js';
 import { Card, type CardEditor } from '../shared/base.js';
 import { ITEM_ALIASES, type AliasSpec } from '../shared/config.js';
 import { EMPTY } from '../shared/heights.js';
 import { emptyPanel, listOf, type EmptyList } from '../shared/lists.js';
+import { iconRefOf, isTemplate, PENDING_LINE, TemplateTexts } from '../shared/templates.js';
 
 const s = strings('chips');
 
 export interface ChipConfig {
+  /**
+   * Its words, or a Home Assistant template rendered live (#87: `{{ states.person | selectattr('state', 'eq', 'home') |
+   * list | count }}`, the chip's `entity` being `entity` in it). A template that renders nothing leaves the chip its
+   * icon, or leaves it out when it has none: a chip that shows only when there is something to say.
+   */
   name: string;
+  /** Its icon, or a template that names one (`mdi:…`, a Fluvy glyph's name). */
   icon?: IconRef | string;
   /** Dashboard path this tab navigates to, e.g. "/fluvy-home/living". The tab whose path is open is the active one. */
   path?: string;
@@ -30,8 +38,19 @@ export interface ChipConfig {
   entity?: string;
   /** A full action; wins over `path` and `entity`. */
   action?: ActionConfig;
-  /** The tab's own colour (a Home Assistant colour name or `#rrggbb`): its fill when it is the open one. */
+  /**
+   * The tab's own colour (a Home Assistant colour name or `#rrggbb`), or a template that gives one: its fill when it is
+   * the open one.
+   */
   color?: string;
+}
+
+/** A chip as it shows: its words, icon and colour, each as written or as its template rendered it. */
+interface Drawn {
+  readonly chip: ChipConfig;
+  readonly name: string;
+  readonly icon: IconRef | string | undefined;
+  readonly color: string | undefined;
 }
 
 export interface ChipsCardConfig extends FluvyCardConfig, EmptyList {
@@ -157,6 +176,10 @@ export class FluvyChipsCard extends Card<ChipsCardConfig> {
 
   /** Pills are sized after render and again when a web font arrives: the row follows their real width. */
   private sizes: ResizeObserver | undefined;
+  /** The chips' templates, rendered by Home Assistant and kept live (one subscription a template). */
+  private readonly texts = new TemplateTexts(this);
+  /** How many chips the last render drew: a template that leaves one out (or brings it back) is a new row to watch. */
+  private drawn = 0;
 
   constructor() {
     super();
@@ -196,7 +219,7 @@ export class FluvyChipsCard extends Card<ChipsCardConfig> {
     return { columns: 12, rows: 'auto', min_columns: 6 };
   }
 
-  /** Nothing drawn here depends on an entity's state. */
+  /** Nothing drawn here depends on an entity's state: what a template says, Home Assistant sends (`TemplateTexts`). */
   protected override watched(): readonly string[] {
     return [];
   }
@@ -226,10 +249,25 @@ export class FluvyChipsCard extends Card<ChipsCardConfig> {
     this.mouse = undefined;
   }
 
-  private activeIndex(): number {
-    return tabsOf(this.config?.chips).findIndex(
-      (chip) => chip.path !== undefined && viewOf(chip.path) === this.path_,
-    );
+  /** Whether a chip points at the view that is open. */
+  private opens(chip: ChipConfig): boolean {
+    return chip.path !== undefined && viewOf(chip.path) === this.path_;
+  }
+
+  /**
+   * The chips as they show, in order: their templates rendered (a name still to come holds a blank of a line's height,
+   * an icon or a colour still to come none); a chip whose name renders nothing keeps its icon, and one with neither is
+   * left out.
+   */
+  private drawnChips(): Drawn[] {
+    return tabsOf(this.config?.chips).flatMap((chip) => {
+      const asked = (text: string | undefined): string | undefined =>
+        text !== undefined && isTemplate(text) ? this.texts.text(text, chip.entity) : text;
+      const name = this.texts.resolve(chip.name, chip.entity);
+      const icon = isTemplate(chip.icon ?? '') ? iconRefOf(asked(chip.icon) ?? '') : chip.icon;
+      const shows = name === PENDING_LINE || name.trim() !== '' || icon !== undefined;
+      return shows ? [{ chip, name, icon, color: asked(chip.color) }] : [];
+    });
   }
 
   /* ---------- the scroller ---------- */
@@ -266,7 +304,10 @@ export class FluvyChipsCard extends Card<ChipsCardConfig> {
 
   protected override updated(changed: PropertyValues): void {
     super.updated(changed);
-    if (changed.has('config')) this.watchChips(); // the observer's first report places the active tab
+    // the observer's first report places the active tab
+    const count = this.scroller?.querySelectorAll('.fv-chip').length ?? 0;
+    if (changed.has('config') || count !== this.drawn) this.watchChips();
+    this.drawn = count;
     this.bindMouse();
     if (changed.has('path_') && !this.tapped) this.hands = false;
     this.settle(changed.has('path_') && this.tapped);
@@ -341,11 +382,17 @@ export class FluvyChipsCard extends Card<ChipsCardConfig> {
   }
 
   protected renderCard(): TemplateResult {
-    const chips = tabsOf(this.config?.chips);
     // no tabs: the panel where the row would be, on the page as the row is
-    const panel = emptyPanel(this, !chips.length, 'rooms', 'common.no_tabs', true);
+    const panel = emptyPanel(
+      this,
+      !tabsOf(this.config?.chips).length,
+      'rooms',
+      'common.no_tabs',
+      true,
+    );
     if (panel) return panel;
-    const active = this.activeIndex();
+    const chips = this.drawnChips();
+    const active = chips.findIndex(({ chip }) => this.opens(chip));
 
     return html`<nav
       class="hm-rooms ${this.besideMark_ ? 'is-beside-mark' : ''}"
@@ -359,13 +406,16 @@ export class FluvyChipsCard extends Card<ChipsCardConfig> {
         @wheel=${this.onHands}
         @focusin=${this.onHands}
       >
-        ${chips.map(
-          (chip, index) =>
+        ${chips.map(({ chip, name, icon: glyph, color }, index) => {
+          const accent = this.accents.item(color);
+          // a pill is fitted to its words (`fitPills`): one whose icon comes or goes is drawn afresh, so it is fitted again
+          return keyed(
+            Boolean(glyph),
             html`<button
-              class="fv-chip ${index === active ? (chip.color ? 'is-active' : 'fv-chip--ink is-active') : ''}"
+              class="fv-chip ${index === active ? (accent ? 'is-active' : 'fv-chip--ink is-active') : ''}"
               data-target
               data-fit="32"
-              data-accent=${this.accents.item(chip.color) ?? nothing}
+              data-accent=${accent ?? nothing}
               aria-current=${index === active ? 'page' : nothing}
               @click=${() => {
                 const action = this.actionFor(chip);
@@ -375,15 +425,14 @@ export class FluvyChipsCard extends Card<ChipsCardConfig> {
             >
               <span
                 class="fv-chip__pill ${
-                  this.config?.tint === 'always' && chip.color && index !== active
-                    ? 'is-tinted'
-                    : ''
+                  this.config?.tint === 'always' && accent && index !== active ? 'is-tinted' : ''
                 }"
                 data-control
-                >${chip.icon ? icon(chip.icon) : nothing}${chip.name}</span
+                >${glyph ? icon(glyph) : nothing}${name}</span
               >
             </button>`,
-        )}
+          );
+        })}
       </div>
     </nav>`;
   }

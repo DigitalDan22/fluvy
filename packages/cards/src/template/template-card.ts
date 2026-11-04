@@ -21,9 +21,9 @@ import type { Tint } from '../shared/colour.js';
 import type { AliasSpec, Secondary } from '../shared/config.js';
 import type { OptionWord } from '../shared/form.js';
 import { changedAt } from '../shared/since.js';
-import { isTemplate, PENDING_LINE, TemplateTexts } from '../shared/templates.js';
+import { iconRefOf, isTemplate, PENDING_LINE, TemplateTexts } from '../shared/templates.js';
 import { templateHeight } from '../template-family.js';
-import { activeOf, colourOf, iconRefOf, type TemplateColour } from './values.js';
+import { activeOf, colourOf, type TemplateColour } from './values.js';
 
 const s = strings('template');
 

@@ -299,6 +299,30 @@ variant: mini
 secondary: sensor.lounge_tv_status # or "{{ state_attr(entity, 'source') }} · {{ states('sensor.soundbar_volume') }}"
 ```
 
+## Chips
+
+A chip's `name` may be a Home Assistant template, rendered and kept live as a row's text is: who is home, the rooms
+with a light on, a state. So may its `icon` (an icon such as `mdi:home-account`, or a Fluvy glyph's name) and its
+`color` (a colour's name, `#rrggbb`, drawn on the card's palette); the chip's `entity` is `entity` in them. A template
+that fails says nothing of itself, and one that renders nothing leaves the chip its icon, or leaves out a chip with no
+icon: a chip that shows only while there is something to say. The row stays one line, whatever the words. Fluvy never
+runs JavaScript: a button-card label between `[[[ ]]]` is shown as written, so write it as a template.
+
+```yaml
+type: custom:fluvy-chips-card
+chips:
+  - name: "{{ states.person | selectattr('state', 'eq', 'home') | list | count }} home"
+    icon: mdi:home-account
+    path: /dashboard-home/people
+  - name: >-
+      {{ states.light | selectattr('state', 'eq', 'on') | map(attribute='entity_id') | map('area_name')
+      | reject('none') | unique | list | count }} rooms lit
+    icon: mdi:lightbulb-group
+    color: "{{ 'amber' if is_state('light.kitchen', 'on') else 'grey' }}"
+  - name: "{{ 'Washer done' if is_state('sensor.washer_state', 'finished') else '' }}"
+    entity: sensor.washer_state
+```
+
 ## Template
 
 The template card is a tile — compact (the default), mini or large, the tile card's own — whose `name`,

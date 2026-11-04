@@ -2164,6 +2164,12 @@ the tile card's tile of the same entity, byte for byte.
   row, tone and colour, the card's colour, *Show its colour* only with a colour, readouts only for a large tile, the
   actions; helpers under the name, the line, the icon, *Shows as on* and the colour (a colour template goes in YAML).
 - Its chunk is its own (`template`, 2.1 KB of 8): every page carries only its name and height (`template-family.ts`).
+- **Chips (1.13, #87).** A chip of the chips card takes the same templates for its words, its icon and its colour (the
+  chip's `entity` is `entity` in them; never JavaScript: `[[[ ]]]` is words), one subscription a template, let go when
+  the row leaves the page. Pending, a chip holds its pill with a blank where the words will land; an icon that names no
+  icon and a colour no palette knows are none. A chip whose words render nothing keeps its icon, and one with neither
+  is left out of the row: a chip that shows while there is something to say. The row stays one line, 44 tall, whatever
+  the words; a pill whose icon comes or goes is drawn afresh, so it is fitted to its content again.
 
 ## Web page (1.11)
 

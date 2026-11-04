@@ -81,6 +81,36 @@ const MORE_ROOMS = ['Bathroom', 'Hall', 'Garage', 'Garden'].map((label) => ({
   path: `/fluvy-home/${label.toLowerCase()}`,
 }));
 
+/**
+ * #87: chips whose words are Home Assistant templates, as the reporter's are — who is home, the rooms with a light on —
+ * a count's icon by a template, a chip coloured by one, and one that shows only while there is something to say.
+ */
+const HOME_COUNT = "{{ states.person | selectattr('state', 'eq', 'home') | list | count }} home";
+const ROOMS_LIT =
+  "{{ states.light | selectattr('state', 'eq', 'on') | map(attribute='entity_id') | map('area_name') | reject('none') | unique | list | count }} rooms lit";
+const COUNTED_CHIPS = [
+  {
+    name: HOME_COUNT,
+    icon: "{{ 'mdi:home-account' if states.person | selectattr('state', 'eq', 'home') | list | count else 'mdi:home-outline' }}",
+    path: '/fluvy-home/people',
+  },
+  {
+    name: ROOMS_LIT,
+    icon: 'mdi:lightbulb-group',
+    color: "{{ 'amber' if is_state('light.kitchen_pendant', 'on') else 'grey' }}",
+    path: '/fluvy-home/lights',
+  },
+  // shows only while the study's lamp is on: a template that renders nothing leaves a chip with no icon out
+  {
+    name: "{{ 'Study lamp on' if is_state('light.study_lamp', 'on') else '' }}",
+    entity: 'light.study_lamp',
+  },
+  {
+    name: "{{ 'Bedroom lamp on' if is_state('light.bedroom_lamp', 'on') else '' }}",
+    entity: 'light.bedroom_lamp',
+  },
+];
+
 export const sheet: SheetSpec = {
   states: [
     /* the evening of the sheet */
@@ -262,7 +292,27 @@ export const sheet: SheetSpec = {
     ['light.hall_strip', 'off', { friendly_name: 'Hall strip' }],
     ['switch.hall_fan', 'on', { friendly_name: 'Hall fan' }],
     ['cover.hall_blind', 'closed', { friendly_name: 'Hall blind', current_position: 0 }],
+
+    /* what the counting chips count (#87): who is home, the rooms with a light on */
+    ['person.lena', 'home', { friendly_name: 'Lena' }],
+    ['light.kitchen_pendant', 'on', { friendly_name: 'Kitchen pendant' }],
+    ['light.kitchen_counter', 'on', { friendly_name: 'Kitchen counter' }],
+    ['light.study_lamp', 'on', { friendly_name: 'Study lamp' }],
+    ['light.bedroom_lamp', 'off', { friendly_name: 'Bedroom lamp' }],
   ],
+  registry: {
+    areas: {
+      ex_kitchen: { area_id: 'ex_kitchen', name: 'Kitchen' },
+      ex_study: { area_id: 'ex_study', name: 'Study' },
+      ex_bedroom: { area_id: 'ex_bedroom', name: 'Bedroom' },
+    },
+    entities: {
+      'light.kitchen_pendant': { entity_id: 'light.kitchen_pendant', area_id: 'ex_kitchen' },
+      'light.kitchen_counter': { entity_id: 'light.kitchen_counter', area_id: 'ex_kitchen' },
+      'light.study_lamp': { entity_id: 'light.study_lamp', area_id: 'ex_study' },
+      'light.bedroom_lamp': { entity_id: 'light.bedroom_lamp', area_id: 'ex_bedroom' },
+    },
+  },
 
   /* six hours of readings: the trend arrow is earned from these, never drawn by hand. `sensor.new_co2` has none. */
   history: {
@@ -533,6 +583,18 @@ export const sheet: SheetSpec = {
         }),
         player('media_player.long'),
       ],
+    },
+    {
+      title: 'Chips · templates (#87)',
+      cards: [
+        { type: 'custom:fluvy-chips-card', chips: COUNTED_CHIPS },
+        // the colour a template gives, at rest
+        { type: 'custom:fluvy-chips-card', chips: COUNTED_CHIPS, tint: 'always' },
+      ],
+    },
+    {
+      title: 'Chips · templates, half',
+      cards: [{ type: 'custom:fluvy-chips-card', chips: COUNTED_CHIPS.slice(0, 2), cols: 6 }],
     },
   ],
 };

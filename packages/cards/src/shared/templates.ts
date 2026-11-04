@@ -1,4 +1,5 @@
 import type { HassConnection, HomeAssistant } from '@fluvy/core';
+import { isGlyph, type IconRef } from '@fluvy/ui';
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
 import { release, type Subscription } from './subscription.js';
 
@@ -12,6 +13,15 @@ export const asText = (value: unknown): string =>
     : typeof value === 'object'
       ? JSON.stringify(value)
       : String(value);
+
+/**
+ * An icon a template's answer names: an id with its set (`mdi:lightbulb`, `fluvy:door-open`) or a Fluvy glyph's name
+ * (`bulb`); nothing for any other text, which is never handed to an icon as it is.
+ */
+export function iconRefOf(text: string): IconRef | undefined {
+  const word = text.trim();
+  return /^[\w-]+:[\w-]+$/.test(word) || isGlyph(word) ? (word as IconRef) : undefined;
+}
 
 /** A blank line of a sub's height (a non-breaking space): what a row shows for a template Home Assistant has not answered yet. */
 export const PENDING_LINE = '\u00a0';

@@ -6,8 +6,10 @@ import type { HassEntity } from '@fluvy/core';
  * the variables Fluvy hands over (`entity`, `user`), strings, numbers, `true`, `false` and `none`, `~` to join, the
  * arithmetic (`+`, `-`, `*`, `/`, `//`, a sign, parentheses: Mushroom's `(state_attr(entity, 'brightness') / 2.55) |
  * round(0)`), the comparisons (`==`, `!=`, `<`, `>`, `<=`, `>=`), `and`, `or` and `not`, the inline `a if b else c`,
- * the filters `round(n)`, `int`, `float`, `upper`, `lower`, `title` and `capitalize`, inside `{{ … }}` with plain
- * text around, and `{% if %}`, `{% elif %}`, `{% else %}`, `{% endif %}` round the text, each bound as Jinja binds it
+ * the filters `round(n)`, `int`, `float`, `upper`, `lower`, `title` and `capitalize`, the house as lists (`states`,
+ * `states.person`, a state's `.state`, `.entity_id`, `.name`, `.attributes.x`) and the filters a count of them is made
+ * with (#87: `selectattr`, `rejectattr`, `select`, `reject` with Jinja's tests, `map(attribute='x')` and `map('f')`,
+ * `list`, `count`, `length`, `unique`, `join`, `area_id`, `area_name`), inside `{{ … }}` with plain text around, and `{% if %}`, `{% elif %}`, `{% else %}`, `{% endif %}` round the text, each bound as Jinja binds it
  * (a filter tightest, then a sign, `*` `/` `//`, `~`, `+` `-`, the comparisons). Only what is chosen is worked out, as
  * Jinja does; a number is written as JavaScript writes it (`2`, where Python writes a division's `2.0`). A name the
  * template reads that is not defined is nothing, said as a warning, as Home Assistant says it under `strict: false`;
@@ -26,11 +28,19 @@ type Value = unknown;
 /** A part of an expression, parsed once and worked out when it is asked (an `else` branch not taken never is). */
 type Thunk = () => Value;
 
+/** An area as the registries say it: its id and its name. */
+export interface AreaOf {
+  readonly id: string;
+  readonly name: string;
+}
+
 interface Scope {
   readonly states: Readonly<Record<string, HassEntity>>;
   readonly variables: Readonly<Record<string, unknown>>;
   /** Says a warning, as Home Assistant's `log_fn` does while it renders. */
   readonly warn: (message: string) => void;
+  /** An entity's area (its own, else its device's), as `area_id` and `area_name` read it. */
+  readonly areaOf: (entityId: string) => AreaOf | undefined;
 }
 
 interface Token {
@@ -39,7 +49,7 @@ interface Token {
 }
 
 const TOKEN =
-  /'([^']*)'|"([^"]*)"|(\d+(?:\.\d+)?)|([A-Za-z_]\w*)|(==|!=|<=|>=|<|>|\/\/|[-+*/()|~,])/y;
+  /'([^']*)'|"([^"]*)"|(\d+(?:\.\d+)?)|([A-Za-z_]\w*)|(==|!=|<=|>=|<|>|\/\/|[-+*/()|~,.=])/y;
 
 function tokenize(source: string): Token[] {
   const tokens: Token[] = [];
@@ -82,9 +92,78 @@ const str = (value: Value): string =>
           ? JSON.stringify(value)
           : String(value);
 
-/** Python's truth: nothing, none, false, 0 and the empty text are false. */
+/** Python's truth: nothing, none, false, 0, the empty text and the empty list are false. */
 const truthy = (value: Value): boolean =>
-  value !== undefined && value !== null && value !== false && value !== 0 && value !== '';
+  value !== undefined &&
+  value !== null &&
+  value !== false &&
+  value !== 0 &&
+  value !== '' &&
+  !(Array.isArray(value) && !value.length);
+
+/** A state as Jinja reads it: its own fields, and what Home Assistant's template state adds (`name`, `domain`). */
+function field(value: Value, key: string): Value {
+  if (value === null || typeof value !== 'object') return undefined;
+  const record = value as Record<string, unknown>;
+  if (typeof record['entity_id'] === 'string') {
+    const id = record['entity_id'];
+    const attributes = (record['attributes'] ?? {}) as Record<string, unknown>;
+    if (key === 'domain') return id.slice(0, id.indexOf('.'));
+    if (key === 'object_id') return id.slice(id.indexOf('.') + 1);
+    if (key === 'name') return attributes['friendly_name'] ?? id;
+  }
+  return record[key];
+}
+
+/** A dotted path read through `field` (`attributes.device_class`). */
+const path = (value: Value, dotted: string): Value =>
+  dotted.split('.').reduce<Value>((at, key) => field(at, key), value);
+
+/** The items of what a filter of lists is handed: a list, a text's letters, else an error as Jinja's. */
+function itemsOf(value: Value): Value[] {
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') return [...value];
+  throw new TemplateError(`'${str(value)}' is not iterable`);
+}
+
+/** Jinja's tests, as `select`, `reject`, `selectattr` and `rejectattr` name them; none named is the item's truth. */
+function test(name: Value, item: Value, against: Value): boolean {
+  switch (name) {
+    case undefined:
+      return truthy(item);
+    case 'eq':
+    case 'equalto':
+    case '==':
+      return item === against;
+    case 'ne':
+    case '!=':
+      return item !== against;
+    case 'gt':
+    case '>':
+    case 'lt':
+    case '<':
+    case 'ge':
+    case '>=':
+    case 'le':
+    case '<=': {
+      const operator = { gt: '>', lt: '<', ge: '>=', le: '<=' }[String(name)] ?? String(name);
+      return compare(operator, item, against);
+    }
+    case 'in':
+      return itemsOf(against).includes(item);
+    case 'none':
+      return item === null;
+    case 'defined':
+      return item !== undefined;
+    case 'undefined':
+      return item === undefined;
+    case 'search':
+      return new RegExp(String(against)).test(String(item));
+    case 'match':
+      return new RegExp(`^(?:${String(against)})`).test(String(item));
+  }
+  throw new TemplateError(`No test named '${str(name)}'`);
+}
 
 /** The words that are values: Jinja writes them in lower case, Python's spelling is read too. */
 const LITERALS: Readonly<Record<string, Value>> = {
@@ -254,18 +333,46 @@ class Parser {
       const name = token.text;
       if (this.peek('(')) return this.call(name);
       if (Object.hasOwn(LITERALS, name)) return () => LITERALS[name];
+      // the house: every state, or a domain's (`states.person`), and a state by its id (`states.light.desk`)
+      if (name === 'states') return this.fields(this.house());
       // a variable handed over as undefined never reaches Home Assistant (JSON leaves it out): it is not defined
-      return () => {
+      return this.fields(() => {
         const variable = this.scope.variables[name];
         if (variable === undefined) this.scope.warn(`'${name}' is undefined`);
         return variable;
-      };
+      });
     }
     throw new TemplateError(`unexpected '${token.text}'`);
   }
 
+  /** `states`, and `states.<domain>` and `states.<domain>.<object id>` after it, as Home Assistant reads them. */
+  private house(): Thunk {
+    const all = (): HassEntity[] => Object.values(this.scope.states);
+    if (!this.peek('.')) return all;
+    this.at += 1;
+    const domain = this.next().text;
+    const ofDomain = (): HassEntity[] =>
+      all().filter((state) => state.entity_id.startsWith(`${domain}.`));
+    if (!this.peek('.') || this.tokens[this.at + 1]?.kind !== 'name') return ofDomain;
+    const after = this.tokens[this.at + 1]?.text ?? '';
+    // a state's own field after the domain is the domain's list read, never an object id
+    if (['state', 'attributes', 'entity_id', 'name'].includes(after)) return ofDomain;
+    this.at += 2;
+    return () => this.scope.states[`${domain}.${after}`];
+  }
+
+  /** A value's fields read after it: `.state`, `.attributes.friendly_name`. */
+  private fields(value: Thunk): Thunk {
+    let read = value;
+    while (this.take('.')) {
+      const [from, key] = [read, this.next().text];
+      read = () => field(from(), key);
+    }
+    return read;
+  }
+
   private call(name: string): Thunk {
-    const args = this.args();
+    const { args } = this.args();
     if (!['states', 'state_attr', 'is_state'].includes(name))
       throw new TemplateError(`'${name}' is undefined`);
     return () => {
@@ -279,51 +386,103 @@ class Parser {
 
   /**
    * Home Assistant's `round` (an int at precision 0, else a float, written with its decimals as Python writes one),
-   * Jinja's `int` and `float`, each refusing what is not a number, as they do without a default; and Jinja's `upper`,
-   * `lower`, `title` and `capitalize`, on the value as it is written.
+   * Jinja's `int` and `float`, each refusing what is not a number, as they do without a default; Jinja's `upper`,
+   * `lower`, `title` and `capitalize`, on the value as it is written; and the filters of lists.
    */
   private filter(value: Thunk): Thunk {
     const name = this.next();
     if (name.kind !== 'name') throw new TemplateError("a filter is expected after '|'");
-    const args = this.peek('(') ? this.args() : [];
-    const text = (input: Value): string => str(input);
-    const words: Readonly<Record<string, (input: string) => string>> = {
-      upper: (input) => input.toUpperCase(),
-      lower: (input) => input.toLowerCase(),
-      title: (input) =>
-        input.toLowerCase().replace(/(^|[^\p{L}\p{N}'])(\p{L})/gu, (m) => m.toUpperCase()),
-      capitalize: (input) => input.charAt(0).toUpperCase() + input.slice(1).toLowerCase(),
-    };
-    const word = words[name.text];
-    if (word) return () => word(text(value()));
-    if (!['round', 'int', 'float'].includes(name.text))
-      throw new TemplateError(`No filter named '${name.text}'`);
-    return () => {
-      const input = value();
-      const number = Number(input);
-      if (
-        input === null ||
-        input === undefined ||
-        input === '' ||
-        typeof input === 'boolean' ||
-        Number.isNaN(number)
-      )
-        throw new TemplateError(`${name.text}: ${str(input)} is not a number`);
-      if (name.text === 'int') return Math.trunc(number);
-      if (name.text === 'float') return number;
-      const digits = Number(args[0]?.() ?? 0);
-      return digits === 0 ? Math.round(number) : number.toFixed(digits);
-    };
+    if (!FILTERS.includes(name.text)) throw new TemplateError(`No filter named '${name.text}'`);
+    const { args, named } = this.peek('(') ? this.args() : { args: [], named: {} };
+    return () =>
+      this.apply(
+        name.text,
+        value(),
+        args.map((arg) => arg()),
+        Object.fromEntries(Object.entries(named).map(([key, arg]) => [key, arg()])),
+      );
   }
 
-  private args(): Thunk[] {
+  /** One filter on its input, its arguments worked out: what `|` and `map('name')` both run. */
+  private apply(
+    name: string,
+    input: Value,
+    args: readonly Value[],
+    named: Readonly<Record<string, Value>> = {},
+  ): Value {
+    const words: Readonly<Record<string, (input: string) => string>> = {
+      upper: (text) => text.toUpperCase(),
+      lower: (text) => text.toLowerCase(),
+      title: (text) =>
+        text.toLowerCase().replace(/(^|[^\p{L}\p{N}'])(\p{L})/gu, (m) => m.toUpperCase()),
+      capitalize: (text) => text.charAt(0).toUpperCase() + text.slice(1).toLowerCase(),
+    };
+    const word = words[name];
+    if (word) return word(str(input));
+    switch (name) {
+      case 'list':
+        return [...itemsOf(input)];
+      case 'count':
+      case 'length':
+        return itemsOf(input).length;
+      case 'unique':
+        return [...new Set(itemsOf(input))];
+      case 'join':
+        return itemsOf(input)
+          .map(str)
+          .join(str(args[0] ?? ''));
+      case 'select':
+      case 'reject':
+        return itemsOf(input).filter(
+          (item) => test(args[0], item, args[1]) === (name === 'select'),
+        );
+      case 'selectattr':
+      case 'rejectattr':
+        return itemsOf(input).filter(
+          (item) => test(args[1], path(item, str(args[0])), args[2]) === (name === 'selectattr'),
+        );
+      case 'map':
+        return itemsOf(input).map((item) =>
+          named['attribute'] !== undefined
+            ? path(item, str(named['attribute']))
+            : this.apply(str(args[0]), item, args.slice(1)),
+        );
+      case 'area_id':
+      case 'area_name': {
+        const area = this.scope.areaOf(str(input));
+        return (name === 'area_id' ? area?.id : area?.name) ?? null;
+      }
+    }
+    const number = Number(input);
+    if (
+      input === null ||
+      input === undefined ||
+      input === '' ||
+      typeof input === 'boolean' ||
+      Number.isNaN(number)
+    )
+      throw new TemplateError(`${name}: ${str(input)} is not a number`);
+    if (name === 'int') return Math.trunc(number);
+    if (name === 'float') return number;
+    const digits = Number(args[0] ?? 0);
+    return digits === 0 ? Math.round(number) : number.toFixed(digits);
+  }
+
+  /** A call's arguments: in order, then by name (`map(attribute='entity_id')`). */
+  private args(): { args: Thunk[]; named: Record<string, Thunk> } {
     this.expect('(');
     const args: Thunk[] = [];
+    const named: Record<string, Thunk> = {};
     if (!this.peek(')'))
-      do args.push(this.conditional());
-      while (this.take(','));
+      do {
+        const [token, after] = [this.tokens[this.at], this.tokens[this.at + 1]];
+        if (token?.kind === 'name' && after?.kind === 'punct' && after.text === '=') {
+          this.at += 2;
+          named[token.text] = this.conditional();
+        } else args.push(this.conditional());
+      } while (this.take(','));
     this.expect(')');
-    return args;
+    return { args, named };
   }
 
   private next(): Token {
@@ -369,6 +528,29 @@ class Parser {
     if (!this.take(text)) throw new TemplateError(`'${text}' expected`);
   }
 }
+
+/** The filters this Jinja knows: anything else is an error, as Jinja's is. */
+const FILTERS: readonly string[] = [
+  'round',
+  'int',
+  'float',
+  'upper',
+  'lower',
+  'title',
+  'capitalize',
+  'list',
+  'count',
+  'length',
+  'unique',
+  'join',
+  'select',
+  'reject',
+  'selectattr',
+  'rejectattr',
+  'map',
+  'area_id',
+  'area_name',
+];
 
 /** A template's parts: its text, what it prints (`{{ … }}`), and its `{% if %}` blocks, each branch with its test. */
 type Part = string | Thunk | readonly Branch[];
@@ -440,13 +622,15 @@ const read = (text: string): Rendered =>
 
 /**
  * `template` rendered against `states` (and the variables the caller hands over); a `TemplateError` when it cannot be.
- * `warn` hears what Home Assistant would say as a warning while it renders (a name that is not defined).
+ * `warn` hears what Home Assistant would say as a warning while it renders (a name that is not defined); `areaOf` says
+ * an entity's area, as the registries do.
  */
 export function renderTemplate(
   template: string,
   states: Readonly<Record<string, HassEntity>>,
   variables: Readonly<Record<string, unknown>> = {},
   warn: (message: string) => void = () => undefined,
+  areaOf: (entityId: string) => AreaOf | undefined = () => undefined,
 ): Rendered {
-  return read(write(parse(template.trim(), { states, variables, warn })).trim());
+  return read(write(parse(template.trim(), { states, variables, warn, areaOf })).trim());
 }

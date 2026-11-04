@@ -1,10 +1,11 @@
 import { isActiveState } from '@fluvy/core';
-import { isGlyph, TONES, type IconRef, type Tone } from '@fluvy/ui';
+import { TONES, type Tone } from '@fluvy/ui';
 
 /**
  * What a template card's templates answer, read as the card reads it: each parser takes the text Home Assistant
- * rendered (a result is text by then: `true`, `21.5`, `mdi:lightbulb`) and gives what the card draws, or nothing for a
- * text that says none — never the text itself where it is not the thing asked for.
+ * rendered (a result is text by then: `true`, `21.5`, `warning`) and gives what the card draws, or nothing for a
+ * text that says none — never the text itself where it is not the thing asked for. An icon is read as every card reads
+ * one (`iconRefOf`, shared/templates.ts).
  */
 
 /**
@@ -18,12 +19,6 @@ export function activeOf(text: string): boolean {
   if (word === 'true' || word === 'yes') return true;
   const number = Number(word);
   return Number.isFinite(number) ? number !== 0 : isActiveState('', word);
-}
-
-/** An icon an answer names: an id with its set (`mdi:lightbulb`, `fluvy:door-open`) or a Fluvy glyph's name (`bulb`). */
-export function iconRefOf(text: string): IconRef | undefined {
-  const word = text.trim();
-  return /^[\w-]+:[\w-]+$/.test(word) || isGlyph(word) ? (word as IconRef) : undefined;
 }
 
 /** A colour an answer gives: a tone of the palette (`heat`, `warning`), or a colour as the card's palette draws it. */

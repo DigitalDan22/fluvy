@@ -1,7 +1,7 @@
 import type { HassConnection, HomeAssistant } from '@fluvy/core';
 import type { ReactiveController } from 'lit';
 import { describe, expect, it } from 'vitest';
-import { asText, isTemplate, PENDING_LINE, TemplateTexts } from './templates.js';
+import { asText, iconRefOf, isTemplate, PENDING_LINE, TemplateTexts } from './templates.js';
 
 /** One `render_template` subscription the fake socket holds: what was asked, where to answer, whether it is over. */
 interface Open {
@@ -261,5 +261,21 @@ describe('TemplateTexts', () => {
     expect(next.live()).toHaveLength(1);
     next.open[0]!.answer({ result: 23, listeners: {} });
     expect(read()).toBe('23');
+  });
+});
+
+describe('iconRefOf: an icon by its set, or a glyph’s name', () => {
+  it('takes an id with its set, and a Fluvy glyph', () => {
+    expect(iconRefOf('mdi:lightbulb-on')).toBe('mdi:lightbulb-on');
+    expect(iconRefOf(' fluvy:door-open ')).toBe('fluvy:door-open');
+    expect(iconRefOf('bulb')).toBe('bulb');
+  });
+
+  it('gives nothing for anything else: words, an empty answer, an id without its set', () => {
+    expect(iconRefOf('')).toBeUndefined();
+    expect(iconRefOf('lightbulb')).toBeUndefined();
+    expect(iconRefOf('mdi:')).toBeUndefined();
+    expect(iconRefOf('the light is on')).toBeUndefined();
+    expect(iconRefOf('mdi:light bulb')).toBeUndefined();
   });
 });

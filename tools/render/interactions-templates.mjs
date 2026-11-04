@@ -3,7 +3,8 @@
  * Interaction tests for templates in a row's text: a template renders to its text (never to itself), follows a state
  * change, two rows that ask the same template for the same entity share one subscription, a template Home Assistant
  * refuses says nothing, removing the cards releases every subscription, and a row whose answer is still to come keeps
- * its line, so nothing moves when the words land.
+ * its line, so nothing moves when the words land; and the chips card's chips (#87), whose words, icon and colour are
+ * templates, counted live, a chip stepping in and out of the row as it has something to say.
  * Real cards on the playground's simulated hass. Exit code 1 on any failure.
  *   PLAYGROUND=http://127.0.0.1:5187/ node interactions-templates.mjs
  */
@@ -139,6 +140,67 @@ const bars = frame(page, 'Bars · template').locator('fluvy-bars-card');
   await settle(page);
   const none = await templates();
   check('removing every card brings the count to 0', none === 0, String(none));
+}
+
+/* ---------- chips whose words, icon and colour are templates (#87) ---------- */
+{
+  const home = await suite.sheet('home-extras');
+  const row = frame(home, 'Chips · templates (#87)').locator('fluvy-chips-card').first();
+  const names = async () =>
+    row.evaluate((el) =>
+      [...(el.shadowRoot?.querySelectorAll('.fv-chip') ?? [])].map((chip) =>
+        (chip.textContent ?? '').trim(),
+      ),
+    );
+  const icon = async () =>
+    row.evaluate((el) => el.shadowRoot?.querySelector('.fv-chip ha-icon')?.icon ?? '');
+  const shown = await names();
+  check(
+    'chips: who is home and the rooms lit, counted by templates; a chip with something to say',
+    JSON.stringify(shown) === JSON.stringify(['2 home', '2 rooms lit', 'Study lamp on']),
+    JSON.stringify(shown),
+  );
+  const text = await row.evaluate((el) => el.shadowRoot?.textContent ?? '');
+  check(
+    'chips: never a template’s own text',
+    !text.includes('{{'),
+    text.replace(/\s+/g, ' ').trim(),
+  );
+  await home.evaluate(() => {
+    window.fluvyMock.set('person.lena', 'not_home');
+    window.fluvyMock.set('light.bedroom_lamp', 'on');
+  });
+  await settle(home);
+  const after = await names();
+  check(
+    'chips: a state change counts again, and a chip with something to say steps into the row',
+    JSON.stringify(after) ===
+      JSON.stringify(['1 home', '3 rooms lit', 'Study lamp on', 'Bedroom lamp on']),
+    JSON.stringify(after),
+  );
+  await home.evaluate(() => window.fluvyMock.set('light.study_lamp', 'off'));
+  await settle(home);
+  const out = await names();
+  check(
+    'chips: …and steps out of it when it has nothing more to say',
+    JSON.stringify(out) === JSON.stringify(['1 home', '2 rooms lit', 'Bedroom lamp on']),
+    JSON.stringify(out),
+  );
+  const glyph = await icon();
+  check('chips: an icon named by a template', glyph === 'mdi:home-account', glyph);
+  // three cards of these chips on the sheet, each its own subscriptions; removing them lets every one go
+  const before = await home.evaluate(() => window.fluvyMock.templates());
+  await home.evaluate(() =>
+    document.querySelectorAll('fluvy-chips-card').forEach((el) => el.remove()),
+  );
+  await settle(home);
+  const left = await home.evaluate(() => window.fluvyMock.templates());
+  check(
+    'chips: removing the rows releases their subscriptions',
+    before > 0 && left === 0,
+    `${before} → ${left}`,
+  );
+  await home.close();
 }
 
 await suite.finish();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { activeOf, colourOf, iconRefOf } from './values.js';
+import { activeOf, colourOf } from './values.js';
 
 describe('activeOf: on by the house’s rule', () => {
   it.each([
@@ -31,22 +31,6 @@ describe('activeOf: on by the house’s rule', () => {
     '0',
     '0.0',
   ])('%j is off', (text) => expect(activeOf(text)).toBe(false));
-});
-
-describe('iconRefOf: an icon by its set, or a glyph’s name', () => {
-  it('takes an id with its set, and a Fluvy glyph', () => {
-    expect(iconRefOf('mdi:lightbulb-on')).toBe('mdi:lightbulb-on');
-    expect(iconRefOf(' fluvy:door-open ')).toBe('fluvy:door-open');
-    expect(iconRefOf('bulb')).toBe('bulb');
-  });
-
-  it('gives nothing for anything else: words, an empty answer, an id without its set', () => {
-    expect(iconRefOf('')).toBeUndefined();
-    expect(iconRefOf('lightbulb')).toBeUndefined();
-    expect(iconRefOf('mdi:')).toBeUndefined();
-    expect(iconRefOf('the light is on')).toBeUndefined();
-    expect(iconRefOf('mdi:light bulb')).toBeUndefined();
-  });
 });
 
 describe('colourOf: a tone by its name, else a colour on the palette', () => {

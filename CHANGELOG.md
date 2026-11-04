@@ -30,6 +30,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Chips whose words are Home Assistant templates, rendered and kept live, such as who is home or how many rooms have
+  a light on, and whose icon and colour may be templates too; a chip whose words render nothing keeps its icon, or
+  steps out of the row when it has none. Thanks to @Gnomi2 (#87).
 - A line of your own on the media card in place of the player's, in every style and the compact row's too
   (`secondary`): words, a template rendered by Home Assistant (the player is `entity` in it), or an entity said as its
   state with its unit, such as a television's status sensor. Thanks to @rammium (#101).
