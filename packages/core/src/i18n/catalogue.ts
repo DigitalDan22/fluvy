@@ -17,6 +17,7 @@ import type panel from './locales/en/panel.json';
 import type roomEditor from './locales/en/room-editor.json';
 import type slider from './locales/en/slider.json';
 import type template from './locales/en/template.json';
+import type vehicle from './locales/en/vehicle.json';
 import type web from './locales/en/web.json';
 
 /**
@@ -45,6 +46,7 @@ export type Catalogue = typeof core &
   typeof roomEditor &
   typeof slider &
   typeof template &
+  typeof vehicle &
   typeof web;
 
 export type Namespace = keyof Catalogue;

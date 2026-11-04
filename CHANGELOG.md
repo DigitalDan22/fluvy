@@ -74,6 +74,18 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   how often, and the days a filter, a desiccant or a deodorant has left. A feeder counts down to its next meal; the
   round gives a meal now, cleans the box or resumes a clean a cat paused, each asked first; the automatic dashboards
   give the pets a band of their own. Thanks to @eduardoribeiro (#112).
+### Added
+
+- A Vehicle card for an electric car: its battery on the car charger's ruler (or as a ring) with its range and its
+  charge limit marked; when it will be at its limit while it charges, as a clock time and as how long from now; a range
+  running low, a window or a boot left open, its limit reached, plugged in and not charging, a cabin too cold or too hot
+  to get into, and "Updated 2 h ago" when the car has said nothing for a while; where it is and how far it has gone;
+  its lock, climate, charging, boot, windows, front boot and sentry as one row of rounds that act on the car and ask
+  first where it matters; its tyres from above. It finds the car's entities by what its integration calls them —
+  Tesla Fleet, Teslemetry, Tessie, Renault, Volvo and Škoda, and from HACS Kia and Hyundai, MySkoda, Polestar, MG,
+  Volkswagen's two and BMW's CarData — never taking a horn, a wake button or a charge cable's latch for a control; full,
+  compact and as a strip, a picture of the car over the battery or in the head, every part switched off or reordered,
+  each control and row named, coloured and given its own actions. Thanks to @DailytheNoob (#84).
 
 ## [1.12.0] — 2026-11-04
 

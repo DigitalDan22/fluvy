@@ -42,6 +42,7 @@ import { ENERGY_FAMILY, ENERGY_PERIOD_FAMILY, type FamilyEntry } from './energy-
 import { ITEMS_FAMILY } from './items-family.js';
 import { MEDIA_FAMILY } from './media-family.js';
 import { SLIDER_FAMILY } from './slider-family.js';
+import { VEHICLE_FAMILY } from './vehicle-family.js';
 import { TEMPLATE_FAMILY } from './template-family.js';
 import { loadChartEngine } from './shared/chart-load.js';
 import { WEB_FAMILY } from './web-family.js';
@@ -274,6 +275,7 @@ const FAMILIES: readonly Family[] = [
   [TEMPLATE_FAMILY, () => import('./template-cards.js')],
   [WEB_FAMILY, () => import('./web-cards.js')],
   [SLIDER_FAMILY, () => import('./slider-cards.js')],
+  [VEHICLE_FAMILY, () => import('./vehicle-cards.js')],
   [ITEMS_FAMILY, () => import('./items-cards.js')],
   [CHART_FAMILY, () => import('./chart-cards.js')],
 ];

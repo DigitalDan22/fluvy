@@ -4,16 +4,17 @@ import { outOfReachStates, type OutOfReach } from '@fluvy/demo-home/out-of-reach
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { familiesDefined } from '../index.js';
 import { PRINTER_HOUSE } from '../printer/fixtures.js';
+import { carHouse, TESLA } from '../vehicle/fixtures.js';
 import { serveFrames } from '../web/fixtures.js';
 
-// the lazy families (the players, the cameras, the printers, the automations) are defined before a card is drawn
+// the lazy families (the players, the cameras, the printers, the cars, the automations) are defined before a card is drawn
 await familiesDefined;
 
 /*
  * An unavailable card keeps its configured size (the owner's rule, 1.9), family by family: what `unavailable.test.ts`
  * does not see in a card's parts — a row's figures kept as dashes, a list's rows at rest, a word that keeps a grid a
  * grid, the size a card says — held for the cards of the third sweep (clocks, lists, people, cameras, players,
- * calendars, maps, rooms, printers, automations). Each card is drawn live and again with what it reads out of reach as
+ * calendars, maps, rooms, printers, cars, automations). Each card is drawn live and again with what it reads out of reach as
  * Home Assistant writes it (`@fluvy/demo-home/out-of-reach`).
  */
 
@@ -442,6 +443,36 @@ describe('printers out of reach', () => {
       const buttons = [...root(twin).querySelectorAll<HTMLButtonElement>('.pr-actions button')];
       expect(buttons.length).toBeGreaterThan(0);
       expect(buttons.every((button) => button.disabled)).toBe(true);
+    },
+  );
+});
+
+describe('cars out of reach', () => {
+  const car = carHouse([TESLA]);
+  const ids = Object.keys(car.states).filter((id) => id.includes('model_y'));
+  const config = { type: 'custom:fluvy-vehicle-card', device: TESLA.device, _now: STAMP };
+
+  it.each(KINDS)(
+    'keep every part while %s: the battery and its ruler, the line, the rounds still, the rows and the tyres',
+    async (kind) => {
+      const live = await draw({ ...config, show_tyres: true }, car);
+      const twin = await draw(
+        { ...config, show_tyres: true },
+        { ...car, states: outOfReachStates(car.states, ids, kind) },
+      );
+      // each part by its classes, what it says of its state (`is-…`) left out
+      const parts = (el: Mounted) =>
+        [...root(el).querySelector('article')!.children].map((child) =>
+          [...child.classList].filter((name) => !name.startsWith('is-')).join(' '),
+        );
+      expect(parts(twin)).toEqual(parts(live));
+      expect(root(twin).querySelector('.vh-card.is-unavailable')).not.toBeNull();
+      expect(texts(twin, '.ef-top .fv-readout__value')).toEqual(['—', '—']);
+      const rounds = [...root(twin).querySelectorAll<HTMLButtonElement>('.vh-control')];
+      expect(rounds).toHaveLength(texts(live, '.vh-control__word').length);
+      expect(rounds.every((round) => round.disabled)).toBe(true);
+      expect(texts(twin, '.vh-rows .fv-row__value')).toEqual(['—', '—']);
+      expect(texts(twin, '.vh-tyre')).toEqual(['—', '—', '—', '—']);
     },
   );
 });

@@ -115,6 +115,12 @@ const SOURCES = {
   'fluvy-alarm-card': [['devices-security', 'Alarm', 0]],
   'fluvy-cameras-card': [['cameras', 'Cameras · the mockup', 0]],
   'fluvy-printer-card': [['printer', 'Bambu Lab · printing', 0]],
+  // a car charging, the whole card with its picture and its tyres, and its strips in half a section
+  'fluvy-vehicle-card': [
+    ['vehicle', 'Teslemetry · charging at home', 0],
+    ['vehicle', 'Its picture in the head · the tyres', 0],
+    ['vehicle', 'Strips · half a section', 0],
+  ],
   'fluvy-automations-card': [['automations', 'Rows', 0]],
   'fluvy-appliances-card': [['appliances', 'Appliances · rows', 0]],
   // its stub finds no flights sensor in the house of every sheet: the issue's three aircraft

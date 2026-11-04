@@ -161,6 +161,14 @@ const WEB =
 const SLIDER =
   /\/packages\/(cards\/src\/(slider-cards\.ts|slider\/)|core\/src\/i18n\/locales\/en\/slider\.json)/;
 
+/**
+ * The Vehicle card (its card, what finds a car's entities and folds its integration's words, its glyphs and its
+ * English): fetched as the bundle starts and defined as it lands, as the Slider card is (`vehicle-family.ts` stays in
+ * core: the name, the height). It reads its charge on the car charger's marked ruler, with the energy family.
+ */
+const VEHICLE =
+  /\/packages\/(cards\/src\/(vehicle-cards\.ts|vehicle\/)|core\/src\/i18n\/locales\/en\/vehicle\.json)/;
+
 /** The items' sheet: fetched the first time an item of an Items card is tapped, never by a dashboard that only lists. */
 const ITEMS_SHEET = /\/packages\/cards\/src\/items\/sheet\//;
 
@@ -210,7 +218,7 @@ const FORMS =
  * every page carries, the weather card, the media, the chart engine, the Chart card, the Energy period card, energy
  * (the history bars' readings on their own), devices (the cameras' sheet on its own), appliances (their pictures on
  * their own), automations and alerts families (each sheet on its own), the template card, the web page card, the Slider
- * card, the items card (its sheet on its own), the light card's colours, a room's quick actions, the cards' editor, the
+ * card, the Vehicle card, the items card (its sheet on its own), the light card's colours, a room's quick actions, the cards' editor, the
  * view icons, the icon set's other part, and everything else (Fluvy's packages and Lit) in `core`. The bundle's own
  * entry stays in `fluvy.js`. Rolldown processes the groups in this order; the priorities only say so out loud.
  * @type {readonly Group[]}
@@ -243,6 +251,7 @@ export const GROUPS = [
   { name: 'template', test: TEMPLATE },
   { name: 'web', test: WEB },
   { name: 'slider', test: SLIDER },
+  { name: 'vehicle', test: VEHICLE },
   { name: 'items-sheet', test: ITEMS_SHEET },
   { name: 'items', test: ITEMS },
   { name: 'light-colour', test: LIGHT_COLOUR },

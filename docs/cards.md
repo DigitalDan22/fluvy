@@ -1,6 +1,6 @@
 # The cards
 
-Sixty-three cards, listed as **Fluvy · …** in the card picker, each with a live preview and an editor form. The form is
+Sixty-four cards, listed as **Fluvy · …** in the card picker, each with a live preview and an editor form. The form is
 the reference for a card's options: it shows what the card does by default, and a default you leave as it is is never
 written into the configuration. It shows an option only where it acts — in the style chosen, with the card's other
 options as they are — and an option it hides keeps its value for when it acts again. In YAML, a card is
@@ -870,6 +870,63 @@ strategy:
   rooms:
     kitchen:
       exclude: [switch.dishwasher_*]
+## Vehicle
+
+The vehicle card (#84) draws an electric car from its device: give it the car's `device` (or any of its `entity`s) and
+it finds the rest by what its integration calls them — Tesla Fleet, Teslemetry and Tessie, Renault, Volvo and Škoda
+from Home Assistant, and Kia and Hyundai (kia_uvo), MySkoda, Polestar, MG (mg_saic), Volkswagen's two and BMW's
+CarData from HACS — and any other by what its entities are (a battery's charge, a lock, a climate, a tracker).
+`roles` names an entity for a part it does not find, or plays otherwise (`{ role: range, entity: … }`); with
+`scan: false` only those play. What could move, wake or sound the car — a horn, its lights, keyless driving, a remote
+engine start, a forced refresh that drains its small battery, valet mode — is never a control, nor is a charge cable's
+latch taken for the car's lock, or its 12 V battery for its own.
+
+The whole card is a head (the car, where it is when no row says it — its address, away from home, where its
+integration gives one — and how long since it last reported, "Updated 2 h ago"; what it does in the badge: Charging ·
+7.2 kW, Driving · 64 km/h, Charged, Plugged in, Parked, Asleep), its battery on the car charger's ruler with its range
+beside it and its charge limit marked (`hero: ring` draws it as a ring, the limit a dot on it), and a line under it
+saying the most pressing: why a charge failed; while it charges, when it will be at its limit — the clock time, how long
+from now and how fast its range grows ("80 % at 22:59 · 1 h 12 min left · +46 km/h"); a range that runs low (under
+`low_range`, in the range's unit, or a fifth of its charge); a window, a door or a boot left open; its charge limit
+reached; plugged in and not charging; a cabin too cold or too hot to get into while its climate is off. Under it, its
+controls as one row of rounds — the lock, the climate, the charge, the boot, the windows, the front boot and sentry, the
+ones the car has, as many as the column holds with their words — each acting on the car and asking first where it
+matters (unlocking, opening the boot or the front boot, venting or closing the windows, stopping a charge, turning
+sentry off), each holding for its details; then `rows` (where it is and how far it has gone; its inside and outside
+temperatures, its charging power and rate, its limit, its time to full, its software, its speed, its fuel, or any
+entity) and its tyres from above (`show_tyres`: each pressure at its wheel, a low one in the warning's ink). A car out of
+reach keeps every part in its place, its values dashes and its controls still.
+
+`variant: compact` keeps the head (its range leading the line), the battery as a bar with its limit marked and a row of
+rounds; `mini` is a strip: the car's circle ringed by its charge, its name over its charge, range and what it does, and
+its first control. `controls` is an ordered list (each with its `name`, `icon`, `color`, `confirm`, `tap_action` and
+`hold_action`; nine of them wrap into even rows), and so is `rows`; every part switches off (`show_range`, `show_limit`,
+`show_status`, `show_controls`, `show_rows`); `image` is a picture of the car — an address, an image or camera entity,
+or `auto` for the one its integration gives — over the battery or in the head (`image_position`); `range_unit` (km or
+mi) and `power_unit`, each with its decimals; `hero_tap_action` and `hero_hold_action` answer the battery.
+
+```yaml
+type: custom:fluvy-vehicle-card
+device: 7c1e…            # the car's device; or entity: one of its entities
+image: /local/model-y.png
+controls: [lock, climate, charging, trunk, frunk]
+rows: [location, odometer, inside]
+show_tyres: true
+low_range: 50
+```
+
+A Nissan Leaf on Home Assistant's own integration has no device: its entities are named by hand.
+
+```yaml
+type: custom:fluvy-vehicle-card
+scan: false
+name: Leaf
+roles:
+  - { role: battery, entity: sensor.leaf_charge }
+  - { role: range, entity: sensor.leaf_range }
+  - { role: plugged, entity: binary_sensor.leaf_plug_status }
+  - { role: charging, entity: binary_sensor.leaf_charging_status }
+  - { role: climate_switch, entity: switch.leaf_climate_control }
 ```
 
 <!-- generated:cards -->
@@ -899,6 +956,7 @@ strategy:
 | **3D printer** | `custom:fluvy-printer-card` | A 3D printer’s job: progress, time left, heaters, layers, filament and the camera; pause, resume and stop. OctoPrint, PrusaLink, Bambu Lab, Moonraker, Creality, Elegoo, Anycubic, Snapmaker and FlashForge. | `device`, `variant` (`full`, `compact`, `row`), `readouts` (`nozzle`, `bed`, `chamber`, `layer`, `speed`, `filament`, `elapsed`), `show_image`, `image` (`auto`, `camera`, `preview`), `camera_view` (`auto`, `live`), `fit_mode` (`cover`, `contain`), `aspect_ratio` (`16:9`, `4:3`, `3:2`, `1:1`, `2:1`, `21:9`, `native`), `show_filament`, `show_controls`, `sensors` (a list: `entity`, `name`), `roles` (a list: `role`, `entity`) | — |
 | **Appliance** | `custom:fluvy-appliance-card` | A washer, dryer, dishwasher, oven, hob, fridge, coffee machine, pet feeder, fountain, litter box or small appliance on a plug, pictured: what it does, when it is ready, what it uses, its reminders. | `device`, `kind` (`auto`, `washer`, `dryer`, `washer_dryer`, `dishwasher`, `oven`, `microwave`, `hob`, `hood`, `fridge`, `freezer`, `wine`, `coffee`, `kettle`, `air_fryer`, `toaster`, `blender`, `sandwich_maker`, `feeder`, `fountain`, `litter_box`, `appliance`), `variant` (`full`, `compact`, `ring`, `row`), `unit` (`both`, `main`, `sub`), `picture` (`art`, `icon`, `none`), `image`, `show_power`, `power_action`, `show_notify`, `show_hero`, `show_progress`, `progress_style` (`auto`, `bar`, `steps`), `time` (`both`, `left`, `end`), `show_zones`, `setpoint_style` (`readout`, `stepper`), `show_drinks`, `show_rows`, `drinks`, `row_values` (`inline`, `end`, `plain`), `readouts` (`program`, `temperature`, `spin`, `dryness`, `energy`, `water`, `cycles`, `detergent`, `elapsed`, `total`, `this_cycle`, `probe`, `power`), `show_maintenance`, `show_modes`, `modes_style` (`chips`, `tiles`), `modes` (`super_cool`, `super_freeze`, `eco`, `holiday`, `ice_maker`, `sabbath`, `child_lock`), `show_controls`, `show_programs`, `controls` (`start`, `pause`, `stop`, `power`, `light`, `feed`, `clean`, `deodorize`, `level`), `feed_amount`, `unload_reminder`, `unload_after`, `done_for`, `door_alert`, `low_level`, `low_days`, `running_power`, `finished_after`, `rows` (a list: `key`, `entity`, `name`, `icon`, `color`, `tap_action`, `hold_action`), `tiles` (a list: `key`, `entity`, `name`, `icon`, `color`, `tap_action`, `hold_action`), `sensors` (a list: `entity`, `name`), `maintenance` (a list: `key`, `name`, `icon`, `color`, `tap_action`, `hold_action`), `zones` (a list: `entity`, `name`, `icon`, `color`, `tap_action`, `hold_action`), `roles` (a list: `role`, `entity`) | — |
 | **Appliances** | `custom:fluvy-appliances-card` | The house’s appliances as live rows, or their whole cards side by side: what runs, what is done, what waits. | `title`, `subtitle`, `variant` (`rows`, `compact`, `tiles`, `cards`), `max_rows`, `picture` (`art`, `icon`, `none`), `show` (`all`, `active`), `sort` (`state`, `name`, `none`), `show_count`, `hide_empty`, `empty_text`, `appliances` (a list: `device`, `entity`, `name`, `icon`, `color`, `kind`, `tap_action`, `hold_action`) | — |
+| **Vehicle** | `custom:fluvy-vehicle-card` | An electric car: its battery, range and charge limit, when it is full, where it is, and its lock, climate, charging, boot and windows in one row. Tesla, BMW, Renault, Volvo, Kia, Hyundai, Volkswagen, Škoda, Polestar, MG and more. | `device`, `scan`, `variant` (`full`, `compact`, `mini`), `hero` (`ruler`, `ring`), `image`, `image_position` (`hero`, `head`), `show_range`, `show_limit`, `show_status`, `show_controls`, `show_rows`, `show_tyres`, `low_range`, `stale_after`, `range_unit` (`auto`, `km`, `mi`), `range_decimals` (`auto`, `0`, `1`, `2`), `power_unit` (`auto`, `W`, `kW`), `power_decimals` (`auto`, `0`, `1`, `2`), `hero_tap_action`, `hero_hold_action`, `controls` (a list: `control`, `name`, `icon`, `color`, `confirm`, `tap_action`, `hold_action`), `rows` (a list: `row`, `entity`, `name`, `icon`, `color`, `tap_action`, `hold_action`), `roles` (a list: `role`, `entity`) | — |
 | **Weather** | `custom:fluvy-weather-card` | Condition, temperature, feels-like, wind and the daily or hourly forecast. | `variant` (`full`, `compact`), `forecast` (`daily`, `hourly`, `both`), `days`, `show_forecast` | `forecast` → `show_forecast` |
 | **Sensor** | `custom:fluvy-sensor-card` | A sensor with its 24 h curve, trend, min, max and average, or up to three sensors on one chart. | `subtitle`, `variant` (`chart`, `tile`), `hours`, `show_stats`, `label`, `chart` (`classic`, `soft`, `glow`, `minimal`, `step`, `bars`, `columns`), `curve` (`smooth`, `straight`, `step`), `fill` (`gradient`, `flat`, `none`), `line_width` (`thin`, `regular`, `bold`), `glow`, `show_points` (`none`, `end`, `all`), `show_grid` (`auto`, `none`, `x`, `y`, `both`), `show_axis`, `highlight` (`none`, `min`, `max`, `both`, `current`), `animate`, `unit` (`auto`, `W`, `kW`, `MW`, `Wh`, `kWh`, `MWh`, `L`, `m³`, `gal`, `ft³`), `decimals` (`auto`, `0`, `1`, `2`, `3`), `entities` (a list: `entity`, `name`, `icon`, `color`) | — |
 | **Readouts** | `custom:fluvy-readouts-card` | Up to four values side by side with their trends. | `hours`, `variant` (`grid`, `row`), `empty_text`, `hide_empty`, `unit` (`auto`, `W`, `kW`, `MW`, `Wh`, `kWh`, `MWh`, `L`, `m³`, `gal`, `ft³`), `decimals` (`auto`, `0`, `1`, `2`, `3`), `rows` (a list: `entity`, `name`, `unit`, `decimals`, `tap_action`) | `entities` → `rows` |

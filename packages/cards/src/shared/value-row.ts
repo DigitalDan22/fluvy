@@ -186,15 +186,22 @@ export function sideStacked(
 
 /**
  * The value row of the charge cards: the reading (a 40 figure) at the left, what qualifies it (a 20 figure: when it
- * is full, when it is due) at the right on its baseline, or under it where the column cannot hold both.
+ * is full, when it is due) at the right on its baseline, or under it where the column cannot hold both — for every
+ * form the two take where `forms` gives them (their widest figures), so a figure that grows never moves the row.
  */
 export function valueRow(
   ruler: TextRuler,
   width: number,
   main: Figure,
   side: { readonly figure: Figure; readonly drawn?: TemplateResult } | null,
+  forms?: { readonly main: readonly Figure[]; readonly side: readonly Figure[] },
 ): TemplateResult {
-  const stacked = sideStacked(ruler, width, [main], side ? [side.figure] : []);
+  const stacked = sideStacked(
+    ruler,
+    width,
+    forms?.main ?? [main],
+    forms?.side ?? (side ? [side.figure] : []),
+  );
   return html`<div class="ef-top fv-value-row ${stacked ? 'is-stacked' : ''}">
     ${readout({ ...main, size: 'l' })}
     ${

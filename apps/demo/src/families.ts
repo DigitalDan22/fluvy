@@ -24,6 +24,7 @@ export const FAMILIES: readonly Family[] = [
     ],
   },
   { key: 'climate', label: 'family.climate', sheets: ['climate'] },
+  { key: 'vehicles', label: 'family.vehicles', sheets: ['vehicle'] },
   {
     key: 'energy',
     label: 'family.energy',

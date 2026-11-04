@@ -2431,6 +2431,85 @@ signed range lit from zero (D), the house's tile (F); no vertical form ("too muc
 - Its chunk is its own (`slider`, 3.8 KB of 8, its editor with the forms): every page carries only its name and height
   (`slider-family.ts`).
 
+## Vehicle (1.13)
+
+The Vehicle card (#84) is an electric car on the charge cards' anatomy: the head, the battery on the car charger's ruler,
+the line under it, a row of rounds, rows and the tyres. Nothing in it is a new idiom but the car from above (the tyres'
+panel) and the controls' row (the map's zone columns as buttons: a circle and its word under it).
+
+- **Who plays what** (`vehicle/roles.ts`): the appliances' and the printer's rule. A role is known by the integration's
+  own translation key (Tesla Fleet, Teslemetry and Tessie share one table; Renault, Volvo, Škoda; Kia's and Hyundai's
+  kia_uvo, MySkoda, Polestar), then by a key it holds as a second choice (Tessie's usable charge, an estimated range
+  beside the rated one, a lock's sensor beside the lock), then by the end of its id without the device's name (MG,
+  Volkswagen's two and BMW's CarData name their entities in English), then by what it is (a battery by its class and
+  percent, a plug, a lock, a climate, a tracker, an update). The integration's own plays a role over a helper attached
+  to its device; `roles` wins, and `scan: false` keeps those alone. **Never a role**: what wakes, sounds, flashes or
+  lends the car, opens a garage, starts its engine or drives it keyless, forces a report (it drains the 12 V battery),
+  the route's tracker, a charge cable's latch (never the car's lock), a cabin's overheat guard (never its climate), a
+  12 V battery or a fuel level that wears the battery's class. A car's doors, its windows and its tyres' warnings are
+  gathered, each by its wheel.
+- **What it does** (`vehicle/state.ts`) folds every integration's charging words into the card's few — charging,
+  complete, stopped (the cable in, no charge), waiting (for its time, starting), unplugged, error, and idle (not
+  charging, nothing said of the cable: its plug sensor says the rest) — a charge plugged in at its limit being complete.
+  The car drives in a gear other than park, at a speed or by its motion sensor; sleeps where its state says so (Tesla's
+  connectivity off, Volvo's power saving, MG's "likely asleep"); is out of reach where its battery, range, lock, place
+  and charge all are.
+- **The head**: the car's glyph in its circle (the badge's tone while it charges or drives, neutral at rest; the dashed
+  ring out of reach), or its picture in the circle's place (64 × 44, the whole car, `image_position: head`); its name;
+  the line — its address where it is away and its integration says one, else the place where no row says it — and
+  "Updated 2 h ago" once its last report is older than `stale_after` (30 min), in the secondary ink: never an alarm. The
+  badge says what it does: "Charging · 7.2 kW", "Driving · 64 km/h", "Charged" (the success's), "Plugged in", "Parked",
+  "Asleep", "Unavailable". The badge outranks an address (`badgeFirst`): one that would take its room gives way to the
+  place's word, then the time alone.
+- **The battery** is the car charger's (`valueRow` and `markedRuler`): "Battery 64 %" at l, "Range 312 km" at s on its
+  baseline (stacked where the column cannot hold both), the read-only ruler with the charge limit marked and named
+  ("Limit"), in the card's colour, the warning's while the range is low. `hero: ring` is the appliances' gauge (R 88 at
+  a 360 column, from the column), the charge in its disc, the range under it, the limit a dot outside the ring. The
+  battery is a button of its own (its details; `hero_tap_action`, `hero_hold_action`).
+- **The line under it** (13/500, one line, its parts fitted, a short form before a part goes) says the most pressing:
+  why charging failed (warning); while charging, when it will be at its limit — the clock time, its day when another,
+  how long from now and how fast its range grows ("80 % at 22:59 · 1 h 12 min left · +46 km/h"), "Full at" where the
+  limit is 100 %; a low range (warning); a window, a door, the boot or the front boot left open (warning: a round may
+  have given way); its limit reached (success); waiting to charge; plugged in, not charging; a cabin too cold (5 °C,
+  41 °F) or too hot (35 °C, 95 °F) while the climate is off (the cool's and the heat's ink); unplugged and its limit;
+  else its limit.
+- **The controls**: the lock, the climate, the charge, the boot, the windows, the front boot, sentry (the doors and the
+  port on request), each a 44 circle and its word under it (12/500, 4 between), the two one button. Equal cells that
+  touch, at least 56 each, a word keeping 2 of its cell clear: as many a row as the column holds with every word at
+  its widest (a state that changes never moves the row) — five at a 392 card in English, four at 360 — the car's own in
+  one row, those that do not hold it giving way in their order, the card's own list in rows as even as they come (nine
+  are five and four, the shorter centred). The circle in its state's tone (the lock locked in the card's colour,
+  unlocked in the warning's; the climate in the heat's or the cool's while it runs; charging in the card's colour,
+  charged in the success's; an opening open in the warning's; sentry on in the armed's); the word its state — "Locked",
+  "21 °C", "Charging", "Off" — but an opening's, which is its name while shut ("Boot", "Windows") and "Open" (warning)
+  while open, so a row never says "Closed" five times; the climate off on a cold cabin says the cabin's temperature in
+  the cool's ink. A tap acts on the car where its integration lets a card (a lock, a climate, a switch, a cover, a
+  button), asking first in Home Assistant's dialog where it matters — unlocking, opening or closing the boot, opening
+  the front boot, venting or closing the windows, stopping a charge, turning sentry off — and `confirm` asks for any;
+  a lock or a switch moves under the finger; what it cannot act on opens its details. The charge cannot start
+  unplugged: the round is still, its title saying why. Hold: its details. Out of reach: the dashed circle and "—",
+  disabled.
+- **The rows**: compact rows (48: the 40 circle, the name 15/600, the value 16/600 at the end); their circles give way
+  together, then every value goes under its name in the row's 48. Location (the place's word), odometer (whole,
+  grouped, in the range's unit), inside, outside, charging power and rate, the limit, the time to full, the software,
+  the speed, the fuel, or any entity — each named, glyphed, coloured and given its actions in the rows editor.
+- **The tyres**: a soft panel (96, radius 16, the inset's fill) with the car from above in its middle (40 × 72, the
+  set's stroke; a wheel with a warning in the warning's ink) and each pressure by its wheel (16/600, the unit 12/500; a
+  bar's one decimal, psi's and kPa's none), low ones in the warning's ink; where only a warning is read, "OK" or "Low";
+  where the column cannot hold a pressure beside the car, the car gives way.
+- **Compact**: the head (its range leading the line), the battery as a 12 bar with its limit a 2 px mark and its
+  percentage at the end (in a room as wide as "100 %"), the line, the rounds without their words. **Mini** (76): the
+  car's circle ringed by its charge (the printer's ring, the card's colour, the warning's when low), its name over its
+  charge, its range, what it does and where (the line's trailing parts give way first), and its first control's round,
+  which gives way where the words would have less than 96; the strip is the card's button.
+- **Glyphs** (`vehicle/glyphs.ts`, added as the chunk lands): the boot and the front boot (the car's side, its nose to
+  the left, the end solid while shut, its lid up while open), a car's door and window (shut and open), the charge port,
+  the odometer, a tyre.
+- **Heights** by the config alone (`vehicle-family.ts`): full 460 (its picture over the battery 176 more, a ring 68
+  more, its tyres 112 more, a row 48, the card's own controls 76 a row more), compact 200, mini 76. A car out of reach
+  keeps every part.
+- Its chunk is its own (`vehicle`, 20.2 KB of 24, its editor on its class): every page carries only its name and height.
+
 ## Value row (1.9)
 
 A card's reading — its big figure — and what goes with it share one 64 row, 16 under the head: the control that sets

@@ -125,6 +125,8 @@ export interface HeadOptions {
   readonly small?: boolean;
   /** The person's own picture in the circle's place (`image`: an address the card has made safe), drawn whole. */
   readonly picture?: string | undefined;
+  /** A picture of the card's own in the circle's place (a car's), part of the head's button as the circle is. */
+  readonly lead?: TemplateResult;
   readonly tone?: Tone;
   readonly title: string;
   readonly sub?: string;
@@ -183,13 +185,14 @@ export function head(o: HeadOptions): TemplateResult {
     @click=${press ? clickHead : nothing}
   >
     ${
-      o.icon === null
+      o.lead ??
+      (o.icon === null
         ? nothing
         : o.picture
           ? html`<span class="fv-ico fv-ico--picture ${o.small ? 'fv-ico--small' : ''}" data-icon
               ><img src=${o.picture} alt=""
             /></span>`
-          : ico(o.icon, o.tone ?? 'accent', { small: o.small ?? false })
+          : ico(o.icon, o.tone ?? 'accent', { small: o.small ?? false }))
     }
     <div class="fv-card__titles">
       <h3 class=${titleClass} data-name=${o.name ? '' : nothing}>${title}</h3>

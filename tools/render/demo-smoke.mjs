@@ -24,7 +24,17 @@ import { launchOptions } from './lib.mjs';
 
 const DEMO = process.env.DEMO ?? 'http://127.0.0.1:5185/fluvy/';
 /** The families, in the order of their chips. */
-const FAMILIES = ['home', 'devices', 'climate', 'energy', 'charts', 'media', 'time', 'helpers'];
+const FAMILIES = [
+  'home',
+  'devices',
+  'climate',
+  'vehicles',
+  'energy',
+  'charts',
+  'media',
+  'time',
+  'helpers',
+];
 const DESKTOP = { width: 1400, height: 1000 };
 const PHONE = { width: 360, height: 800 };
 

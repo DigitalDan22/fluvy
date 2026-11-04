@@ -84,6 +84,9 @@ const BUDGETS = {
   web: 8192,
   // the Slider card: its card on the tile's and its English, its editor with the forms (1.11.1, #77)
   slider: 8192,
+  // the Vehicle card: the card (three layouts, its editor), what finds a car's entities on thirteen integrations and
+  // folds their words, its glyphs and its English (1.13, #84); measured at 20.2 KB
+  vehicle: 24_576,
   // the items family: the card, its fields and presets, its English (1.11, #66)
   items: 12_288,
   // the items' sheet: fetched when an item is tapped
@@ -106,11 +109,12 @@ const BUDGETS = {
   pages: 12_288,
   activity: 32_768,
   history: 16_384,
-  // 29 KB since 2026-11-04 (the pet devices' words, #112: Hungarian, the longest, came within 120 B of 28); 28 KB
-  // since 1.11 (the date picker's, the units', a row's real last change's, the web page's and the Items card's
-  // words, the flights preset's among them: Japanese, the longest, went 320 B over 24); 24 since 1.9 (the appliances'
-  // and the alerts' words), 20 in 1.8, 16 before
-  lang: 29_696,
+  // 30 KB since 2026-11-04 (the pet devices' words, #112, and the Vehicle card's, #84: its states, its line, its
+  // controls and rows, its editor and the parts a car's entities play, 1.2 KB a language; Hungarian, the longest, went
+  // over 28); 28 since 1.11 (the date picker's, the units', a row's real last change's, the web page's and the Items
+  // card's words, the flights preset's among them: Japanese, the longest, went 320 B over 24); 24 since 1.9 (the
+  // appliances' and the alerts' words), 20 in 1.8, 16 before
+  lang: 30_720,
   'rolldown-runtime': 2048,
   'loader.js': 4096,
 };

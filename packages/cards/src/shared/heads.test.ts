@@ -176,8 +176,8 @@ async function drawn(
   return element.shadowRoot;
 }
 
-/** The cards this house leaves empty (a printer, an appliance: devices of their own); any other must be drawn and held. */
-const UNFILLABLE = new Set(['fluvy-printer-card', 'fluvy-appliance-card']);
+/** The cards this house leaves empty (a printer, an appliance, a car: devices of their own); any other must be drawn and held. */
+const UNFILLABLE = new Set(['fluvy-printer-card', 'fluvy-appliance-card', 'fluvy-vehicle-card']);
 const unfilled = new Set<string>();
 
 /** What a reader hears for a surface: its label, or its words. */
