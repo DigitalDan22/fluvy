@@ -369,7 +369,7 @@ export function carHouse(cars: readonly CarFixture[] = CARS): HomeAssistant {
     localize: (key: string) => key,
     formatEntityState: (s: HassEntity) =>
       s.state.charAt(0).toUpperCase() + s.state.slice(1).replace(/_/g, ' '),
-    hassUrl: (path: string) => `http://ha.local${path}`,
+    hassUrl: (path: string) => `http://ha.example${path}`,
     callService: () => Promise.resolve(),
     callWS: () => new Promise(() => undefined),
   } as unknown as HomeAssistant;

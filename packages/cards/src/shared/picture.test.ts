@@ -23,14 +23,14 @@ const hass = {
     },
     'sensor.power': { entity_id: 'sensor.power', state: '12', attributes: {} },
   },
-  hassUrl: (path: string) => `http://ha.local:8123${path}`,
+  hassUrl: (path: string) => `http://ha.example:8123${path}`,
 } as unknown as HomeAssistant;
 
 describe('a picture of the person’s own (#99)', () => {
   it('loads from the web, from Home Assistant and written out as a picture, never from another scheme', () => {
     for (const url of [
       'https://example.com/tv.png',
-      'http://192.168.1.5/ac.jpg',
+      'http://10.0.0.5/ac.jpg',
       'HTTPS://EXAMPLE.COM/TV.PNG',
       '/local/tv.png',
       'local/tv.png',
@@ -54,10 +54,10 @@ describe('a picture of the person’s own (#99)', () => {
   });
 
   it('is an address, or the picture of the entity it names, made whole by Home Assistant', () => {
-    expect(imageOf(hass, '/local/tv.png')).toBe('http://ha.local:8123/local/tv.png');
+    expect(imageOf(hass, '/local/tv.png')).toBe('http://ha.example:8123/local/tv.png');
     expect(imageOf(hass, ' https://example.com/tv.png ')).toBe('https://example.com/tv.png');
     expect(imageOf(hass, 'image.lounge_tv')).toBe(
-      'http://ha.local:8123/api/image_proxy/image.lounge_tv?token=abc',
+      'http://ha.example:8123/api/image_proxy/image.lounge_tv?token=abc',
     );
     expect(imageOf(hass, 'camera.porch')).toBe('https://cam.example/still.jpg');
     // a protocol-relative address is the web's, never Home Assistant's own path

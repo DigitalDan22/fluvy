@@ -277,7 +277,7 @@ describe('the vehicle card', () => {
   it('reads its picture as every card reads one, and draws the car’s glyph where it would not load', async () => {
     const card = await mount({ device: TESLA.device, image: '/local/car.png' });
     const img = root(card).querySelector<HTMLImageElement>('.vh-picture img');
-    expect(img?.getAttribute('src')).toBe('http://ha.local/local/car.png');
+    expect(img?.getAttribute('src')).toBe('http://ha.example/local/car.png');
     img?.dispatchEvent(new Event('error'));
     await card.updateComplete;
     const plate = root(card).querySelector('.vh-picture');

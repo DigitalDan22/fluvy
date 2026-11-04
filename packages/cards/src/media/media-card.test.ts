@@ -55,7 +55,7 @@ const hass = {
   devices: {},
   areas: {},
   localize: (key: string) => key,
-  hassUrl: (path: string) => `http://ha.local${path}`,
+  hassUrl: (path: string) => `http://ha.example${path}`,
   formatEntityState: (s: { state: string; attributes: Record<string, unknown> }) => {
     const unit = s.attributes['unit_of_measurement'];
     return unit ? `${s.state} ${String(unit)}` : s.state.charAt(0).toUpperCase() + s.state.slice(1);
@@ -158,7 +158,7 @@ const plate = (card: CardElement) => {
 };
 
 describe('a picture of the person’s own on the plate (#99)', () => {
-  const TV = 'http://ha.local/api/image_proxy/image.lounge_tv?token=abc';
+  const TV = 'http://ha.example/api/image_proxy/image.lounge_tv?token=abc';
 
   it('stands where the player has no artwork, drawn whole on the plate at rest', async () => {
     for (const variant of ['full', 'hero', 'mini'])
@@ -167,14 +167,14 @@ describe('a picture of the person’s own on the plate (#99)', () => {
         variant,
       ).toEqual({ url: TV, own: true, idle: true });
     expect(plate(await draw({ entity: 'media_player.den_tv', image: '/local/tv.png' }))).toEqual({
-      url: 'http://ha.local/local/tv.png',
+      url: 'http://ha.example/local/tv.png',
       own: true,
       idle: true,
     });
   });
 
   it('gives way to the artwork, unless it is asked for always', async () => {
-    const artwork = 'http://ha.local/api/media_player_proxy/media_player.kitchen?token=1';
+    const artwork = 'http://ha.example/api/media_player_proxy/media_player.kitchen?token=1';
     expect(plate(await draw({ entity: 'media_player.kitchen', image: 'image.lounge_tv' }))).toEqual(
       {
         url: artwork,
