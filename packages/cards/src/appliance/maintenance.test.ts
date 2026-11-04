@@ -176,12 +176,10 @@ describe('what an appliance asks to be looked after', () => {
       key: 'water_tank',
       entity: 'sensor.de1_water_level',
       severity: 'ok',
-      amount: true,
     });
     // none left is due
     expect(maintenanceItem(amount!, state('sensor.de1_water_level', '0'))).toMatchObject({
       severity: 'due',
-      amount: true,
     });
     expect(maintenanceOf(tank('esphome', '%'))).toEqual({ key: 'water_tank', form: 'level' });
     // an integration with words of its own, or an entity with a key, keeps them

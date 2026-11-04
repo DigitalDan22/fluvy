@@ -494,8 +494,8 @@ interface Reminder {
   readonly level: number | undefined;
   /** The days it has left, where the integration counts them. */
   readonly days: number | undefined;
-  /** Whether it says what is left in its own unit (a tank's millilitres). */
-  readonly amount: boolean | undefined;
+  /** Whether it says what is left in its own unit (a tank's millilitres), as its registry has it. */
+  readonly amount: boolean;
   readonly entry: MaintenanceEntry | undefined;
 }
 
@@ -2931,6 +2931,10 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
           s(this.hass, 'ok'),
           `${this.figure(100)} %`,
           `${this.figure(999)} ${unitWord(this.hass, 'd')}`,
+          // a tank's amount in its unit, at its widest
+          ...(item.reminder.amount
+            ? [`${this.figure(9999)} ${this.entity(item.reminder.entity).unit}`]
+            : []),
         ];
       }
       return [`${item.value || '—'}${item.unit ? ` ${item.unit}` : ''}`];
@@ -4607,6 +4611,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     const { found, r } = view;
     const entities = new Map<MaintenanceKey, string>();
     const resets = new Map<MaintenanceKey, string>();
+    const amounts = new Set<MaintenanceKey>();
     for (const candidate of found.candidates) {
       if (!found.entities.maintenance.includes(candidate.id)) continue;
       const spec = maintenanceOf(candidate);
@@ -4614,7 +4619,10 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       const key = forKind(spec.key, view.kind);
       if (spec.form === 'reset') {
         if (resetCall(r.platform, candidate.id)) resets.set(key, candidate.id);
-      } else if (!entities.has(key)) entities.set(key, candidate.id);
+      } else if (!entities.has(key)) {
+        entities.set(key, candidate.id);
+        if (spec.form === 'amount') amounts.add(key);
+      }
     }
     const entries = (this.config?.maintenance ?? []).map((entry) =>
       typeof entry === 'string' ? { key: entry } : entry,
@@ -4631,7 +4639,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         severity: view.unavailable ? 'unknown' : (item?.severity ?? 'unknown'),
         level: item?.level,
         days: item?.days,
-        amount: item?.amount,
+        amount: amounts.has(key),
         entry: entries.find((entry) => entry.key === key),
       };
     });

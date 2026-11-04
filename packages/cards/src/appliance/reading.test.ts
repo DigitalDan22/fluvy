@@ -84,7 +84,6 @@ describe('an appliance read', () => {
         key: 'water_tank',
         entity: 'sensor.decent_espresso_de1pro_de1_water_level',
         severity: 'ok',
-        amount: true,
       },
     ]);
     expect(r.program).toBe('Blooming espresso');
@@ -98,7 +97,7 @@ describe('an appliance read', () => {
     // an empty tank is due
     const dry = houseOf([de1('refill')(NOW)], NOW);
     dry.states['sensor.decent_espresso_de1pro_de1_water_level']!.state = '0';
-    expect(read('de1', {}, dry).maintenance[0]).toMatchObject({ severity: 'due', amount: true });
+    expect(read('de1', {}, dry).maintenance[0]).toMatchObject({ severity: 'due' });
   });
 
   it('reads a washer and a dryer on hcpy by their own keys run together (#115): times, programme, door, buttons', () => {

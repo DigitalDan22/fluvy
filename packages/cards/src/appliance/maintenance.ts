@@ -279,8 +279,6 @@ export interface MaintenanceItem {
   readonly level?: number;
   /** The days it has left, where the integration counts them (a desiccant's, a filter's). */
   readonly days?: number;
-  /** Whether it says what is left in its own unit (a tank's millilitres): said as it reads. */
-  readonly amount?: boolean;
   /** Since when it has been asked for (ms): the event's, or the flag's last change. */
   readonly since?: number;
   /** Home Connect's "confirmed": seen to on the appliance, still to do (drawn in the secondary ink). */
@@ -347,7 +345,7 @@ export function maintenanceItem(
     case 'amount': {
       const value = Number(state.state);
       if (!/\d/.test(state.state) || !Number.isFinite(value)) return undefined;
-      if (found.form === 'amount') return { ...said(value <= 0 ? 'due' : 'ok'), amount: true };
+      if (found.form === 'amount') return said(value <= 0 ? 'due' : 'ok');
       // a count of cycles since: due at LG's thirty, soon from four fifths of them; what is left as its level
       if (found.form === 'count')
         return {

@@ -596,6 +596,10 @@ describe('the appliance card', () => {
     expect((await said('refill'))[2]).toEqual(['Last brew11:35', 'Water60 mL', 'Refill']);
     expect((await said('fatal'))[2]).toEqual(['Last brew11:35', 'Water1,240 mL', 'Fatal error']);
     expect((await said('lost'))[2]).toEqual(['Last brew—', 'Water—', '—']);
+    // its tank as a pet device's tile says it the same way
+    const tile = await mount({ device: 'de1', kind: 'fountain' }, at('idle'));
+    expect(text(root(tile).querySelector('.ap-tile'))).toBe('Water1,240 mL');
+    tile.remove();
   });
 
   it('draws a Bosch washer on hcpy by its own keys (#115): running, its time left of its whole, its programme', async () => {
