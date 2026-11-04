@@ -1,5 +1,6 @@
 import {
   formatNumber,
+  stateSaid,
   stateText,
   strings,
   type ActionConfig,
@@ -1064,10 +1065,13 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         padding: 0;
       }
       .ap-drink__name {
+        max-width: 100%;
+        overflow: hidden;
         font-size: 14px;
         font-weight: 400;
         line-height: 20px;
         white-space: nowrap;
+        text-overflow: ellipsis;
       }
       /* the rows under a hairline: a 40 soft circle, the words 16/20, the value in the text's ink */
       .ap-items {
@@ -1114,13 +1118,18 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         margin-left: 4px;
       }
       .ap-item__value {
+        max-width: 100%;
+        overflow: hidden;
         font-weight: 650;
         color: var(--fluvy-text);
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
+        text-overflow: ellipsis;
       }
-      .ap-items--end .ap-item__value {
+      .ap-items--end .ap-item__value,
+      .ap-item.is-stacked .ap-item__value {
         flex: 0 0 auto;
+        margin-left: 0;
         font-size: 16px;
         line-height: 20px;
       }
@@ -2507,8 +2516,9 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
    * A coffee machine's drinks: tiles of its programmes (the card's, else its first three), a cup over each name, and
    * one more ("…") for the rest; a tap starts the drink where its integration lets a card, else opens the programme.
    * The tiles are as even as their words allow: the row's room shared equally (on the 4 grid), a tile whose words need
-   * more (8 a side) taking only what they need, so the row ends on the column's edge; as many as hold their words. Out
-   * of reach, or where it says no programme, the slots stay, their words a dash.
+   * more (8 a side) taking only what they need, so the row ends on the column's edge; as many as hold their words. A
+   * name the whole row cannot hold (the device's own, never translated) takes the row and ends in its ellipsis. Out of
+   * reach, or where it says no programme, the slots stay, their words a dash.
    */
   private renderDrinks(view: View): TemplateResult {
     const { r } = view;
@@ -2521,7 +2531,10 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     const words = slots.map((option) => (option ? optionWord(this.hass, state, option) : '—'));
     const room = this.contentWidth - 48 - 8;
     const sizes = words.map((word) =>
-      Math.max(64, Math.ceil((this.head.ruler.width('ap-drink__name', word) + 16) / 4) * 4),
+      Math.min(
+        room,
+        Math.max(64, Math.ceil((this.head.ruler.width('ap-drink__name', word) + 16) / 4) * 4),
+      ),
     );
     const span = (count: number): number =>
       sizes.slice(0, count).reduce((sum, size) => sum + size, 0) + 8 * (count - 1);
@@ -2564,7 +2577,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
             @click=${pour}
           >
             ${icon(MILKY.test(option) ? 'cappuccino' : 'cup')}
-            <span class="ap-drink__name">${word}</span>
+            <span class="ap-drink__name" title=${word}>${word}</span>
           </button>`;
         })}
       </div>
@@ -2887,8 +2900,9 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
   /**
    * The rows under a hairline: a soft circle (where every row's words hold beside one; else none, together), the words
    * and the value — bold beside them, at the row's end, or one phrase with them — what is due in the warning's ink. A
-   * tap opens what it says (or does the card's own for it); a reminder's hold resets it where its integration lets a
-   * card, after asking.
+   * value is the device's words for a thing (a programme, a setting): one longer than its line ends in its ellipsis,
+   * the row its 44. A tap opens what it says (or does the card's own for it); a reminder's hold resets it where its
+   * integration lets a card, after asking.
    */
   private renderItems(view: View, items: readonly Item[]): TemplateResult {
     const style = this.config?.row_values ?? KIND_VALUES[view.kind];
@@ -2909,9 +2923,16 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
             ruler.width('ap-item__text > ap-item__value', item.value) +
             (item.unit ? ruler.width('ap-item__text', ` ${item.unit}`) : 0);
     const circles = items.every((item) => width(item) <= this.contentWidth - 40 - 16);
-    // at the row's end, a value that would not hold beside its words goes under them (the circles have gone)
+    // a value that would not hold beside its words goes under them (the circles have gone): at the row's end, and in
+    // the words' line where it is longer than the line itself (a programme's own name), its ellipsis ending it there
     const stacked = (item: Item): boolean =>
-      style === 'end' && !circles && Boolean(item.value) && width(item) > this.contentWidth;
+      !circles &&
+      Boolean(item.value) &&
+      (style === 'end'
+        ? width(item) > this.contentWidth
+        : style === 'inline' &&
+          !item.phrase &&
+          ruler.width('ap-item__text > ap-item__value', said(item)) > this.contentWidth);
     return html`<div class="ap-items ap-items--${style}">
       ${items.map((item) => {
         const tap = (): void =>
@@ -2948,9 +2969,11 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
           ${
             style === 'plain' || !item.value || (item.phrase && style !== 'end')
               ? html`<span class="ap-item__text">${phrase(item)}</span>`
-              : style === 'end'
+              : style === 'end' || stacked(item)
                 ? html`<span class="ap-item__text">${item.label}</span
-                    ><span class="ap-item__value">${said(item)}</span>`
+                    ><span class="ap-item__value" data-name title=${said(item)}
+                      >${said(item)}</span
+                    >`
                 : html`<span class="ap-item__text"
                     >${item.label} <span class="ap-item__value">${item.value}</span>${
                       item.unit ? ` ${item.unit}` : nothing
@@ -4526,10 +4549,10 @@ function optionWord(
   state: HassEntity | undefined,
   option: string,
 ): string {
-  const said = state ? hass?.formatEntityState?.({ ...state, state: option }, option) : undefined;
-  if (said) return said.charAt(0).toUpperCase() + said.slice(1);
-  const raw = option.replace(/_/g, ' ');
-  return raw.charAt(0).toUpperCase() + raw.slice(1);
+  return stateSaid(
+    state ? hass?.formatEntityState?.({ ...state, state: option }, option) : undefined,
+    option,
+  );
 }
 
 /** The setpoint a step goes to: a temperature by its step within its range, a level to the next of its levels. */

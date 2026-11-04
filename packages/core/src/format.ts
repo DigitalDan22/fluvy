@@ -152,22 +152,53 @@ function defaultDigits(value: number, unit: string): number {
 /** "°C" stays, "%" stays: spacing is the template's job ("46 %" is set with a gap, not a character). */
 export const displayUnit = (unit: string): string => unit;
 
+/** Home Connect's namespaces: the first words of every key it names a programme or a setting's value by. */
+const HOME_CONNECT =
+  /^(?:b_s_h_common|consumer_products|cooking|dishcare|heating_ventilation_air_conditioning|laundry_care|refrigeration)_/;
+/** The groups it files programmes under ("beverage", "coffee world"), which Home Assistant's own names leave out. */
+const PROGRAM_GROUP =
+  /^(?:basic|beverage|cleaning_modes|cleaning|coffee_world|heating_mode|hood|steam_modes|subsequent_mode)_/;
+
+/**
+ * A raw key in words: a Home Connect programme by what follows `_program_`, less its group, and a setting's value by
+ * what follows `_enum_type_` (`consumer_products_coffee_maker_program_beverage_espresso` is "espresso"); any other
+ * key with its underscores as spaces.
+ */
+function keyWords(key: string): string {
+  if (HOME_CONNECT.test(key)) {
+    const program = key.split('_program_')[1];
+    const tail =
+      program === undefined ? key.split('_enum_type_')[1] : program.replace(PROGRAM_GROUP, '');
+    if (tail) return tail.replace(/_/g, ' ');
+  }
+  return key.replace(/_/g, ' ');
+}
+
+/**
+ * A state's or an option's words: Home Assistant's own (`said`, its translation), else the raw key's (`keyWords`).
+ * Where it has no translation it says the raw key itself, and a Home Connect key then says its tail too; any other
+ * stays as it said it. Capitalised: its untranslated words come lower case ("idle").
+ */
+export function stateSaid(said: string | undefined, key: string): string {
+  const words = said && !(said === key && HOME_CONNECT.test(key)) ? said : keyWords(key);
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 /** Human state text. Home Assistant's own formatter first (translated, device-class aware). */
 export function stateText(hass: HomeAssistant | undefined, view: EntityView): string {
   if (view.status === 'missing') return localizeStatus(hass, 'missing');
   if (view.status === 'unavailable') return localizeStatus(hass, 'unavailable');
   if (view.status === 'unknown') return localizeStatus(hass, 'unknown');
+  let said: string | undefined;
   if (hass?.formatEntityState && view.stateObj) {
     try {
       const text = hass.formatEntityState(view.stateObj);
-      if (typeof text === 'string' && text !== '')
-        return text.charAt(0).toUpperCase() + text.slice(1); // untranslated states come back raw ("idle")
+      if (typeof text === 'string') said = text;
     } catch {
-      /* fall through */
+      /* the key's own words */
     }
   }
-  const raw = view.state.replace(/_/g, ' ');
-  return raw.charAt(0).toUpperCase() + raw.slice(1);
+  return stateSaid(said, view.state);
 }
 
 function localizeStatus(

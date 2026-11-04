@@ -8,6 +8,7 @@ import {
   formatTime,
   relativeTime,
   scaleUnit,
+  stateSaid,
   stateText,
   valueParts,
 } from '../format.js';
@@ -179,6 +180,53 @@ describe('stateText', () => {
       formatEntityState: () => 'idle',
     } as unknown as HomeAssistant;
     expect(stateText(h, resolveEntity(h, 'sensor.x'))).toBe('Idle');
+  });
+
+  it('says a Home Connect key Home Assistant has no words for by its tail, and keeps the words it has', () => {
+    const raw = 'consumer_products_coffee_maker_program_beverage_espresso';
+    const untranslated = {
+      ...make('en', 'language', raw),
+      formatEntityState: () => raw,
+    } as unknown as HomeAssistant;
+    expect(stateText(untranslated, resolveEntity(untranslated, 'sensor.x'))).toBe('Espresso');
+    const translated = {
+      ...make('de', 'language', raw),
+      formatEntityState: () => 'Espresso doppelt',
+    } as unknown as HomeAssistant;
+    expect(stateText(translated, resolveEntity(translated, 'sensor.x'))).toBe('Espresso doppelt');
+  });
+});
+
+describe('stateSaid', () => {
+  it('a Home Connect programme by what follows its programme, less the group it is filed under', () => {
+    expect(stateSaid(undefined, 'consumer_products_coffee_maker_program_beverage_espresso')).toBe(
+      'Espresso',
+    );
+    expect(stateSaid(undefined, 'dishcare_dishwasher_program_eco_50')).toBe('Eco 50');
+    expect(
+      stateSaid(undefined, 'consumer_products_coffee_maker_program_coffee_world_cafe_au_lait'),
+    ).toBe('Cafe au lait');
+    expect(stateSaid(undefined, 'cooking_oven_program_heating_mode_hot_air')).toBe('Hot air');
+    expect(
+      stateSaid(undefined, 'consumer_products_coffee_maker_program_cleaning_modes_descale'),
+    ).toBe('Descale');
+    expect(
+      stateSaid(undefined, 'consumer_products_cleaning_robot_program_cleaning_clean_all'),
+    ).toBe('Clean all');
+  });
+
+  it('a Home Connect setting by its value, and its raw key said back by Home Assistant the same way', () => {
+    const key = 'laundry_care_washer_enum_type_temperature_g_c_40';
+    expect(stateSaid(undefined, key)).toBe('Temperature g c 40');
+    expect(stateSaid(key, key)).toBe('Temperature g c 40');
+    expect(stateSaid('40ºC clothes', key)).toBe('40ºC clothes');
+  });
+
+  it('any other key as today: its underscores as spaces, or as Home Assistant said it', () => {
+    expect(stateSaid(undefined, 'heat_cool')).toBe('Heat cool');
+    expect(stateSaid('heat_cool', 'heat_cool')).toBe('Heat_cool');
+    expect(stateSaid(undefined, 'no_program_selected')).toBe('No program selected');
+    expect(stateSaid('', 'idle')).toBe('Idle');
   });
 });
 

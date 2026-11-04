@@ -305,6 +305,45 @@ const speaking = (hass: HomeAssistant): HomeAssistant => {
   } as HomeAssistant;
 };
 
+/**
+ * The house as Home Assistant says it where it has no words for the appliances' programmes: their raw keys, as it
+ * says a Home Connect programme it has not met. `programmes`: the selects on programmes of their own (by entity).
+ */
+const untranslated =
+  (programmes: Readonly<Record<string, string>> = {}) =>
+  (hass: HomeAssistant): HomeAssistant => {
+    const spoken = speaking({
+      ...hass,
+      states: {
+        ...hass.states,
+        ...Object.fromEntries(
+          Object.entries(programmes).map(([id, state]) => [
+            id,
+            { ...(hass.states[id] as HassEntity), state },
+          ]),
+        ),
+      },
+    });
+    return {
+      ...spoken,
+      formatEntityState: (stateObj: HassEntity, state?: string) =>
+        /_programm$/.test(stateObj.entity_id)
+          ? (state ?? stateObj.state)
+          : (spoken.formatEntityState?.(stateObj, state) ?? state ?? stateObj.state),
+    } as HomeAssistant;
+  };
+
+/** Programmes Home Connect added after Home Assistant's words, longer than a phone's row: drinks, a dishwasher's. */
+const LONG_DRINKS = [
+  'consumer_products_coffee_maker_program_coffee_world_iced_cafe_con_leche_with_oat_milk_double_shot',
+  'consumer_products_coffee_maker_program_coffee_world_cold_brew_macchiato',
+];
+const LONG_PROGRAMMES = {
+  [COFFEE_PROGRAM.entity_id]: LONG_DRINKS[0] ?? '',
+  'select.geschirrspuler_ausgewahltes_programm':
+    'dishcare_dishwasher_program_intensive_power_with_extra_dry_hygiene_plus_and_silence',
+};
+
 /** The house with some states changed, its states in the page's language. */
 const changed =
   (
@@ -518,6 +557,44 @@ export const sheet: SheetSpec = {
     frame({ title: 'Home Connect · dishwasher, salt out', cards: [card('hc-dish')] }),
     frame({ title: 'Home Connect · oven preheating', cards: [card('hc-oven')] }),
     frame({ title: 'Home Connect · coffee machine, descale', cards: [card('hc-coffee')] }),
+    // where Home Assistant has no words for a programme, its raw key: the programme by its own name ("Espresso",
+    // "Eco 50"); a name longer than its room (a drink's tile, a row's value) ending in its ellipsis, the card its size
+    ...[360, 412].map((width) =>
+      frame({
+        title: `Home Connect · programmes untranslated, ${width}`,
+        width,
+        hass: untranslated(),
+        cards: [card('hc-coffee'), card('hc-dish')],
+      }),
+    ),
+    ...[360, 412].map((width) =>
+      frame({
+        title: `Home Connect · programmes untranslated and long, ${width}`,
+        width,
+        hass: untranslated(LONG_PROGRAMMES),
+        cards: [
+          card('hc-coffee', {
+            drinks: LONG_DRINKS,
+            rows: [{ entity: COFFEE_PROGRAM.entity_id, name: 'Programme' }, 'last_brew'],
+          }),
+          card('hc-dish', {
+            rows: [
+              { entity: 'select.geschirrspuler_ausgewahltes_programm', name: 'Programme' },
+              'salt',
+            ],
+          }),
+        ],
+      }),
+    ),
+    frame({
+      title: 'Home Connect · programmes untranslated and long, half a section',
+      width: 360,
+      hass: untranslated(LONG_PROGRAMMES),
+      cards: [
+        card('hc-coffee', { variant: 'row', cols: 6 }),
+        card('hc-dish', { variant: 'row', cols: 6 }),
+      ],
+    }),
     frame({ title: 'Home Connect · fridge freezer, a door open', cards: [card('hc-fridge')] }),
     // Miele
     frame({ title: 'Miele · washer rinsing', cards: [card('miele-washer')] }),

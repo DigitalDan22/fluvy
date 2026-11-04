@@ -656,15 +656,16 @@ for (const [query, why, title] of [
 /* ---------- the automatic dashboard on a phone: nothing past the screen's edge (#104) ---------- */
 {
   /**
-   * Each tab's view drawn afresh, as the tab opens it, and how far the page reached past the screen's edge: right after
-   * its cards first drew, in every frame while they settle, and at rest. The views that did, each with how far.
+   * Each view (`tabs`: the tabs' alone) drawn afresh, as a tab opens it, and how far the page reached past the screen's
+   * edge: right after its cards first drew, in every frame while they settle, and at rest. The views that did, each with
+   * how far.
    */
-  const sweep = (page) =>
-    page.evaluate(async () => {
+  const sweep = (page, tabs) =>
+    page.evaluate(async (tabs) => {
       const se = document.scrollingElement;
       const past = [];
       for (const { path, tab } of await window.fluvyAutomaticViews()) {
-        if (!tab) continue;
+        if (tabs && !tab) continue;
         let widest = 0;
         let watching = true;
         const watch = () => {
@@ -680,7 +681,7 @@ for (const [query, why, title] of [
         if (widest > 0) past.push(`${path} +${widest}`);
       }
       return past;
-    });
+    }, tabs);
   const phone = (width, query) =>
     suite.page(`dashboard=auto&width=${width}&${query}`, {
       viewport: { width, height: 780 },
@@ -691,7 +692,7 @@ for (const [query, why, title] of [
       ['light', 'dark'].flatMap((mode) =>
         [false, true].map(async (frame) => {
           const page = await phone(width, `mode=${mode}${frame ? '&frame=1&floating=1' : ''}`);
-          const past = await sweep(page);
+          const past = await sweep(page, true);
           check(
             `a phone ${width} wide, ${mode}, ${frame ? 'the house’s frame on' : 'no frame'}: no tab of the automatic dashboard reaches past the screen, from its first frame (#104)`,
             past.length === 0,
@@ -701,6 +702,15 @@ for (const [query, why, title] of [
         }),
       ),
     );
+  // every view, its rooms, its appliances and its lists too, at the narrowest
+  const page = await phone(360, 'mode=light');
+  const past = await sweep(page, false);
+  check(
+    'a phone 360 wide: no view of the automatic dashboard (its rooms, its appliances, its lists) reaches past the screen',
+    past.length === 0,
+    past.join(', '),
+  );
+  await page.close();
 }
 
 await suite.finish();

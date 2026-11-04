@@ -71,6 +71,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   meanwhile. Every card now draws to its own width from its first frame. Thanks to @JavierSegoviaCordoba (#104).
 - The Energy period card's date keeps a 44 px target when its word is short (Hungarian's "Ma" for today), where it
   drew 40 px wide.
+- A Home Connect programme or setting Home Assistant has no words for reads by its own name ("Espresso", "Eco 50"),
+  where the card said the whole raw key, and a programme's name longer than its room (a drink's tile, a row's value)
+  ends in its ellipsis inside the appliance card, where it reached past the card and a phone's page scrolled sideways.
 
 ## [1.11.3] — 2026-10-28
 

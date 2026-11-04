@@ -748,6 +748,53 @@ describe('the whole card’s standard slot (#47)', () => {
     );
   });
 
+  it('says a programme Home Assistant has no words for by its own name, a long one whole in its title', async () => {
+    const base = house();
+    const id = 'select.kaffeevollautomat_ausgewahltes_programm';
+    const key = (drink: string): string => `consumer_products_coffee_maker_program_${drink}`;
+    const options = [
+      key('beverage_espresso'),
+      key('coffee_world_cold_brew_macchiato'),
+      key('coffee_world_iced_cafe_con_leche_with_oat_milk_double_shot_and_cinnamon'),
+    ];
+    // Home Assistant says an option it has no translation for as its raw key
+    const raw = {
+      ...base,
+      formatEntityState: (stateObj: HassEntity, state?: string) => state ?? stateObj.state,
+      entities: {
+        ...base.entities,
+        [id]: {
+          entity_id: id,
+          device_id: 'hc-coffee',
+          platform: 'home_connect',
+          translation_key: 'selected_program',
+        },
+      },
+      states: {
+        ...base.states,
+        [id]: {
+          entity_id: id,
+          state: options[0],
+          attributes: { options },
+          last_changed: AT,
+          last_updated: AT,
+        },
+      },
+    } as unknown as HomeAssistant;
+    const tiles = (card: Mounted): string[] =>
+      [...root(card).querySelectorAll('.ap-drink__name')].map(text);
+    expect(tiles(await mount({ device: 'hc-coffee' }, raw))).toEqual([
+      'Espresso',
+      'Cold brew macchiato',
+      'Iced cafe con leche with oat milk double shot and cinnamon',
+    ]);
+    // a name its tile may end in its ellipsis keeps its whole words in its title
+    const long = await mount({ device: 'hc-coffee', drinks: [options[2]] }, raw);
+    expect(root(long).querySelector('.ap-drink__name')?.getAttribute('title')).toBe(
+      'Iced cafe con leche with oat milk double shot and cinnamon',
+    );
+  });
+
   it('the list’s whole cards follow them: each what its appliance draws, one a row 16 apart', () => {
     const hass = house();
     const list = (config: Record<string, unknown>, at?: HomeAssistant): number =>
