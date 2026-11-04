@@ -439,6 +439,18 @@ describe('the appliance card', () => {
     expect(start?.title).toMatch(/Remote start is off/);
   });
 
+  it('leaves out a control it does not know, a typo by hand, and draws the others', async () => {
+    const config = { device: 'hc-dish', show_controls: true, controls: ['stopp', 'stop', 'power'] };
+    const card = await mount(config);
+    expect(root(card).querySelector('.fv-card--empty')).toBeNull();
+    expect(
+      [...root(card).querySelectorAll('[data-action]')].map((el) => el.getAttribute('data-action')),
+    ).toEqual(['stop', 'power']);
+    expect(applianceHouseHeight({ type: 'x', ...config } as never, house())).toBe(
+      applianceHouseHeight({ type: 'x', ...config, controls: ['stop', 'power'] } as never, house()),
+    );
+  });
+
   it('presses LocalThings’ own buttons (#97): its pause at once, its stop once the dialog has asked, its resume greyed while its Smart Control is off', async () => {
     const handed: unknown[] = [];
     const listen = (event: Event): void => void handed.push((event as CustomEvent).detail);

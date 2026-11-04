@@ -63,6 +63,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - An appliance card with `device: none` reads no device again, as before 1.13.0: it is named after its entity and is
   what its `kind` or its entity's name says, where 1.13.0 took the name and the kind of its entity's device, and one
   that names only its roles shows them, where it showed nothing (#98).
+- An appliance card whose `controls` names one it does not know (a typo written by hand) draws the others, where the
+  card failed to draw.
 
 ### Development
 

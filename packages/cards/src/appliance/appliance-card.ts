@@ -1942,10 +1942,9 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
    * that cannot act now is drawn disabled.
    */
   private cells(view: View): Cell[] {
-    const c = this.config;
     const { r } = view;
     const can = (...actions: Action[]): boolean => canDo(this.hass, r, actions);
-    const wanted = c?.controls ?? KIND_DEFAULTS[view.kind].controls;
+    const wanted = controlsOf(this.config ?? { type: '' }, view.kind);
     const cells: Cell[] = [];
     let primary = false;
     for (const control of wanted) {
@@ -4895,6 +4894,15 @@ const CONTROL_ACTIONS: Readonly<Record<CommandName, readonly Action[]>> = {
 };
 
 /**
+ * The controls a card names, else its kind's, those the card knows: a name it does not (a typo by hand; the editor
+ * offers only the known) drops out.
+ */
+const controlsOf = (config: ApplianceCardConfig, kind: ApplianceKind): readonly CommandName[] =>
+  (config.controls ?? KIND_DEFAULTS[kind].controls).filter((control) =>
+    COMMAND_NAMES.includes(control),
+  );
+
+/**
  * A pet device's buttons' glyphs: a meal (the feeder's own, which joins the set with the family's chunk), a clean (the
  * drum turning), a deodorizing, a levelling.
  */
@@ -5035,7 +5043,7 @@ export function applianceHouseHeight(
         : 0) -
       (16 + 44);
   }
-  const wanted = config.controls ?? KIND_DEFAULTS[r.kind].controls;
+  const wanted = controlsOf(config, r.kind);
   if (config.show_controls && !wanted.some((control) => canDo(hass, r, CONTROL_ACTIONS[control])))
     height -= 16 + 44;
   if (config.show_programs) {
