@@ -1222,6 +1222,27 @@ export const sheet: SheetSpec = {
         card('de1', { variant: 'row', cols: 6 }),
       ],
     }),
+    // as the docs name it by hand: its drinks, its rows (its steam's temperature one), its roles
+    frame({
+      title: 'Any device · DE1 named by hand',
+      cards: [
+        card('de1', {
+          kind: 'coffee',
+          drinks: ['Default', 'Londinium', 'Blooming espresso'],
+          rows: [
+            'last_brew',
+            'water_tank',
+            { entity: 'sensor.decent_espresso_de1pro_de1_steam_temperature', name: 'Steam' },
+          ],
+          roles: [
+            { role: 'state', entity: 'sensor.decent_espresso_de1pro_de1_state' },
+            { role: 'power', entity: 'switch.decent_espresso_de1pro_de1_on' },
+            { role: 'program', entity: 'select.decent_espresso_de1pro_de1_profile' },
+            { role: 'temperature', entity: 'sensor.decent_espresso_de1pro_de1_head_temperature' },
+          ],
+        }),
+      ],
+    }),
     frame({
       title: 'Any device · a washer and a dryer on hcpy',
       cards: [card('hcpy-washer'), card('hcpy-dryer')],

@@ -413,14 +413,14 @@ The appliance card finds a washer, a dryer, a dishwasher, an oven, a hob, a hood
 coffee machine, a kettle, an air fryer, a microwave, a toaster, a blender, a sandwich maker, a pet feeder, fountain or
 litter box — or any appliance on a smart plug, read from the plug's switch and power — by what its integration says (LG
 ThinQ and LG's older SmartThinQ, Home Connect, Miele, SmartThings, LocalThings, Matter, Whirlpool, Tuya, hOn,
-Electrolux, PetKit, PETLIBRO) or by its name in any of Fluvy's languages; `kind` names it when the card guesses wrong,
-`roles` names an entity for a role (a helper you attached to its device, a template or a utility meter, plays one only
-where nothing of its integration's own does), and `scan: false` makes it read only the entities you name (`entity` and
-`roles`) and nothing else of its device. The card is the design a reader drew for us: a picture of the appliance
-(`picture`: a drawing a kind, the icon, none, or `image` for your own photo; it steps down from 64 to 44 and 32 before
-it gives way to a letter of the name, and `picture_min: 32`, `44` or `64` keeps it at least that large, a long name
-ending in "…" beside it), its name and what it is doing (off while its power switch is off, unless it says it runs,
-waits or is done), a power button tinted by what it does, its kind's hero — the time left over a bar, an oven's
+Electrolux, PetKit, PETLIBRO) or by its name in any of Fluvy's languages, else its maker's; `kind` names it when the
+card guesses wrong, `roles` names an entity for a role (a helper you attached to its device, a template or a utility
+meter, plays one only where nothing of its integration's own does), and `scan: false` makes it read only the entities
+you name (`entity` and `roles`) and nothing else of its device. The card is the design a reader drew for us: a picture
+of the appliance (`picture`: a drawing a kind, the icon, none, or `image` for your own photo; it steps down from 64 to
+44 and 32 before it gives way to a letter of the name, and `picture_min: 32`, `44` or `64` keeps it at least that large,
+a long name ending in "…" beside it), its name and what it is doing (off while its power switch is off, unless it says
+it runs, waits or is done), a power button tinted by what it does, its kind's hero — the time left over a bar, an oven's
 temperature and target, a fridge's compartments, a hob's zones, a coffee machine's drinks — and three `rows` under a
 hairline (the programme, water, energy, a filter to clean, the last coffee: picked, ordered, named, coloured and given
 actions in the rows editor), `maintenance` as rows of their own, and buttons only where the integration's own code says
@@ -453,6 +453,38 @@ roles:
     entity: button.dishwasher_pause
   - role: stop
     entity: script.dishwasher_stop
+```
+
+Any device can be an appliance (#115): the picker lists every device of the house with a sensor, a binary sensor or a
+switch, whatever its integration — an espresso machine over MQTT, a washer on a bridge of its own. Pick it and choose
+what it is (`kind`, where its name or its maker's does not say); the card reads what it can by its entities' names and
+words (what it is doing, its power switch, its programme, a temperature, its counters, its water tank), and
+**Entities named by hand** (`roles`) names what it did not find: the editor offers the roles of its kind, and its
+entity pickers the device's own entities (a switch over them offers the whole house: a plug's power under a washer
+plays a role too). More of its readings go in `rows` (**Another entity**), or `sensors` on a compact card. A Decent
+DE1 over MQTT (its tablet's de1plus-mqtt plugin) reads by itself as a coffee machine: what it is doing in its own
+words, its profiles as its drinks, its last shot and its tank in millilitres. Named by hand, with its steam's
+temperature as a row:
+
+```yaml
+type: custom:fluvy-appliance-card
+device: 4b9e…            # Decent Espresso DE1PRO
+kind: coffee
+drinks: [Default, Londinium, Blooming espresso]
+rows:
+  - last_brew
+  - water_tank
+  - entity: sensor.decent_espresso_de1pro_de1_steam_temperature
+    name: Steam
+roles:
+  - role: state
+    entity: sensor.decent_espresso_de1pro_de1_state
+  - role: power
+    entity: switch.decent_espresso_de1pro_de1_on
+  - role: program
+    entity: select.decent_espresso_de1pro_de1_profile
+  - role: temperature
+    entity: sensor.decent_espresso_de1pro_de1_head_temperature
 ```
 
 Pet devices are appliances too: a feeder, a water fountain and a litter box (`kind: feeder`, `fountain`,
