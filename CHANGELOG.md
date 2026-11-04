@@ -26,12 +26,45 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
-- A compact appliance card with its buttons asked for (`show_controls: true`) is as tall as it draws them, where its
-  height left their row out and the card under it in a column rose over them.
-- A PetKit litter box removing odours or resetting its deodorant says so (Removing odours, Resetting deodorant),
-  where it said the integration's raw words.
 - A room card's quick action written without its dash (`quick_actions: lights`) is a list of one, where the card
   drew the room's lights and blinds instead, or broke on one written as an object; a number says what is wrong.
+- A room card's quick action sends each blind and player the service it takes, one call a service: a blind that only
+  tilts moves its slats, a player that cannot pause stops or goes off, one that can do neither is left out, where Home
+  Assistant refused the whole call and nothing moved; a round none of whose members can act takes no tap.
+- A room card's quick action for a set asks first where its tap has a `confirmation` and then turns the set on or
+  off, and opens its details where its tap or hold is `more-info` (its one member's, else where the room opens), where
+  either did nothing.
+- A room card whose tiles are an empty list (as the editor leaves it once the last is removed) declares the height of
+  the controls it draws as its tiles, where it declared none and a column laid out by its height left it short.
+- A room's `include` or `exclude` pattern with many stars (`*`) is read at once on any id, where one that did not
+  match a long id could hold the page for seconds or more (#95). The alerts card reads its id and device patterns
+  (`sensor.*_battery`, `hall ?`) the same way.
+- The Vehicle card takes a charge port's latch or a charge cable's lock for the car's lock on no integration: a car on
+  tesla_custom whose latch came first in its registry had its lock round say and unlock the latch, which opens the
+  charge port's door, where the doors' lock was meant.
+- The Vehicle card counts a door, a window or a tyre's warning only of what can say it is open or on: a button or a
+  switch named for the windows (one that vents them) gave the card a Windows round that read shut whatever they did.
+- The Vehicle card's charging round turns a charge switch by the switch's own state: a switch still on while the charge
+  read complete was turned on again by a tap, where it should have turned off (asking first, as stopping a charge
+  does), and one off while the car still charged asked to stop it.
+- The Vehicle card lays its row of rounds out for every word each round can say, whatever the car does now: a lock
+  saying Unlocking, a cabin's temperature or a setpoint of half a degree could take a round from the row (or push the
+  card's own list onto another row), and a car out of reach, its rounds all dashes, showed one round more than while it
+  read.
+- An appliance card with `device: none` reads no device again, as before 1.13.0: it is named after its entity and is
+  what its `kind` or its entity's name says, where 1.13.0 took the name and the kind of its entity's device, and one
+  that names only its roles shows them, where it showed nothing (#98).
+- An appliance card whose `controls` names one it does not know (a typo written by hand) draws the others, where the
+  card failed to draw.
+- A compact appliance card with its buttons asked for (`show_controls: true`) is as tall as it draws them, where its
+  height left their row out and the card under it in a column rose over them.
+- A LocalThings washer's or dishwasher's energy readout (the compact card's) says what this cycle used, as its row
+  does, where it said the machine's count of years.
+- A PetKit litter box whose light is on is at rest and says "Light on", where it said "light" and ran with a Pause
+  that had nothing to pause; one calibrating, resetting itself, levelling or deodorizing offers no Pause either: only a
+  clean, a dump and its maintenance pause.
+- A PetKit litter box removing odours or resetting its deodorant says so (Removing odours, Resetting deodorant),
+  where it said the integration's raw words.
 - A picture of your own on the thermostat, appliance or Vehicle card that would not load once (while Home Assistant
   restarted) comes back by itself once it loads again, where the card kept its circle, its drawing or its glyph until
   the picture's address changed.
@@ -45,42 +78,11 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   a month offers Today again.
 - A card editor's select whose choices follow another field (a chart's style, by the sensor picked) offers the choices
   that apply as that field changes, where it kept the first ones.
-- The Vehicle card takes a charge port's latch or a charge cable's lock for the car's lock on no integration: a car on
-  tesla_custom whose latch came first in its registry had its lock round say and unlock the latch, which opens the
-  charge port's door, where the doors' lock was meant.
-- The Vehicle card counts a door, a window or a tyre's warning only of what can say it is open or on: a button or a
-  switch named for the windows (one that vents them) gave the card a Windows round that read shut whatever they did.
-- The Vehicle card's charging round turns a charge switch by the switch's own state: a switch still on while the charge
-  read complete was turned on again by a tap, where it should have turned off (asking first, as stopping a charge
-  does), and one off while the car still charged asked to stop it.
-- The Vehicle card lays its row of rounds out for every word each round can say, whatever the car does now: a lock
-  saying Unlocking, a cabin's temperature or a setpoint of half a degree could take a round from the row (or push the
-  card's own list onto another row), and a car out of reach, its rounds all dashes, showed one round more than while it
-  read.
-- A room card's quick action sends each blind and player the service it takes, one call a service: a blind that only
-  tilts moves its slats, a player that cannot pause stops or goes off, one that can do neither is left out, where Home
-  Assistant refused the whole call and nothing moved; a round none of whose members can act takes no tap.
-- A room card's quick action for a set asks first where its tap has a `confirmation` and then turns the set on or
-  off, and opens its details where its tap or hold is `more-info` (its one member's, else where the room opens), where
-  either did nothing.
-- A room card whose tiles are an empty list (as the editor leaves it once the last is removed) declares the height of
-  the controls it draws as its tiles, where it declared none and a column laid out by its height left it short.
-- A room's `include` or `exclude` pattern with many stars (`*`) is read at once on any id, where one that did not
-  match a long id could hold the page for seconds or more (#95). The alerts card reads its id and device patterns
-  (`sensor.*_battery`, `hall ?`) the same way.
-- An appliance card with `device: none` reads no device again, as before 1.13.0: it is named after its entity and is
-  what its `kind` or its entity's name says, where 1.13.0 took the name and the kind of its entity's device, and one
-  that names only its roles shows them, where it showed nothing (#98).
-- An appliance card whose `controls` names one it does not know (a typo written by hand) draws the others, where the
-  card failed to draw.
-- A PetKit litter box whose light is on is at rest and says "Light on", where it said "light" and ran with a Pause
-  that had nothing to pause; one calibrating, resetting itself, levelling or deodorizing offers no Pause either: only a
-  clean, a dump and its maintenance pause.
-- A LocalThings washer's or dishwasher's energy readout (the compact card's) says what this cycle used, as its row
-  does, where it said the machine's count of years.
 
 ### Development
 
+- The leak scan counts the hits of every batch of files it reads, where one batch without a hit let the others'
+  through: on a developer's tree, larger than CI's, it could pass with hits printed.
 - What an entity's id is is core's one rule (`isEntityId`, as Home Assistant writes one), where the pictures, the
   energy cards, the automations, the alerts and the car charger each had a pattern of their own: the energy, alerts
   and automations chunks are 0.2 KB lighter, every page the same.
