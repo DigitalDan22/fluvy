@@ -50,6 +50,16 @@ export const inverted = (from: string, to: string): Move =>
 export const onOff = (value: unknown): unknown =>
   value === true ? 'on' : value === false ? 'off' : value;
 
+/**
+ * What a map by state holds for a state (`states: {on: Tilted, off: Closed}`): in a YAML-mode dashboard its unquoted
+ * `on` and `off` keys are true and false too (`onOff`), which reach the card as "true" and "false".
+ */
+export const byState = <T>(
+  map: Readonly<Record<string, T>> | undefined,
+  state: string,
+): T | undefined =>
+  map?.[state] ?? map?.[state === 'on' ? 'true' : state === 'off' ? 'false' : state];
+
 type Bag = Record<string, unknown>;
 
 /** The bag with these keys' booleans read as on or off: the same bag when none is one. */

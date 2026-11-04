@@ -1255,6 +1255,32 @@ export const sheet: SheetSpec = {
         },
       ],
     },
+    // the same words from a dashboard in YAML mode: Home Assistant reads an unquoted on: and off: as true and false,
+    // which reach the card as "true" and "false" keys
+    {
+      title: 'Openings · words for on and off from YAML mode',
+      cards: [
+        {
+          type: 'custom:fluvy-openings-card',
+          title: 'Bedroom',
+          _now,
+          rows: [
+            {
+              entity: 'binary_sensor.am_bedroom_window_tilt',
+              name: 'Tilt',
+              icon: 'windowOpen',
+              states: { true: 'Tilted', false: 'Closed' },
+            },
+            {
+              entity: 'binary_sensor.am_side_door_contact',
+              name: 'Side door',
+              device_class: 'door',
+              states: { true: 'Ajar', false: 'Shut' },
+            },
+          ],
+        },
+      ],
+    },
     // #105: covers count in the head and light up while open, as a window does: open, on their way, or partly open by
     // their position
     {

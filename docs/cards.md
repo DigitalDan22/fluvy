@@ -816,7 +816,9 @@ an open door, window or cover, a leak, smoke, a problem. A row may read its sens
 `moisture`, `smoke` …), for a sensor that has none or the wrong one: it takes the class's words, its icon (open or shut
 as it stands) and whether it counts (#102). A row may also say a state in words of its own (`states`, by the state:
 `on`, `off`; a cover's `open`, `closed`), before the class's. The class decides what counts: a tilt sensor given words
-alone reads "Tilted" and never counts as open; given `device_class: window`, a tilted window counts as an open one.
+alone reads "Tilted" and never counts as open; given `device_class: window`, a tilted window counts as an open one. In
+a dashboard in YAML mode, Home Assistant reads an unquoted `on:` or `off:` as true or false; the card reads those as
+on and off, so the example below works as written there too.
 
 ```yaml
 type: custom:fluvy-openings-card

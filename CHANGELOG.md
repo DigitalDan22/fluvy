@@ -13,6 +13,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The thermostat, media and appliance cards draw the new picture of the entity their `image` names (an image
   entity's, a camera's still) as it changes, where they kept the one they had drawn until something else on the card
   changed.
+- The openings card says a row's own words for on and off (`states: {on: Tilted, off: Closed}`) in a dashboard in YAML
+  mode, where Home Assistant reads an unquoted `on:` and `off:` as true and false and the row said its class's words.
 
 ## [1.13.0] — 2026-11-04
 

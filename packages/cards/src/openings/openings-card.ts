@@ -29,7 +29,7 @@ import { HeadFit, type FittedHead } from '../energy/head.js';
 import { Card, type CardEditor } from '../shared/base.js';
 
 import { iconOf } from '../shared/domain.js';
-import { ITEM_ALIASES, type AliasSpec } from '../shared/config.js';
+import { byState, ITEM_ALIASES, type AliasSpec } from '../shared/config.js';
 import { EMPTY, entryCount, HEAD, ROW } from '../shared/heights.js';
 import { emptyPanel, itemsOf, listOf, type EmptyList } from '../shared/lists.js';
 import { changedAt, sinceIds, sinceOf } from '../shared/since.js';
@@ -242,7 +242,7 @@ export class FluvyOpeningsCard extends Card<OpeningsCardConfig> {
   /** The state, said once: in the row's own words for it, else in those the device class deserves. */
   private valueText(view: EntityView, item: OpeningItem): string {
     if (view.status !== 'ok') return stateText(this.hass, view);
-    const own: unknown = item.states?.[view.state];
+    const own: unknown = byState(item.states, view.state);
     if (typeof own === 'string' && own) return own;
     const on = isOn(view);
     const dc = view.deviceClass;

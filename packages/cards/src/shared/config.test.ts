@@ -2,6 +2,7 @@ import type { FluvyCardConfig } from '@fluvy/core';
 import { describe, expect, it } from 'vitest';
 import {
   COMMON_ALIASES,
+  byState,
   ITEM_ALIASES,
   columnsOf,
   configKeys,
@@ -126,6 +127,16 @@ describe('normaliseConfig', () => {
       alerts: [{ preset: 'open', snooze: false }],
     };
     expect(normaliseConfig(given, COMMON_ALIASES)).toBe(given);
+  });
+
+  it('reads a map by state’s true and false keys as on and off, the words as written first', () => {
+    const yaml = { true: 'Tilted', false: 'Closed' };
+    expect(byState(yaml, 'on')).toBe('Tilted');
+    expect(byState(yaml, 'off')).toBe('Closed');
+    expect(byState({ on: 'Ajar', true: 'Tilted' }, 'on')).toBe('Ajar');
+    expect(byState({ open: 'Up', true: 'Tilted' }, 'open')).toBe('Up');
+    expect(byState(yaml, 'open')).toBeUndefined();
+    expect(byState(undefined, 'on')).toBeUndefined();
   });
 });
 

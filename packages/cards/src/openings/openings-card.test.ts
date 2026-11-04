@@ -286,6 +286,18 @@ describe('a row’s own class and state words (#102)', () => {
     expect(badge(card)).toBe('All clear');
   });
 
+  it('reads its words for on and off from a YAML-mode dashboard, where they reach it as true and false', async () => {
+    // Home Assistant's loader reads an unquoted `on:` and `off:` as booleans: JSON hands their keys on as words
+    const card = await draw({
+      rows: [
+        { entity: 'binary_sensor.window_tilt', states: { true: 'Tilted', false: 'Closed' } },
+        { entity: 'binary_sensor.front_door', states: { true: 'Ajar', false: 'Shut' } },
+        { entity: 'binary_sensor.shed', states: { on: 'Ajar', false: 'Shut', off: 'Bolted' } },
+      ],
+    });
+    expect(values(card)).toEqual(['Tilted', 'Shut', 'Bolted']);
+  });
+
   it('reads a row as the class it borrows: a window, open and counted; its own words before the class’s', async () => {
     const window = await draw({
       rows: [{ entity: 'binary_sensor.window_tilt', device_class: 'window' }],
