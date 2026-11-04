@@ -95,7 +95,7 @@ describe('the catalogues on disk', () => {
     for (const code of await catalogueCodes()) {
       const words = (await readCatalogue(code))['words'] as Record<string, readonly string[]>;
       const kinds = Object.entries(words).filter(([category]) => category.startsWith('appliance_'));
-      expect(kinds.length, code).toBe(18);
+      expect(kinds.length, code).toBe(21);
       for (const [category, stems] of kinds)
         for (const stem of stems) {
           expect(stem, `${code} ${category}`).toBe(plain(stem));

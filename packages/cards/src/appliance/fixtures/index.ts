@@ -40,6 +40,7 @@ export * from './lg-thinq.js';
 export * from './localthings.js';
 export * from './matter.js';
 export * from './miele.js';
+export * from './pets.js';
 export * from './plug.js';
 export * from './smartthings.js';
 export * from './tuya.js';

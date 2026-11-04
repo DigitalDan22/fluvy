@@ -11,11 +11,12 @@ import { says, type Rules } from '../shared/words.js';
 /*
  * What an appliance is. The card's own `kind` first; then what the integration says outright — Miele's model is the
  * appliance's type in English ("Washing machine", "Coffee system"), LG's model ends in its device type ("WM4000
- * (DEVICE_WASHER)"), and a WashTower is two devices named "<name> washer" and "<name> dryer"; then the keys only one
- * kind has (salt is a dishwasher's, i-Dos a washer's, a cavity's temperature an oven's, a setpoint that tops out below
- * 30 °C a compartment's; what LG's status can say — spinning, night dry, preheating — and what its older integration
- * writes in the device sensor's attributes); then the words of its name in any of the eleven languages, the longest of
- * words that overlap winning (`shared/words.ts`: オーブントースター is a toaster, not an oven). Some things are never
+ * (DEVICE_WASHER)"), a WashTower is two devices named "<name> washer" and "<name> dryer", PetKit's model id is its
+ * device type ("D4SH") and PetLibro's model its product code ("PLAF103"); then the keys only one kind has (salt is a
+ * dishwasher's, i-Dos a washer's, a cavity's temperature an oven's, a setpoint that tops out below 30 °C a
+ * compartment's, a meal now a feeder's; what LG's status can say — spinning, night dry, preheating — and what its older
+ * integration writes in the device sensor's attributes); then the words of its name in any of the eleven languages,
+ * the longest of words that overlap winning (`shared/words.ts`: オーブントースター is a toaster, not an oven). Some things are never
  * an appliance, whatever they say: a vacuum (Home Connect's robot has no vacuum entity, only its keys), a charger, a
  * 3D printer, and — until 1.10 — a warming drawer, LG's Styler and its kimchi fridge.
  */
@@ -38,6 +39,9 @@ export type ApplianceKind =
   | 'toaster'
   | 'blender'
   | 'sandwich_maker'
+  | 'feeder'
+  | 'fountain'
+  | 'litter_box'
   | 'appliance';
 
 export const APPLIANCE_KINDS: readonly ApplianceKind[] = [
@@ -58,6 +62,9 @@ export const APPLIANCE_KINDS: readonly ApplianceKind[] = [
   'toaster',
   'blender',
   'sandwich_maker',
+  'feeder',
+  'fountain',
+  'litter_box',
   'appliance',
 ];
 
@@ -75,6 +82,8 @@ export type KindVerdict =
 export interface KindSignals {
   readonly platform?: string | undefined;
   readonly model?: string | null | undefined;
+  /** The integration's own code for its model (PetKit's device type, "D4SH"). */
+  readonly modelId?: string | null | undefined;
   /** Its name as the person sees it (theirs, else the integration's). */
   readonly name?: string | null | undefined;
   /** Its entities' translation keys. */
@@ -171,13 +180,37 @@ const verdict = (said: ApplianceKind | Exclusion, by: KindSource): KindVerdict =
 /** A WashTower's half, by its name's end (lg_thinq/coordinator.py:42-55: "<alias> washer", "<alias> dryer"). */
 const TOWER_HALF = /\s(washer|dryer)$/i;
 
-/** By its model: Miele's type, LG's device type and a WashTower's half. */
+/**
+ * PetKit's device types (pypetkitapi const.py, the device's `model_id`): its feeders, its litter boxes, its fountains;
+ * a pet of its own is a device too, and never an appliance.
+ */
+const PETKIT: ReadonlyArray<readonly [RegExp, ApplianceKind]> = [
+  [/^(FEEDER|FEEDERMINI|D3|D4|D4S|D4H|D4SH)$/, 'feeder'],
+  [/^T[3-7]$/, 'litter_box'],
+  [/^(W4|W5|CTW2|CTW3|W7H)$/, 'fountain'],
+];
+
+/** PetLibro's product codes, its device's model (devices/*: PLAF a feeder, PLWF a fountain, PLLB a litter box). */
+const PETLIBRO: ReadonlyArray<readonly [RegExp, ApplianceKind]> = [
+  [/^PLAF\d/, 'feeder'],
+  [/^PLWF\d/, 'fountain'],
+  [/^PLLB\d/, 'litter_box'],
+];
+
+/** By its model: Miele's type, LG's device type and a WashTower's half, a pet device's type or product code. */
 function byModel(signals: KindSignals): KindVerdict | undefined {
   const model = (signals.model ?? '').trim();
   if (signals.platform === 'miele') {
     const said = MIELE[model.toLowerCase()];
     if (said) return verdict(said, 'model');
   }
+  const pet =
+    signals.platform === 'petkit'
+      ? PETKIT.find(([pattern]) => pattern.test((signals.modelId ?? '').toUpperCase()))
+      : signals.platform === 'petlibro'
+        ? PETLIBRO.find(([pattern]) => pattern.test(model.toUpperCase()))
+        : undefined;
+  if (pet) return verdict(pet[1], 'model');
   const type = LG_MODEL.exec(model)?.[1];
   const said = type ? LG[type] : undefined;
   if (!said) return undefined;
@@ -351,6 +384,23 @@ function byKeys(signals: KindSignals): KindVerdict | undefined {
       if (objects.some((object) => /(^|_)(fridge|freezer)_.*targettemperature/.test(object)))
         return verdict('fridge', 'keys');
       return undefined;
+    // petkit and petlibro: what only a feeder, a litter box or a fountain has (the Luma shares its fountains' filter)
+    case 'petkit':
+      if (has('manual_feed_single', 'manual_feed_dual_h1', 'feeding', 'desiccant_left_days'))
+        return verdict('feeder', 'keys');
+      if (has('litter_state', 'start_scoop', 'sand_lack', 'waste_bin'))
+        return verdict('litter_box', 'keys');
+      if (has('filter_percent', 'filter_left_days', 'lack_warning', 'pump_running'))
+        return verdict('fountain', 'keys');
+      return undefined;
+    case 'petlibro':
+      if (has('manual_feed', 'food_low', 'next_feed_time', 'remaining_desiccant'))
+        return verdict('feeder', 'keys');
+      if (has('running_state', 'rubbish_full_state', 'trigger_clean'))
+        return verdict('litter_box', 'keys');
+      if (has('remaining_filter_days', 'today_drinking_amount', 'water_dispensing_mode'))
+        return verdict('fountain', 'keys');
+      return undefined;
     default:
       return undefined;
   }
@@ -443,6 +493,7 @@ export function signalsOf(hass: House | undefined, device: string, printer = fal
   return {
     platform: platformOf(entries),
     model: entry?.model,
+    modelId: entry?.model_id,
     name,
     keys: new Set(
       candidates.map((candidate) => candidate.key).filter((key): key is string => Boolean(key)),
@@ -493,9 +544,10 @@ export const APPLIANCE_READOUTS: readonly ApplianceReadout[] = [
 /**
  * The hero a kind draws: a cycle's progress (washer, dryer, dishwasher, microwave, air fryer), a temperature on its
  * way to its target (oven, kettle), a hob's plates, a fridge's compartments, a state and its counters (coffee
- * machine, hood), a plug's power.
+ * machine, hood), a plug's power, a pet device's two tiles (its food and its next meal, its water and its filter, its
+ * litter and its waste drawer).
  */
-export type Hero = 'cycle' | 'heat' | 'hob' | 'cold' | 'state' | 'plug';
+export type Hero = 'cycle' | 'heat' | 'hob' | 'cold' | 'state' | 'plug' | 'pet';
 
 /** A kind's stroke glyph: the ten kinds' are drawn by the appliances' chunk, the hood's and a plug's are Fluvy's. */
 export type ApplianceGlyph =
@@ -512,6 +564,9 @@ export type ApplianceGlyph =
   | 'toaster'
   | 'blender'
   | 'sandwich'
+  | 'feeder'
+  | 'fountain'
+  | 'litter'
   | 'fan'
   | 'plug';
 
@@ -634,6 +689,18 @@ export const KIND_DEFAULTS: Readonly<Record<ApplianceKind, KindDefaults>> = {
   toaster: small('toaster', 'heat', 'state', [], ['power']),
   blender: small('blender', 'accent', 'state', [], ['power']),
   sandwich_maker: small('sandwich', 'heat', 'state', [], ['power']),
+  // a pet device's whole card: its tiles, its rows and the buttons that matter (a meal now; a clean, a deodorizing, a
+  // levelling; a fountain's power)
+  feeder: small('feeder', 'accent', 'pet', [], ['feed'], 'full'),
+  fountain: small('fountain', 'water', 'pet', [], ['power'], 'full'),
+  litter_box: small(
+    'litter',
+    'accent',
+    'pet',
+    [],
+    ['clean', 'deodorize', 'level', 'pause'],
+    'full',
+  ),
   appliance: {
     glyph: 'plug',
     tone: 'accent',

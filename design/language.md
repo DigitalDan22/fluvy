@@ -1807,6 +1807,54 @@ temperature on its way, a hob's plates, a fridge's compartments, a state and its
   reach as an unavailable one does (the status offline, the card's dashed skin). The house's appliances are found in its
   registries: their entities gone from the house leave every row, tile and whole card in place.
 
+### Pet devices (1.13, #112)
+
+**A feeder, a water fountain and a litter box are appliances**, so they take the family's whole anatomy — the picture,
+the head and its round, a hero of 108, three rows, the buttons a card asks for, every layout, the list and the
+dashboards' bands — and change only their hero and their words.
+
+- **What it is**: PetKit's device type (its model id: `D3`…`D4SH` a feeder, `T3`…`T7` a litter box, `W4`, `W5`,
+  `CTW2`, `CTW3`, `W7H` a fountain), PETLIBRO's product code (`PLAF` a feeder, `PLWF` a fountain, `PLLB` a litter box),
+  else the keys only one of them has (a meal now, a litter state, a filter's percentage), else its name in the eleven
+  languages ("Futterautomat", "Arenero", "自動給餌器"; a glitter lamp is no litter box). A pet of PetKit's own is a device
+  too, never an appliance. Both integrations are the community's (HACS) and named by their translation keys; their
+  buttons, texts and switches are pinned from their source as Home Assistant's own are.
+- **What it is doing**: a feeder feeds while PetKit's flag says so; a litter box's work state is folded as every
+  appliance's (cleaning, levelling, dumping at work; a clean paused for a cat paused, its reason in Home Assistant's
+  words); a device that says it is not reached (PetKit's device status, PETLIBRO's Wi-Fi flag) is out of reach;
+  PetKit's error message (not its "No error") and PETLIBRO's dispenser fault are a failure. What is out — the food, the
+  water, the litter, a full waste bin — is said in the head in the warning's ink ("Refill the food"); a feeder at rest
+  counts down to its next meal ("Next meal in 1 h 13 min", its status's word the shorter form), on the minute's clock.
+- **Its meals**: PETLIBRO's last and next feed are sensors of their own, their amounts beside them; PetKit's are the rows
+  of its plan (its "Feeding schedule" switch's attributes, the same shape as PETLIBRO's plan): the last of today's
+  given, the first still to come (one due a minute ago is on its way), else tomorrow's first on its weekdays; a plan
+  switched off has none to come. The plan's times are the house's (its time zone), as the device keeps them. Amounts in
+  the plan's unit: grams, or portions where the feeder counts them so.
+- **The hero is two tiles** (`tiles`, the rows editor's, any number two a row): the compartments' tiles (84, radius 12,
+  the page's fill, the name 15/400 over the value 22/700), the circle 16 from its words and ringed by what is left
+  where the part says it in percent (2, 6 out of the circle, on the border's track, in the tile's tone). A part's tile
+  is the kind's tone while fine (a feeder's and a litter box's the accent, a fountain's water), the warning's when it is
+  soon, the danger's when it is out, its value in that ink. A feeder's food and next meal (its time: the row says the
+  amount), a fountain's water and its filter, a litter box's litter and its waste bin. Compact, they are its readouts;
+  on a dial the first that says what is left fills its ticks.
+- **The rows** never repeat a tile, and a part due that a tile says never takes a row: a feeder's last meal with its
+  amount, what it gave today and its desiccant; a fountain's drinks today, its last drink and the water it purified; a
+  litter box's last use and by whom ("21:05 · Luna"), its uses today and its deodorant. A part's days left are said as
+  days ("12 d"), in the warning's ink within `low_days` (seven), the thing to do when none are left.
+- **The round is the button that matters**: a meal now (PetKit's amount written to its text, its smallest unless the
+  card names one, `feed_amount`; PETLIBRO's button gives the amount set on the device), a litter box's clean, or a
+  resume while a cat has paused it, a pause while it cleans; a fountain's power. A meal, a clean and a levelling ask
+  first in Home Assistant's dialog ("Feed 20 g now?", "Clean the litter box now? Check that no pet is inside."); a
+  deodorizing does not. `show_controls` adds the rest (deodorize, level, pause); the dump that empties a whole box is
+  never a card's. A reminder's hold resets a filter, a desiccant or a deodorant, after asking.
+- **The pictures**, in the family's hand: a feeder in white enamel, its hopper's smoked window on the kibble, a steel
+  bowl in its base; a fountain whose water wells up on its steel top over a clear tank; a self-cleaning litter box, its
+  dome, its dark entry with the litter at its foot, its drawer. Their glyphs: a hopper over a bowl, a tank under a drop,
+  a dome over its entry; a paw for the pets.
+- **On the automatic dashboards** the pet devices are a band of their own after the small appliances ("Pets", whole
+  cards side by side), never "Large appliances". The list says what a feeder, a fountain or a box has left at a row's
+  end ("64 %") and its next meal or last use under its name.
+
 ## Light colour (1.7)
 
 - **A colour bulb's controls** (`supported_color_modes` with `hs`, `rgb`, `rgbw`, `rgbww` or `xy`) live under the

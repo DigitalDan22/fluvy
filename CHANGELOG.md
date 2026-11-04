@@ -65,6 +65,15 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - `include` and `exclude` on the room card, in its editor too: entity ids, patterns of ids (`switch.dishwasher_*`),
   device ids or domains, to count what the room's rule leaves out or leave out what it shows. The automatic dashboards
   take them per room (`rooms`), for the room's card and its page. Thanks to @rammium (#95).
+### Added
+
+- Pet devices on the appliance card: a feeder, a water fountain and a litter box, found on PetKit's and PETLIBRO's
+  integrations or by their names. Two tiles say what matters (a feeder's food and its next meal, a fountain's water and
+  its filter, a litter box's litter and its waste bin), ringed by what is left and in the warning's or the danger's ink
+  as it runs low; the rows say the last meal and what was given today, what the pets drank, who used the box last and
+  how often, and the days a filter, a desiccant or a deodorant has left. A feeder counts down to its next meal; the
+  round gives a meal now, cleans the box or resumes a clean a cat paused, each asked first; the automatic dashboards
+  give the pets a band of their own. Thanks to @eduardoribeiro (#112).
 
 ## [1.12.0] — 2026-11-04
 

@@ -18,6 +18,7 @@ import {
   lgFridge,
   lgWasher,
   mieleHob,
+  petFixtures,
   plugWasher,
   tuyaKettle,
 } from '../appliance/fixtures/index.js';
@@ -857,6 +858,33 @@ describe('custom:fluvy-home strategy — the appliances, as the reporter of #47 
     ]);
     expect(small).toMatchObject({ title: 'Small appliances', subtitle: 'Show all' });
     expect(smallCards!['appliances']).toEqual([{ device: 'tuya-kettle', kind: 'kettle' }]);
+  });
+
+  it('gives the pets’ feeders, fountains and litter boxes a band of their own after the small appliances (#112)', async () => {
+    const hass = houseOf(
+      [tuyaKettle(APPLIANCES_AT), ...petFixtures(APPLIANCES_AT)],
+      APPLIANCES_AT,
+      demoHass() as never,
+    );
+    const { views } = await FluvyHomeStrategy.generate({ type: 'custom:fluvy-home' }, hass);
+    const [across] = band(views, 'home');
+    const [small, , pets, petCards] = across!.cards;
+    expect(small).toMatchObject({ title: 'Small appliances' });
+    expect(pets).toMatchObject({
+      type: 'custom:fluvy-heading-card',
+      title: 'Pets',
+      icon: 'mdi:paw',
+      subtitle: 'Show all',
+    });
+    // whole cards, by kind and then by name; never a pet of its own
+    expect(petCards!['appliances']).toEqual([
+      { device: 'pk-feeder', kind: 'feeder' },
+      { device: 'pl-feeder', kind: 'feeder' },
+      { device: 'pl-fountain', kind: 'fountain' },
+      { device: 'pk-fountain', kind: 'fountain' },
+      { device: 'pk-litter', kind: 'litter_box' },
+      { device: 'pl-litter', kind: 'litter_box' },
+    ]);
   });
 
   it('takes the appliances out of the plug tiles and the room readings, never out of the energy views', async () => {

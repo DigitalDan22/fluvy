@@ -63,7 +63,8 @@ const CATEGORIES: ReadonlyArray<{ category: string; name: string; shape: Shape }
  * The appliance kinds a name can say, in the order they win where a name says two that stand apart (where their
  * words overlap, the longer wins): the more particular first — a washer-dryer before a washer and a dryer, a
  * dishwasher before a washer, a microwave before an oven, a wine cooler ("wine fridge") before a fridge, a fridge
- * (a fridge freezer is one) before a freezer, a sandwich maker (a "Sandwichtoaster") before a toaster.
+ * (a fridge freezer is one) before a freezer, a sandwich maker (a "Sandwichtoaster") before a toaster; the pets'
+ * feeder, fountain and litter box last, none of their words an appliance's.
  */
 const KINDS = [
   'washer_dryer',
@@ -83,6 +84,9 @@ const KINDS = [
   'sandwich_maker',
   'toaster',
   'blender',
+  'feeder',
+  'fountain',
+  'litter_box',
 ] as const;
 
 /** A stem that carries regex of its own (a class, a boundary, an anchor, a lookaround); any other is its letters. */

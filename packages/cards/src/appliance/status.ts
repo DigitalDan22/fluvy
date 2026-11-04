@@ -3,11 +3,11 @@ import type { ApplianceKind } from './kinds.js';
 /*
  * What an appliance is doing, whatever its integration calls it: Home Connect's nine operation states, Miele's
  * nineteen statuses, LG's eighty-odd current states, SmartThings' machine states, Matter's operational states,
- * Whirlpool's cycle states, hOn's numbers, Electrolux's appliance states, each folded into the few a card draws. The
- * words a card writes stay Home Assistant's (the state as it translates it); the status decides the tone, the bar,
- * the buttons and the line under the head. The phase a cycle is at is folded the same way into the steps a bar can
- * show: a washer washes, rinses and spins; a dishwasher prewashes, washes, rinses and dries; a dryer dries, cools and
- * keeps the load from creasing.
+ * Whirlpool's cycle states, hOn's numbers, Electrolux's appliance states, PetKit's litter box's work states, each
+ * folded into the few a card draws. The words a card writes stay Home Assistant's (the state as it translates it);
+ * the status decides the tone, the bar, the buttons and the line under the head. The phase a cycle is at is folded the
+ * same way into the steps a bar can show: a washer washes, rinses and spins; a dishwasher prewashes, washes, rinses
+ * and dries; a dryer dries, cools and keeps the load from creasing.
  */
 
 export type ApplianceStatus =
@@ -198,6 +198,8 @@ export function statusOfWord(
     return (kind === 'dishwasher' ? HON_DISHWASHER : HON)[word] ?? 'idle';
   if (platform === 'miele' && word === 'reserved') return 'idle';
   for (const [status, words] of STATUSES) if (words.includes(word)) return status;
+  // a job paused and why (PetKit's litter box: "cleaning_paused_pet_entered")
+  if (/(^|_)paused(_|$)/.test(word)) return 'paused';
   return 'running';
 }
 

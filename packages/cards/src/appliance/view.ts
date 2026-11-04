@@ -2,7 +2,7 @@ import { localize, type HomeAssistant } from '@fluvy/core';
 import { addGlyphs, type Tone } from '@fluvy/ui';
 import { statusToneOf, toneOf, type Coloured } from '../shared/colour.js';
 import { durationText, spanText } from '../shared/duration.js';
-import { jobWords, whenText, type JobClock } from '../shared/job-time.js';
+import { jobWords, when, whenText, type JobClock } from '../shared/job-time.js';
 import { APPLIANCE_GLYPHS } from './glyphs.js';
 import { KIND_DEFAULTS, type ApplianceKind } from './kinds.js';
 import type { ApplianceReading, Attention } from './reading.js';
@@ -11,13 +11,17 @@ import { busy, type ApplianceStatus } from './status.js';
 /*
  * What both appliance cards say of an appliance, worded once: the unit a card shows (an appliance's, or its second
  * drum's or cavity's in its place), the tone its status draws in, how long things take and how long ago they were,
- * the line that says when ("Ready at 14:32", "Starts at 02:00", "Finished yesterday") and what asks for attention.
+ * the line that says when ("Ready at 14:32", "Starts at 02:00", "Finished yesterday"), what asks for attention and
+ * what a pet device at rest says of itself ("Next meal in 2 h 15 min", "Last used 14:32 · Luna").
  * The appliances' glyphs join the set here, as the family's chunk lands.
  */
 addGlyphs(APPLIANCE_GLYPHS);
 
-const s = (hass: HomeAssistant | undefined, key: Parameters<typeof localize>[1]): string =>
-  localize(hass, key);
+const s = (
+  hass: HomeAssistant | undefined,
+  key: Parameters<typeof localize>[1],
+  values?: Parameters<typeof localize>[2],
+): string => localize(hass, key, values);
 
 /** Which of an appliance's units a card shows: its own, its second drum or cavity, or both (the second as a line). */
 export type ApplianceUnit = 'main' | 'sub' | 'both';
@@ -133,6 +137,42 @@ export function whenParts(
         : '',
     ].filter(Boolean);
   return [];
+}
+
+/**
+ * A moment as a readout says it: its time today, "Fri 05:27" another day this week or next, "yesterday" for a
+ * finish before today — by the house's calendar.
+ */
+export function momentText(hass: HomeAssistant | undefined, at: number, now: number): string {
+  const { time, days, day, ago } = when(hass, at, now);
+  if (days === 0) return time;
+  return days < 0 && ago ? ago : `${day} ${time}`;
+}
+
+/**
+ * What a pet device at rest says of itself, most telling first: a feeder its next meal ("Next meal in 2 h 15 min"),
+ * else its last; a litter box its last use and by whom ("Last used 14:32", "Luna"), a fountain its last drink.
+ */
+export function petWords(
+  hass: HomeAssistant | undefined,
+  r: ApplianceReading,
+  now: number,
+): string[] {
+  if (!r.pet) return [];
+  const { next, last } = r.pet.meals;
+  if (r.kind === 'feeder')
+    return next
+      ? [s(hass, 'appliance.next_meal_in', { time: spanText(hass, (next.at - now) / 1000) })]
+      : last
+        ? [`${s(hass, 'appliance.row_last_meal')} ${momentText(hass, last.at, now)}`]
+        : [];
+  const visit = r.pet.visit;
+  if (!visit) return [];
+  const label = s(
+    hass,
+    r.kind === 'fountain' ? 'appliance.row_last_drink' : 'appliance.row_last_use',
+  );
+  return [`${label} ${momentText(hass, visit.at, now)}`, visit.pet].filter(Boolean);
 }
 
 /** "1 h 12 min left", for a line. */

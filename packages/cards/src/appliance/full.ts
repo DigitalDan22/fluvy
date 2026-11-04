@@ -9,7 +9,10 @@ import { MAINTENANCE_KEYS, type MaintenanceKey } from './maintenance.js';
  * the appliance has, so a washer without a water meter shows its next row instead, and where it has fewer than three a
  * row it lacks says a dash in its place: every whole card of a kind has its three rows) or the card's own (`rows`, a
  * rows editor's list, in its order, with names, icons, colours and actions of their own); how a value sits is the
- * kind's too: bold beside its words, at the row's end, or one phrase with them (`row_values`).
+ * kind's too: bold beside its words, at the row's end, or one phrase with them (`row_values`). A pet device's hero is
+ * two of the same, as tiles (`tiles`, #112): a feeder's food and its next meal, a fountain's water and its filter, a
+ * litter box's litter and its waste bin; its rows its last meal and what it gave today, what its pets drank, who
+ * last used it and how often today.
  */
 
 /** What a row says: a reading of the appliance, a reminder (`salt`, `filter`…), or any entity (`entity`). */
@@ -29,6 +32,14 @@ export type RowKey =
   | 'alarm'
   | 'last_brew'
   | 'zones'
+  | 'last_meal'
+  | 'next_meal'
+  | 'fed_today'
+  | 'drank_today'
+  | 'purified'
+  | 'pump'
+  | 'last_use'
+  | 'uses_today'
   | 'entity'
   | MaintenanceKey;
 
@@ -49,6 +60,14 @@ const READING_ROWS = [
   'alarm',
   'last_brew',
   'zones',
+  'last_meal',
+  'next_meal',
+  'fed_today',
+  'drank_today',
+  'purified',
+  'pump',
+  'last_use',
+  'uses_today',
   'entity',
 ] as const satisfies readonly RowKey[];
 
@@ -78,6 +97,8 @@ const HERO_SAYS: Readonly<Record<Hero, readonly RowKey[]>> = {
   hob: ['zones'],
   cold: [],
   state: [],
+  // a pet device's tiles are the card's own: what they say is left out of the rows where the card draws them
+  pet: [],
 };
 
 /** Whether a hero says what a row would (`HERO_SAYS`). */
@@ -157,7 +178,17 @@ const KIND_ROWS: Readonly<Record<ApplianceKind, readonly RowSlot[]>> = {
   toaster: PLUGGED,
   blender: PLUGGED,
   sandwich_maker: PLUGGED,
+  feeder: ['last_meal', 'fed_today', 'desiccant', 'next_meal', 'food', 'alarm'],
+  fountain: ['drank_today', 'last_use', 'purified', 'clean', 'pump', 'water_filter', 'alarm'],
+  litter_box: ['last_use', 'uses_today', 'deodorant', 'filter', 'waste', 'litter', 'alarm'],
   appliance: PLUGGED,
+};
+
+/** A pet device's tiles where the card names none: what its hero says first. */
+export const KIND_TILES: Readonly<Partial<Record<ApplianceKind, readonly RowKey[]>>> = {
+  feeder: ['food', 'next_meal'],
+  fountain: ['water_tank', 'water_filter'],
+  litter_box: ['litter', 'waste'],
 };
 
 /** How each kind's values sit: a washer's beside their words, an oven's at the end, a fridge's in its phrases. */
@@ -179,6 +210,9 @@ export const KIND_VALUES: Readonly<Record<ApplianceKind, RowValues>> = {
   toaster: 'end',
   blender: 'end',
   sandwich_maker: 'end',
+  feeder: 'end',
+  fountain: 'end',
+  litter_box: 'end',
   appliance: 'end',
 };
 
@@ -199,6 +233,14 @@ export const ROW_GLYPH: Readonly<Record<(typeof READING_ROWS)[number], string>> 
   alarm: 'bell',
   last_brew: 'cup',
   zones: 'hob',
+  last_meal: 'clock',
+  next_meal: 'timer',
+  fed_today: 'feeder',
+  drank_today: 'drop',
+  purified: 'filter',
+  pump: 'fountain',
+  last_use: 'clock',
+  uses_today: 'paw',
   entity: 'list',
 };
 
@@ -233,6 +275,11 @@ export const DUE_WORD: Readonly<Record<MaintenanceKey, MessageKey>> = {
   grease_filter: 'appliance.do_clean',
   leak: 'appliance.do_check',
   service: 'appliance.do_check',
+  food: 'appliance.do_refill',
+  desiccant: 'appliance.do_replace',
+  litter: 'appliance.do_refill',
+  waste: 'appliance.do_empty',
+  deodorant: 'appliance.do_replace',
 };
 
 /** A span in hours and minutes, as the hero writes the time left: "1:12", "0:48". */

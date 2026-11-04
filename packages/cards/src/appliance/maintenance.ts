@@ -9,7 +9,9 @@ import type { Candidate } from './roles.js';
  * Miele's levels are percentages, due at half the low level and soon at it; LG's reminders are flags, its rinse aid's
  * dispenser a step of five (empty is due, the last step soon), its tub-clean count the cycles since (due at the
  * thirty its machines ask at), and its notification events count for a day, said with their age; SmartThings'
- * filters count how much they are used.
+ * filters count how much they are used. A pet device's (#112) are its food, its desiccant, a fountain's water and
+ * filter, a litter box's litter, waste drawer and deodorant: flags, levels, and the days a part has left (due when
+ * none are, soon within `low_days`).
  */
 
 export type MaintenanceKey =
@@ -29,7 +31,12 @@ export type MaintenanceKey =
   | 'air_filter'
   | 'grease_filter'
   | 'leak'
-  | 'service';
+  | 'service'
+  | 'food'
+  | 'desiccant'
+  | 'litter'
+  | 'waste'
+  | 'deodorant';
 export const MAINTENANCE_KEYS: readonly MaintenanceKey[] = [
   'salt',
   'rinse_aid',
@@ -48,19 +55,28 @@ export const MAINTENANCE_KEYS: readonly MaintenanceKey[] = [
   'grease_filter',
   'leak',
   'service',
+  'food',
+  'desiccant',
+  'litter',
+  'waste',
+  'deodorant',
 ];
 
 /**
  * How an entity says it: `event` (Home Connect: present, confirmed, off), `level` (a percentage left), `used` (a
  * percentage used), `flag` (on when it is needed), `word` (a state that names it: Whirlpool's "empty", LG's "replace"),
  * `steps` (a dispenser's step, LG's "rinselevel_2" of its five), `count` (the cycles since it was last done, LG's
- * tub clean), `reset` (a button that says it is done: SmartThings' filters, Matter's).
+ * tub clean), `days` (the days a part has left: a pet device's desiccant and filters), `reset` (a button that says it
+ * is done: SmartThings' filters, Matter's, a pet device's).
  */
 export type MaintenanceForm =
-  'event' | 'level' | 'used' | 'flag' | 'word' | 'steps' | 'count' | 'reset';
+  'event' | 'level' | 'used' | 'flag' | 'word' | 'steps' | 'count' | 'days' | 'reset';
 
 /** The cycles after which LG's washers and dishwashers ask for a tub clean (their own "tCL" reminder). */
 export const TUB_CLEAN_CYCLES = 30;
+
+/** The days left within which a pet device's part is soon to change (its desiccant, its filter): a week. */
+export const LOW_DAYS = 7;
 
 export interface MaintenanceSpec {
   readonly key: MaintenanceKey;
@@ -151,7 +167,65 @@ const BY_KEY: Readonly<Record<string, Readonly<Record<string, MaintenanceSpec>>>
   },
   // whirlpool/sensor.py: the bulk detergent tank, "25", "50", "100", "empty"
   whirlpool: { whirlpool_tank: spec('detergent', 'word') },
+  // petkit binary_sensor.py, sensor.py, button.py: a feeder's food flag is on when its hopper is empty, a fountain's
+  // lack warning when its water is low, a box's waste bin when its drawer is full
+  petkit: {
+    food_level: spec('food', 'flag'),
+    food_level_1: spec('food', 'flag'),
+    food_level_2: spec('food', 'flag'),
+    food_left: spec('food', 'level'),
+    food_replenished: spec('food', 'reset'),
+    desiccant_left_days: spec('desiccant', 'days'),
+    reset_desiccant: spec('desiccant', 'reset'),
+    lack_warning: spec('water_tank', 'flag'),
+    clean_water_tank_state: spec('water_tank', 'word'),
+    clean_water_tank_low: spec('water_tank', 'flag', 'soon'),
+    clean_water_tank_empty: spec('water_tank', 'flag'),
+    filter_percent: spec('water_filter', 'level'),
+    filter_left_days: spec('water_filter', 'days'),
+    replace_filter: spec('water_filter', 'flag'),
+    reset_filter: spec('water_filter', 'reset'),
+    litter_level: spec('litter', 'level'),
+    sand_lack: spec('litter', 'flag'),
+    sand_tray_left_days: spec('litter', 'days'),
+    waste_bin: spec('waste', 'flag'),
+    waste_tank_full: spec('waste', 'flag'),
+    odor_eliminator_n50_left_days: spec('deodorant', 'days'),
+    odor_eliminator_n60_left_days: spec('deodorant', 'days'),
+    purification_n60_left_days: spec('deodorant', 'days'),
+    reset_n50_odor_eliminator: spec('deodorant', 'reset'),
+    reset_n60_odor_eliminator: spec('deodorant', 'reset'),
+  },
+  // petlibro binary_sensor.py, sensor.py, button.py: a feeder's food flag on when it runs low; a fountain's water in
+  // percent (the Luma's litter, under the same key: `forKind`), its filter's and its cleaning's days
+  petlibro: {
+    food_low: spec('food', 'flag', 'soon'),
+    left_food_low: spec('food', 'flag', 'soon'),
+    right_food_low: spec('food', 'flag', 'soon'),
+    remaining_desiccant: spec('desiccant', 'days'),
+    desiccant_reset: spec('desiccant', 'reset'),
+    weight_percent: spec('water_tank', 'level'),
+    remaining_filter_days: spec('water_filter', 'days'),
+    remaining_replacement_days: spec('water_filter', 'days'),
+    filter_reset: spec('water_filter', 'reset'),
+    remaining_cleaning_days: spec('clean', 'days'),
+    cleaning_reset: spec('clean', 'reset'),
+    rubbish_full_state: spec('waste', 'flag'),
+  },
 };
+
+/**
+ * A litter box's word for what a fountain's key says (PetLibro's Luma shares its fountains' keys): its litter's level
+ * where a fountain's is its water, its own filter where a fountain's is its water filter.
+ */
+const LITTER_BOX_KEYS: Partial<Record<MaintenanceKey, MaintenanceKey>> = {
+  water_tank: 'litter',
+  water_filter: 'filter',
+};
+
+/** What a maintenance item is called on an appliance of a kind (a litter box's litter where a key says water). */
+export const forKind = (key: MaintenanceKey, kind: string | undefined): MaintenanceKey =>
+  (kind === 'litter_box' ? LITTER_BOX_KEYS[key] : undefined) ?? key;
 
 /** The ends of ids of the integrations read by their ids. */
 const BY_ID: Readonly<Record<string, ReadonlyArray<readonly [RegExp, MaintenanceSpec]>>> = {
@@ -184,6 +258,8 @@ export interface MaintenanceItem {
   readonly severity: 'due' | 'soon' | 'ok';
   /** What is left, in percent, where the integration says it. */
   readonly level?: number;
+  /** The days it has left, where the integration counts them (a desiccant's, a filter's). */
+  readonly days?: number;
   /** Since when it has been asked for (ms): the event's, or the flag's last change. */
   readonly since?: number;
   /** Home Connect's "confirmed": seen to on the appliance, still to do (drawn in the secondary ink). */
@@ -194,8 +270,12 @@ export interface MaintenanceItem {
 const byLevel = (level: number, low: number): MaintenanceItem['severity'] =>
   level <= low / 2 ? 'due' : level <= low ? 'soon' : 'ok';
 
-/** Words that say a thing needs doing (Whirlpool's tank, LG's fresh-air filter, Electrolux's water filter). */
-const NEEDED = /^(empty|replace|change|buy|bad|expired|exhausted|25)$/;
+/**
+ * Words that say a thing needs doing (Whirlpool's tank, LG's fresh-air filter, Electrolux's water filter, PetKit's
+ * water tank), and those of them that say it soon (Whirlpool's quarter, a tank low).
+ */
+const NEEDED = /^(empty|replace|change|buy|bad|expired|exhausted|25|low)$/;
+const SOON = /^(25|low)$/;
 
 /**
  * One maintenance entity, read: how pressing it is (`lowLevel` the percentage a level is low at, 20 by default), its
@@ -205,6 +285,7 @@ export function maintenanceItem(
   found: MaintenanceSpec,
   state: HassEntity | undefined,
   lowLevel = 20,
+  lowDays = LOW_DAYS,
 ): MaintenanceItem | undefined {
   if (!state || found.form === 'reset') return undefined;
   const word = state.state.toLowerCase().replace(/[\s-]+/g, '_');
@@ -226,7 +307,7 @@ export function maintenanceItem(
     case 'flag':
       return said(word === 'on' ? (found.severity ?? 'due') : 'ok');
     case 'word':
-      return said(NEEDED.test(word) ? (word === '25' ? 'soon' : 'due') : 'ok');
+      return said(NEEDED.test(word) ? (SOON.test(word) ? 'soon' : 'due') : 'ok');
     case 'steps': {
       // "rinselevel_2": the step of as many as its options list (LG's five), empty due, the last step soon
       const step = Number(/\d+$/.exec(word)?.[0]);
@@ -240,7 +321,8 @@ export function maintenanceItem(
     }
     case 'level':
     case 'used':
-    case 'count': {
+    case 'count':
+    case 'days': {
       const value = Number(state.state);
       if (!/\d/.test(state.state) || !Number.isFinite(value)) return undefined;
       // a count of cycles since: due at LG's thirty, soon from four fifths of them; what is left as its level
@@ -250,6 +332,12 @@ export function maintenanceItem(
             value >= TUB_CLEAN_CYCLES ? 'due' : value >= TUB_CLEAN_CYCLES * 0.8 ? 'soon' : 'ok',
           ),
           level: Math.max(0, Math.round(100 - (value / TUB_CLEAN_CYCLES) * 100)),
+        };
+      // the days a part has left: due when none are, soon within `lowDays`
+      if (found.form === 'days')
+        return {
+          ...said(value <= 0 ? 'due' : value <= lowDays ? 'soon' : 'ok'),
+          days: Math.max(0, Math.round(value)),
         };
       const level = Math.min(100, Math.max(0, found.form === 'used' ? 100 - value : value));
       return { ...said(byLevel(level, lowLevel)), level };
@@ -292,7 +380,9 @@ const SEVERITY = { due: 0, soon: 1, ok: 2 } as const;
 
 /**
  * The maintenance a card shows: one item a key (the most pressing of those that say it: two tanks, an event and a
- * level), due first, then soon, then fine, each in the order of `MAINTENANCE_KEYS`.
+ * level), due first, then soon, then fine, each in the order of `MAINTENANCE_KEYS`; of two as pressing, the first —
+ * each with what is left as the other says it, where it does not say it (a litter box's flag that its litter is short
+ * keeps its level's percentage, a filter's percentage its days).
  */
 export function maintenanceList(
   items: ReadonlyArray<MaintenanceItem | undefined>,
@@ -301,7 +391,17 @@ export function maintenanceList(
   for (const item of items) {
     if (!item) continue;
     const held = byKey.get(item.key);
-    if (!held || SEVERITY[item.severity] < SEVERITY[held.severity]) byKey.set(item.key, item);
+    if (!held) {
+      byKey.set(item.key, item);
+      continue;
+    }
+    const [main, other] =
+      SEVERITY[item.severity] < SEVERITY[held.severity] ? [item, held] : [held, item];
+    byKey.set(item.key, {
+      ...main,
+      ...(main.level === undefined && other.level !== undefined ? { level: other.level } : {}),
+      ...(main.days === undefined && other.days !== undefined ? { days: other.days } : {}),
+    });
   }
   return [...byKey.values()].sort(
     (a, b) =>

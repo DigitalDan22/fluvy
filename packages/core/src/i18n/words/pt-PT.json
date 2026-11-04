@@ -135,5 +135,8 @@
   "appliance_air_fryer": ["fritadeira[ _-]de[ _-]ar", "air[ _-]?fryer"],
   "appliance_sandwich_maker": ["tostadeira", "sanduicheira"],
   "appliance_toaster": ["torradeira"],
-  "appliance_blender": ["liquidificadora"]
+  "appliance_blender": ["liquidificadora"],
+  "appliance_feeder": ["comedouro", "alimentador automatico", "dispensador de comida"],
+  "appliance_fountain": ["bebedouro", "fonte de agua", "fonte para gatos"],
+  "appliance_litter_box": ["caixa de areia", "liteira"]
 }

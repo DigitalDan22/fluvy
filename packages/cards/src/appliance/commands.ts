@@ -11,18 +11,45 @@ import { setterFor, type Setter } from './zones.js';
  * whose exact service and data are pinned by a contract test from that source (`commands.test.ts`, file and line
  * cited): LG ThinQ's operation select and power switch, Home Connect's active programme and its buttons, Miele's
  * buttons and power, SmartThings' operating state and buttons, Matter's buttons, Whirlpool's oven stop and light,
- * Tuya's kettle. Anything else — hOn, Electrolux, LG's older integration — is read and never written to (1.9.1). A
- * select's option is offered only when it is in the select's own options. Starting needs the appliance at rest and,
- * where it has one, its remote start on; stopping asks first, and so does switching off one that is not at rest (at
- * work, waiting to start, failed) and switching off what keeps food cold, whatever its compressor is doing.
+ * Tuya's kettle, PetKit's and PetLibro's pet devices (a meal now, a litter box's clean, deodorizing and levelling, a
+ * fountain's pause and power). Anything else — hOn, Electrolux, LG's older integration — is read and never written to
+ * (1.9.1). A select's option is offered only when it is in the select's own options. Starting needs the appliance at
+ * rest and, where it has one, its remote start on; stopping asks first, and so does switching off one that is not at
+ * rest (at work, waiting to start, failed) and switching off what keeps food cold, whatever its compressor is doing;
+ * a meal, a litter box's clean and its levelling ask first too.
  */
 
-/** A control's cell, as a card names its controls (`controls`): resume shares start's, power is one toggle. */
-export type CommandName = 'start' | 'pause' | 'stop' | 'power' | 'light';
-export const COMMAND_NAMES: readonly CommandName[] = ['start', 'pause', 'stop', 'power', 'light'];
+/**
+ * A control's cell, as a card names its controls (`controls`): resume shares start's, power is one toggle; a pet
+ * device's a meal now, a litter box's clean, deodorizing and levelling.
+ */
+export type CommandName =
+  'start' | 'pause' | 'stop' | 'power' | 'light' | 'feed' | 'clean' | 'deodorize' | 'level';
+export const COMMAND_NAMES: readonly CommandName[] = [
+  'start',
+  'pause',
+  'stop',
+  'power',
+  'light',
+  'feed',
+  'clean',
+  'deodorize',
+  'level',
+];
 
 /** What a command does. */
-export type Action = 'start' | 'pause' | 'resume' | 'stop' | 'power_on' | 'power_off' | 'light';
+export type Action =
+  | 'start'
+  | 'pause'
+  | 'resume'
+  | 'stop'
+  | 'power_on'
+  | 'power_off'
+  | 'light'
+  | 'feed'
+  | 'clean'
+  | 'deodorize'
+  | 'level';
 
 /** A service call, as `hass.callService` takes it (the entity in its data). */
 export interface ServiceCall {
@@ -40,9 +67,13 @@ export interface Command {
   readonly label: MessageKey;
   /**
    * Asked first, in Home Assistant's confirmation: stopping; switching off while it runs, while it waits to start or
-   * has failed (`power_off_now`), and a fridge, a freezer or a wine cooler at any time (`power_off_cold`).
+   * has failed (`power_off_now`), and a fridge, a freezer or a wine cooler at any time (`power_off_cold`); a meal now,
+   * a litter box's clean and its levelling.
    */
-  readonly confirm?: 'stop' | 'power_off' | 'power_off_now' | 'power_off_cold';
+  readonly confirm?:
+    'stop' | 'power_off' | 'power_off_now' | 'power_off_cold' | 'feed' | 'clean' | 'level';
+  /** A meal's amount, where the card writes it (PetKit's), as the confirmation says it. */
+  readonly amount?: number;
   /**
    * Why it cannot be done now (the cell drawn disabled, titled so): the appliance's remote start is off, or the
    * integration does not allow it at this moment (Miele's buttons are unavailable when their action is).
@@ -63,6 +94,23 @@ export const COMMANDS_PINNED: Readonly<Record<string, readonly Action[]>> = {
   matter: ['start', 'pause', 'resume', 'stop', 'power_on', 'power_off'],
   whirlpool: ['stop', 'light'],
   tuya: ['start', 'stop', 'power_on', 'power_off', 'light'],
+  // petkit text.py:66-108, :196-213 (a meal: its amount written to the text), number.py:107-122 (the first Fresh
+  // Element's), button.py:107-300, :486-494 (scoop, deodorize, level, pause, continue; a fountain's pause and resume),
+  // switch.py (power), light.py
+  petkit: [
+    'pause',
+    'resume',
+    'power_on',
+    'power_off',
+    'light',
+    'feed',
+    'clean',
+    'deodorize',
+    'level',
+  ],
+  // petlibro button.py:60-64, :755-777 (manual feed; the Luma's clean cycle, level litter, stop), switch.py:84, :112-120
+  // (the Luma's light)
+  petlibro: ['stop', 'light', 'feed', 'clean', 'level'],
 };
 
 /** Whether an integration's appliance may be written to at all (a plug of any other integration may: it is a switch). */
@@ -81,6 +129,8 @@ export interface CommandInput {
   readonly status: ApplianceStatus;
   /** What it is: switching off what keeps food cold always asks first. */
   readonly kind?: ApplianceKind | undefined;
+  /** A meal's amount, as the card names it (`feed_amount`): the integration's smallest otherwise. */
+  readonly amount?: number | undefined;
 }
 
 /** What keeps food cold: off, it stops cooling, so a card asks first whatever its compressor is doing. */
@@ -128,6 +178,28 @@ const turn = (entity: string, on: boolean): ServiceCall => ({
 });
 
 /**
+ * The amounts a PetKit meal may be: its text's pattern (text.py:174-181, "^(10|20|30|40|50|0)$"), else its number's
+ * range in its steps (the first Fresh Element's, 20 to 400 g); none is nought.
+ */
+export function mealAmounts(state: HassEntity | undefined): number[] {
+  const pattern = state?.attributes['pattern'];
+  if (typeof pattern === 'string')
+    return [...pattern.matchAll(/\d+/g)].map((match) => Number(match[0])).filter((n) => n > 0);
+  const { min, max, step } = state?.attributes ?? {};
+  if (typeof max !== 'number' || typeof step !== 'number' || step <= 0) return [];
+  const amounts: number[] = [];
+  for (let n = Math.max(step, typeof min === 'number' ? min : 0); n <= max; n += step)
+    amounts.push(n);
+  return amounts;
+}
+
+/** A meal's amount: the card's where the integration takes it, else the smallest it takes. */
+export function mealAmount(state: HassEntity | undefined, wanted?: number): number | undefined {
+  const amounts = mealAmounts(state);
+  return wanted !== undefined && amounts.includes(wanted) ? wanted : amounts[0];
+}
+
+/**
  * The call that does an action on an appliance of an integration, from the entities it found, as the integration's
  * source pins it; none where it has no way (LG cannot pause from Home Assistant) or the action is not pinned.
  */
@@ -136,6 +208,7 @@ export function callFor(
   platform: string | undefined,
   roles: ApplianceRoles,
   action: Action,
+  amount?: number,
 ): ServiceCall | undefined {
   if (!writable(platform, action)) return undefined;
   // what a select lists is its capability: a card can say what it could do while it is out of reach
@@ -147,6 +220,24 @@ export function callFor(
     id && domainOf(id) === 'button' ? press(id) : undefined;
   const { operation, launch, program, start, pause, resume, stop, cancel, power, light } = roles;
   switch (action) {
+    case 'feed': {
+      const feed = roles.feed;
+      if (!feed) return undefined;
+      // petlibro button.py:60-64: its manual feed's button gives the amount its number holds
+      if (domainOf(feed) === 'button') return press(feed);
+      // petkit text.py:196-213, number.py:107-122: the meal is the amount written to its text, or to its number
+      const value = mealAmount(state(feed), amount);
+      if (value === undefined) return undefined;
+      return domainOf(feed) === 'text'
+        ? { domain: 'text', service: 'set_value', data: { entity_id: feed, value: String(value) } }
+        : { domain: 'number', service: 'set_value', data: { entity_id: feed, value } };
+    }
+    case 'clean':
+      return button(roles.clean);
+    case 'deodorize':
+      return button(roles.deodorize);
+    case 'level':
+      return button(roles.level);
     case 'start':
       switch (platform) {
         // lg_thinq/select.py: operation_mode's option "start", posted as it is
@@ -204,14 +295,18 @@ export function callFor(
 /** The entity a call acts on. */
 const target = (call: ServiceCall): string => String(call.data['entity_id']);
 
+/** A pet device's own commands, each a cell of its own. */
+const PET_ACTIONS = ['feed', 'clean', 'deodorize', 'level'] as const;
+
 /**
  * The commands an appliance can take now, a cell each, in the order a card lays them out (start or resume, pause,
- * stop, power, light): start at rest or done, resume while paused, pause while it runs, stop while it has a job (or
- * waits to start), switch off unless off, on when off, the light always. Each with what it asks first (stopping;
- * switching off one not at rest, or what keeps food cold) and why it cannot be done now.
+ * stop, power, light, then a pet device's meal, clean, deodorizing and levelling): start at rest or done, resume
+ * while paused, pause while it runs, stop while it has a job (or waits to start), switch off unless off, on when off,
+ * the light always, a pet device's own while it is reached. Each with what it asks first (stopping; switching off one
+ * not at rest, or what keeps food cold; a meal, a clean, a levelling) and why it cannot be done now.
  */
 export function commandsOf(input: CommandInput): Command[] {
-  const { hass, platform, roles, status, kind } = input;
+  const { hass, platform, roles, status, kind, amount } = input;
   const running = status === 'running' || status === 'preheating';
   const remote = roles.remote ? hass?.states?.[roles.remote]?.state : undefined;
   const wanted: Array<readonly [CommandName, Action]> = [];
@@ -221,9 +316,11 @@ export function commandsOf(input: CommandInput): Command[] {
   if (busy(status) || status === 'scheduled') wanted.push(['stop', 'stop']);
   if (status !== 'offline') wanted.push(['power', status === 'off' ? 'power_on' : 'power_off']);
   wanted.push(['light', 'light']);
+  if (status !== 'offline')
+    for (const action of PET_ACTIONS) wanted.push([action, action] as const);
   const commands: Command[] = [];
   for (const [control, action] of wanted) {
-    const call = callFor(hass, platform, roles, action);
+    const call = callFor(hass, platform, roles, action, amount);
     if (!call) continue;
     const state = hass?.states?.[target(call)];
     // SmartThings asks its remote control for everything; the others for a start (smartthings/button.py:110-140)
@@ -237,7 +334,12 @@ export function commandsOf(input: CommandInput): Command[] {
           ? 'remote_off'
           : undefined;
     const confirm =
-      action === 'stop' ? 'stop' : action === 'power_off' ? offConfirm(status, kind) : undefined;
+      action === 'stop' || action === 'feed' || action === 'clean' || action === 'level'
+        ? action
+        : action === 'power_off'
+          ? offConfirm(status, kind)
+          : undefined;
+    const value = call.data['value'];
     commands.push({
       control,
       action,
@@ -245,6 +347,7 @@ export function commandsOf(input: CommandInput): Command[] {
       label: `appliance.${action}`,
       ...(confirm ? { confirm } : {}),
       ...(blocked ? { blocked } : {}),
+      ...(action === 'feed' && value !== undefined ? { amount: Number(value) } : {}),
     });
   }
   return commands;
@@ -256,6 +359,9 @@ export const CONFIRM: Readonly<Record<NonNullable<Command['confirm']>, MessageKe
   power_off: 'appliance.confirm_power_off',
   power_off_now: 'appliance.confirm_power_off_now',
   power_off_cold: 'appliance.confirm_power_off_cold',
+  feed: 'appliance.confirm_feed',
+  clean: 'appliance.confirm_clean',
+  level: 'appliance.confirm_level',
 };
 export const BLOCKED: Readonly<Record<NonNullable<Command['blocked']>, MessageKey>> = {
   remote_off: 'appliance.remote_off',
@@ -360,9 +466,11 @@ export function boostCall(
 /**
  * The integrations whose maintenance resets a card may press (it asks first): SmartThings' water, hood and HEPA
  * filter resets (smartthings/button.py:36-55, pressed as the capability's command, :179-186), Matter's filter
- * conditions (matter/button.py:117-143, ResetCondition). The others' are left to their own pages.
+ * conditions (matter/button.py:117-143, ResetCondition), PetKit's desiccant, filter and odor eliminators
+ * (petkit button.py:66-72, :239-275, :486-494) and PetLibro's desiccant, filter and cleaning (petlibro button.py:188,
+ * :656-662). The others' are left to their own pages.
  */
-export const RESETS_PINNED: readonly string[] = ['smartthings', 'matter'];
+export const RESETS_PINNED: readonly string[] = ['smartthings', 'matter', 'petkit', 'petlibro'];
 
 /** The call that resets a maintenance item, for an integration whose reset button is pinned. */
 export const resetCall = (platform: string | undefined, entity: string): ServiceCall | undefined =>

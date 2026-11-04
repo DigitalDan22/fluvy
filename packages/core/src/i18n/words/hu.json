@@ -103,5 +103,8 @@
   "appliance_air_fryer": ["forrolevegos\\suto", "airfryer", "air\\fryer"],
   "appliance_sandwich_maker": ["szendvicssuto", "szendvicsgep", "toasztsuto", "melegszendvics"],
   "appliance_toaster": ["kenyerpirito", "piritogep"],
-  "appliance_blender": ["turmix", "botmixer", "mixer"]
+  "appliance_blender": ["turmix", "botmixer", "mixer"],
+  "appliance_feeder": ["eteto", "tapadagolo"],
+  "appliance_fountain": ["itato", "ivokut"],
+  "appliance_litter_box": ["macskaalom", "alomtalca", "macskawc", "macskatoalett"]
 }

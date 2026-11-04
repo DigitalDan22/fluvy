@@ -90,5 +90,14 @@
     "toastie[ _-]?maker"
   ],
   "appliance_toaster": ["toaster"],
-  "appliance_blender": ["blender", "smoothie[ _-]?maker"]
+  "appliance_blender": ["blender", "smoothie[ _-]?maker"],
+  "appliance_feeder": ["feeder"],
+  "appliance_fountain": [
+    "pet[ _-]?fountain",
+    "cat[ _-]?fountain",
+    "dog[ _-]?fountain",
+    "water[ _-]?fountain",
+    "drinking[ _-]?fountain"
+  ],
+  "appliance_litter_box": ["(?<!g)litter", "cat[ _-]?toilet"]
 }

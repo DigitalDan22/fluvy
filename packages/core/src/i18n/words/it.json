@@ -98,5 +98,13 @@
   "appliance_air_fryer": ["friggitrice"],
   "appliance_sandwich_maker": ["tostiera", "piastra[ _-]per[ _-]panini"],
   "appliance_toaster": ["tostapane"],
-  "appliance_blender": ["frullatore"]
+  "appliance_blender": ["frullatore"],
+  "appliance_feeder": [
+    "mangiatoia",
+    "distributore di cibo",
+    "dispenser di cibo",
+    "distributore di crocchette"
+  ],
+  "appliance_fountain": ["fontanella", "fontana per gatti", "fontana per animali", "abbeveratoio"],
+  "appliance_litter_box": ["lettiera"]
 }

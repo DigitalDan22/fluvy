@@ -106,5 +106,13 @@
   "appliance_air_fryer": ["fritadeira"],
   "appliance_sandwich_maker": ["sanduicheira"],
   "appliance_toaster": ["torradeira"],
-  "appliance_blender": ["liquidificador"]
+  "appliance_blender": ["liquidificador"],
+  "appliance_feeder": [
+    "comedouro",
+    "alimentador automatico",
+    "alimentador pet",
+    "alimentador para"
+  ],
+  "appliance_fountain": ["bebedouro", "fonte de agua", "fonte para gatos", "fonte para pets"],
+  "appliance_litter_box": ["caixa de areia", "banheiro para gatos", "banheiro de gato"]
 }

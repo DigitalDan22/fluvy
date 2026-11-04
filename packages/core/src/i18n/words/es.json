@@ -81,5 +81,8 @@
   "appliance_air_fryer": ["freidora"],
   "appliance_sandwich_maker": ["sandwichera"],
   "appliance_toaster": ["tostadora", "tostador"],
-  "appliance_blender": ["licuadora", "batidora"]
+  "appliance_blender": ["licuadora", "batidora"],
+  "appliance_feeder": ["comedero", "dispensador de comida", "alimentador automatico"],
+  "appliance_fountain": ["bebedero", "fuente para mascotas", "fuente para gatos", "fuente de agua"],
+  "appliance_litter_box": ["arenero", "caja de arena", "bandeja sanitaria"]
 }

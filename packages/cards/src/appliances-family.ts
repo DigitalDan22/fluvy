@@ -33,12 +33,21 @@ const HEROES: Readonly<Record<string, string>> = {
   coffee: 'state',
   hood: 'state',
   appliance: 'plug',
+  feeder: 'pet',
+  fountain: 'pet',
+  litter_box: 'pet',
 };
 /** The kinds that draw their cycle's steps under it, and those with no buttons by default (a fridge's). */
 const STEPPED = ['washer', 'dryer', 'washer_dryer', 'dishwasher'];
 const QUIET = ['fridge', 'freezer', 'wine'];
 /** The kinds with readouts of their own (`kinds.ts`, the programme the head's) when the card names none. */
 const READOUTS = ['washer', 'washer_dryer', 'dryer', 'dishwasher', 'oven', 'air_fryer'];
+
+/** A pet device's tiles: the card's, else its kind's two. */
+const tilesOf = (config: LovelaceCardConfig): number => {
+  const tiles = config['tiles'];
+  return config['show_hero'] === false ? 0 : Array.isArray(tiles) ? tiles.length : 2;
+};
 
 /** The card's padding and head (20 + 44 + … + 20): every section counts the margin above it. */
 const FRAME = 20 + 44 + 20;
@@ -66,6 +75,9 @@ function heroHeight(hero: string, config: LovelaceCardConfig, kind: string): num
     case 'cold':
       // a hob's plates, a fridge's setpoints as readouts side by side
       return CELLS + LINE;
+    case 'pet':
+      // a pet device's tiles as readouts side by side
+      return (tilesOf(config) ? CELLS : 0) + LINE;
     default: {
       if (config['show_progress'] === false) return LINE;
       const steps = config['progress_style'] !== 'bar' && STEPPED.includes(kind) ? STEP_WORDS : 0;
@@ -77,7 +89,7 @@ function heroHeight(hero: string, config: LovelaceCardConfig, kind: string): num
 /**
  * The whole card (#47, the reporter's design) at a 360 column: 20 over its head (64, the picture's, with or without
  * one: a row of appliances keeps its level), the hero's 108 16 under it (the figures and the bar, the compartments,
- * the plates or the drinks; a hood has none), its rows 20 under that (44 each: three where it names none, so a
+ * the plates, the drinks or a pet device's tiles, two a row; a hood has none), its rows 20 under that (44 each: three where it names none, so a
  * dashboard's row of appliances ends level), what it adds when asked (the quick modes, the buttons, the programmes),
  * and 16 under the last.
  */
@@ -96,15 +108,17 @@ function fullHeight(config: LovelaceCardConfig, kind: string): number {
         ? on('show_zones')
           ? 108
           : 0
-        : hero === 'state'
-          ? kind === 'coffee' && on('show_drinks')
-            ? 108
-            : 0
-          : on('show_hero')
-            ? 108 + steps
-            : hero !== 'plug' && on('show_progress')
-              ? 20 + steps
-              : 0;
+        : hero === 'pet'
+          ? tilesOf(config) && Math.max(108, rowsOf(tilesOf(config), 2) * 96 - 12)
+          : hero === 'state'
+            ? kind === 'coffee' && on('show_drinks')
+              ? 108
+              : 0
+            : on('show_hero')
+              ? 108 + steps
+              : hero !== 'plug' && on('show_progress')
+                ? 20 + steps
+                : 0;
   const listed = config['rows'];
   const rows = on('show_rows') ? (Array.isArray(listed) ? listed.length : 3) : 0;
   const modes = config['show_modes'] === true && hero === 'cold' ? CELLS : 0;
@@ -197,7 +211,7 @@ export const APPLIANCES_FAMILY: readonly FamilyEntry[] = [
   [
     'fluvy-appliance-card',
     'Fluvy · Appliance',
-    'A washer, dryer, dishwasher, oven, hob, fridge, coffee machine or small appliance on a plug, pictured: what it does, when it is ready, what it uses, its reminders.',
+    'A washer, dryer, dishwasher, oven, hob, fridge, coffee machine, pet feeder, fountain, litter box or small appliance on a plug, pictured: what it does, when it is ready, what it uses, its reminders.',
     applianceHeight,
   ],
   [

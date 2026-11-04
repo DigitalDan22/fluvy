@@ -80,7 +80,7 @@ budget (`BUDGETS`; the facts guard in `tools/docs` holds this table to it):
 | `media` | 16 KB | the player and the now-playing strip |
 | `devices` | 36 KB | the lock, the alarm and its keypad, the camera and the cameras, the printer, the job's times |
 | `cameras-sheet` | 8 KB | the Cameras card's sheet |
-| `appliances` | 55 KB | the appliances family and its English |
+| `appliances` | 62 KB | the appliances family and its English |
 | `appliance-art` | 32 KB | the appliances' product drawings |
 | `automations` | 20 KB | the automations card, the schedule model and its store |
 | `automations-sheet` | 16 KB | the schedule sheet |
@@ -101,7 +101,7 @@ budget (`BUDGETS`; the facts guard in `tools/docs` holds this table to it):
 | `pages` | 12 KB | what the pages share: the date picker, the time field, the dropdown, the period, the layers, the CSV, their chrome's sheet |
 | `activity` | 32 KB | the Activity page |
 | `history` | 16 KB | the History page |
-| `lang` | 28 KB | a language's catalogue (`lang-de`, `lang-fr`, …) |
+| `lang` | 29 KB | a language's catalogue (`lang-de`, `lang-fr`, …) |
 | `rolldown-runtime` | 2 KB | the bundler's runtime |
 | `loader.js` | 4 KB | the loader the integration puts on every page |
 

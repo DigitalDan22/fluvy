@@ -6,8 +6,9 @@ import { entityOf, stateOf } from './refs.js';
 /*
  * An appliance's entities, found on its device. Each integration hangs a washer's, an oven's or a fridge's entities on
  * one device, each with its own words: LG ThinQ, Home Connect, Miele, SmartThings, Matter, Whirlpool and Tuya (Home
- * Assistant's own, read from their source: their translation keys, and the writes the commands module pins), and hOn,
- * Electrolux and LG's older SmartThinQ integration (from HACS, read by the ends of their ids). A role is known by the
+ * Assistant's own, read from their source: their translation keys, and the writes the commands module pins), hOn,
+ * Electrolux and LG's older SmartThinQ integration (from HACS, read by the ends of their ids), and PetKit's and
+ * PetLibro's feeders, fountains and litter boxes (from HACS, read by their keys, #112). A role is known by the
  * integration's own translation key, then by the keys they share, then by the end of its id, then by what it is (a
  * door by its device class, a power reading by its unit); where two entities could play it, the integration's own
  * plays it over a helper a person attached to its device (a template, a utility meter), then the one known more
@@ -83,7 +84,32 @@ export type ApplianceRole =
   /** What it draws (W): a plug's reading. */
   | 'watts'
   /** A binary "running" sensor: Home Assistant's threshold helper on a plug's power. */
-  | 'running';
+  | 'running'
+  /** Whether the device is reached at all: PetKit's device status, PetLibro's Wi-Fi flag. */
+  | 'online'
+  /** A pet device's buttons: a feeder's meal now (the entity its amount is written to), a litter box's clean, its
+   * deodorizing and its levelling. */
+  | 'feed'
+  | 'clean'
+  | 'deodorize'
+  | 'level'
+  /** A feeder's plan (its meals of the day in the attributes), its last and next meals, what it gave today. */
+  | 'schedule'
+  | 'last_feed'
+  | 'last_amount'
+  | 'next_feed'
+  | 'next_amount'
+  | 'fed_today'
+  | 'meals_today'
+  /** A fountain's pump, what its pets drank today (times, and how much), the water it purified, the last drink. */
+  | 'pump'
+  | 'drinks_today'
+  | 'drank_today'
+  | 'purified'
+  | 'last_drink'
+  /** A litter box's uses today, and the pet that last used it (or last drank). */
+  | 'uses_today'
+  | 'last_pet';
 
 export const APPLIANCE_ROLES: readonly ApplianceRole[] = [
   'state',
@@ -125,6 +151,25 @@ export const APPLIANCE_ROLES: readonly ApplianceRole[] = [
   'detergent',
   'watts',
   'running',
+  'online',
+  'feed',
+  'clean',
+  'deodorize',
+  'level',
+  'schedule',
+  'last_feed',
+  'last_amount',
+  'next_feed',
+  'next_amount',
+  'fed_today',
+  'meals_today',
+  'pump',
+  'drinks_today',
+  'drank_today',
+  'purified',
+  'last_drink',
+  'uses_today',
+  'last_pet',
 ];
 
 /**
@@ -142,10 +187,21 @@ export const VERIFIED_PLATFORMS = [
   'tuya',
 ] as const;
 export const COMMUNITY_PLATFORMS = ['hon', 'electrolux_status', 'smartthinq_sensors'] as const;
+/**
+ * The pet devices' integrations, from HACS (#112): read by their translation keys, as Home Assistant's own are, and
+ * written to only through the buttons, texts and switches their source pins (`commands.ts`).
+ */
+export const PET_PLATFORMS = ['petkit', 'petlibro'] as const;
 export type AppliancePlatform =
-  (typeof VERIFIED_PLATFORMS)[number] | (typeof COMMUNITY_PLATFORMS)[number];
+  | (typeof VERIFIED_PLATFORMS)[number]
+  | (typeof COMMUNITY_PLATFORMS)[number]
+  | (typeof PET_PLATFORMS)[number];
 
-const PLATFORMS: readonly string[] = [...VERIFIED_PLATFORMS, ...COMMUNITY_PLATFORMS];
+const PLATFORMS: readonly string[] = [
+  ...VERIFIED_PLATFORMS,
+  ...COMMUNITY_PLATFORMS,
+  ...PET_PLATFORMS,
+];
 export const knownPlatform = (platform: string | undefined): platform is AppliancePlatform =>
   PLATFORMS.includes(platform ?? '');
 
@@ -191,6 +247,26 @@ const DOMAINS: Readonly<Record<ApplianceRole, readonly string[]>> = {
   detergent: ['sensor'],
   watts: ['sensor'],
   running: ['binary_sensor'],
+  online: ['binary_sensor', 'sensor'],
+  // PetKit's meal is written to a text (most feeders) or a number (the first Fresh Element); PetLibro's is a button
+  feed: ['button', 'text', 'number'],
+  clean: ['button'],
+  deodorize: ['button'],
+  level: ['button'],
+  schedule: ['switch', 'binary_sensor'],
+  last_feed: ['sensor'],
+  last_amount: ['sensor'],
+  next_feed: ['sensor'],
+  next_amount: ['sensor'],
+  fed_today: ['sensor'],
+  meals_today: ['sensor'],
+  pump: ['binary_sensor'],
+  drinks_today: ['sensor'],
+  drank_today: ['sensor'],
+  purified: ['sensor'],
+  last_drink: ['sensor'],
+  uses_today: ['sensor'],
+  last_pet: ['sensor'],
 };
 
 /** The roles that act: never an entity Home Assistant files under diagnostics. */
@@ -205,6 +281,10 @@ const ACTING: ReadonlySet<ApplianceRole> = new Set([
   'cancel',
   'light',
   'fan',
+  'feed',
+  'clean',
+  'deodorize',
+  'level',
 ]);
 
 /** An integration's word for an entity: the role it plays, or `null` — none at all, whatever its id ends in. */
@@ -242,7 +322,10 @@ const KEYS_COMMON: Readonly<Record<string, ApplianceRole>> = {
  * and `maintenance.ts`.
  */
 const KEYS_BY_PLATFORM: Readonly<
-  Record<(typeof VERIFIED_PLATFORMS)[number] | 'hon', Readonly<Record<string, Word>>>
+  Record<
+    (typeof VERIFIED_PLATFORMS)[number] | 'hon' | (typeof PET_PLATFORMS)[number],
+    Readonly<Record<string, Word>>
+  >
 > = {
   // lg_thinq/sensor.py, binary_sensor.py, select.py, switch.py, number.py, event.py
   lg_thinq: {
@@ -429,6 +512,70 @@ const KEYS_BY_PLATFORM: Readonly<
     program_phases_dw: 'phase',
     door_open: 'door',
     delay_time: 'start_in',
+  },
+  // petkit sensor.py, binary_sensor.py, button.py, text.py, number.py, switch.py, light.py: a feeder's meal now is
+  // its text's value (its number's on the first Fresh Element), a litter box's state its work state; its consumables
+  // are `maintenance.ts`'
+  petkit: {
+    device_status: 'online',
+    error_message: 'error',
+    litter_state: 'state',
+    feeding: 'running',
+    feeding_schedule: 'schedule',
+    manual_feed_single: 'feed',
+    manual_feed_dual_h1: 'feed',
+    manual_feed: 'feed',
+    total_dispensed: 'fed_today',
+    times_dispensed: 'meals_today',
+    start_scoop: 'clean',
+    deodorize: 'deodorize',
+    level_litter: 'level',
+    action_pause: 'pause',
+    action_continue: 'resume',
+    times_used: 'uses_today',
+    last_used_by: 'last_pet',
+    last_drink_pet: 'last_pet',
+    pump_running: 'pump',
+    drink_times: 'drinks_today',
+    drink_count: 'drinks_today',
+    drink_time: 'last_drink',
+    purified_water: 'purified',
+    // the second hopper's meal, a fountain's heater and its tanks' pumps, the camera's own flag; a bowl's eating, a
+    // box's occupancy, its deodorizing (the state says it)
+    manual_feed_dual_h2: null,
+    water_pump_running: null,
+    camera: null,
+    eating: null,
+    toilet_occupied: null,
+    deodorization_running: null,
+  },
+  // petlibro sensor.py, binary_sensor.py, button.py, switch.py: the Luma's running state and its exception, a feeder's
+  // meals as sensors of their own; its manual feed's amount is the number beside the button
+  petlibro: {
+    online: 'online',
+    running_state: 'state',
+    exception_message: 'error',
+    feeding_schedule: 'schedule',
+    manual_feed: 'feed',
+    food_dispenser_state: 'error',
+    last_feed_time: 'last_feed',
+    last_feed_quantity_weight: 'last_amount',
+    next_feed_time: 'next_feed',
+    next_feed_quantity_weight: 'next_amount',
+    today_feeding_quantity_weight: 'fed_today',
+    today_feeding_times: 'meals_today',
+    water_state: 'pump',
+    today_drinking_count: 'drinks_today',
+    today_drinking_amount: 'drank_today',
+    trigger_clean: 'clean',
+    trigger_level_litter: 'level',
+    trigger_stop_action: 'stop',
+    light_switch: 'light',
+    // the lid's door, a feeder's indicator and a display's flags, the power a fountain's dock says
+    door_state: null,
+    power_state: null,
+    sound_switch: null,
+    display_switch: null,
   },
 };
 

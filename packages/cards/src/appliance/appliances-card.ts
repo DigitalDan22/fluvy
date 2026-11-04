@@ -1,4 +1,5 @@
 import {
+  formatNumber,
   plural,
   selfHide,
   strings,
@@ -46,7 +47,7 @@ import type { EditorDefaults, RowsListSpec } from '../shared/rows-editor.js';
 import { Ticker, MINUTE } from '../shared/ticker.js';
 import { applianceHouseHeight, type ApplianceCardConfig } from './appliance-card.js';
 import { choiceField, deviceField, kindField, option } from './form.js';
-import { DUE_WORD } from './full.js';
+import { DUE_WORD, KIND_TILES } from './full.js';
 import { applianceDevices, KIND_DEFAULTS, type ApplianceKind } from './kinds.js';
 import type { MaintenanceKey } from './maintenance.js';
 import { unloadedAt, UNLOADED_EVENT } from './memory.js';
@@ -72,6 +73,7 @@ import {
   attentionText,
   durationText,
   kindGlyph,
+  petWords,
   shownOf,
   spanText,
   statusTone,
@@ -530,7 +532,10 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
     return Number.isFinite(frozen) ? frozen : Date.now();
   }
 
-  /** Whether the minute's clock has something to say: one under way, waiting to start, finished not 2 h ago. */
+  /**
+   * Whether the minute's clock has something to say: one under way, waiting to start, finished not 2 h ago, a feeder's
+   * next meal.
+   */
   private timed(): boolean {
     return this.lines.some(
       ({ shown, r }) =>
@@ -539,7 +544,8 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
         (shown.status === 'finished' &&
           shown.finishedAt !== null &&
           Date.now() - shown.finishedAt < 2 * 60 * MINUTE) ||
-        r.attention.some((item) => item.since !== undefined),
+        r.attention.some((item) => item.since !== undefined) ||
+        Boolean(r.pet?.meals.next),
     );
   }
 
@@ -618,7 +624,10 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
 
   /* ---------- render ---------- */
 
-  /** What a row says at its end: the time left, when it starts, its compartments' setpoints, else its state. */
+  /**
+   * What a row says at its end: the time left, when it starts, its compartments' setpoints, what a pet device has left
+   * (its food, its water, its litter), else its state.
+   */
   private value(line: Line): string {
     const { shown, r } = line;
     if (busy(shown.status) && shown.clock.left !== null) {
@@ -632,6 +641,10 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
         .map((value) => `${Math.round(value)}°`);
       if (values.length) return values.join(' · ');
     }
+    const left = (KIND_TILES[r.kind] ?? [])
+      .map((key) => r.maintenance.find((item) => item.key === key)?.level)
+      .find((level) => level !== undefined);
+    if (left !== undefined && !r.unavailable) return `${formatNumber(this.hass, left)} %`;
     return shown.word;
   }
 
@@ -661,17 +674,20 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
       ];
     }
     const word = busy(shown.status) && shown.phase ? shown.phase : shown.word;
-    const [when = ''] = whenParts(this.hass, shown, r.startAt, now, 'both');
+    // a pet device at rest says its next meal or its last use
+    const [when = ''] = r.pet
+      ? petWords(this.hass, r, now)
+      : whenParts(this.hass, shown, r.startAt, now, 'both');
     const elapsed =
       busy(shown.status) && shown.clock.at === null && shown.clock.elapsed !== null
         ? spanText(this.hass, shown.clock.elapsed)
         : '';
     const said = this.value(line) === word ? '' : word;
+    // a pet device's next meal or last use, where it would not hold, says what it does
+    const short = elapsed || (r.pet ? word : '');
     return [
       ...(said ? [{ text: said }] : []),
-      ...(when
-        ? [{ text: when, optional: Boolean(said), ...(elapsed ? { short: elapsed } : {}) }]
-        : []),
+      ...(when ? [{ text: when, optional: Boolean(said), ...(short ? { short } : {}) }] : []),
     ].concat(said || when ? [] : [{ text: word }]);
   }
 

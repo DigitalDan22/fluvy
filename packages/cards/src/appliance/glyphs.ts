@@ -1,6 +1,7 @@
 /*
- * The appliances' glyphs: the thirteen kinds the family draws (the hood is Fluvy's fan, an appliance on a plug its plug)
- * and what a card's rows say (a shirt, warm air, a cup, a bean, a filter, chips), in the set's own hand — 24 grid,
+ * The appliances' glyphs: the sixteen kinds the family draws (the hood is Fluvy's fan, an appliance on a plug its plug;
+ * a feeder, a fountain and a litter box the pets') and what a card's rows say (a shirt, warm air, a cup, a bean, a
+ * filter, chips, a paw), in the set's own hand — 24 grid,
  * 1.75 round stroke, ink 3..21 centred on (12, 12). They travel with the appliances'
  * chunk, which adds them to the set as it lands (`addGlyphs`); the six a person would pick for a card of their own in
  * Home Assistant's icon picker are also outlined in core's icon set (`fluvy:washer`, `tools/icons`). The design lab
@@ -64,6 +65,17 @@ export const APPLIANCE_GLYPHS = {
   /** chips in their carton: what an air fryer makes */
   fries:
     '<path d="M6 10h12l-1.5 10.5h-9Z"/><path d="M8.5 10 7.5 4"/><path d="M11 10V3.5"/><path d="M13.75 10l.75-5.5"/><path d="M16 10l1.5-4.5"/>',
+  /** a pet feeder: its hopper, the chute, the bowl under it */
+  feeder:
+    '<path d="M6.5 3.5h11l-2 6.5h-7Z"/><path d="M12 10v2.5"/><path d="M3.5 15h17a8.5 5.75 0 0 1-17 0Z"/>',
+  /** a pet fountain: the water welling up on its top, its tank */
+  fountain:
+    '<path d="M5.5 11h13v6.5a3.5 3.5 0 0 1-3.5 3.5H9a3.5 3.5 0 0 1-3.5-3.5Z"/><path d="M3.5 11h17"/><path d="M9.5 11a2.5 2.5 0 0 1 5 0"/><path d="M12 3.5c-1.1 1.3-1.75 2.2-1.75 3a1.75 1.75 0 0 0 3.5 0c0-.8-.65-1.7-1.75-3Z"/>',
+  /** a litter box: its dome, the entry, its base */
+  litter:
+    '<path d="M4 18.5V12a8 8 0 0 1 16 0v6.5"/><path d="M9 18.5V15a3 3 0 0 1 6 0v3.5"/><path d="M3 18.5h18"/><path d="M5 21h14"/>',
+  /** a paw: a pet's */
+  paw: '<circle cx="6.5" cy="10.5" r="1.75"/><circle cx="10" cy="6" r="1.75"/><circle cx="14" cy="6" r="1.75"/><circle cx="17.5" cy="10.5" r="1.75"/><path d="M12 12c-2.75 0-5.25 3-5.25 5.5 0 1.6 1.2 2.5 2.6 2.5 1.05 0 1.6-.6 2.65-.6s1.6.6 2.65.6c1.4 0 2.6-.9 2.6-2.5 0-2.5-2.5-5.5-5.25-5.5Z"/>',
 } as const;
 
 export type ApplianceGlyphName = keyof typeof APPLIANCE_GLYPHS;

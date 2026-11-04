@@ -7,12 +7,13 @@ import type { Card, Section, StrategyContext, View } from './types.js';
 /*
  * The house's appliances as the reporter of #47 drew them, across the view under its columns: "Large appliances" —
  * each a whole card, side by side (four at a desktop's width, as many as hold on a narrower screen) — then "Small
- * appliances", each a row. A band is one section spanning the view's columns (Home Assistant narrows it to those a
- * screen has); its heading leads to every appliance, and the appliances card lays the cards out inside it, so the cards
- * fill the band at any width, never a gap at its end.
+ * appliances", each a row; then the pets' — a feeder, a fountain, a litter box (#112) — each a whole card too. A band is
+ * one section spanning the view's columns (Home Assistant narrows it to those a screen has); its heading leads to every
+ * appliance, and the appliances card lays the cards out inside it, so the cards fill the band at any width, never a gap
+ * at its end.
  */
 
-/** A band's order: what keeps food cold, what cleans, what cooks, the coffee; then the small ones. */
+/** A band's order: what keeps food cold, what cleans, what cooks, the coffee; then the small ones; then the pets'. */
 const ORDER: readonly ApplianceKind[] = [
   'fridge',
   'freezer',
@@ -32,7 +33,13 @@ const ORDER: readonly ApplianceKind[] = [
   'sandwich_maker',
   'hood',
   'appliance',
+  'feeder',
+  'fountain',
+  'litter_box',
 ];
+
+/** The pets' devices: a band of their own, after the appliances'. */
+const PETS: readonly ApplianceKind[] = ['feeder', 'fountain', 'litter_box'];
 
 /** As many as Home shows of each band: two rows of four large ones, a row of five small ones. */
 export const HOME_LARGE = 8;
@@ -49,12 +56,17 @@ export interface BandItem {
 
 /**
  * The appliances in a band's order, the large ones (a kind whose card is whole: a washer, a fridge, an oven) apart from
- * the small ones (a kettle, a toaster, anything on a plug: a row each).
+ * the small ones (a kettle, a toaster, anything on a plug: a row each) and the pets' (a feeder, a fountain, a litter
+ * box: whole cards).
  */
 export function bandsOf(
   home: HomeRegistry,
   devices: readonly string[],
-): { readonly large: readonly BandItem[]; readonly small: readonly BandItem[] } {
+): {
+  readonly large: readonly BandItem[];
+  readonly small: readonly BandItem[];
+  readonly pets: readonly BandItem[];
+} {
   const items = devices
     .map((device) => ({
       device,
@@ -70,9 +82,15 @@ export function bandsOf(
         a.name.localeCompare(b.name, home.registries.language),
     )
     .map(({ device, kind }) => ({ device, kind }));
+  const pet = ({ kind }: BandItem): boolean => PETS.includes(kind);
   return {
-    large: items.filter(({ kind }) => applianceVariant({ type: '', kind }) === 'full'),
-    small: items.filter(({ kind }) => applianceVariant({ type: '', kind }) !== 'full'),
+    large: items.filter(
+      (item) => !pet(item) && applianceVariant({ type: '', kind: item.kind }) === 'full',
+    ),
+    small: items.filter(
+      (item) => !pet(item) && applianceVariant({ type: '', kind: item.kind }) !== 'full',
+    ),
+    pets: items.filter(pet),
   };
 }
 
@@ -108,9 +126,9 @@ function band(
 }
 
 /**
- * The bands of a set of appliances, as one section across `span` columns: the large ones, then the small ones, each
- * capped where `caps` says (Home's), each heading leading to `path` (every appliance) where there is one. None for
- * a house without appliances.
+ * The bands of a set of appliances, as one section across `span` columns: the large ones, then the small ones, then
+ * the pets', each capped where `caps` says (Home's), each heading leading to `path` (every appliance) where there is
+ * one. None for a house without appliances.
  */
 export function applianceSections(
   ctx: Pick<StrategyContext, 'home' | 't'>,
@@ -118,7 +136,7 @@ export function applianceSections(
   span: number,
   { path, caps = false }: { readonly path?: string; readonly caps?: boolean } = {},
 ): Section[] {
-  const { large, small } = bandsOf(ctx.home, devices);
+  const { large, small, pets } = bandsOf(ctx.home, devices);
   const link = (text: 'strategy.all_appliances' | 'strategy.show_all') =>
     path ? { path, text: ctx.t(text) } : undefined;
   const cards = [
@@ -138,6 +156,15 @@ export function applianceSections(
           caps ? small.slice(0, HOME_SMALL) : small,
           link('strategy.show_all'),
           true,
+        )
+      : []),
+    ...(pets.length
+      ? band(
+          ctx.t('strategy.pet_devices'),
+          'mdi:paw',
+          caps ? pets.slice(0, HOME_LARGE) : pets,
+          link('strategy.show_all'),
+          false,
         )
       : []),
   ];

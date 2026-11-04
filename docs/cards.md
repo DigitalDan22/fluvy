@@ -408,9 +408,10 @@ targets:
 ## Appliances
 
 The appliance card finds a washer, a dryer, a dishwasher, an oven, a hob, a hood, a fridge, a freezer, a wine cooler, a
-coffee machine, a kettle, an air fryer, a microwave, a toaster, a blender, a sandwich maker — or any appliance on a
-smart plug, read from the plug's switch and power — by what its integration says (LG ThinQ and LG's older SmartThinQ,
-Home Connect, Miele, SmartThings, Matter, Whirlpool, Tuya, hOn, Electrolux) or by its name in any of Fluvy's languages;
+coffee machine, a kettle, an air fryer, a microwave, a toaster, a blender, a sandwich maker, a pet feeder, fountain or
+litter box — or any appliance on a smart plug, read from the plug's switch and power — by what its integration says
+(LG ThinQ and LG's older SmartThinQ, Home Connect, Miele, SmartThings, Matter, Whirlpool, Tuya, hOn, Electrolux, PetKit,
+PETLIBRO) or by its name in any of Fluvy's languages;
 `kind` names it when the card guesses wrong, `roles` names an entity for a role (a helper you attached to its device, a
 template or a utility meter, plays one only where nothing of its integration's own does). The card is the design a
 reader drew for us: a picture of the appliance (`picture`: a drawing a kind, the icon, none, or `image` for your own
@@ -429,6 +430,31 @@ type: custom:fluvy-appliance-card
 device: 1f2c…            # the appliance's device; or entity: one of its entities
 kind: washer             # auto by default
 rows: [program, water, energy]
+```
+
+Pet devices are appliances too: a feeder, a water fountain and a litter box (`kind: feeder`, `fountain`,
+`litter_box`), found on PetKit's and PETLIBRO's integrations (from HACS) by their device type and their entities, or
+by their names. Their hero is two `tiles` — a feeder's food and its next meal, a fountain's water and its filter, a
+litter box's litter and its waste bin — each ringed by what is left where the device says it in percent, in the
+warning's ink when it runs low and the danger's when it is out; their rows say the last meal and what it gave today
+(`last_meal`, `next_meal`, `fed_today`), what the pets drank (`drank_today`), the water purified and the pump
+(`purified`, `pump`), who used the box last and how often today (`last_use`, `uses_today`), and their parts (`food`,
+`desiccant`, `water_tank`, `water_filter`, `litter`, `waste`, `deodorant`, `clean`, `filter`) with the days they have
+left, soon within `low_days` (seven). A feeder at rest counts down to its next meal ("Next meal in 1 h 13 min"), read
+from PETLIBRO's sensors or PetKit's feeding plan in the house's time; a litter box says who used it last. Its round is
+the button that matters: a meal now (`feed_amount` is the amount PetKit's feeders take, their smallest by default;
+PETLIBRO's gives the amount set on the device), a clean, or a resume while a cat has paused one — each asks first in
+Home Assistant's dialog. `show_controls` adds the others (deodorize, level the litter, pause); a reminder's hold resets
+a filter, a desiccant or a deodorant. The tiles and rows are picked, ordered, named and coloured in the rows editor as
+any whole card's; on the automatic dashboards the pet devices have a band of their own.
+
+```yaml
+type: custom:fluvy-appliance-card
+device: 9a41…            # a PetKit or PETLIBRO feeder
+tiles: [food, next_meal]
+rows: [last_meal, fed_today, desiccant]
+feed_amount: 20          # a PetKit feeder's meal, as it takes them
+low_days: 5
 ```
 
 The appliances card lists the house's appliances (or those it names in `appliances`) as rows, compact rows, tiles
@@ -871,7 +897,7 @@ strategy:
 | **Camera** | `custom:fluvy-camera-card` | A still that refreshes itself, or Home Assistant’s live stream, in the shape you choose; tap for the stream. | `subtitle`, `camera_view` (`auto`, `live`), `refresh`, `aspect_ratio` (`16:9`, `4:3`, `3:2`, `1:1`, `2:1`, `21:9`, `native`), `fit_mode` (`cover`, `contain`), `show_rows`, `rows` (a list: `entity`, `name`, `icon`, `secondary`, `since`, `tone`, `color`, `tap_action`) | `sub` → `subtitle` |
 | **Cameras** | `custom:fluvy-cameras-card` | Several cameras at a glance, each picture live or refreshing itself with its name and what it sees; a sheet of them all. | `title`, `subtitle`, `area`, `variant` (`grid`, `list`, `compact`), `columns` (`auto`, `1`, `2`, `3`, `4`), `camera_view` (`auto`, `live`), `max_live`, `refresh`, `aspect_ratio` (`16:9`, `4:3`, `3:2`, `1:1`, `2:1`, `21:9`, `native`), `fit_mode` (`cover`, `contain`), `show_status`, `status` (`auto`, `motion`, `state`, `none`), `show_live`, `show_fullscreen`, `empty_text`, `hide_empty`, `cameras` (a list: `entity`, `name`, `icon`, `motion`, `status`, `camera_view`, `refresh`, `fit_mode`, `tone`, `color`, `tap_action`, `hold_action`) | `entities` → `cameras` |
 | **3D printer** | `custom:fluvy-printer-card` | A 3D printer’s job: progress, time left, heaters, layers, filament and the camera; pause, resume and stop. OctoPrint, PrusaLink, Bambu Lab, Moonraker, Creality, Elegoo, Anycubic, Snapmaker and FlashForge. | `device`, `variant` (`full`, `compact`, `row`), `readouts` (`nozzle`, `bed`, `chamber`, `layer`, `speed`, `filament`, `elapsed`), `show_image`, `image` (`auto`, `camera`, `preview`), `camera_view` (`auto`, `live`), `fit_mode` (`cover`, `contain`), `aspect_ratio` (`16:9`, `4:3`, `3:2`, `1:1`, `2:1`, `21:9`, `native`), `show_filament`, `show_controls`, `sensors` (a list: `entity`, `name`), `roles` (a list: `role`, `entity`) | — |
-| **Appliance** | `custom:fluvy-appliance-card` | A washer, dryer, dishwasher, oven, hob, fridge, coffee machine or small appliance on a plug, pictured: what it does, when it is ready, what it uses, its reminders. | `device`, `kind` (`auto`, `washer`, `dryer`, `washer_dryer`, `dishwasher`, `oven`, `microwave`, `hob`, `hood`, `fridge`, `freezer`, `wine`, `coffee`, `kettle`, `air_fryer`, `toaster`, `blender`, `sandwich_maker`, `appliance`), `variant` (`full`, `compact`, `ring`, `row`), `unit` (`both`, `main`, `sub`), `picture` (`art`, `icon`, `none`), `image`, `show_power`, `power_action`, `show_notify`, `show_hero`, `show_progress`, `progress_style` (`auto`, `bar`, `steps`), `time` (`both`, `left`, `end`), `show_zones`, `setpoint_style` (`readout`, `stepper`), `show_drinks`, `show_rows`, `drinks`, `row_values` (`inline`, `end`, `plain`), `readouts` (`program`, `temperature`, `spin`, `dryness`, `energy`, `water`, `cycles`, `detergent`, `elapsed`, `total`, `this_cycle`, `probe`, `power`), `show_maintenance`, `show_modes`, `modes_style` (`chips`, `tiles`), `modes` (`super_cool`, `super_freeze`, `eco`, `holiday`, `ice_maker`, `sabbath`, `child_lock`), `show_controls`, `show_programs`, `controls` (`start`, `pause`, `stop`, `power`, `light`), `unload_reminder`, `unload_after`, `done_for`, `door_alert`, `low_level`, `running_power`, `finished_after`, `rows` (a list: `key`, `entity`, `name`, `icon`, `color`, `tap_action`, `hold_action`), `sensors` (a list: `entity`, `name`), `maintenance` (a list: `key`, `name`, `icon`, `color`, `tap_action`, `hold_action`), `zones` (a list: `entity`, `name`, `icon`, `color`, `tap_action`, `hold_action`), `roles` (a list: `role`, `entity`) | — |
+| **Appliance** | `custom:fluvy-appliance-card` | A washer, dryer, dishwasher, oven, hob, fridge, coffee machine, pet feeder, fountain, litter box or small appliance on a plug, pictured: what it does, when it is ready, what it uses, its reminders. | `device`, `kind` (`auto`, `washer`, `dryer`, `washer_dryer`, `dishwasher`, `oven`, `microwave`, `hob`, `hood`, `fridge`, `freezer`, `wine`, `coffee`, `kettle`, `air_fryer`, `toaster`, `blender`, `sandwich_maker`, `feeder`, `fountain`, `litter_box`, `appliance`), `variant` (`full`, `compact`, `ring`, `row`), `unit` (`both`, `main`, `sub`), `picture` (`art`, `icon`, `none`), `image`, `show_power`, `power_action`, `show_notify`, `show_hero`, `show_progress`, `progress_style` (`auto`, `bar`, `steps`), `time` (`both`, `left`, `end`), `show_zones`, `setpoint_style` (`readout`, `stepper`), `show_drinks`, `show_rows`, `drinks`, `row_values` (`inline`, `end`, `plain`), `readouts` (`program`, `temperature`, `spin`, `dryness`, `energy`, `water`, `cycles`, `detergent`, `elapsed`, `total`, `this_cycle`, `probe`, `power`), `show_maintenance`, `show_modes`, `modes_style` (`chips`, `tiles`), `modes` (`super_cool`, `super_freeze`, `eco`, `holiday`, `ice_maker`, `sabbath`, `child_lock`), `show_controls`, `show_programs`, `controls` (`start`, `pause`, `stop`, `power`, `light`, `feed`, `clean`, `deodorize`, `level`), `feed_amount`, `unload_reminder`, `unload_after`, `done_for`, `door_alert`, `low_level`, `low_days`, `running_power`, `finished_after`, `rows` (a list: `key`, `entity`, `name`, `icon`, `color`, `tap_action`, `hold_action`), `tiles` (a list: `key`, `entity`, `name`, `icon`, `color`, `tap_action`, `hold_action`), `sensors` (a list: `entity`, `name`), `maintenance` (a list: `key`, `name`, `icon`, `color`, `tap_action`, `hold_action`), `zones` (a list: `entity`, `name`, `icon`, `color`, `tap_action`, `hold_action`), `roles` (a list: `role`, `entity`) | — |
 | **Appliances** | `custom:fluvy-appliances-card` | The house’s appliances as live rows, or their whole cards side by side: what runs, what is done, what waits. | `title`, `subtitle`, `variant` (`rows`, `compact`, `tiles`, `cards`), `max_rows`, `picture` (`art`, `icon`, `none`), `show` (`all`, `active`), `sort` (`state`, `name`, `none`), `show_count`, `hide_empty`, `empty_text`, `appliances` (a list: `device`, `entity`, `name`, `icon`, `color`, `kind`, `tap_action`, `hold_action`) | — |
 | **Weather** | `custom:fluvy-weather-card` | Condition, temperature, feels-like, wind and the daily or hourly forecast. | `variant` (`full`, `compact`), `forecast` (`daily`, `hourly`, `both`), `days`, `show_forecast` | `forecast` → `show_forecast` |
 | **Sensor** | `custom:fluvy-sensor-card` | A sensor with its 24 h curve, trend, min, max and average, or up to three sensors on one chart. | `subtitle`, `variant` (`chart`, `tile`), `hours`, `show_stats`, `label`, `chart` (`classic`, `soft`, `glow`, `minimal`, `step`, `bars`, `columns`), `curve` (`smooth`, `straight`, `step`), `fill` (`gradient`, `flat`, `none`), `line_width` (`thin`, `regular`, `bold`), `glow`, `show_points` (`none`, `end`, `all`), `show_grid` (`auto`, `none`, `x`, `y`, `both`), `show_axis`, `highlight` (`none`, `min`, `max`, `both`, `current`), `animate`, `unit` (`auto`, `W`, `kW`, `MW`, `Wh`, `kWh`, `MWh`, `L`, `m³`, `gal`, `ft³`), `decimals` (`auto`, `0`, `1`, `2`, `3`), `entities` (a list: `entity`, `name`, `icon`, `color`) | — |

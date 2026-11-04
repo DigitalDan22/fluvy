@@ -103,5 +103,8 @@
     "kontaktgrill"
   ],
   "appliance_toaster": ["toaster"],
-  "appliance_blender": ["standmixer", "mixer", "blender"]
+  "appliance_blender": ["standmixer", "mixer", "blender"],
+  "appliance_feeder": ["futterautomat", "futterspender", "futterstation"],
+  "appliance_fountain": ["trinkbrunnen", "katzenbrunnen", "hundebrunnen"],
+  "appliance_litter_box": ["katzenklo", "katzentoilette", "katzenstreu"]
 }

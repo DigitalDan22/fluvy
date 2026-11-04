@@ -175,5 +175,8 @@
   "appliance_air_fryer": ["fritoz"],
   "appliance_sandwich_maker": ["tost[ _-]?makine"],
   "appliance_toaster": ["ekmek[ _-]kizartma"],
-  "appliance_blender": ["blender", "mikser"]
+  "appliance_blender": ["blender", "mikser"],
+  "appliance_feeder": ["besleyici", "mama kabi", "mama makinesi"],
+  "appliance_fountain": ["su pinari", "su cesmesi", "suluk"],
+  "appliance_litter_box": ["kedi tuvaleti", "kum kabi", "kedi kumu"]
 }

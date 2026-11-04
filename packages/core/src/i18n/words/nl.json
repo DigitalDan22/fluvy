@@ -85,5 +85,8 @@
   "appliance_air_fryer": ["airfryer", "heteluchtfriteuse"],
   "appliance_sandwich_maker": ["tosti[ _-]?ijzer", "tosti[ _-]?apparaat"],
   "appliance_toaster": ["broodrooster"],
-  "appliance_blender": ["blender"]
+  "appliance_blender": ["blender"],
+  "appliance_feeder": ["voerautomaat", "voerdispenser", "voerbak"],
+  "appliance_fountain": ["drinkfontein", "waterfontein"],
+  "appliance_litter_box": ["kattenbak"]
 }

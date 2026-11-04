@@ -39,4 +39,10 @@ export const KIND_WORDS = [
   ['toaster', /(toaster|tostadora|tostador|grille[ _-]pain|kenyerpirito|piritogep|tostapane|toosutaa|toosuta|tosutaa|tosuta\b|broodrooster|torradeira|ekmek[ _-]kizartma|トースター|オーブントースター|ポップアップトースター)/i],
   /** blender: 33 stems. */
   ['blender', /(standmixer|mixer|blender|smoothie[ _-]?maker|licuadora|batidora|mixeur|turmix|botmixer|frullatore|burendaa|burenda|mikisaa|mikisa\b|juusaa|juusa\b|fuudo[ _-]?purosessaa|fuudo[ _-]?purosessa|sumuujii|liquidificadora|liquidificador|mikser|ブレンダー|ハンドブレンダー|ミキサー|ジューサー|フードプロセッサー|スムージー)/i],
+  /** feeder: 33 stems. */
+  ['feeder', /(futterautomat|futterspender|futterstation|feeder|comedero|dispensador de comida|alimentador automatico|distributeur de croquettes|distributeur de nourriture|mangeoire|eteto|tapadagolo|mangiatoia|distributore di cibo|dispenser di cibo|distributore di crocchette|kyuujiki|kyujiki|voerautomaat|voerdispenser|voerbak|comedouro|alimentador pet|alimentador para|besleyici|mama kabi|mama makinesi|給餌器|フィーダー)/i],
+  /** fountain: 37 stems. */
+  ['fountain', /(trinkbrunnen|katzenbrunnen|hundebrunnen|pet[ _-]?fountain|cat[ _-]?fountain|dog[ _-]?fountain|water[ _-]?fountain|drinking[ _-]?fountain|bebedero|fuente para mascotas|fuente para gatos|fuente de agua|fontaine a eau|fontaine pour chat|abreuvoir|itato|ivokut|fontanella|fontana per gatti|fontana per animali|abbeveratoio|kyuusuiki|kyusuiki|drinkfontein|waterfontein|bebedouro|fonte de agua|fonte para gatos|fonte para pets|su pinari|su cesmesi|suluk|給水器|ウォーターファウンテン)/i],
+  /** litter_box: 28 stems. */
+  ['litter_box', /(katzenklo|katzentoilette|katzenstreu|(?<!g)litter|cat[ _-]?toilet|arenero|caja de arena|bandeja sanitaria|litiere|macskaalom|alomtalca|macskawc|macskatoalett|lettiera|neko[ _-]?toire|kattenbak|caixa de areia|banheiro para gatos|banheiro de gato|liteira|kedi tuvaleti|kum kabi|kedi kumu|猫トイレ|ねこトイレ|ネコトイレ|自動トイレ)/i],
 ] as const;

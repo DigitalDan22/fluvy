@@ -27,12 +27,14 @@ import {
   type KindVerdict,
 } from './kinds.js';
 import {
+  forKind,
   maintenanceItem,
   maintenanceList,
   maintenanceOf,
   notifiedItem,
   type MaintenanceItem,
 } from './maintenance.js';
+import { isPet, petReading, type PetReading } from './pets.js';
 import {
   applianceDevice,
   applianceEntities,
@@ -63,9 +65,9 @@ import { zoneOf, zonesOf, type Zone } from './zones.js';
  * An appliance as a card reads it, at one moment: what it is and what it is doing, in Home Assistant's words and in the
  * card's few statuses; its cycle's step and times (left, ready at, so far, in all, how far along); whether it waits to
  * be unloaded, its door has stood open too long, or it failed and why; what it asks to be looked after; its
- * compartments, quick modes, plates and counters; its oven's or kettle's heat; its readouts; the commands it can take
- * now; its twin's state. Pure: the appliance card and the list of the house's appliances both read it, and draw it
- * each their own way. A plug's appliance (no integration of its own) is read here as far as its switch and power
+ * compartments, quick modes, plates and counters; its oven's or kettle's heat; a pet device's meals and visits; its
+ * readouts; the commands it can take now; its twin's state. Pure: the appliance card and the list of the house's
+ * appliances both read it, and draw it each their own way. A plug's appliance (no integration of its own) is read here as far as its switch and power
  * reading go; its cycle, from the plug's history, is the card's.
  */
 
@@ -84,6 +86,10 @@ export interface ApplianceConfig {
   readonly done_for?: number | undefined;
   /** The level, in percent, a tank or a filter is low at (20). */
   readonly low_level?: number | undefined;
+  /** The days left within which a pet device's part is soon to change (7). */
+  readonly low_days?: number | undefined;
+  /** A meal's amount, where the feeder takes one from the card (PetKit's: its smallest otherwise). */
+  readonly feed_amount?: number | undefined;
   /** Seconds a door may stand open before the card says so (the kind's say by default: a fridge's 60). */
   readonly door_alert?: number | undefined;
 }
@@ -207,6 +213,8 @@ export interface ApplianceReading {
   /** The programmes it may be started on, where its integration lets a card choose. */
   readonly programs: ProgramChoice | undefined;
   readonly twin: TwinReading | undefined;
+  /** A pet device's meals and visits; none for any other appliance. */
+  readonly pet: PetReading | null;
   /** Read from a plug's switch and power alone: its cycle is the plug's history's. */
   readonly plug: boolean;
   readonly unavailable: boolean;
@@ -405,7 +413,9 @@ export function readAppliance(
   const statusWord: MessageKey =
     heat?.ready && (status === 'running' || status === 'preheating')
       ? 'appliance.status_at_temperature'
-      : `appliance.status_${status}`;
+      : kind === 'feeder' && status === 'running'
+        ? 'appliance.feeding'
+        : `appliance.status_${status}`;
   const twin = found.entities.twin;
   return {
     kind,
@@ -434,9 +444,17 @@ export function readAppliance(
     counters: found.entities.counters,
     heat,
     readouts: readoutsOf(roles),
-    commands: commandsOf({ hass, platform: found.platform, roles, status, kind }),
+    commands: commandsOf({
+      hass,
+      platform: found.platform,
+      roles,
+      status,
+      kind,
+      amount: config.feed_amount,
+    }),
     programs: programChoice({ hass, platform: found.platform, roles, status }),
     twin: twin ? twinOf(hass, found, twin, now, doneFor, view) : undefined,
+    pet: isPet(kind) ? petReading(hass, roles, view, now) : null,
     plug,
     unavailable: status === 'offline',
     roles,
@@ -492,8 +510,11 @@ function statusOf(
 ): ApplianceStatus {
   const state = view(roles.state);
   const kind = found.verdict && 'kind' in found.verdict ? found.verdict.kind : undefined;
-  // unavailable, or gone from the house: out of reach either way (1.9)
+  // unavailable, or gone from the house: out of reach either way (1.9); a device that says it is not reached
   if (state && (state.status === 'unavailable' || state.status === 'missing')) return 'offline';
+  const online = view(roles.online);
+  if (online?.status === 'ok' && (online.state === 'off' || wordOf(online.state) === 'offline'))
+    return 'offline';
   // with no state, or one that says nothing (LG's older integration's dash), a running flag or the power says what it can
   return applianceStatus({
     state: state?.status === 'ok' ? state.state : undefined,
@@ -686,12 +707,18 @@ function maintenanceOfAppliance(
   config: ApplianceConfig,
   now: number,
 ): MaintenanceItem[] {
+  const kind = found.verdict && 'kind' in found.verdict ? found.verdict.kind : undefined;
   const items = found.candidates
     .filter((candidate) => found.entities.maintenance.includes(candidate.id))
     .map((candidate) => {
       const spec = maintenanceOf(candidate);
       return spec
-        ? maintenanceItem(spec, refState(hass, candidate.id), config.low_level ?? LOW_LEVEL)
+        ? maintenanceItem(
+            { ...spec, key: forKind(spec.key, kind) },
+            refState(hass, candidate.id),
+            config.low_level ?? LOW_LEVEL,
+            config.low_days,
+          )
         : undefined;
     });
   const notification = found.entities.roles.notification;

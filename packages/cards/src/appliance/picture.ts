@@ -32,6 +32,9 @@ export const KIND_ART: Readonly<Record<ApplianceKind, ArtName>> = {
   toaster: 'toaster',
   blender: 'blender',
   sandwich_maker: 'sandwich_maker',
+  feeder: 'feeder',
+  fountain: 'fountain',
+  litter_box: 'litter_box',
   appliance: 'plug',
 };
 

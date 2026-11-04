@@ -108,5 +108,8 @@
     "presse[ _-]panini"
   ],
   "appliance_toaster": ["grille[ _-]pain"],
-  "appliance_blender": ["blender", "mixeur"]
+  "appliance_blender": ["blender", "mixeur"],
+  "appliance_feeder": ["distributeur de croquettes", "distributeur de nourriture", "mangeoire"],
+  "appliance_fountain": ["fontaine a eau", "fontaine pour chat", "abreuvoir"],
+  "appliance_litter_box": ["litiere"]
 }

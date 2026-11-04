@@ -53,12 +53,13 @@ export type FixtureAt = (now: number) => ApplianceFixture;
 export const minutesFrom = (now: number, minutes: number): string =>
   new Date(now + minutes * 60_000).toISOString();
 
-/** A device as the registry lists it. */
+/** A device as the registry lists it (with the integration's own code for its model, where it gives one). */
 export const device = (
   id: string,
   name: string,
   model: string | null,
   manufacturer: string | null = null,
+  modelId?: string,
 ): DeviceRegistryEntry => ({
   id,
   name,
@@ -66,6 +67,7 @@ export const device = (
   area_id: null,
   model,
   manufacturer,
+  ...(modelId ? { model_id: modelId } : {}),
   via_device_id: null,
 });
 

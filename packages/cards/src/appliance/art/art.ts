@@ -158,6 +158,30 @@ export const APPLIANCE_ART = {
     lit(17, 12, 30, 44, 8, 'faW') +
     '<rect x="17" y="12" width="30" height="44" rx="8" fill="none" stroke="#c4c9d0" stroke-width=".6"/><circle cx="32" cy="31" r="10" fill="#f4f5f7" stroke="#cdd1d7" stroke-width=".7"/><circle cx="28" cy="31" r="1.5" fill="#3a3e45"/><circle cx="36" cy="31" r="1.5" fill="#3a3e45"/><circle cx="32" cy="48" r="1.4" fill="#5fd38a"/>' +
     rim(17, 12, 30, 44, 8),
+  /** a pet feeder in white enamel: its hopper's smoked window on the kibble, its lid, a steel bowl in its base */
+  feeder:
+    shadow(42) +
+    lit(11, 41, 42, 18, 6, 'faW') +
+    '<rect x="11" y="41" width="42" height="18" rx="6" fill="none" stroke="#c4c9d0" stroke-width=".6"/>' +
+    lit(16, 6, 32, 38, 7, 'faW') +
+    '<rect x="16" y="6" width="32" height="38" rx="7" fill="none" stroke="#c4c9d0" stroke-width=".6"/><rect x="15" y="3.6" width="34" height="6.4" rx="3.2" fill="url(#faW)" stroke="#c4c9d0" stroke-width=".6"/><rect x="21" y="14" width="22" height="21" rx="4" fill="#5b5f66" fill-opacity=".18" stroke="#b9bfc6" stroke-width=".5"/><g fill="#a5713f"><circle cx="24.6" cy="31.6" r="1.5"/><circle cx="29.4" cy="32.2" r="1.5"/><circle cx="34.6" cy="31.8" r="1.5"/><circle cx="39.4" cy="31.4" r="1.5"/><circle cx="27" cy="28.6" r="1.5"/><circle cx="37" cy="28.4" r="1.5"/></g><g fill="#c9925a"><circle cx="32" cy="28.8" r="1.5"/><circle cx="24.4" cy="27.2" r="1.4"/><circle cx="29.6" cy="25.6" r="1.4"/><circle cx="35" cy="25.4" r="1.4"/><circle cx="39.6" cy="26.8" r="1.4"/></g><rect x="21" y="14" width="22" height="21" rx="4" fill="url(#faG)"/><circle cx="32" cy="39.4" r="1.1" fill="#5fd38a"/>' +
+    '<ellipse cx="32" cy="50.4" rx="14" ry="4.6" fill="url(#faS)"/><ellipse cx="32" cy="50.8" rx="11.4" ry="3.3" fill="#7f858e"/><g fill="#a5713f"><circle cx="28" cy="51.4" r="1.3"/><circle cx="33.4" cy="52" r="1.3"/><circle cx="37" cy="51" r="1.3"/></g><circle cx="30.8" cy="50.2" r="1.2" fill="#c9925a"/>' +
+    rim(16, 6, 32, 38, 7),
+  /** a pet fountain in white enamel: water in its clear tank, a steel top on which the water wells up */
+  fountain:
+    shadow(42) +
+    lit(12, 23, 40, 36, 9, 'faW') +
+    '<rect x="12" y="23" width="40" height="36" rx="9" fill="none" stroke="#c4c9d0" stroke-width=".6"/><rect x="16.5" y="31" width="31" height="22" rx="5" fill="#dcecf5" stroke="#b9c8d2" stroke-width=".5"/><path d="M16.5 38.5h31V48a5 5 0 0 1-5 5h-21a5 5 0 0 1-5-5Z" fill="#7cc2e6"/><path d="M17 38.5h30" stroke="#fff" stroke-opacity=".8" stroke-width=".8"/><rect x="16.5" y="31" width="31" height="22" rx="5" fill="url(#faG)"/><circle cx="32" cy="56" r="1" fill="#7fd0ff"/>' +
+    '<ellipse cx="32" cy="24.4" rx="20.6" ry="5.4" fill="url(#faS)"/><ellipse cx="32" cy="23.8" rx="15.4" ry="3.6" fill="#bfe2f4"/><path d="M26.4 23.4c0-3.4 2.5-5.6 5.6-5.6s5.6 2.2 5.6 5.6c-1.6.9-3.5 1.3-5.6 1.3s-4-.4-5.6-1.3Z" fill="#8fd0f0"/><path d="M28.6 20.6c.8-.9 1.9-1.4 3.2-1.5" fill="none" stroke="#fff" stroke-opacity=".85" stroke-width=".9" stroke-linecap="round"/>' +
+    '<path class="r" d="M12.5 50V32a8.5 8.5 0 0 1 2.8-6.3"/>',
+  /** a self-cleaning litter box in white enamel: its dome, the dark entry with litter at its foot, its drawer */
+  litter_box:
+    shadow(50) +
+    '<path d="M9 50V28C9 15.4 18.6 7.4 32 7.4S55 15.4 55 28v22Z" fill="url(#faW)"/><path d="M9 50V28C9 15.4 18.6 7.4 32 7.4S55 15.4 55 28v22Z" fill="url(#faV)"/><path d="M9 50V28C9 15.4 18.6 7.4 32 7.4S55 15.4 55 28v22Z" fill="none" stroke="#c4c9d0" stroke-width=".6"/>' +
+    '<rect x="18.5" y="18" width="27" height="27" rx="13.5" fill="#2c3037"/><path d="M20.8 38.6A13.5 13.5 0 0 0 43.2 38.6Z" fill="#d9c4a0"/><path d="M21.6 38.6h20.8" stroke="#efe2c8" stroke-width=".8"/><rect x="18.5" y="18" width="27" height="27" rx="13.5" fill="url(#faG)"/><rect x="27" y="10.6" width="10" height="3.2" rx="1.6" fill="#1a1d22"/><rect x="28.4" y="11.5" width="3" height="1.4" rx=".5" fill="#5fd38a"/>' +
+    lit(7, 48, 50, 11, 4, 'faW') +
+    '<rect x="7" y="48" width="50" height="11" rx="4" fill="none" stroke="#c4c9d0" stroke-width=".6"/><rect x="26" y="52.4" width="12" height="1.8" rx=".9" fill="#9aa0a8"/>' +
+    '<path class="r" d="M9.5 48V28C9.5 15.8 18.8 7.9 32 7.9"/>',
 } as const;
 
 export type ArtName = keyof typeof APPLIANCE_ART;

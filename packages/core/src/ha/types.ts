@@ -51,6 +51,8 @@ export interface DeviceRegistryEntry {
   labels?: string[];
   manufacturer?: string | null;
   model?: string | null;
+  /** The integration's own code for its model (PetKit's device type, "D4SH"): steadier than the model's name. */
+  model_id?: string | null;
   /** The device this one is reached through (a printer's filament unit hangs on the printer). */
   via_device_id?: string | null;
 }

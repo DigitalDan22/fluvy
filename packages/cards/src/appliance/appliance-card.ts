@@ -1,5 +1,6 @@
 import {
   formatNumber,
+  plural,
   stateSaid,
   stateText,
   strings,
@@ -10,6 +11,7 @@ import {
   type HomeAssistant,
   type LovelaceConfigForm,
   type LovelaceGridOptions,
+  type MessageKey,
 } from '@fluvy/core';
 import {
   activateKey,
@@ -55,7 +57,7 @@ import { HeadFit } from '../energy/head.js';
 import { Card, HEAD_BASE, type HeadConfig } from '../shared/base.js';
 import { statusToneOf, toneOf } from '../shared/colour.js';
 import { configKeys } from '../shared/config.js';
-import { widestDuration } from '../shared/duration.js';
+import { unitWord, widestDuration } from '../shared/duration.js';
 import { fitLine, type Segment } from '../shared/fit.js';
 import { COLUMN, textWidth } from '../shared/heights.js';
 import { optionColumnsFor, optionsHold } from '../shared/options.js';
@@ -71,6 +73,7 @@ import {
   fieldRow,
   nameIconFields,
   numberField,
+  onlyWhen,
   orderedField,
   selectField,
   showIconField,
@@ -95,6 +98,7 @@ import {
   callFor,
   COMMAND_NAMES,
   CONFIRM,
+  mealAmount,
   programCall,
   resetCall,
   targetSetter,
@@ -108,6 +112,7 @@ import {
   DUE_WORD,
   heroSays,
   hoursMinutes,
+  KIND_TILES,
   KIND_VALUES,
   PROGRAM_GLYPH,
   kindRows,
@@ -127,10 +132,17 @@ import {
   type ApplianceReadout,
   type Hero,
 } from './kinds.js';
-import { maintenanceOf, MAINTENANCE_KEYS, type MaintenanceKey } from './maintenance.js';
+import {
+  forKind,
+  LOW_DAYS,
+  maintenanceOf,
+  MAINTENANCE_KEYS,
+  type MaintenanceKey,
+} from './maintenance.js';
 import { rememberUnloaded, unloadedAt, UNLOADED_EVENT } from './memory.js';
 import { noticeTriggers, phoneOf } from './notice.js';
 import { Nudges } from './nudge.js';
+import { isPet, type Meal } from './pets.js';
 import { artOf, headFit, pictureBox, pictureStyles, type PictureStyle } from './picture.js';
 import { entityOf, refView, stateOf } from './refs.js';
 import {
@@ -159,6 +171,8 @@ import {
   durationText,
   kindGlyph,
   leftText,
+  momentText,
+  petWords,
   shownOf,
   spanText,
   statusTone,
@@ -243,6 +257,10 @@ export interface ApplianceCardConfig extends FluvyCardConfig, HeadConfig {
   show_rows?: boolean;
   /** The rows under the hero, in order: what each says, its name, icon, colour and actions (default: the kind's three). */
   rows?: ReadonlyArray<RowKey | string | RowEntry>;
+  /** A pet device's hero: its tiles, in order, two a row, each as a row is named (default: the kind's two). */
+  tiles?: ReadonlyArray<RowKey | string | RowEntry>;
+  /** A meal's amount, where the feeder takes one from the card (PetKit's; its smallest by default). */
+  feed_amount?: number;
   /** How a row's value sits: beside its words, at the end, or one phrase with them (default: the kind's). */
   row_values?: RowValues;
   /** A fridge's quick modes as chips under its rows (the compact and ring layouts say them in the line). */
@@ -263,6 +281,8 @@ export interface ApplianceCardConfig extends FluvyCardConfig, HeadConfig {
   maintenance?: ReadonlyArray<MaintenanceKey | MaintenanceEntry>;
   /** The level a tank or a filter is low at, in percent (20). */
   low_level?: number;
+  /** The days left within which a pet device's part is soon to change (7). */
+  low_days?: number;
   /** The compartments, in order (default: all, the fridge first). */
   zones?: ReadonlyArray<string | ZoneEntry>;
   setpoint_style?: SetpointStyle;
@@ -298,6 +318,8 @@ const RING_MIN = 56;
 const RING_TICK = 12;
 /** The row's ring round its circle (the printer's). */
 const ROW_RADIUS = 26.5;
+/** A pet device's tile: the ring round its 40 circle, 6 out. */
+const TILE_RADIUS = 25;
 /** Each reminder's glyph, where the card names none. */
 const MAINTENANCE_GLYPH: Readonly<Record<MaintenanceKey, string>> = {
   salt: 'box',
@@ -317,6 +339,11 @@ const MAINTENANCE_GLYPH: Readonly<Record<MaintenanceKey, string>> = {
   grease_filter: 'filter',
   leak: 'warn',
   service: 'wrench',
+  food: 'feeder',
+  desiccant: 'box',
+  litter: 'litter',
+  waste: 'trash',
+  deodorant: 'sparkle',
 };
 
 /** Each quick mode's glyph. */
@@ -364,6 +391,14 @@ const NAMED_ROLES = [
   'water',
   'watts',
   'running',
+  'online',
+  'feed',
+  'clean',
+  'schedule',
+  'next_feed',
+  'last_feed',
+  'fed_today',
+  'last_pet',
 ] as const satisfies readonly ApplianceRole[];
 
 /** A readout of the card: which it is, what it says, the entity a tap opens. */
@@ -383,6 +418,8 @@ interface Reminder {
   readonly reset: string | undefined;
   readonly severity: 'due' | 'soon' | 'ok' | 'unknown';
   readonly level: number | undefined;
+  /** The days it has left, where the integration counts them. */
+  readonly days: number | undefined;
   readonly entry: MaintenanceEntry | undefined;
 }
 
@@ -396,6 +433,26 @@ interface ZoneShown {
   readonly setpoint: string | undefined;
   readonly entry: ZoneEntry | undefined;
 }
+
+/** A tile of the hero (a compartment, a pet device's part): its words, its circle, its ring, how it answers. */
+interface TileCell {
+  readonly label: string;
+  readonly value: string;
+  readonly unit: string;
+  readonly glyph: string;
+  readonly tone: Tone;
+  /** Its own colour, as the card names it. */
+  readonly accent: string | undefined;
+  readonly tap: () => void;
+  readonly hold: () => void;
+  /** What is left, in percent: a ring round its circle. */
+  readonly level?: number;
+  /** Due or soon: its value in the danger's or the warning's ink. */
+  readonly severity?: 'due' | 'soon';
+}
+
+/** A tile's value with its unit. */
+const tileValue = (cell: TileCell): string => `${cell.value}${cell.unit ? ` ${cell.unit}` : ''}`;
 
 /** A cell of the action row: its control, what it does now, whether it can. */
 interface Cell {
@@ -453,6 +510,8 @@ interface Item {
   readonly warn: boolean;
   /** What a reminder due says as one phrase ("Replace the water filter"), where its row is a phrase. */
   readonly phrase?: string;
+  /** Its value as a tile says it, where that is shorter (a meal's time without its amount). */
+  readonly brief?: string;
   readonly entity: string | undefined;
   readonly entry: RowEntry | undefined;
   readonly reminder: Reminder | undefined;
@@ -785,14 +844,15 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         height: 58px;
         transform: rotate(-90deg);
       }
-      .ap-ring circle {
+      .ap-ring circle,
+      .ap-tile__ring circle {
         fill: none;
         stroke-width: 2;
       }
-      .ap-ring .ap-ring__track {
+      .ap-ring__track {
         stroke: var(--fluvy-border);
       }
-      .ap-ring .ap-ring__fill {
+      .ap-ring__fill {
         stroke: var(--tone-ink, var(--fluvy-accent));
         stroke-linecap: round;
         transition: stroke-dashoffset var(--fv-slow) var(--fv-ease);
@@ -981,6 +1041,35 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         letter-spacing: -0.01em;
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
+      }
+      /* a pet device's tiles: the circle ringed by what is left (2, 6 out of it) and 16 from its words; what is due in
+         the danger's ink, what is soon in the warning's */
+      .ap-tiles--ringed .ap-tile {
+        gap: 16px;
+      }
+      .ap-tile__ring {
+        position: relative;
+        display: grid;
+        place-items: center;
+        flex: 0 0 40px;
+        width: 40px;
+        height: 40px;
+      }
+      .ap-tile__ring > svg {
+        position: absolute;
+        top: -6px;
+        left: -6px;
+        width: 52px;
+        height: 52px;
+        transform: rotate(-90deg);
+      }
+      .ap-tile.is-soon .ap-tile__value,
+      .ap-stat.is-soon .fv-readout__value {
+        color: var(--fluvy-warning);
+      }
+      .ap-tile.is-due .ap-tile__value,
+      .ap-stat.is-due .fv-readout__value {
+        color: var(--fluvy-danger);
       }
       /* a hob's plates on a soft panel: a 44 ring while it cooks, a disc at rest, its name and level under it */
       .ap-plates {
@@ -1209,6 +1298,8 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     'drinks',
     'show_rows',
     'rows',
+    'tiles',
+    'feed_amount',
     'row_values',
     'show_modes',
     'readouts',
@@ -1219,6 +1310,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     'show_maintenance',
     'maintenance',
     'low_level',
+    'low_days',
     'zones',
     'setpoint_style',
     'modes',
@@ -1236,28 +1328,9 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
   ]);
 
   static override lists: readonly RowsListSpec[] = [
-    {
-      key: 'rows',
-      idKey: 'key',
-      also: ['entity'],
-      title: 'appliance.editor_rows',
-      keys: ['key', 'entity', 'name', 'icon', 'color', 'tap_action', 'hold_action'],
-      computeLabel: (schema) =>
-        schema.name === 'key' ? editorWord('appliance.editor_row') : undefined,
-      picker: rowPicker(),
-      read: (raw) =>
-        typeof raw === 'string' || (typeof raw === 'object' && raw !== null)
-          ? { ...rowEntry(raw as string | RowEntry) }
-          : null,
-      schema: [
-        rowPicker(),
-        entityField(undefined, 'entity', false),
-        nameIconFields(),
-        accentField(),
-        actionField('tap_action'),
-        actionField('hold_action'),
-      ],
-    },
+    rowsList('rows', 'appliance.editor_rows'),
+    // a pet device's tiles, said as its rows are
+    { ...rowsList('tiles', 'option.tiles'), when: (data, hass) => petCard(data, hass) },
     {
       key: 'sensors',
       title: 'appliance.editor_sensors',
@@ -1323,6 +1396,8 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       show_zones: true,
       show_drinks: true,
       show_rows: true,
+      ...(isPet(kind) ? { tiles: [...(KIND_TILES[kind] ?? [])], low_days: LOW_DAYS } : {}),
+      ...feedAmountOf(c, hass, kind),
       row_values: KIND_VALUES[kind],
       show_modes: false,
       readouts: defaults.readouts.filter((key) => key !== 'program'),
@@ -1431,11 +1506,14 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
             'controls',
             COMMAND_NAMES.map((key) => ({ value: key, label: editorWord(`appliance.${key}`) })),
           ),
+          // a meal's amount, where the feeder takes one from the card
+          onlyWhen((data) => data['feed_amount'] !== undefined, numberField('feed_amount', 1, 400)),
         ]),
         sectionField('appliance.section_reminders', [
           fieldRow(boolField('unload_reminder'), numberField('unload_after', 0, 720)),
           fieldRow(numberField('done_for', 0, 1440), numberField('door_alert', 0, 3600)),
           numberField('low_level', 0, 100),
+          onlyWhen((data, hass) => petCard(data, hass), numberField('low_days', 0, 90)),
         ]),
         sectionField('appliance.section_plug', [
           fieldRow(numberField('running_power', 1, 3000), numberField('finished_after', 1, 120)),
@@ -1465,6 +1543,8 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         show_modes: 'editor_show_modes',
         show_maintenance: 'editor_show_maintenance',
         low_level: 'editor_low_level',
+        low_days: 'editor_low_days',
+        feed_amount: 'editor_feed_amount',
         setpoint_style: 'editor_setpoint_style',
         modes: 'editor_modes',
         modes_style: 'editor_modes_style',
@@ -1598,7 +1678,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
 
   /**
    * Whether the minute's clock has something to say: a job under way, a start to wait for, a finish not 2 h old, how
-   * long something has waited, a door open.
+   * long something has waited, a door open, a feeder's next meal.
    */
   private timed(): boolean {
     const last = this.last;
@@ -1610,7 +1690,9 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       (status === 'finished' && finishedAt !== null && Date.now() - finishedAt < 2 * 60 * MINUTE) ||
       last.r.attention.some((item) => item.since !== undefined) ||
       // a door open now is said once it has stood a minute
-      (last.r.door?.open ?? false)
+      (last.r.door?.open ?? false) ||
+      // a feeder's next meal counts down
+      Boolean(last.r.pet?.meals.next)
     );
   }
 
@@ -1714,6 +1796,9 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         roles.power ??
         roles.watts ??
         roles.running ??
+        roles.pump ??
+        roles.schedule ??
+        roles.online ??
         zones[0] ??
         hob[0],
       now,
@@ -1776,8 +1861,23 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
 
   private command(command: Command): void {
     if (command.blocked) return;
-    if (command.confirm) this.ask(command.call, this.t(CONFIRM[command.confirm]));
+    // a meal says its amount where the card writes it, else asks as it is (PETLIBRO's gives its own)
+    const text =
+      command.amount !== undefined
+        ? this.t(CONFIRM.feed, { amount: this.mealWords(command.amount) })
+        : command.confirm === 'feed'
+          ? s(this.hass, 'confirm_feed_now')
+          : command.confirm && this.t(CONFIRM[command.confirm]);
+    if (text) this.ask(command.call, text);
     else this.run(command.call);
+  }
+
+  /** A meal's amount in words: "20 g" in the feeder's unit, else in portions ("2 portions"). */
+  private mealWords(amount: number): string {
+    const unit = this.last?.r.pet?.meals.unit ?? '';
+    return unit
+      ? `${this.figure(amount)} ${unit}`
+      : plural(this.hass, 'appliance.portions', amount, { count: this.figure(amount) });
   }
 
   /** "Unloaded": the finish is remembered, and the reminder goes. */
@@ -1838,7 +1938,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
           on: r.status !== 'off' && r.status !== 'offline',
           primary: false,
         });
-      } else {
+      } else if (control === 'light') {
         const light = r.roles.light;
         cells.push({
           control,
@@ -1847,6 +1947,16 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
           command: r.commands.find((item) => item.control === 'light'),
           on: light ? this.entity(light).state === 'on' : false,
           primary: false,
+        });
+      } else {
+        // a pet device's own: the first of them the primary (a feeder's meal, a litter box's clean)
+        cells.push({
+          control,
+          glyph: PET_GLYPH[control],
+          label: s(this.hass, control),
+          command: r.commands.find((item) => item.control === control),
+          on: false,
+          primary: !cells.some((cell) => cell.primary),
         });
       }
     }
@@ -1875,7 +1985,12 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     >
       ${top}
       ${
-        ring && (hero === 'cycle' || hero === 'heat' || hero === 'plug' || hero === 'cold')
+        ring &&
+        (hero === 'cycle' ||
+          hero === 'heat' ||
+          hero === 'plug' ||
+          hero === 'cold' ||
+          hero === 'pet')
           ? this.renderDial(view)
           : this.renderHero(view, compact)
       }
@@ -1993,17 +2108,22 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
 
   /**
    * What the head says the appliance is doing: what asks for attention first (why it failed, a door left open, a load
-   * waiting, with how long — never a reminder, and not where an alarm row says it: the rows say those), in the
-   * warning's ink; a hob's plates on ("Zone 1 on", "1 of 4 on" where a plate's name would not hold); a fridge at work
-   * is in operation; else its phase while it works, else its state — each with its shorter forms (`briefs`).
+   * waiting, with how long — never a reminder, and not where an alarm row says it: the rows say those; a pet device's
+   * part due, though, its food, its water, its waste drawer), in the warning's ink; a hob's plates on ("Zone 1 on", "1
+   * of 4 on" where a plate's name would not hold); a fridge at work is in operation; a feeder at rest its next meal
+   * ("Next meal in 2 h 15 min"); else its phase while it works, else its state — each with its shorter forms
+   * (`briefs`).
    */
   private headWords(view: View, alarm: boolean): Words & { readonly warn: boolean } {
     const { r, shown } = view;
-    const need =
-      view.unavailable || alarm
-        ? undefined
-        : r.attention.find((item) => !item.key.startsWith('appliance.m_'));
+    const pet = view.hero === 'pet';
+    const need = view.unavailable
+      ? undefined
+      : r.attention.find((item) => (item.key.startsWith('appliance.m_') ? pet : !alarm));
     if (need) return { ...this.needWords(view, [need]), warn: true };
+    const next = view.kind === 'feeder' && !busy(shown.status) ? this.petSaid(view)[0] : undefined;
+    if (next && !view.unavailable && shown.status === 'idle')
+      return { parts: [{ text: next }], briefs: [this.t(r.statusWord)], warn: false };
     if (view.hero === 'hob' && !view.unavailable) {
       const on = r.hob.flatMap((id, index) => (this.plateOn(id) ? [index] : []));
       const count = s(this.hass, 'hob_on', { on: on.length, count: r.hob.length });
@@ -2063,7 +2183,8 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
    * The power round (48, the head's), tinted by what the appliance does: the accent (the card's colour) while it works
    * or waits to start, the success's green while it is on and ready, the warning's while it needs a hand, quiet while
    * off, the dashed skin out of reach. It switches the appliance where its integration lets a card (`power_action`
-   * stands in for it), else opens its details; "Unloaded" takes its place while a load waits.
+   * stands in for it), else opens its details; "Unloaded" takes its place while a load waits. A pet device's is the
+   * one that matters (#112): its own first command — a meal now, a litter box's clean — where it has one.
    */
   private powerRound(view: View, extra = ''): TemplateResult | typeof nothing {
     const { r, shown } = view;
@@ -2077,6 +2198,19 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         'ap-power',
       );
     if (this.config?.show_power === false) return nothing;
+    if (view.hero === 'pet' && !this.config?.power_action) {
+      // its first own (a meal, a clean) while it can act, else a resume or a pause that can, else its first disabled
+      const cells = this.cells(view);
+      const acts = (cell: Cell): boolean => Boolean(cell.command && !cell.command.blocked);
+      const first = cells.find((item) => item.control in PET_GLYPH);
+      const cell =
+        first && acts(first)
+          ? first
+          : (cells.find(
+              (item) => (item.control === 'start' || item.control === 'pause') && acts(item),
+            ) ?? first);
+      if (cell) return this.commandRound(cell, `ap-power ${extra}`);
+    }
     const command = r.commands.find((item) => item.control === 'power');
     const action = this.config?.power_action;
     const entity = r.roles.power ?? view.entity;
@@ -2129,6 +2263,12 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         return view.kind === 'coffee' && c?.show_drinks !== false
           ? { parts: this.renderDrinks(view), fixed: true }
           : nothing;
+      case 'pet': {
+        const cells = c?.show_hero === false ? [] : this.tileCells(view);
+        return cells.length
+          ? { parts: this.renderTileGrid(cells, cells.map(tileValue), true), fixed: true }
+          : nothing;
+      }
       default: {
         // the target's row where its stepper is asked for and the integration lets a card set it: out of reach too
         const setter =
@@ -2392,8 +2532,8 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
           setpoint: undefined,
           entry: undefined,
         }));
-    const w = this.contentWidth;
-    const items = zones.map((zone) => {
+    const forms: string[] = [];
+    const cells = zones.map((zone): TileCell => {
       const value = view.unavailable ? null : this.zoneValue(zone);
       const unit = this.zoneUnit(zone);
       const said = (n: number | string): string =>
@@ -2403,45 +2543,82 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       const setter = zone.setpoint
         ? zoneSetter(this.hass, view.r.platform, stateOf(this.hass, zone.setpoint))
         : undefined;
-      const forms = setter?.options ?? [setter?.min ?? -24, setter?.max ?? 8];
-      return { zone, value: value === null ? '—' : said(value), forms: forms.map(said) };
+      forms.push(...(setter?.options ?? [setter?.min ?? -24, setter?.max ?? 8]).map(said));
+      const accent = this.accents.item(zone.entry?.color);
+      return {
+        label: zone.label,
+        value: value === null ? '—' : said(value),
+        unit: '',
+        glyph: zone.entry?.icon ?? (zone.kind === 'wine' ? 'drop' : 'snow'),
+        tone: view.unavailable ? 'off' : accent ? 'accent' : 'cool',
+        accent,
+        ...this.zoneActions(zone),
+      };
     });
+    return this.renderTileGrid(cells, forms, false);
+  }
+
+  /**
+   * The hero's tiles (84, radius 12, the page's fill), two a row: a soft circle 8 from the name over the value — a pet
+   * device's 16 from them, ringed by what is left where its part says it in percent — what is due in the danger's ink,
+   * what is soon in the warning's. Two a row where they hold their words
+   * (and every form a value takes, `forms`) with their circles, then without them, else one a row: a word is never cut.
+   */
+  private renderTileGrid(
+    cells: readonly TileCell[],
+    forms: readonly string[],
+    ringed: boolean,
+  ): TemplateResult {
     const widest = Math.max(
       0,
-      ...items.flatMap(({ zone, forms }) => [
-        this.head.ruler.width('ap-tile__label', zone.label),
-        ...forms.map((form) => this.head.ruler.width('ap-tile__value', form)),
-      ]),
+      ...cells.map((cell) => this.head.ruler.width('ap-tile__label', cell.label)),
+      ...forms.map((form) => this.head.ruler.width('ap-tile__value', form)),
     );
-    const n = Math.max(1, Math.min(2, items.length));
-    const each = (columns: number): number => (w - 12 * (columns - 1)) / columns;
+    // 12 in from a tile's sides; a ringed circle 16 from its words, its ring 6 out of it
+    const n = Math.max(1, Math.min(2, cells.length));
+    const each = (columns: number): number => (this.contentWidth - 12 * (columns - 1)) / columns;
     const columns = each(n) >= 12 + widest + 12 ? n : 1;
-    const circles = each(columns) >= 12 + 40 + 8 + widest + 12;
-    return html`<div class="ap-tiles" style="--ap-tiles:${columns}" data-fill-row>
-      ${items.map(({ zone, value }) => {
-        const { tap, hold } = this.zoneActions(zone);
-        const accent = this.accents.item(zone.entry?.color);
-        const tone: Tone = view.unavailable ? 'off' : accent ? 'accent' : 'cool';
-        return html`<div
-          class="ap-tile"
-          data-accent=${accent ?? nothing}
-          role="button"
-          tabindex="0"
-          aria-label=${`${zone.label} · ${value}`}
-          .fvTap=${tap}
-          .fvHold=${hold}
-          @pointerdown=${startPress}
-          @click=${clickPress}
-          @contextmenu=${preventMenu}
-          @keydown=${activateKey(tap)}
-        >
-          ${circles ? ico(zone.entry?.icon ?? (zone.kind === 'wine' ? 'drop' : 'snow'), tone) : nothing}
-          <span class="ap-tile__text"
-            ><span class="ap-tile__label">${zone.label}</span
-            ><span class="ap-tile__value">${value}</span></span
+    const circles = each(columns) >= 12 + 40 + (ringed ? 16 : 8) + widest + 12;
+    const length = 2 * Math.PI * TILE_RADIUS;
+    return html`<div
+      class="ap-tiles ${ringed ? 'ap-tiles--ringed' : ''}"
+      style="--ap-tiles:${columns}"
+      data-fill-row
+    >
+      ${cells.map(
+        (cell) =>
+          html`<div
+            class="ap-tile ${cell.severity ? `is-${cell.severity}` : ''}"
+            data-accent=${cell.accent ?? nothing}
+            role="button"
+            tabindex="0"
+            aria-label=${`${cell.label} · ${tileValue(cell)}`}
+            .fvTap=${cell.tap}
+            .fvHold=${cell.hold}
+            @pointerdown=${startPress}
+            @click=${clickPress}
+            @contextmenu=${preventMenu}
+            @keydown=${activateKey(cell.tap)}
           >
-        </div>`;
-      })}
+            ${
+              !circles
+                ? nothing
+                : ringed
+                  ? html`<span class="ap-tile__ring fv-tone--${cell.tone}"
+                      >${
+                        cell.level !== undefined
+                          ? svg`<svg viewBox="0 0 52 52" aria-hidden="true" data-measure="drawn"><circle class="ap-ring__track" cx="26" cy="26" r=${TILE_RADIUS} /><circle class="ap-ring__fill" cx="26" cy="26" r=${TILE_RADIUS} stroke-dasharray=${length.toFixed(2)} stroke-dashoffset=${(length * (1 - cell.level / 100)).toFixed(2)} /></svg>`
+                          : nothing
+                      }${ico(cell.glyph, cell.tone)}</span
+                    >`
+                  : ico(cell.glyph, cell.tone)
+            }
+            <span class="ap-tile__text"
+              ><span class="ap-tile__label">${cell.label}</span
+              ><span class="ap-tile__value">${tileValue(cell)}</span></span
+            >
+          </div>`,
+      )}
     </div>`;
   }
 
@@ -2587,6 +2764,94 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     </div>`;
   }
 
+  /* ---------- a pet device's tiles ---------- */
+
+  /** A pet device's tiles, as the card names them (`tiles`), else its kind's two. */
+  private tileEntries(view: View): RowEntry[] {
+    return (this.config?.tiles ?? KIND_TILES[view.kind] ?? []).map(rowEntry);
+  }
+
+  /** A pet device's tiles as items: each what its row would say. */
+  private tiles(view: View): Item[] {
+    const reminders = this.reminders(view);
+    return this.tileEntries(view).map((entry) =>
+      this.item(view, entry.key ?? 'entity', reminders, entry),
+    );
+  }
+
+  /** A meal's amount in its unit ("20 g"), or in portions where the feeder counts them so ("2"); none where unsaid. */
+  private amountText(meal: Meal, unit: string): string {
+    return meal.amount === null ? '' : `${this.figure(meal.amount)}${unit ? ` ${unit}` : ''}`;
+  }
+
+  /** The tone a tile draws in: a part due the danger's, one soon the warning's, else the kind's (or its own colour). */
+  private tileTone(view: View, item: Item): Tone {
+    if (view.unavailable) return 'off';
+    const severity = item.reminder?.severity;
+    if (severity === 'due') return 'danger';
+    if (severity === 'soon') return 'warning';
+    return item.entry?.color ? 'accent' : toneOf(this.config, KIND_DEFAULTS[view.kind].tone);
+  }
+
+  /**
+   * A pet device's tiles (#112) as cells: each what its row would say (a meal's time without its amount), its part's
+   * ring and how pressing it is; a tap opens what it says (or does the card's own), a part's hold resets it where its
+   * integration lets a card, after asking. Out of reach, a dash each.
+   */
+  private tileCells(view: View): TileCell[] {
+    return this.tiles(view).map((item) => {
+      const reset = item.reminder ? this.reminderActions(view, item.reminder).hold : undefined;
+      const severity = view.unavailable ? undefined : item.reminder?.severity;
+      const level = view.unavailable ? undefined : item.reminder?.level;
+      return {
+        label: item.label,
+        value: item.brief ?? (item.value || '—'),
+        unit: item.brief ? '' : item.unit,
+        glyph: item.glyph,
+        tone: this.tileTone(view, item),
+        accent: this.accents.item(item.entry?.color),
+        tap: () => this.tap(item.entity, item.entry?.tap_action ?? { action: 'more-info' }),
+        hold: () => {
+          if (item.entry?.hold_action) this.hold(item.entity, item.entry.hold_action);
+          else if (reset) reset();
+          else this.hold(item.entity, { action: 'more-info' });
+        },
+        ...(level === undefined ? {} : { level }),
+        ...(severity === 'due' || severity === 'soon' ? { severity } : {}),
+      };
+    });
+  }
+
+  /**
+   * Cells as readouts side by side (compact): a fridge's compartments, a pet device's tiles — each its value, centred,
+   * what is due or soon in its ink, a tap opening it.
+   */
+  private renderReadoutCells(cells: readonly TileCell[]): TemplateResult | typeof nothing {
+    if (!cells.length) return nothing;
+    const row = statsRow(this.head.ruler, this.contentWidth, cells);
+    return html`<div
+      class="fv-cols ap-zones-row ${row.odd ? 'fv-cols--odd' : ''}"
+      style="grid-template-columns:repeat(${row.columns}, minmax(0, 1fr))"
+    >
+      ${cells.map(
+        (cell) =>
+          html`<div
+            class="ap-stat ${cell.severity ? `is-${cell.severity}` : ''}"
+            role="button"
+            tabindex="0"
+            .fvTap=${cell.tap}
+            .fvHold=${cell.hold}
+            @pointerdown=${startPress}
+            @click=${clickPress}
+            @contextmenu=${preventMenu}
+            @keydown=${activateKey(cell.tap)}
+          >
+            ${readout({ label: cell.label, value: cell.value, unit: cell.unit, size: 'xs', name: true })}
+          </div>`,
+      )}
+    </div>`;
+  }
+
   /* ---------- the rows ---------- */
 
   /** Whether the appliance has what a row says: its registry's, never its state's (out of reach, it has them still). */
@@ -2620,6 +2885,24 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         return r.counters.length > 0;
       case 'zones':
         return r.hob.length > 0;
+      case 'last_meal':
+        return Boolean(r.roles.last_feed ?? r.roles.schedule);
+      case 'next_meal':
+        return Boolean(r.roles.next_feed ?? r.roles.schedule);
+      case 'fed_today':
+        return Boolean(r.roles.fed_today ?? r.roles.meals_today);
+      case 'drank_today':
+        return Boolean(r.roles.drank_today ?? r.roles.drinks_today);
+      case 'purified':
+        return Boolean(r.roles.purified);
+      case 'pump':
+        return Boolean(r.roles.pump);
+      case 'last_use':
+        return Boolean(
+          r.roles.uses_today ?? r.roles.last_pet ?? r.roles.last_drink ?? r.roles.drinks_today,
+        );
+      case 'uses_today':
+        return Boolean(r.roles.uses_today);
       case 'entity':
         return false;
       default:
@@ -2630,9 +2913,9 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
   /**
    * The rows: a second drum or cavity first (`unit: both`); then the card's own, in its order, else the kind's three
    * — two beside a second drum, which holds its place in the slot as the reporter's oven holds its second cavity —
-   * among those the appliance has and its hero does not already say (a cycle's time left, a plug's power), a dash in
-   * the place of one it lacks; where a reminder is due that they do not say, it takes the place of the last it lacks,
-   * else the last one's (the count is the kind's, whatever is due).
+   * among those the appliance has and its hero does not already say (a cycle's time left, a plug's power, a pet
+   * device's tiles), a dash in the place of one it lacks; where a reminder is due that they do not say, it takes the
+   * place of the last it lacks, else the last one's (the count is the kind's, whatever is due).
    */
   private items(view: View): Item[] {
     const twin =
@@ -2647,12 +2930,25 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
           .map((entry) => this.item(view, entry.key ?? 'entity', reminders, entry)),
       ];
     const has = (key: RowKey): boolean => this.has(view, key, reminders);
-    const keys = kindRows(view.kind, has, ROWS_SHOWN - twin.length, heroSays(view.hero));
+    // a pet device's tiles say what they say: its rows go on to the rest
+    const tiles =
+      view.hero === 'pet' && this.config?.show_hero !== false
+        ? this.tileEntries(view).map((entry) => entry.key)
+        : [];
+    const says = heroSays(view.hero);
+    const keys = kindRows(
+      view.kind,
+      has,
+      ROWS_SHOWN - twin.length,
+      (key) => says(key) || tiles.includes(key),
+    );
     const due = view.unavailable
       ? undefined
       : reminders.find(
           (item) =>
-            (item.severity === 'due' || item.severity === 'soon') && !keys.includes(item.key),
+            (item.severity === 'due' || item.severity === 'soon') &&
+            !keys.includes(item.key) &&
+            !tiles.includes(item.key),
         );
     if (due) {
       const lacking = keys.map(has).lastIndexOf(false);
@@ -2717,6 +3013,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     let entity: string | undefined;
     let reminder: Reminder | undefined;
     let phrase: string | undefined;
+    let brief: string | undefined;
     switch (key) {
       case 'program': {
         label = (off ? '' : r.program) || dash;
@@ -2840,6 +3137,58 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         label = off || !r.hob.length ? dash : s(this.hass, 'hob_on', { on, count: r.hob.length });
         break;
       }
+      case 'last_meal':
+      case 'next_meal': {
+        const meals = r.pet?.meals;
+        const last = key === 'last_meal';
+        const meal = last ? meals?.last : meals?.next;
+        entity = (last ? r.roles.last_feed : r.roles.next_feed) ?? r.roles.schedule;
+        label = s(this.hass, `row_${key}`);
+        if (!off && meal) {
+          brief = this.moment(meal.at, now);
+          value = [brief, this.amountText(meal, meals?.unit ?? '')].filter(Boolean).join(' · ');
+        } else value = dash;
+        break;
+      }
+      case 'fed_today':
+      case 'drank_today':
+      case 'uses_today': {
+        // an amount where it says one, else how many times
+        const [amount, times] =
+          key === 'fed_today'
+            ? [r.roles.fed_today, r.roles.meals_today]
+            : key === 'drank_today'
+              ? [r.roles.drank_today, r.roles.drinks_today]
+              : [undefined, r.roles.uses_today];
+        entity = amount ?? times;
+        label = s(this.hass, `row_${key}`);
+        value = off ? dash : joined(this.valueText(entity));
+        break;
+      }
+      case 'purified':
+        entity = r.roles.purified;
+        label = s(this.hass, 'row_purified');
+        value = off ? dash : joined(this.valueText(entity));
+        break;
+      case 'pump': {
+        entity = r.roles.pump;
+        const v = this.entity(entity);
+        label = s(this.hass, 'row_pump');
+        value = off || v.status !== 'ok' ? dash : stateText(this.hass, v);
+        tint = !off && v.state === 'on' ? 'water' : 'neutral';
+        break;
+      }
+      case 'last_use': {
+        const visit = off ? null : (r.pet?.visit ?? null);
+        entity =
+          r.roles.last_pet ?? r.roles.last_drink ?? r.roles.uses_today ?? r.roles.drinks_today;
+        label = s(this.hass, view.kind === 'fountain' ? 'row_last_drink' : 'row_last_use');
+        if (visit) {
+          brief = this.moment(visit.at, now);
+          value = [brief, visit.pet].filter(Boolean).join(' · ');
+        } else value = dash;
+        break;
+      }
       case 'entity': {
         entity = entry?.entity;
         const v = this.entity(entity);
@@ -2858,14 +3207,19 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         entity = reminder?.entity;
         label = reminder?.entry?.name ?? this.reminderNoun(view, key);
         const due = reminder?.severity === 'due' || reminder?.severity === 'soon';
+        // a part's days left say when it is soon, not what to do yet
+        const days =
+          reminder?.days !== undefined && reminder.severity !== 'due' ? reminder.days : undefined;
         value =
           off || !reminder || reminder.severity === 'unknown'
             ? dash
-            : reminder.level !== undefined && !due
-              ? `${this.figure(reminder.level)} %`
-              : due
-                ? this.t(DUE_WORD[key])
-                : s(this.hass, 'ok');
+            : days !== undefined
+              ? joined({ value: this.figure(days), unit: unitWord(this.hass, 'd') })
+              : reminder.level !== undefined && !due
+                ? `${this.figure(reminder.level)} %`
+                : due
+                  ? this.t(DUE_WORD[key])
+                  : s(this.hass, 'ok');
         glyphName = reminder?.entry?.icon ?? MAINTENANCE_GLYPH[key];
         // due, what to do says so in the warning's ink; its circle stays quiet, as the other rows'
         warn = due && !off;
@@ -2887,6 +3241,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       entry,
       reminder,
       ...(phrase && entry?.name === undefined ? { phrase } : {}),
+      ...(brief ? { brief } : {}),
     };
   }
 
@@ -3059,6 +3414,10 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         return this.renderHob(view);
       case 'cold':
         return compact ? this.renderZoneReadouts(view) : this.renderZones(view);
+      case 'pet':
+        return this.config?.show_hero === false
+          ? nothing
+          : this.renderReadoutCells(this.tileCells(view));
       default:
         return nothing;
     }
@@ -3115,9 +3474,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
    * finish before today — by the house's calendar.
    */
   private moment(at: number, now: number): string {
-    const { time, days, day, ago } = when(this.hass, at, now);
-    if (days === 0) return time;
-    return days < 0 && ago ? ago : `${day} ${time}`;
+    return momentText(this.hass, at, now);
   }
 
   /** Whether the hero's side readout goes under its main one: measured in every form either takes, never by state. */
@@ -3552,39 +3909,20 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
 
   /** The compartments as readouts side by side (compact): each its setpoint, centred, a tap opening it. */
   private renderZoneReadouts(view: View): TemplateResult | typeof nothing {
-    const zones = this.zonesShown(view);
-    if (!zones.length) return nothing;
-    const items = zones.map((zone) => {
-      const value = this.zoneValue(zone);
-      return {
-        zone,
-        label: zone.label,
-        value: this.zoneText(zone, value),
-        unit: value === null ? '' : this.zoneUnit(zone),
-      };
-    });
-    const row = statsRow(this.head.ruler, this.contentWidth, items);
-    return html`<div
-      class="fv-cols ap-zones-row ${row.odd ? 'fv-cols--odd' : ''}"
-      style="grid-template-columns:repeat(${row.columns}, minmax(0, 1fr))"
-    >
-      ${items.map(({ zone, label, value, unit }) => {
-        const { tap, hold } = this.zoneActions(zone);
-        return html`<div
-          class="ap-stat"
-          role="button"
-          tabindex="0"
-          .fvTap=${tap}
-          .fvHold=${hold}
-          @pointerdown=${startPress}
-          @click=${clickPress}
-          @contextmenu=${preventMenu}
-          @keydown=${activateKey(tap)}
-        >
-          ${readout({ label, value, unit, size: 'xs', name: true })}
-        </div>`;
-      })}
-    </div>`;
+    return this.renderReadoutCells(
+      this.zonesShown(view).map((zone) => {
+        const value = this.zoneValue(zone);
+        return {
+          label: zone.label,
+          value: this.zoneText(zone, value),
+          unit: value === null ? '' : this.zoneUnit(zone),
+          glyph: '',
+          tone: 'cool',
+          accent: undefined,
+          ...this.zoneActions(zone),
+        };
+      }),
+    );
   }
 
   /** A quick mode's word: the card's, by the switch's key. */
@@ -3699,14 +4037,24 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     const { shown } = view;
     const status = this.t(view.r.statusWord);
     // an oven's heat on its way says how far it is, whole ("76 %": the head says it heats), what it does its status's
-    // word
+    // word; a pet device's next meal or last use what it does
     const preheating = `${s(this.hass, 'status_preheating')} `;
     const briefs = first.startsWith(preheating)
       ? [first.slice(preheating.length)]
       : first === shown.word || first === shown.phase
         ? [status].filter((word) => word !== first)
-        : [];
+        : view.hero === 'pet'
+          ? [shown.word]
+          : [];
     return { parts: said.map((text, index) => ({ text, optional: index > 0 })), briefs };
+  }
+
+  /**
+   * What a pet device at rest says of itself, most telling first: a feeder its next meal ("Next meal in 2 h 15 min"),
+   * else its last; a litter box its last use and by whom ("Last used 14:32 · Luna"), a fountain its last drink.
+   */
+  private petSaid(view: View): string[] {
+    return view.unavailable ? [] : petWords(this.hass, view.r, view.now);
   }
 
   private statusSaid(view: View): string[] {
@@ -3725,6 +4073,10 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         return [r.door ? s(this.hass, r.door.open ? 'door_open' : 'door_closed') : shown.word];
       case 'state':
         return [shown.word, program].filter(Boolean);
+      case 'pet': {
+        const said = busy(shown.status) ? [] : this.petSaid(view);
+        return said.length ? said : [shown.word];
+      }
       default:
         break;
     }
@@ -3818,7 +4170,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     if (hero === 'cold') return this.renderZoneDials(view);
     const { r, shown, now } = view;
     const radius = this.radius(this.contentWidth);
-    const tone = view.tone;
+    let tone = view.tone;
     let label = jobWords(this.hass, 'left');
     let text = '—';
     let unit = '';
@@ -3849,6 +4201,17 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         heat?.target !== null && heat?.target !== undefined
           ? `${s(this.hass, 'target')} ${this.figure(heat.target)} ${heat.unit}`
           : shown.word;
+    } else if (hero === 'pet') {
+      // a pet device's first tile that says what is left (its food, its water, its litter), else its first
+      const tiles = this.tiles(view);
+      const item = tiles.find((tile) => tile.reminder?.level !== undefined) ?? tiles[0];
+      const level = view.unavailable ? undefined : item?.reminder?.level;
+      label = item?.label ?? '';
+      fill = (level ?? 0) / 100;
+      text = level !== undefined ? this.figure(level) : (item?.brief ?? item?.value) || '—';
+      unit = level !== undefined ? '%' : item?.brief ? '' : (item?.unit ?? '');
+      tone = item ? this.tileTone(view, item) : tone;
+      sub = shown.word;
     } else {
       const watts = this.valueText(r.roles.watts);
       label = s(this.hass, 'r_power');
@@ -4085,9 +4448,10 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       if (!found.entities.maintenance.includes(candidate.id)) continue;
       const spec = maintenanceOf(candidate);
       if (!spec) continue;
+      const key = forKind(spec.key, view.kind);
       if (spec.form === 'reset') {
-        if (resetCall(r.platform, candidate.id)) resets.set(spec.key, candidate.id);
-      } else if (!entities.has(spec.key)) entities.set(spec.key, candidate.id);
+        if (resetCall(r.platform, candidate.id)) resets.set(key, candidate.id);
+      } else if (!entities.has(key)) entities.set(key, candidate.id);
     }
     const entries = (this.config?.maintenance ?? []).map((entry) =>
       typeof entry === 'string' ? { key: entry } : entry,
@@ -4103,6 +4467,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         reset: resets.get(key),
         severity: view.unavailable ? 'unknown' : (item?.severity ?? 'unknown'),
         level: item?.level,
+        days: item?.days,
         entry: entries.find((entry) => entry.key === key),
       };
     });
@@ -4194,7 +4559,10 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
 
   /* ---------- the row ---------- */
 
-  /** What a row says of its hero: a fridge's setpoints ("4° · −18°"), an oven's heat ("142° → 180°"), a plug's watts. */
+  /**
+   * What a row says of its hero: a fridge's setpoints ("4° · −18°"), an oven's heat ("142° → 180°"), a plug's watts,
+   * a pet device's next meal or last use.
+   */
   private rowSummary(view: View): string {
     const degrees = (n: number | null | undefined): string =>
       n === null || n === undefined ? '—' : `${this.figure(n)}°`;
@@ -4213,6 +4581,8 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         const watts = this.valueText(view.r.roles.watts);
         return busy(view.shown.status) && watts.value !== '—' ? `${watts.value} ${watts.unit}` : '';
       }
+      case 'pet':
+        return this.petSaid(view)[0] ?? '';
       default:
         return '';
     }
@@ -4220,27 +4590,36 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
 
   /**
    * The row's round, the one that matters now: "Unloaded" while a load waits; start, resume or pause where the
-   * appliance runs cycles a card can start; else its power round (what a toaster or a kettle on a plug has).
+   * appliance runs cycles a card can start; else its power round (what a toaster or a kettle on a plug has, a pet
+   * device's own command).
    */
   private rowRound(view: View): TemplateResult | typeof nothing {
     const { r } = view;
     if (this.config?.show_power === false) return nothing;
     if (r.unload && !view.unavailable)
       return round('check', 'accent', s(this.hass, 'unloaded'), () => this.unloaded(view));
+    // a pet device's is the whole card's: its own command's, else its power's
+    if (view.hero === 'pet') return this.powerRound(view, 'ap-power--row');
     const cell = this.cells(view).find((item) => item.primary);
     if (!cell)
       return r.roles.power || r.plug || KIND_DEFAULTS[view.kind].controls.includes('power')
         ? this.powerRound(view, 'ap-power--row')
         : nothing;
+    return this.commandRound(cell);
+  }
+
+  /** The round of a primary cell: its glyph (pause while it can pause), the accent while it can act, else quiet. */
+  private commandRound(cell: Cell, extra = ''): TemplateResult {
     const primary = cell.command && !cell.command.blocked ? cell.command : undefined;
     return round(
-      primary?.action === 'pause' ? 'pause' : 'play',
+      primary?.action === 'pause' ? 'pause' : cell.glyph,
       primary ? 'accent' : 'quiet',
       primary ? this.t(primary.label) : cell.label,
       () => {
         if (primary) this.command(primary);
       },
       !primary,
+      extra,
     );
   }
 
@@ -4259,12 +4638,17 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     let control = this.rowRound(view);
     const summary = this.rowSummary(view);
     const attention = view.unavailable ? undefined : r.attention[0];
-    // what the row must say whole: what asks for attention (how long, after it, may go), else what it is doing — a
-    // fridge at work says its setpoints instead
-    const quiet = view.hero === 'cold' && shown.status === 'idle' && summary !== '';
     // the row with its picture says its words larger (15 and 15): they are measured as they are drawn
     const words = art ? 'ap-card--picture > ' : '';
     const width = (text: string): number => this.head.ruler.width(`${words}fv-row__sub`, text);
+    // what the row must say whole: what asks for attention (how long, after it, may go), else what it is doing — a
+    // fridge at work says its setpoints instead, a pet device at rest its next meal or its last use where the bare
+    // row holds it
+    const quiet =
+      (view.hero === 'cold' || view.hero === 'pet') &&
+      shown.status === 'idle' &&
+      summary !== '' &&
+      (view.hero === 'cold' || width(summary) <= this.contentWidth);
     // what asks for attention says it in its own words where the bare row holds them, else in its state's (the warning
     // ink, the ring's tone and the row's name say the rest)
     const need = attention ? attention.text || this.t(attention.key) : '';
@@ -4388,6 +4772,21 @@ const CONTROL_ACTIONS: Readonly<Record<CommandName, readonly Action[]>> = {
   stop: ['stop'],
   power: ['power_on', 'power_off'],
   light: ['light'],
+  feed: ['feed'],
+  clean: ['clean'],
+  deodorize: ['deodorize'],
+  level: ['level'],
+};
+
+/**
+ * A pet device's buttons' glyphs: a meal (the feeder's own, which joins the set with the family's chunk), a clean (the
+ * drum turning), a deodorizing, a levelling.
+ */
+const PET_GLYPH: Readonly<Record<'feed' | 'clean' | 'deodorize' | 'level', GlyphName>> = {
+  feed: 'feeder' as GlyphName,
+  clean: 'refresh',
+  deodorize: 'sparkle',
+  level: 'sliders',
 };
 
 /** Whether the appliance takes any of `actions`, as its integration lets a card. */
@@ -4623,4 +5022,52 @@ function kindFor(config: ApplianceCardConfig, hass: HomeAssistant | undefined): 
     roles: config.roles,
   });
   return found.verdict && 'kind' in found.verdict ? found.verdict.kind : 'appliance';
+}
+
+/**
+ * The rows editor's list of a whole card's rows (or a pet device's tiles): what each says, its name, icon, colour and
+ * actions.
+ */
+function rowsList(key: 'rows' | 'tiles', title: MessageKey): RowsListSpec {
+  return {
+    key,
+    idKey: 'key',
+    also: ['entity'],
+    title,
+    keys: ['key', 'entity', 'name', 'icon', 'color', 'tap_action', 'hold_action'],
+    computeLabel: (schema) =>
+      schema.name === 'key' ? editorWord('appliance.editor_row') : undefined,
+    picker: rowPicker(),
+    read: (raw) =>
+      typeof raw === 'string' || (typeof raw === 'object' && raw !== null)
+        ? { ...rowEntry(raw as string | RowEntry) }
+        : null,
+    schema: [
+      rowPicker(),
+      entityField(undefined, 'entity', false),
+      nameIconFields(),
+      accentField(),
+      actionField('tap_action'),
+      actionField('hold_action'),
+    ],
+  };
+}
+
+/** Whether the editor's card is a pet device's (its tiles and its days are offered then). */
+const petCard = (data: Readonly<Record<string, unknown>>, hass?: HomeAssistant): boolean =>
+  isPet(kindFor(data as ApplianceCardConfig, hass));
+
+/** A feeder's meal amount for the editor, where it takes one from the card: the card's, else its smallest. */
+function feedAmountOf(
+  config: ApplianceCardConfig,
+  hass: HomeAssistant | undefined,
+  kind: ApplianceKind,
+): { feed_amount?: number } {
+  if (kind !== 'feeder' || !hass) return {};
+  const feed = findAppliance(hass, config).entities.roles.feed;
+  const amount =
+    feed && !feed.startsWith('button.')
+      ? mealAmount(stateOf(hass, feed), config.feed_amount)
+      : undefined;
+  return amount === undefined ? {} : { feed_amount: amount };
 }

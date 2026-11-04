@@ -724,5 +724,8 @@
     "fuudo[ _-]?purosessaa",
     "fuudo[ _-]?purosessa",
     "sumuujii"
-  ]
+  ],
+  "appliance_feeder": ["給餌器", "フィーダー", "kyuujiki", "kyujiki"],
+  "appliance_fountain": ["給水器", "ウォーターファウンテン", "kyuusuiki", "kyusuiki"],
+  "appliance_litter_box": ["猫トイレ", "ねこトイレ", "ネコトイレ", "自動トイレ", "neko[ _-]?toire"]
 }

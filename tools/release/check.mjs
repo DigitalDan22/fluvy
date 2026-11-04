@@ -55,15 +55,17 @@ const BUDGETS = {
   devices: 36_864,
   // the cameras' sheet: fetched when a Cameras card's round opens it
   'cameras-sheet': 8192,
-  // the appliances family: the washer, the dryer, the dishwasher and their kin, plug mode, their English. 55 KB since
-  // 2026-11-04 (Hungarian's naming words, #110; the integration's own entities before a helper on its device and Off
-  // while the power switch is, #91; Home Connect's programmes Home Assistant has no words for); 54 since 2026-10-20 (the
+  // the appliances family: the washer, the dryer, the dishwasher and their kin, plug mode, the pet devices, their
+  // English. 62 KB since 2026-11-04 (#112, 6.5 KB: the feeder, the fountain and the litter box — their PetKit and
+  // PETLIBRO keys, consumables and commands, their meals read from a plan, their tiles, their names in every language);
+  // 55 KB since 2026-11-04 (Hungarian's naming words, #110; the integration's own entities before a helper on its
+  // device and Off while the power switch is, #91; Home Connect's programmes Home Assistant has no words for); 54 since 2026-10-20 (the
   // Japanese naming words, in kanji, kana and romaji, #54); 53 since 2026-10-19 (the #47 judge's
   // fixes: rows that never repeat the hero, the head's picture chosen by the whole name, a fridge on a plug that never
   // finishes and asks before it is switched off, the compact line's shorter forms); 51 since the reporter's LG house
   // (#47: LG's older integration read by its device sensor's attributes, both LG integrations known by their
   // signatures, LG's states and cycles worded in eight languages); 48 before
-  appliances: 56_320,
+  appliances: 63_488,
   // the appliances' pictures: one product drawing a kind, fetched by the first card that draws one
   'appliance-art': 32_768,
   // the automations family: the card, the schedule model and its store. 20 KB since 1.9 (the family's English, the
@@ -104,10 +106,11 @@ const BUDGETS = {
   pages: 12_288,
   activity: 32_768,
   history: 16_384,
-  // 28 KB since 1.11 (the date picker's, the units', a row's real last change's, the web page's and the Items card's
+  // 29 KB since 2026-11-04 (the pet devices' words, #112: Hungarian, the longest, came within 120 B of 28); 28 KB
+  // since 1.11 (the date picker's, the units', a row's real last change's, the web page's and the Items card's
   // words, the flights preset's among them: Japanese, the longest, went 320 B over 24); 24 since 1.9 (the appliances'
   // and the alerts' words), 20 in 1.8, 16 before
-  lang: 28_672,
+  lang: 29_696,
   'rolldown-runtime': 2048,
   'loader.js': 4096,
 };
