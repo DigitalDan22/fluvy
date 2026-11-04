@@ -20,7 +20,7 @@ import {
   type RowEnd,
 } from './rows.js';
 
-import { MAX_CHIPS, selectPiece, selectValue } from './select.js';
+import { asChips, offered, ownLabel, selectEnd, selectPiece } from './select.js';
 
 import { rowStyles } from './styles.js';
 
@@ -30,7 +30,7 @@ import { ITEM_ALIASES, type AliasSpec, type RowStyle } from '../shared/config.js
 import { HeadFit, SWITCH_SLOT } from '../energy/head.js';
 import { toneOf } from '../shared/colour.js';
 import { chipRows, EMPTY, HEAD, ROW } from '../shared/heights.js';
-import { emptyPanel, idsOf, itemsOf, listOf, type EmptyList } from '../shared/lists.js';
+import { emptyPanel, itemsOf, listOf, type EmptyList } from '../shared/lists.js';
 import { TemplateTexts } from '../shared/templates.js';
 
 const s = strings('helpers');
@@ -63,40 +63,45 @@ export interface HelperShape {
 /**
  * The card's height at a 360 column, for the automatic dashboard's columns. A helper by its kind, 16 under what is
  * above it: a number's field and its ruler (44 + 4 + 44; the field alone for a counter without a range, a boxed
- * number), a select's label and its chips (20 + 8 + rows of 44; a list past six options is a row), a text's label and
- * field (20 + 12 + 44; a 36 label with a second line), a switch, a button, a moment or a state as rows of 60 in one
- * group (16 above the group, not each row), a time's quick presets 56 under its row. The house says a number's range,
- * a select's options and a moment's date (`shapeOf`, read by `house-heights.ts`); where it is not there to say, a
- * ruler (a counter its field) and one row of three chips.
+ * number), a select's label and its chips (20 + 8 + rows of 44, in its row's words; a list past six options, or a row
+ * that says `display: dropdown`, is a row), a text's label and field (20 + 12 + 44; a 36 label with a second line), a
+ * switch, a button, a moment or a state as rows of 60 in one group (16 above the group, not each row), a time's quick
+ * presets 56 under its row. The house says a number's range, a select's options and a moment's date (`shapeOf`, read
+ * by `house-heights.ts`); where it is not there to say, a ruler (a counter its field) and the row's own options, else
+ * one row of three chips.
  */
 export function helpersHeight(
   config: HelpersCardConfig,
   shapeOf?: (id: string, domain: string) => HelperShape,
 ): number {
-  const rows = idsOf(config.rows ?? config.entities);
+  // by position, as the card lays them out: the same select twice (an oven's zones) is two rows of their own
+  const rows = itemsOf<HelperRowConfig>(config.rows ?? config.entities);
   if (!rows.length) return HEAD + EMPTY;
   // one number or counter and no title: the compact figure (see `compactNumber`)
-  if (rows.length === 1 && !config.title && /^(counter|number|input_number)\./.test(rows[0] ?? ''))
+  if (
+    rows.length === 1 &&
+    !config.title &&
+    /^(counter|number|input_number)\./.test(rows[0]!.entity)
+  )
     return 76;
-  const items = (config.rows ?? config.entities ?? []) as readonly (string | HelperRowConfig)[];
-  const itemOf = (id: string): HelperRowConfig | undefined =>
-    items.find((item): item is HelperRowConfig => typeof item !== 'string' && item.entity === id);
   let height = 64 + 20;
   let group = 0; // rows in the open group of list rows
-  for (const id of rows) {
+  for (const row of rows) {
+    const id = row.entity;
     const domain = id.slice(0, id.indexOf('.'));
     const shape = shapeOf?.(id, domain) ?? {};
     let block = 0;
     if (NUMBERS.has(domain)) {
       block = (shape.ranged ?? domain !== 'counter') ? 92 : 44;
     } else if (SELECTS.has(domain)) {
-      const options = shape.options ?? [];
-      if (options.length <= MAX_CHIPS) {
+      const options = offered(shape.options ?? [], row.options);
+      if (asChips(row, options.length || 3)) {
         const style = config.options_style === 'chips' ? 'chips' : 'full';
-        block = 28 + chipRows(options.length ? options : ['a', 'b', 'c'], style) * 44;
+        const labels = options.map((option) => ownLabel(row, option) ?? option);
+        block = 28 + chipRows(labels.length ? labels : ['a', 'b', 'c'], style) * 44;
       }
     } else if (TEXTS.has(domain)) {
-      block = (itemOf(id)?.secondary ? 36 : 20) + 12 + 44;
+      block = (row.secondary ? 36 : 20) + 12 + 44;
     }
     if (block) {
       height += 16 + block;
@@ -107,7 +112,7 @@ export function helpersHeight(
     group += 1;
     height += ROW;
     // a time with quick presets: the chips under its row
-    if (MOMENTS.has(domain) && !shape.dated && itemOf(id)?.presets?.length) height += 56;
+    if (MOMENTS.has(domain) && !shape.dated && row.presets?.length) height += 56;
   }
   return height;
 }
@@ -216,8 +221,8 @@ export class FluvyHelpersCard extends Card<HelpersCardConfig> {
         return [{ name, button: momentValue(host, view, row), capped: true }];
       if (!SELECTS.has(domain))
         return [{ name, end: this.ruler.width('fv-row__value', plainValue(host, view)) }];
-      const value = selectValue(host, view);
-      return value === undefined ? [] : [{ name, button: value }];
+      const end = selectEnd(host, view, row);
+      return end ? [{ ...end, name }] : [];
     });
     return rowsKeepIcon(this.ruler, this.contentWidth, ends);
   }

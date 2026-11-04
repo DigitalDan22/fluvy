@@ -3,6 +3,7 @@ import { glyph } from '../glyphs.js';
 import { haptic } from '../haptics.js';
 import { reducedMotion } from '../motion.js';
 import { baseStyles } from '../styles/index.js';
+import { textWidth } from '../text.js';
 import { zoomOf } from './zoom.js';
 
 /** One thing the field may hold: its value, the label the list shows, a hint beside it ("Portuguese (Brazil)"). */
@@ -24,6 +25,8 @@ const PAD = 4;
 const GAP = 4;
 const MARGIN = 16;
 const MIN_WIDTH = 192;
+/** A row's sides (12 each), the gap and the check beside its name (menus.css): an anchored list holds its names. */
+const ROW_CHROME = 12 + 12 + 12 + 20;
 /**
  * Every row up to nine is shown whole; from ten, eight rows and 24 of the ninth — the cut row says there is more, and
  * the menu stays on the 4 grid (half a row would not: the language menu has ten rows since Japanese).
@@ -60,6 +63,12 @@ const topLayer = (): boolean =>
  *
  * `value`, `options` (`SelectOption`), `label` (the accessible name; the visible label sits above, as a field's
  * does), `disabled`, `on-page` (the card's fill on the page's ground), `open` (reflected). Event: `fluvy-change`.
+ *
+ * `anchored`: no field of its own — the list opens from the element just before it (a card row's value button, which
+ * keeps its face and opens it by setting `open`), from that element's end where it ends its row (else its start), and
+ * is as wide as its longest name (192 at the least). The element lays out as nothing (`display: contents`); while the
+ * list is open it has the focus and the keys, and gives the focus back to the button as it closes; the button says
+ * whether it is open (`aria-expanded`, written here).
  */
 export class FluvySelect extends LitElement {
   static override styles = [
@@ -68,6 +77,19 @@ export class FluvySelect extends LitElement {
       :host {
         display: block;
         min-width: 0;
+      }
+
+      :host([anchored]) {
+        display: contents;
+      }
+
+      /* an anchored list at its row's end unfolds from its button's end */
+      .fv-menu[data-align='end'] {
+        transform-origin: top right;
+      }
+
+      .fv-menu[data-align='end'][data-placement='above'] {
+        transform-origin: bottom right;
       }
     `,
   ];
@@ -79,6 +101,7 @@ export class FluvySelect extends LitElement {
     disabled: { type: Boolean, reflect: true },
     onPage: { type: Boolean, attribute: 'on-page' },
     open: { type: Boolean, reflect: true },
+    anchored: { type: Boolean, reflect: true },
   };
 
   declare value: string;
@@ -87,6 +110,7 @@ export class FluvySelect extends LitElement {
   declare disabled: boolean;
   declare onPage: boolean;
   declare open: boolean;
+  declare anchored: boolean;
 
   /** The row the keys or the pointer are on (−1: none). */
   private active = -1;
@@ -111,6 +135,7 @@ export class FluvySelect extends LitElement {
     this.disabled = false;
     this.onPage = false;
     this.open = false;
+    this.anchored = false;
   }
 
   /* ---------- the model ---------- */
@@ -170,8 +195,11 @@ export class FluvySelect extends LitElement {
     this.hide();
   }
 
+  /** Closes; an anchored list that had the focus gives it back to its button. */
   private hide(): void {
     this.open = false;
+    if (this.anchored && this.shadowRoot?.activeElement === this.menu)
+      this.anchor?.focus({ preventScroll: true });
   }
 
   private left(): void {
@@ -192,15 +220,21 @@ export class FluvySelect extends LitElement {
     return this.renderRoot.querySelector<HTMLButtonElement>('.fv-select');
   }
 
+  /** The button an anchored list opens from: the element before this one. */
+  private get anchor(): HTMLElement | null {
+    return this.anchored ? (this.previousElementSibling as HTMLElement | null) : null;
+  }
+
   /**
    * Where the menu goes, from the field's box and the viewport — set before it is shown, so it never jumps: under
    * the field when its rows fit there, else on the side with more room, as tall as that side allows (the rest
-   * scrolls; one row at the least), as wide as the field. Written only when something differs from the last time.
-   * The menu is laid out in the field's own pixels (a zoomed view zooms its top layer too), so the field's box and
-   * the viewport are read in those.
+   * scrolls; one row at the least), as wide as the field — an anchored list as its longest name, from its button's
+   * edge on the side of the row the button stands on. Written only when something differs from the last time. The
+   * menu is laid out in the field's own pixels (a zoomed view zooms its top layer too), so the field's box and the
+   * viewport are read in those.
    */
   private place(menu: MenuElement): void {
-    const field = this.field;
+    const field = this.anchor ?? this.field;
     if (!field) return;
     const zoom = zoomOf(field);
     const visual = field.getBoundingClientRect();
@@ -208,6 +242,7 @@ export class FluvySelect extends LitElement {
       top: visual.top / zoom,
       bottom: visual.bottom / zoom,
       left: visual.left / zoom,
+      right: visual.right / zoom,
       width: visual.width / zoom,
     };
     const viewport = { width: window.innerWidth / zoom, height: window.innerHeight / zoom };
@@ -218,19 +253,36 @@ export class FluvySelect extends LitElement {
     const room = placement === 'below' ? below : above;
     const height = Math.max(PAD * 2 + ROW, Math.min(wanted, room));
     const top = placement === 'below' ? rect.bottom + GAP : rect.top - GAP - height;
-    const width = Math.max(MIN_WIDTH, Math.min(rect.width, viewport.width - MARGIN * 2));
-    const left = Math.max(MARGIN, Math.min(rect.left, viewport.width - MARGIN - width));
+    const width = Math.max(
+      MIN_WIDTH,
+      Math.min(this.anchored ? this.namesWidth() : rect.width, viewport.width - MARGIN * 2),
+    );
+    // an anchored list keeps to the side of its row its button stands on: a value at the row's end, its end
+    const row = this.anchored ? field.parentElement?.getBoundingClientRect() : undefined;
+    const end = row !== undefined && row.right - visual.right < visual.left - row.left;
+    const from = end ? rect.right - width : rect.left;
+    const left = Math.max(MARGIN, Math.min(from, viewport.width - MARGIN - width));
     const box = [top, left, width, height].map((n) => `${Math.round(n)}px`);
-    const placed = `${placement} ${box.join(' ')}`;
+    const placed = `${placement} ${end ? 'end' : 'start'} ${box.join(' ')}`;
     if (placed === this.placed) return;
     this.placed = placed;
     this.placement = placement;
     menu.dataset['placement'] = placement;
+    menu.dataset['align'] = end ? 'end' : 'start';
     const [t, l, w, h] = box as [string, string, string, string];
     menu.style.setProperty('--fv-menu-top', t);
     menu.style.setProperty('--fv-menu-left', l);
     menu.style.setProperty('--fv-menu-w', w);
     menu.style.setProperty('--fv-menu-h', h);
+  }
+
+  /** What an anchored list needs to hold its longest name whole: the name at 15/500, its row's sides, gap and check. */
+  private namesWidth(): number {
+    const widest = Math.max(
+      0,
+      ...this.options.map((option) => textWidth(option.label, { size: 15, weight: 500 })),
+    );
+    return Math.ceil(PAD * 2 + ROW_CHROME + widest);
   }
 
   /** While the menu is open its field may still be moving (a card animating in, a font landing): it follows. */
@@ -306,6 +358,15 @@ export class FluvySelect extends LitElement {
     }
   };
 
+  /**
+   * An anchored list's keys, on the list: the field's, kept from the page (a letter that finds a name never reaches
+   * Home Assistant's shortcuts); Tab goes on, as the focus does.
+   */
+  private readonly onMenuKey = (event: KeyboardEvent): void => {
+    this.onKey(event);
+    if (event.key !== 'Tab') event.stopPropagation();
+  };
+
   /** The next name starting with what has been typed; the same letter again goes on to the next such name. */
   private typeAhead(letter: string): void {
     const now = performance.now();
@@ -346,7 +407,11 @@ export class FluvySelect extends LitElement {
   private readonly onOutside = (event: Event): void => {
     if (!this.open) return;
     if (event.type === 'scroll' && this.menu && event.composedPath().includes(this.menu)) return;
-    if (event.type === 'pointerdown' && event.composedPath().includes(this)) return;
+    // a tap on an anchored list's button is the button's to answer (its click sets `open`)
+    const path = event.composedPath();
+    const anchor = this.anchor;
+    if (event.type === 'pointerdown' && (path.includes(this) || (anchor && path.includes(anchor))))
+      return;
     this.hide();
   };
 
@@ -391,7 +456,11 @@ export class FluvySelect extends LitElement {
    * again on its way out, it stays where it is and plays its entrance once more.
    */
   protected override updated(changed: PropertyValues<this>): void {
-    if (changed.has('open')) this.listen(this.open);
+    if (changed.has('open')) {
+      this.listen(this.open);
+      if (changed.get('open') !== undefined || this.open)
+        this.anchor?.setAttribute('aria-expanded', String(this.open));
+    }
     const menu = this.menu;
     if (!menu) return;
     if (this.open) {
@@ -404,6 +473,8 @@ export class FluvySelect extends LitElement {
         } catch {
           /* no top layer here: the menu stays where it is, fixed under its field */
         }
+        // an anchored list takes the keys from its button while it is open
+        if (this.anchored) menu.focus({ preventScroll: true });
       }
       menu
         .querySelector<HTMLElement>(`[data-index="${this.active}"]`)
@@ -424,16 +495,23 @@ export class FluvySelect extends LitElement {
 
   /* ---------- markup ---------- */
 
-  /** The list; out of the tab order (a list that scrolls — eleven languages — would otherwise be a tab stop of its own). */
+  /**
+   * The list; out of the tab order (a list that scrolls — eleven languages — would otherwise be a tab stop of its own).
+   * An anchored one holds the focus while open, and says which row the keys are on itself: its active row is its ring.
+   */
   private renderMenu(): TemplateResult {
+    const anchored = this.anchored;
     return html`<div
       id="menu"
       class="fv-menu"
       tabindex="-1"
+      data-own-focus
       role="listbox"
       popover=${topLayer() ? 'manual' : nothing}
       aria-label=${this.label}
+      aria-activedescendant=${anchored && this.open && this.active >= 0 ? `opt-${this.active}` : nothing}
       data-placement=${this.placement}
+      @keydown=${anchored ? this.onMenuKey : nothing}
     >
       ${this.options.map((option, index) => {
         const selected = option.value === this.value;
@@ -461,6 +539,8 @@ export class FluvySelect extends LitElement {
   }
 
   protected override render(): TemplateResult {
+    const list = this.open || this.leaving ? this.renderMenu() : nothing;
+    if (this.anchored) return html`${list}`;
     const chosen = this.options[this.selected];
     return html`<button
         class="fv-field fv-select ${this.onPage ? 'fv-field--on-page' : ''}"
@@ -478,7 +558,7 @@ export class FluvySelect extends LitElement {
         <span class="fv-field__input fv-select__value">${chosen?.label ?? this.value}</span>
         ${glyph('down')}
       </button>
-      ${this.open || this.leaving ? this.renderMenu() : nothing}`;
+      ${list}`;
   }
 }
 

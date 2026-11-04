@@ -169,6 +169,115 @@ const keysSeen = (page) => page.evaluate(() => window.__keys.splice(0));
   await page.close();
 }
 
+/* ---------- helpers: a long select opens Fluvy's dropdown from its value (#96) ---------- */
+{
+  const page = await open('inputs');
+  const card = frame(page, 'Helpers · selects as dropdowns').locator('fluvy-helpers-card');
+  const oven = card.locator('.in-value[aria-haspopup]').first();
+  const list = card.locator('fluvy-select').first().locator('.fv-menu');
+  check(
+    'a 30-option select is a row whose value says it opens a list',
+    (await oven.textContent()).trim() === 'Hot air' &&
+      (await oven.getAttribute('aria-expanded')) === 'false',
+  );
+  await oven.click();
+  await list.waitFor();
+  await page.waitForTimeout(250);
+  const opened = await list.evaluate((menu) => ({
+    top: menu.matches(':popover-open'),
+    focused: menu.getRootNode().activeElement === menu,
+    rows: menu.querySelectorAll('.fv-menu__item').length,
+    chosen: menu.querySelector('[aria-selected="true"]')?.textContent.trim(),
+  }));
+  check(
+    'a tap opens the list in the top layer, with the keys, its option checked',
+    opened.top &&
+      opened.focused &&
+      opened.rows === 30 &&
+      opened.chosen === 'Hot air' &&
+      (await oven.getAttribute('aria-expanded')) === 'true',
+    JSON.stringify(opened),
+  );
+  const box = await list.boundingBox();
+  const pill = await oven.boundingBox();
+  check(
+    'the list unfolds 4 under its value and ends where the value ends',
+    Math.abs(box.y - (pill.y + pill.height + 4)) <= 1 &&
+      Math.abs(box.x + box.width - (pill.x + pill.width)) <= 1,
+    `${JSON.stringify(box)} ${JSON.stringify(pill)}`,
+  );
+  await keysSeen(page);
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('h');
+  const leaked = await keysSeen(page);
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(250);
+  let c = await calls(page);
+  check(
+    'the keys choose (a letter finds the next name), one select_option, and never reach the window',
+    leaked.length === 0 &&
+      c.length === 1 &&
+      c[0].s === 'select.select_option' &&
+      c[0].d.option === 'hot_air_grilling',
+    `${JSON.stringify(leaked)} ${JSON.stringify(c.map((x) => x.d))}`,
+  );
+  check(
+    '…the value says it at once, and the focus is back on it',
+    (await oven.textContent()).trim() === 'Hot air grilling' &&
+      (await oven.evaluate((el) => el.getRootNode().activeElement === el)),
+  );
+  await reset(page);
+
+  await oven.click();
+  await list.waitFor();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(250);
+  check(
+    'Escape closes it with nothing sent',
+    (await calls(page)).length === 0 && (await list.count()) === 0,
+  );
+  await oven.click();
+  await list.waitFor();
+  await oven.click();
+  await page.waitForTimeout(250);
+  check('a second tap on the value closes it', (await list.count()) === 0);
+  await oven.click();
+  await list.waitFor();
+  await page.mouse.click(4, 4);
+  await page.waitForTimeout(250);
+  check('a tap elsewhere closes it', (await list.count()) === 0);
+
+  // a part of the options, in the row's order: chips that send its option
+  const zone = card.locator('.fv-chip').filter({ hasText: 'Pizza setting' });
+  await zone.click();
+  await page.waitForTimeout(80);
+  c = await calls(page);
+  check(
+    "a row's own options are chips in its order, sending their option",
+    c.length === 1 && c[0].d.option === 'pizza_setting',
+    JSON.stringify(c.map((x) => x.d)),
+  );
+  await reset(page);
+
+  // the dropdown in the row's words: a click on an option chooses it
+  const picture = card.locator('.in-value[aria-haspopup]').nth(1);
+  check("the value is said in the row's words", (await picture.textContent()).trim() === 'AI Mode');
+  await picture.click();
+  const menu = card.locator('fluvy-select').nth(1).locator('.fv-menu');
+  await menu.waitFor();
+  await page.waitForTimeout(250);
+  await menu.locator('.fv-menu__item').filter({ hasText: 'Movie' }).click();
+  await page.waitForTimeout(250);
+  c = await calls(page);
+  check(
+    'a tap on an option chooses it',
+    c.length === 1 && c[0].s === 'select.select_option' && c[0].d.option === 'movie',
+    JSON.stringify(c.map((x) => x.d)),
+  );
+  await page.close();
+}
+
 /* ---------- to-do ---------- */
 {
   const page = await open('inputs');

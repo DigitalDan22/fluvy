@@ -670,6 +670,30 @@ entity: media_player.living_room
 max: 60
 ```
 
+## Helpers
+
+The helpers card draws each helper as its own control: a number with its figure, − and + and ruler, a text as its
+field, a switch, a date or a time, a button as a row, and a select as its options in chips. A select of more than six
+options is a row whose value opens Fluvy's own dropdown (#96): the list unfolds under the value, the option chosen
+checked; a tap, or the arrow keys and Enter (a letter finds the next name), chooses one (`select_option`), and Escape
+or a tap elsewhere closes it with nothing changed. A select's row may offer a part of its options, in the order it
+names them (`options`: of those the select lists — a few of an oven's thirty modes for its upper zone), name an
+option in words of its own where its integration left it raw (`labels`), and be chips or a dropdown whatever its
+length (`display`: `auto`, the default — chips up to six — `chips` or `dropdown`). Options it names that the select
+does not list are left out; where it names none the select lists, it offers them all.
+
+```yaml
+type: custom:fluvy-helpers-card
+rows:
+  - entity: select.oven_cooking_mode
+    name: Upper zone
+    options: [conventional, fan_conventional, grill, pizza] # four of thirty: chips, in this order
+  - entity: select.tv_picture_mode
+    display: dropdown
+    labels:
+      gen_589828: AI Mode
+```
+
 <!-- generated:cards -->
 
 ## Everyday
@@ -727,7 +751,7 @@ max: 60
 | **Scene** | `custom:fluvy-scene-card` | One scene, script or button as a tile with a done state. | `subtitle`, `show_subtitle` | `meta` → `subtitle` |
 | **Scenes** | `custom:fluvy-scenes-card` | A grid of scenes and scripts. | `title`, `columns` (`auto`, `1`, `2`), `tint` (`on`, `always`), `empty_text`, `hide_empty`, `scenes` (a list: `entity`, `name`, `icon`, `subtitle`, `color`, `tap_action`) | `entities` → `scenes` |
 | **Actions** | `custom:fluvy-actions-card` | Buttons and scripts as a list with run buttons. | `title`, `subtitle`, `columns`, `empty_text`, `hide_empty`, `rows` (a list: `entity`, `name`, `icon`, `secondary`) | `entities` → `rows` |
-| **Helpers** | `custom:fluvy-helpers-card` | Numbers, selects, texts, booleans and dates as their own controls. | `title`, `subtitle`, `options_style` (`full`, `chips`), `empty_text`, `hide_empty`, `rows` (a list: `entity`, `name`, `icon`, `secondary`, `since`, `presets`) | `entities` → `rows` |
+| **Helpers** | `custom:fluvy-helpers-card` | Numbers, selects, texts, booleans and dates as their own controls. | `title`, `subtitle`, `options_style` (`full`, `chips`), `empty_text`, `hide_empty`, `rows` (a list: `entity`, `name`, `icon`, `secondary`, `since`, `presets`, `options`, `display`, `labels`) | `entities` → `rows` |
 | **To-do** | `custom:fluvy-todo-card` | A to-do list: check, add, hide the done. | `subtitle`, `show_completed`, `show_add`, `show_due` | `title` → `name`, `hide_completed` → `show_completed` |
 | **Timer** | `custom:fluvy-timer-card` | A timer counting down live, with pause and cancel. | `show_gauge`, `show_actions` | — |
 | **Updates** | `custom:fluvy-updates-card` | Pending updates with install buttons and progress. | `title`, `subtitle`, `show_up_to_date`, `toggle`, `toggle_secondary`, `empty_text`, `hide_empty` | — |

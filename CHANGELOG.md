@@ -5,6 +5,19 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Visible on upgrade
+
+- The helpers card opens a select of more than six options in Fluvy's own dropdown, from the value at the end of its
+  row (a chevron beside it says so), where it opened Home Assistant's dialog: the keys, a letter to find a name, the
+  haptics' tick as one is chosen. An option too long to hold beside the name in a narrow column goes under it, as a
+  date does, where it ended in an ellipsis. Thanks to @rammium (#96).
+
+### Added
+
+- A select's row on the helpers card may offer a part of its options in its own order (`options`), name an option
+  in its own words (`labels`, for an option its integration left raw) and be chips or a dropdown whatever its length
+  (`display`), in YAML and in the editor. Thanks to @rammium (#96).
+
 ## [1.12.0] — 2026-11-04
 
 ### Visible on upgrade

@@ -13,6 +13,12 @@ export interface HelperRowConfig {
   since?: string;
   /** Quick-set chips under a time-only helper, as "HH:MM" (the sheet's Wake-up row). */
   presets?: readonly string[];
+  /** A select's options offered, in this order: those it lists (#96). */
+  options?: readonly string[];
+  /** A select's options in the owner's words (`gen_589828: AI Mode`), before Home Assistant's. */
+  labels?: Readonly<Record<string, string>>;
+  /** A select as chips or as a dropdown; `auto`: chips up to six options. */
+  display?: 'auto' | 'chips' | 'dropdown';
 }
 
 /**

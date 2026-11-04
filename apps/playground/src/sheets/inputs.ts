@@ -219,6 +219,66 @@ export const sheet: SheetSpec = {
         },
       ],
     },
+    // #96: a long select opens Fluvy's dropdown from its value; a row may offer a part of its options in its order,
+    // name an option in its own words, and be chips or a dropdown whatever its length
+    {
+      title: 'Helpers · selects as dropdowns',
+      cards: [
+        {
+          type: 'custom:fluvy-helpers-card',
+          title: 'Oven & TV',
+          rows: [
+            { entity: 'select.oven_mode', name: 'Oven', secondary: '30 modes' },
+            {
+              entity: 'select.oven_mode',
+              name: 'Upper zone',
+              secondary: '',
+              options: ['grill_large_area', 'hot_air', 'pizza_setting', 'top_bottom_heating'],
+            },
+            {
+              entity: 'select.tv_picture_mode',
+              secondary: '',
+              labels: { gen_589828: 'AI Mode', filmmaker_mode: 'Filmmaker' },
+            },
+            {
+              entity: 'select.tv_picture_mode',
+              name: 'TV picture',
+              display: 'dropdown',
+              labels: { gen_589828: 'AI Mode' },
+            },
+            { entity: 'select.washer_programme', display: 'chips', secondary: '' },
+          ],
+        },
+      ],
+    },
+    {
+      title: 'Helpers · dropdowns, half a section',
+      cards: [
+        {
+          type: 'custom:fluvy-helpers-card',
+          title: 'Oven',
+          cols: 6,
+          rows: [
+            { entity: 'select.oven_mode', name: 'Mode' },
+            { entity: 'select.oven_ghost', name: 'Lower zone' },
+          ],
+        },
+        {
+          type: 'custom:fluvy-helpers-card',
+          title: 'Picture',
+          cols: 6,
+          rows: [
+            {
+              entity: 'select.tv_picture_mode',
+              name: 'Mode',
+              display: 'dropdown',
+              labels: { gen_589828: 'AI Mode' },
+            },
+            { entity: 'input_select.zone' },
+          ],
+        },
+      ],
+    },
     // a list without its composer, its due dates or its ticked items
     {
       title: 'To-do · bare',
@@ -534,6 +594,76 @@ const STATES = (): SheetSpec['states'] => [
         'Basement',
         'Studio',
         'Terrace',
+      ],
+    },
+  ],
+  [
+    'select.oven_mode',
+    'hot_air',
+    {
+      friendly_name: 'Oven mode',
+      options: [
+        'conventional',
+        'fan_conventional',
+        'hot_air',
+        'hot_air_eco',
+        'hot_air_grilling',
+        'top_bottom_heating',
+        'top_bottom_heating_eco',
+        'bottom_heating',
+        'pizza_setting',
+        'slow_cook',
+        'intensive_heat',
+        'keep_warm',
+        'preheat_ovenware',
+        'frozen_heatup_special',
+        'desiccation',
+        'defrost',
+        'proof',
+        'hot_air_30_steam',
+        'hot_air_60_steam',
+        'hot_air_80_steam',
+        'hot_air_100_steam',
+        'sabbath_programme',
+        'grill_large_area',
+        'grill_small_area',
+        'steam',
+        'reheat',
+        'sous_vide',
+        'dough_proving',
+        'plate_warming',
+        'descaling',
+      ],
+    },
+  ],
+  // a zone of the same oven, gone from the house: its row keeps its anatomy, its value a dash
+  [
+    'select.oven_ghost',
+    'unavailable',
+    { friendly_name: 'Oven lower zone', options: ['grill', 'hot_air', 'steam'] },
+  ],
+  [
+    'select.tv_picture_mode',
+    'gen_589828',
+    {
+      friendly_name: 'Picture mode',
+      options: ['standard', 'dynamic', 'movie', 'filmmaker_mode', 'gen_589828'],
+    },
+  ],
+  [
+    'select.washer_programme',
+    'cotton',
+    {
+      friendly_name: 'Washer programme',
+      options: [
+        'cotton',
+        'eco_40_60',
+        'synthetics',
+        'mix',
+        'wool',
+        'delicates',
+        'quick_15',
+        'rinse',
       ],
     },
   ],

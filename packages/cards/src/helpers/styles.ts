@@ -101,4 +101,24 @@ export const rowStyles = css`
     text-overflow: ellipsis;
     font-variant-numeric: tabular-nums;
   }
+
+  /* a value its list opens from (#96): a 16 chevron 4 after its words, turned over while the list is open; the list
+     itself lays out as nothing, before and after its file arrives */
+  .in-value[aria-haspopup] {
+    gap: 4px;
+  }
+
+  .in-value[aria-haspopup] > svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 180ms var(--fv-ease, ease);
+  }
+
+  .in-value[aria-expanded='true'] > svg {
+    transform: rotate(180deg);
+  }
+
+  [anchored] {
+    display: contents;
+  }
 `;

@@ -1,4 +1,4 @@
-import type { LovelaceConfigForm } from '@fluvy/core';
+import type { HaFormSchemaItem, LovelaceConfigForm } from '@fluvy/core';
 import type { BaseKey } from '../shared/base.js';
 import {
   actionFields,
@@ -44,22 +44,53 @@ export const keys = configKeys<HelpersCardConfig>()([
   ...EMPTY_KEYS,
 ]);
 
+/** What every row shows: its entity, name and icon, its line and where its last change is read from. */
+const ROW = [entityField(), nameIconFields(), textField('secondary'), sinceField()];
+/** A time's quick-set times. */
+const PRESETS: HaFormSchemaItem = {
+  name: 'presets',
+  selector: { select: { multiple: true, custom_value: true, options: [] } },
+};
+/** A select's (#96): the options it offers in their order (of those it lists), chips or a dropdown, and its words. */
+const SELECT = [
+  { name: 'options', selector: { select: { multiple: true, reorder: true, options: [] } } },
+  selectField('display', ['auto', 'chips', 'dropdown']),
+  { name: 'labels', selector: { object: {} } },
+];
+const OTHER_ROW = [...ROW, PRESETS];
+const SELECT_ROW = [...ROW, ...SELECT];
+
 export const lists: readonly RowsListSpec[] = [
   {
     key: 'rows',
     alias: 'entities',
     title: 'editor.rows',
-    keys: ['entity', 'name', 'icon', 'secondary', 'since', 'presets'],
-    schema: [
-      entityField(),
-      nameIconFields(),
-      textField('secondary'),
-      sinceField(),
-      {
-        name: 'presets',
-        selector: { select: { multiple: true, custom_value: true, options: [] } },
-      },
+    keys: [
+      'entity',
+      'name',
+      'icon',
+      'secondary',
+      'since',
+      'presets',
+      'options',
+      'display',
+      'labels',
     ],
+    schema: [...ROW, PRESETS, ...SELECT],
+    schemaOf: (item) =>
+      /^(input_)?select\./.test(String(item['entity'])) ? SELECT_ROW : OTHER_ROW,
+    // a row's `since` offers the house's timestamp sensors, a select's `options` what it lists, in its words
+    choices: (item, hass) => {
+      const state = hass?.states[String(item['entity'])];
+      const listed: unknown = state?.attributes['options'];
+      return {
+        ...sinceChoices(item, hass),
+        options: (Array.isArray(listed) ? listed : []).map((option) => {
+          const value = String(option);
+          return { value, label: (state && hass?.formatEntityState?.(state, value)) || value };
+        }),
+      };
+    },
   },
 ];
 
@@ -80,6 +111,7 @@ export function getConfigForm(): LovelaceConfigForm {
       emptyFields(),
       actionFields(),
     ],
-    ...formLabels({ options_style: 'editor.options_style' }),
+    // a select row's `display` is the card's `options_style` said of one select: its options as chips or a dropdown
+    ...formLabels({ options_style: 'editor.options_style', display: 'editor.options_style' }),
   };
 }

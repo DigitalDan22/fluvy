@@ -307,4 +307,90 @@ describe('the dropdown', () => {
       delete (HTMLElement.prototype as { showPopover?: unknown }).showPopover;
     }
   });
+
+  /*
+   * #96: a card row's value opens the list itself; the element draws no field, opens from the button before it, takes
+   * the keys while open and gives the focus back.
+   */
+  describe('anchored to a button before it', () => {
+    async function anchored(value = 'en') {
+      const row = document.createElement('div');
+      const button = document.createElement('button');
+      button.setAttribute('aria-expanded', 'false');
+      const node = document.createElement('fluvy-select');
+      node.anchored = true;
+      node.value = value;
+      node.options = LANGUAGES;
+      node.label = 'Language';
+      row.append(button, node);
+      document.body.append(row);
+      await node.updateComplete;
+      const changes: string[] = [];
+      node.addEventListener('fluvy-change', (event) =>
+        changes.push((event as CustomEvent<SelectChangeDetail>).detail.value),
+      );
+      const menu = () => node.shadowRoot!.querySelector<HTMLElement>('.fv-menu');
+      const key = async (name: string) => {
+        const event = new KeyboardEvent('keydown', {
+          key: name,
+          bubbles: true,
+          composed: true,
+          cancelable: true,
+        });
+        menu()!.dispatchEvent(event);
+        await node.updateComplete;
+        return event;
+      };
+      return { node, button, changes, menu, key };
+    }
+
+    it('draws no field of its own, and lays out as nothing', async () => {
+      const { node, menu } = await anchored();
+      expect(node.shadowRoot!.querySelector('.fv-select')).toBeNull();
+      expect(menu()).toBeNull();
+      expect(node.hasAttribute('anchored')).toBe(true);
+    });
+
+    it('opens with the focus and the keys, says so on its button, and gives the focus back', async () => {
+      const { node, button, menu, key, changes } = await anchored('es');
+      button.focus();
+      node.open = true;
+      await node.updateComplete;
+      expect(button.getAttribute('aria-expanded')).toBe('true');
+      expect(node.shadowRoot!.activeElement).toBe(menu());
+      expect(menu()!.getAttribute('aria-activedescendant')).toBe('opt-3');
+      const down = await key('ArrowDown');
+      expect(menu()!.getAttribute('aria-activedescendant')).toBe('opt-4');
+      await key('Enter');
+      expect(changes).toEqual(['fr']);
+      expect(node.open).toBe(false);
+      expect(button.getAttribute('aria-expanded')).toBe('false');
+      expect(document.activeElement).toBe(button);
+      expect(down.defaultPrevented).toBe(true);
+    });
+
+    it('keeps its keys from the page, Escape too, and closes with nothing changed', async () => {
+      const { node, button, key, changes } = await anchored();
+      const heard: string[] = [];
+      document.addEventListener('keydown', (event) => heard.push(event.key));
+      node.open = true;
+      await node.updateComplete;
+      await key('d');
+      await key('Escape');
+      expect(heard).toEqual([]);
+      expect(node.open).toBe(false);
+      expect(changes).toEqual([]);
+      expect(document.activeElement).toBe(button);
+    });
+
+    it("leaves its button's own tap to the button (which closes it), and closes on a tap elsewhere", async () => {
+      const { node, button } = await anchored();
+      node.open = true;
+      await node.updateComplete;
+      button.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true }));
+      expect(node.open).toBe(true);
+      document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      expect(node.open).toBe(false);
+    });
+  });
 });
