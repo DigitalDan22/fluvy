@@ -210,6 +210,25 @@ describe('what an appliance is', () => {
       ['ホットサンドメーカー', 'sandwich_maker'],
       ['ミキサー', 'blender'],
       ['ワインセラー', 'wine'],
+      // Slovak, with its accents or as an entity id carries it
+      ['Práčka', 'washer'],
+      ['Práčka so sušičkou', 'washer_dryer'],
+      ['Umývačka riadu', 'dishwasher'],
+      ['Sušička', 'dryer'],
+      ['Mikrovlnná rúra', 'microwave'],
+      ['Rúra', 'oven'],
+      ['Indukčná doska', 'hob'],
+      ['Digestor', 'hood'],
+      ['Vinotéka', 'wine'],
+      ['Chladnička', 'fridge'],
+      ['chladnicka_kuchyna', 'fridge'],
+      ['Mraznička', 'freezer'],
+      ['Kávovar', 'coffee'],
+      ['Rýchlovarná kanvica', 'kettle'],
+      ['Teplovzdušná fritéza', 'air_fryer'],
+      ['Dávkovač krmiva', 'feeder'],
+      ['Fontána pre zvieratá', 'fountain'],
+      ['Mačacia toaleta', 'litter_box'],
     ];
     for (const [name, kind] of names) expect(byWords(name), name).toEqual({ kind, by: 'words' });
     // a name that says no kind says none: a solar panel is no hob ("placa"), a brand ("marca") no freezer ("arca")
@@ -220,6 +239,8 @@ describe('what an appliance is', () => {
     // a word of another: a hood is not a "neighbourhood", a hob not a "hobby"
     expect(byWords('Neighbourhood lamp')).toBeUndefined();
     expect(byWords('Hobby room plug')).toBeUndefined();
+    // Slovak's cooling ("chladenie") is no fridge ("chladnička")
+    expect(byWords('Chladenie obývačka')).toBeUndefined();
   });
 
   it('never takes a vacuum, a charger, a hair dryer or what waits for 1.10 for an appliance', () => {

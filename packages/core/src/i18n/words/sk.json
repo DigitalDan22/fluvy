@@ -23,17 +23,30 @@
     "exterier",
     "veranda"
   ],
-  "solar": ["fotovolt", "solar", "fve", "menic", "invertor", "inverter", "solarne_panely"],
-  "grid": ["distribuc", "elektromer", "siet", "grid", "odber", "elektricka_siet"],
-  "grid_export": ["pretok", "export", "dodavka_do_siete", "prebytok", "vykup"],
+  "solar": ["fotovolt", "solar", "fve", "menic", "invertor", "inverter", "solarne[ _-]panely"],
+  "grid": ["distribuc", "elektromer", "siet", "grid", "odber", "elektricka[ _-]siet"],
+  "grid_export": ["pretok", "export", "dodavka[ _-]do[ _-]siete", "prebytok", "vykup"],
   "battery": ["bateria", "baterie", "akumulator", "ulozisko", "bess"],
-  "charger": ["wallbox", "nabijacka_auta", "ev_nabijacka", "nabijaci_bod", "nabijacia_stanica"],
-  "home": ["domacnost", "domov", "dom", "spotreba_domu", "celkova_spotreba", "odber_domu"],
-  "today": ["dnes", "denna", "denny", "denne", "denn", "za_den"],
+  "charger": [
+    "wallbox",
+    "nabijacka[ _-]auta",
+    "ev[ _-]nabijacka",
+    "nabijaci[ _-]bod",
+    "nabijacia[ _-]stanica"
+  ],
+  "home": [
+    "domacnost",
+    "domov",
+    "(^|[ _-])domu?([ _-]|$)",
+    "spotreba[ _-]domu",
+    "celkova[ _-]spotreba",
+    "odber[ _-]domu"
+  ],
+  "today": ["dnes", "denna", "denny", "denne", "denn(?!i)", "za[ _-]den"],
   "not_appliance": [
     "casovac",
     "dovolenka",
-    "detska_poistka",
+    "detska[ _-]poistka",
     "zamok",
     "uzamykanie",
     "povolene",
@@ -51,7 +64,7 @@
     "pohyb",
     "pritomnost",
     "bateria",
-    "stav_baterie",
+    "stav[ _-]baterie",
     "vykon",
     "energia",
     "prepinac",
@@ -63,7 +76,7 @@
     "dvere",
     "okno",
     "unik",
-    "unik_vody",
+    "unik[ _-]vody",
     "uroven"
   ],
   "place_noise": [
@@ -79,40 +92,50 @@
   "appliance_never": [
     "vysavac",
     "robot",
-    "roboticky_vysavac",
+    "roboticky[ _-]vysavac",
     "(^|[ _-])fen([ _-]|$)",
     "kulma",
-    "holiaci_strojcek",
-    "ohrevna_zasuvka"
+    "holiaci[ _-]strojcek",
+    "ohrevna[ _-]zasuvka"
   ],
   "appliance_washer_dryer": [
-    "pracka_so_susickou",
+    "pracka[ _-]so[ _-]susickou",
     "prackosusicka",
     "pracka[ _-]susicka",
-    "pranie_a_susenie"
+    "pranie[ _-]a[ _-]susenie"
   ],
-  "appliance_dishwasher": ["umyvacka_riadu", "umyvacka", "umyvanie_riadu"],
-  "appliance_washer": ["pracka", "pranie_bielizne"],
-  "appliance_dryer": ["susicka", "susenie_bielizne"],
-  "appliance_microwave": ["mikrovlnna_rura", "mikrovlnka", "mikrovln"],
-  "appliance_oven": ["peciaca_rura", "rura", "truba"],
-  "appliance_hob": ["varna_doska", "indukcna_doska", "indukcia", "varic"],
-  "appliance_hood": ["digestor", "odsavac_par"],
-  "appliance_wine": ["vinoteka", "chladnicka_na_vino", "vychladzovac_vina"],
-  "appliance_fridge": ["chladnicka", "chladnick", "chlad"],
+  "appliance_dishwasher": ["umyvacka[ _-]riadu", "umyvacka", "umyvanie[ _-]riadu"],
+  "appliance_washer": ["pracka", "pranie[ _-]bielizne"],
+  "appliance_dryer": ["susicka", "susenie[ _-]bielizne"],
+  "appliance_microwave": ["mikrovlnna[ _-]rura", "mikrovlnka", "mikrovln"],
+  "appliance_oven": ["peciaca[ _-]rura", "rura", "truba"],
+  "appliance_hob": ["varna[ _-]doska", "indukcna[ _-]doska", "indukcia", "varic"],
+  "appliance_hood": ["digestor", "odsavac[ _-]par"],
+  "appliance_wine": ["vinoteka", "chladnicka[ _-]na[ _-]vino", "vychladzovac[ _-]vina"],
+  "appliance_fridge": ["chladnicka", "chladnick"],
   "appliance_freezer": ["mraznicka", "mraznick"],
-  "appliance_coffee": ["kavovar", "kavovy_automat", "espresso"],
-  "appliance_kettle": ["rychlovarna_kanvica", "kanvica", "varic_vody"],
-  "appliance_air_fryer": ["teplovzdusna_friteza", "horkovzdusna_friteza", "friteza", "airfryer"],
-  "appliance_sandwich_maker": ["sendvicovac", "toastovac", "kontaktny_gril"],
-  "appliance_toaster": ["hriankovac"],
-  "appliance_blender": ["mixer", "stolovy_mixer", "tycovy_mixer", "smoothie_mixer"],
-  "appliance_feeder": ["krmidlo", "davkovac_krmiva", "automaticke_krmenie"],
-  "appliance_fountain": [
-    "fontana_pre_zvierata",
-    "napajacka",
-    "pitna_fontana",
-    "fontanka_pre_macky"
+  "appliance_coffee": ["kavovar", "kavovy[ _-]automat", "espresso"],
+  "appliance_kettle": ["rychlovarna[ _-]kanvica", "kanvica", "varic[ _-]vody"],
+  "appliance_air_fryer": [
+    "teplovzdusna[ _-]friteza",
+    "horkovzdusna[ _-]friteza",
+    "friteza",
+    "airfryer"
   ],
-  "appliance_litter_box": ["macacia_toaleta", "macacie_wc", "zachod_pre_macku", "macaci_zachod"]
+  "appliance_sandwich_maker": ["sendvicovac", "toastovac", "kontaktny[ _-]gril"],
+  "appliance_toaster": ["hriankovac"],
+  "appliance_blender": ["mixer", "stolovy[ _-]mixer", "tycovy[ _-]mixer", "smoothie[ _-]mixer"],
+  "appliance_feeder": ["krmidlo", "davkovac[ _-]krmiva", "automaticke[ _-]krmenie"],
+  "appliance_fountain": [
+    "fontana[ _-]pre[ _-]zvierata",
+    "napajacka",
+    "pitna[ _-]fontana",
+    "fontanka[ _-]pre[ _-]macky"
+  ],
+  "appliance_litter_box": [
+    "macacia[ _-]toaleta",
+    "macacie[ _-]wc",
+    "zachod[ _-]pre[ _-]macku",
+    "macaci[ _-]zachod"
+  ]
 }

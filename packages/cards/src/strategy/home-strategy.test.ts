@@ -49,6 +49,29 @@ const types = (cards: readonly { type: string }[]): string[] =>
   cards.map((c) => c.type.replace('custom:fluvy-', '').replace('-card', ''));
 
 describe('custom:fluvy-home strategy — a house named in Japanese', () => {
+  /** A power reading of that name. */
+  const power = (id: string, friendly_name: string) =>
+    [
+      id,
+      {
+        entity_id: id,
+        state: '100',
+        attributes: { friendly_name, device_class: 'power', unit_of_measurement: 'W' },
+        last_changed: '',
+        last_updated: '',
+        context: { id: '', parent_id: null, user_id: null },
+      },
+    ] as const;
+  /** A house of those readings, nothing else, in that language. */
+  const powerHouse = (states: ReadonlyArray<ReturnType<typeof power>>, language: string) =>
+    new HomeRegistry({
+      states: Object.fromEntries(states),
+      entities: {},
+      devices: {},
+      areas: {},
+      language,
+    } as never);
+
   it('reads a switch as a light by its kana or kanji, a garden as outdoors, a full-width name in ordinary width', () => {
     const registry = new HomeRegistry(
       house([
@@ -105,32 +128,17 @@ describe('custom:fluvy-home strategy — a house named in Japanese', () => {
   });
 
   it('names its energy readings’ roles: the sun, what is bought and sold, the battery, the charger, the house', () => {
-    const power = (id: string, friendly_name: string) =>
+    const registry = powerHouse(
       [
-        id,
-        {
-          entity_id: id,
-          state: '100',
-          attributes: { friendly_name, device_class: 'power', unit_of_measurement: 'W' },
-          last_changed: '',
-          last_updated: '',
-          context: { id: '', parent_id: null, user_id: null },
-        },
-      ] as const;
-    const registry = new HomeRegistry({
-      states: Object.fromEntries([
         power('sensor.taiyoukou', '太陽光発電 電力'),
         power('sensor.kaiden', '買電 電力'),
         power('sensor.baiden', '売電 電力'),
         power('sensor.chikudenchi', '蓄電池 電力'),
         power('sensor.ev_juudenki', 'EV充電器 電力'),
         power('sensor.katei', '家庭の消費電力'),
-      ]),
-      entities: {},
-      devices: {},
-      areas: {},
-      language: 'ja',
-    } as never);
+      ],
+      'ja',
+    );
     expect(findEnergyRoles(registry, null)).toMatchObject({
       solarPower: 'sensor.taiyoukou',
       gridPower: 'sensor.kaiden',
@@ -143,37 +151,34 @@ describe('custom:fluvy-home strategy — a house named in Japanese', () => {
   });
 
   it('never takes a bathroom for the house: "casa de banho" and "casa de baño" are rooms, "consumo da casa" is the house', () => {
-    const power = (id: string, friendly_name: string) =>
-      [
-        id,
-        {
-          entity_id: id,
-          state: '100',
-          attributes: { friendly_name, device_class: 'power', unit_of_measurement: 'W' },
-          last_changed: '',
-          last_updated: '',
-          context: { id: '', parent_id: null, user_id: null },
-        },
-      ] as const;
-    const house = (states: ReadonlyArray<ReturnType<typeof power>>, language: string) =>
-      new HomeRegistry({
-        states: Object.fromEntries(states),
-        entities: {},
-        devices: {},
-        areas: {},
-        language,
-      } as never);
     const bathrooms = [
       power('sensor.toalheiro_casa_de_banho_power', 'Toalheiro casa de banho'),
       power('sensor.calefactor_casa_de_bano_power', 'Calefactor casa de baño'),
     ];
-    expect(findEnergyRoles(house(bathrooms, 'pt-PT'), null).homePower).toBeUndefined();
+    expect(findEnergyRoles(powerHouse(bathrooms, 'pt-PT'), null).homePower).toBeUndefined();
     expect(
       findEnergyRoles(
-        house([...bathrooms, power('sensor.consumo_da_casa', 'Consumo da casa')], 'pt-PT'),
+        powerHouse([...bathrooms, power('sensor.consumo_da_casa', 'Consumo da casa')], 'pt-PT'),
         null,
       ).homePower,
     ).toBe('sensor.consumo_da_casa');
+  });
+
+  it('takes Slovak’s house as a word: a domestic water heater or a random plug is no "dom", "Spotreba domu" is the house', () => {
+    const others = [
+      power('sensor.domestic_hot_water_power', 'Domestic hot water'),
+      power('sensor.random_plug_power', 'Random plug'),
+    ];
+    expect(findEnergyRoles(powerHouse(others, 'sk'), null).homePower).toBeUndefined();
+    expect(
+      findEnergyRoles(
+        powerHouse([...others, power('sensor.spotreba_domu', 'Spotreba domu')], 'sk'),
+        null,
+      ).homePower,
+    ).toBe('sensor.spotreba_domu');
+    expect(findEnergyRoles(powerHouse([power('sensor.dom', 'Dom')], 'sk'), null).homePower).toBe(
+      'sensor.dom',
+    );
   });
 });
 
