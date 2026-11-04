@@ -115,6 +115,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   0.8 KB less on every page.
 - The bundle carries its Lit `html` literals without their indentation (each line break stays): 2.1 KB less on every
   page, and every chunk lighter. Every page of the playground draws the same box for box with them so.
+- The sources the Activity and History pages narrow to are `@fluvy/core/sources`, in the pages' chunk: 0.5 KB less
+  on every page.
 
 ## [1.12.0] — 2026-11-04
 

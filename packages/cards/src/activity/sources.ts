@@ -2,14 +2,13 @@
 
 import { html, nothing, type TemplateResult } from 'lit';
 
+import { resolveEntity, writeStored } from '@fluvy/core';
 import {
   countFilters,
   countTargets,
-  resolveEntity,
   type SourceFilters,
   type SourceTarget,
-  writeStored,
-} from '@fluvy/core';
+} from '@fluvy/core/sources';
 
 import { emptyState } from '@fluvy/ui';
 import { glide } from './rail.js';

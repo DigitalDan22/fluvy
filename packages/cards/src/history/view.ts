@@ -5,7 +5,6 @@
 // the page's words first: they are here before anything in its chunk says them
 import './english.js';
 import {
-  countTargets,
   dateFormat,
   ensureFonts,
   formatTime,
@@ -13,15 +12,18 @@ import {
   navigate,
   onWords,
   readStored,
-  sourceEntities,
   strings,
-  targetFromSearch,
   writeStored,
   type HomeAssistant,
   type KeyOf,
+} from '@fluvy/core';
+import {
+  countTargets,
+  sourceEntities,
+  targetFromSearch,
   type SourceFilters,
   type SourceTarget,
-} from '@fluvy/core';
+} from '@fluvy/core/sources';
 import {
   buildWindow,
   fetchWindowStatistics,

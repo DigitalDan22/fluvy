@@ -105,7 +105,7 @@ const BUDGETS = {
   // the icon set's other part: the appliances, the garage, the gate, the window and the door open (13 outlines)
   icons: 4096,
   // what the pages share: the date picker, the time field, the dropdown; the Activity and History pages' period,
-  // layers, CSV and chrome's sheet. 12 KB since 1.10 (those left core, 2.3 KB): 8 before
+  // sources, layers, CSV and chrome's sheet. 12 KB since 1.10 (those left core, 2.3 KB; the sources in 1.13): 8 before
   pages: 12_288,
   activity: 32_768,
   history: 16_384,

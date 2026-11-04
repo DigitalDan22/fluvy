@@ -4,7 +4,6 @@ import { html, LitElement, nothing, type PropertyValues, type TemplateResult } f
 import { keyed } from 'lit/directives/keyed.js';
 import {
   ACTIVITY_CARD,
-  countTargets,
   ensureFonts,
   formatDate,
   formatTime,
@@ -12,14 +11,17 @@ import {
   navigate,
   PREFERENCES_EVENT,
   readStored,
-  sourceEntities,
   strings,
-  targetFromSearch,
   type HomeAssistant,
   type KeyOf,
+} from '@fluvy/core';
+import {
+  countTargets,
+  sourceEntities,
+  targetFromSearch,
   type SourceFilters,
   type SourceTarget,
-} from '@fluvy/core';
+} from '@fluvy/core/sources';
 import {
   type ActivityEvent,
   type ActivityFilter,

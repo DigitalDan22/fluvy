@@ -2,7 +2,12 @@
  * The History page's floating layers: the dates (a popover on a desktop, a sheet on a phone) and the sources, both
  * the pages' shared ones — the picker and the drawer know nothing about this page.
  */
-import { countFilters, countTargets, type SourceFilters, type SourceTarget } from '@fluvy/core';
+import {
+  countFilters,
+  countTargets,
+  type SourceFilters,
+  type SourceTarget,
+} from '@fluvy/core/sources';
 import { emptyState } from '@fluvy/ui';
 import { html, type TemplateResult } from 'lit';
 

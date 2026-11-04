@@ -3,7 +3,8 @@ import { html, nothing, type TemplateResult } from 'lit';
 
 import { keyed } from 'lit/directives/keyed.js';
 
-import { countFilters, countTargets, type KeyOf } from '@fluvy/core';
+import { type KeyOf } from '@fluvy/core';
+import { countFilters, countTargets } from '@fluvy/core/sources';
 
 import { faceOf, firstFit, glyph, reducedMotion, sideScroll, zoomOf } from '@fluvy/ui';
 import type { ActivityModel } from './model.js';

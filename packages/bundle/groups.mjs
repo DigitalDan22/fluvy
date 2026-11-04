@@ -11,12 +11,12 @@ const LANGUAGE = /\/packages\/core\/src\/i18n\/locales\/([\w-]+)\.json/;
 /**
  * What the pages and the settings panel share and a dashboard never needs: the date picker both pages open, the
  * time field inside it, the dropdown; and what the Activity and History pages share — the period they show and its
- * range, their floating layers, the CSV they write, their chrome's sheet. Fetched with whichever of them opens first;
- * core must not reach for any of it (a static import from core would drag the chunk onto every dashboard —
- * `finish.mjs` refuses such a build).
+ * range, the sources they narrow to (`@fluvy/core/sources`), their floating layers, the CSV they write, their chrome's
+ * sheet. Fetched with whichever of them opens first; core must not reach for any of it (a static import from core
+ * would drag the chunk onto every dashboard — `finish.mjs` refuses such a build).
  */
 const PAGES =
-  /\/packages\/(cards\/src\/shared\/(date-picker|period|range|layers?|csv)\.ts|ui\/src\/(controls\/(time-field|select)|styles\/(generated\/)?page)\.ts)/;
+  /\/packages\/(cards\/src\/shared\/(date-picker|period|range|layers?|csv)\.ts|core\/src\/sources\.ts|ui\/src\/(controls\/(time-field|select)|styles\/(generated\/)?page)\.ts)/;
 
 /** What only the Activity page uses (all of its folder but the takeover, and its English): fetched the first time `/logbook` is opened. */
 const ACTIVITY =

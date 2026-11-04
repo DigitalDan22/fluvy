@@ -5,7 +5,8 @@
 import { emptyState, glyph } from '@fluvy/ui';
 import { html, nothing, type TemplateResult } from 'lit';
 
-import { countFilters, countTargets, goBack } from '@fluvy/core';
+import { goBack } from '@fluvy/core';
+import { countFilters, countTargets } from '@fluvy/core/sources';
 import { describePeriod } from '../shared/period.js';
 import { dayRange, sameRange } from '../shared/range.js';
 

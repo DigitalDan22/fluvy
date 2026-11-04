@@ -8,8 +8,8 @@ import {
   navigate,
   type EntityView,
   type KeyOf,
-  type SourceTarget,
 } from '@fluvy/core';
+import type { SourceTarget } from '@fluvy/core/sources';
 import type { ActivityCause, ActivityItem } from '@fluvy/core/activity';
 import { glyph, textWidth } from '@fluvy/ui';
 import { changeOf } from './rows.js';

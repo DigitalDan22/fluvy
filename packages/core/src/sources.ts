@@ -1,3 +1,8 @@
+/*
+ * The sources the Activity and History pages narrow to: a target as Home Assistant's pickers and links say it, the
+ * entities it holds, the filters a person set. Imported as `@fluvy/core/sources`, never through the package's index:
+ * it travels in the pages' chunk, which no dashboard loads.
+ */
 import { areaOf } from './areas.js';
 import { domainOf } from './entity.js';
 import type { HomeAssistant } from './ha/types.js';
