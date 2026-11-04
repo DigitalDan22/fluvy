@@ -2312,6 +2312,7 @@
     "state_refreshing": "Rinfresco",
     "state_cooking": "Cottura",
     "state_cleaning": "Pulizia",
+    "state_light_on": "Luce accesa",
     "cycle_turbo": "Turbo",
     "cycle_heavy": "Intensivo",
     "cycle_auto": "Auto",

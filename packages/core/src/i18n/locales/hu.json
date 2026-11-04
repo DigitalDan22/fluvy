@@ -1414,6 +1414,7 @@
     "state_refreshing": "Frissítés",
     "state_cooking": "Főzés",
     "state_cleaning": "Tisztítás",
+    "state_light_on": "Világítás bekapcsolva",
     "cycle_turbo": "Turbó",
     "cycle_heavy": "Intenzív",
     "cycle_auto": "Automata",

@@ -1837,7 +1837,9 @@ dashboards' bands — and change only their hero and their words.
   buttons, texts and switches are pinned from their source as Home Assistant's own are.
 - **What it is doing**: a feeder feeds while PetKit's flag says so; a litter box's work state is folded as every
   appliance's (cleaning, levelling, dumping at work; a clean paused for a cat paused, its reason in Home Assistant's
-  words); a device that says it is not reached (PetKit's device status, PETLIBRO's Wi-Fi flag) is out of reach;
+  words); PetKit's box with its light on is at rest ("Light on", a word its translations lack), and only a clean, a
+  dump and its maintenance pause: a calibration, a reset, a levelling or a deodorizing is at work with no pause
+  (1.13.1); a device that says it is not reached (PetKit's device status, PETLIBRO's Wi-Fi flag) is out of reach;
   PetKit's error message (not its "No error") and PETLIBRO's dispenser fault are a failure. What is out — the food, the
   water, the litter, a full waste bin — is said in the head in the warning's ink ("Refill the food"); a feeder at rest
   counts down to its next meal ("Next meal in 1 h 13 min", its status's word the shorter form), on the minute's clock.

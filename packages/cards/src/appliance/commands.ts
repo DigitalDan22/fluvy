@@ -2,7 +2,7 @@ import type { HassEntity, HomeAssistant, MessageKey } from '@fluvy/core';
 import type { ApplianceKind } from './kinds.js';
 import { stateOf } from './refs.js';
 import { COMMUNITY_PLATFORMS, knownPlatform, type ApplianceRoles } from './roles.js';
-import { busy, type ApplianceStatus } from './status.js';
+import { busy, pausable, type ApplianceStatus } from './status.js';
 import { setterFor, type Setter } from './zones.js';
 
 /*
@@ -333,9 +333,10 @@ const PET_ACTIONS = ['feed', 'clean', 'deodorize', 'level'] as const;
 /**
  * The commands an appliance can take now, a cell each, in the order a card lays them out (start or resume, pause,
  * stop, power, light, then a pet device's meal, clean, deodorizing and levelling): start at rest or done, resume
- * while paused, pause while it runs, stop while it has a job (or waits to start), switch off unless off, on when off,
- * the light always, a pet device's own while it is reached. Each with what it asks first (stopping; switching off one
- * not at rest, or what keeps food cold; a meal, a clean, a levelling) and why it cannot be done now.
+ * while paused, pause while it runs a job that pauses (`pausable`), stop while it has a job (or waits to start), switch
+ * off unless off, on when off, the light always, a pet device's own while it is reached. Each with what it asks first
+ * (stopping; switching off one not at rest, or what keeps food cold; a meal, a clean, a levelling) and why it cannot
+ * be done now.
  */
 export function commandsOf(input: CommandInput): Command[] {
   const { hass, platform, roles, status, kind, amount } = input;
@@ -344,7 +345,8 @@ export function commandsOf(input: CommandInput): Command[] {
   const wanted: Array<readonly [CommandName, Action]> = [];
   if (status === 'paused') wanted.push(['start', 'resume']);
   else if (status === 'idle' || status === 'finished') wanted.push(['start', 'start']);
-  if (running) wanted.push(['pause', 'pause']);
+  if (running && pausable(stateOf(hass, roles.state)?.state, platform, kind))
+    wanted.push(['pause', 'pause']);
   if (busy(status) || status === 'scheduled') wanted.push(['stop', 'stop']);
   if (status !== 'offline') wanted.push(['power', status === 'off' ? 'power_on' : 'power_off']);
   wanted.push(['light', 'light']);

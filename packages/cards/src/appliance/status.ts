@@ -187,8 +187,9 @@ const NOTHING = new Set(['', 'unknown', 'n/a']);
 
 /**
  * The status one state word says. hOn's numbers by its own table (a dishwasher's differ); Miele's "reserved" is a
- * status of its own, at rest; anything not idle, finished or off that the appliance says while it has a job is
- * running — a washer washing, rinsing or spinning, an oven cooking, a kettle heating. An empty word says nothing.
+ * status of its own, at rest, and so is PetKit's lit litter box; anything not idle, finished or off that the appliance
+ * says while it has a job is running — a washer washing, rinsing or spinning, an oven cooking, a kettle heating. An
+ * empty word says nothing.
  */
 export function statusOfWord(
   state: string | undefined,
@@ -200,6 +201,8 @@ export function statusOfWord(
   if (platform === 'hon' && /^\d$/.test(word))
     return (kind === 'dishwasher' ? HON_DISHWASHER : HON)[word] ?? 'idle';
   if (platform === 'miele' && word === 'reserved') return 'idle';
+  // PetKit's litter box with its light on (utils.py map_work_state, work mode 7) does no job
+  if (platform === 'petkit' && word === 'light') return 'idle';
   for (const [status, words] of STATUSES) if (words.includes(word)) return status;
   // a job paused and why (PetKit's litter box: "cleaning_paused_pet_entered")
   if (/(^|_)paused(_|$)/.test(word)) return 'paused';
@@ -256,6 +259,20 @@ export function applianceStatus(input: StatusInput): ApplianceStatus {
 /** A job is under way: there is time to count, progress to draw and something to pause or stop. */
 export const busy = (status: ApplianceStatus): boolean =>
   status === 'running' || status === 'preheating' || status === 'paused' || status === 'attention';
+
+/** PetKit's litter box's processes: the work states that say when they paused (utils.py map_work_state). */
+const PETKIT_PROCESSES = /^(cleaning|dumping|maintenance)$/;
+
+/**
+ * Whether the job a state word says can be paused: any, but PetKit's litter box's, which pauses only its processes (a
+ * clean, a dump, its maintenance), never a calibration, a reset, a levelling or a deodorizing.
+ */
+export const pausable = (
+  state: string | undefined,
+  platform?: string,
+  kind?: ApplianceKind,
+): boolean =>
+  platform !== 'petkit' || kind !== 'litter_box' || PETKIT_PROCESSES.test(wordOf(state));
 
 /* ---------- the steps of a cycle ---------- */
 

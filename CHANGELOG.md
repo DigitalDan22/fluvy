@@ -65,6 +65,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   that names only its roles shows them, where it showed nothing (#98).
 - An appliance card whose `controls` names one it does not know (a typo written by hand) draws the others, where the
   card failed to draw.
+- A PetKit litter box whose light is on is at rest and says "Light on", where it said "light" and ran with a Pause
+  that had nothing to pause; one calibrating, resetting itself, levelling or deodorizing offers no Pause either: only a
+  clean, a dump and its maintenance pause.
 
 ### Development
 

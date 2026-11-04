@@ -261,6 +261,25 @@ describe('what it is doing', () => {
     expect(statusOfWord('delay_paused')).toBe('scheduled');
   });
 
+  it('knows a litter box lit, calibrating or resetting itself: at rest with its light on, busy with nothing to pause', () => {
+    // utils.py map_work_state: its light (work mode 7) is no job; a calibration (5), a reset (3), a levelling (4) and a
+    // clean's own reset (its process at 3) say no pause; only a clean, a dump and its maintenance say they paused
+    const at = (word: string) => {
+      const hass = house({ 'sensor.katzenklo_state': { state: word } });
+      return readAppliance(hass, findAppliance(hass, { device: 'pk-litter' }), {}, NOW);
+    };
+    const actions = (word: string): string[] => at(word).commands.map((c) => c.action);
+    expect(statusOfWord('light', 'petkit')).toBe('idle');
+    expect(at('light')).toMatchObject({ status: 'idle', word: 'Light on' });
+    expect(actions('light')).not.toContain('pause');
+    for (const word of ['calibrating', 'resetting', 'resetting_device', 'leveling']) {
+      expect(at(word).status, word).toBe('running');
+      expect(actions(word), word).not.toContain('pause');
+    }
+    for (const word of ['cleaning', 'dumping', 'maintenance'])
+      expect(actions(word), word).toContain('pause');
+  });
+
   it('feeds while its flag says so, and is out of reach where it says it is not reached', () => {
     const feeding = house({ 'binary_sensor.futterautomat_feeding': { state: 'on' } });
     expect(status('pk-feeder', feeding)).toMatchObject({
@@ -570,6 +589,23 @@ describe('the card', () => {
         el.getAttribute('data-action'),
       ),
     ).toEqual(['clean', 'deodorize', 'level', 'start']);
+  });
+
+  it('offers its pause while a clean is under way, never while only its light is on or it calibrates itself', async () => {
+    const primary = async (word: string): Promise<string | null | undefined> => {
+      const hass = house({
+        'sensor.katzenklo_state': { state: word },
+        'button.katzenklo_action_pause': { state: 'unknown' },
+      });
+      const card = await mount({ device: 'pk-litter', show_controls: true }, hass);
+      return card.shadowRoot
+        .querySelector('[data-action="start"], [data-action="pause"]')
+        ?.getAttribute('data-action');
+    };
+    expect(await primary('cleaning')).toBe('pause');
+    expect(await primary('light')).toBe('start');
+    expect(await primary('calibrating')).toBe('start');
+    expect(await primary('resetting_device')).toBe('start');
   });
 
   it('declares its height from its config: the standard slot, its tiles two a row', () => {

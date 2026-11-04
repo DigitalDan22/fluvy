@@ -2312,6 +2312,7 @@
     "state_refreshing": "Opfrissen",
     "state_cooking": "Bereiden",
     "state_cleaning": "Reinigen",
+    "state_light_on": "Licht aan",
     "cycle_turbo": "Turbo",
     "cycle_heavy": "Intensief",
     "cycle_auto": "Auto",

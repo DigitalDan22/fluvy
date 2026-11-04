@@ -16,8 +16,9 @@ if (!customElements.get('fluvy-appliances-card'))
  * own fixtures). Each frame's house holds them alone (the other sheets' lists never see them), its states moved to the
  * moment the frame shows: at rest, low (food out, water low, a filter and a desiccant due, the litter short and its
  * drawer full), failed or paused, at work, out of reach; then every layout, at a phone's width, half a section and a
- * desktop's band, the cards made one's own, and the list of the house's pet devices. The plan's times are the
- * browser's own here (the house's zone left out), so the next meal is at 23:00 on the sheet's evening anywhere.
+ * desktop's band, the cards made one's own, the list of the house's pet devices, and a litter box at work it cannot
+ * pause. The plan's times are the browser's own here (the house's zone left out), so the next meal is at 23:00 on the
+ * sheet's evening anywhere.
  */
 
 const now = NOW.getTime();
@@ -29,6 +30,8 @@ const WORDS: Readonly<Record<string, string>> = {
   idle: 'Idle',
   cleaning: 'Cleaning',
   cleaning_paused_pet_entered: 'Cleaning paused - Pet entered',
+  calibrating: 'Calibrating',
+  resetting_device: 'Resetting Device',
   IDLE: 'Idle',
   RUNNING: 'Running',
 };
@@ -166,6 +169,25 @@ const four = (
 
 const OUT = Object.assign({}, ...FOUR.map(unavailable)) as Record<string, Partial<HassEntity>>;
 
+/**
+ * PetKit's litter box at a work state with no pause in it: its light on (a word its translations lack: the card's
+ * own), calibrating, resetting itself after a clean. Whole with its buttons, compact and as a row.
+ */
+const litter = (title: string, state: string): FrameSpec => ({
+  title,
+  hass: pets({
+    ...REST,
+    'sensor.katzenklo_state': { state, last_changed: at(-1) },
+    'button.katzenklo_action_pause': { state: 'unknown' },
+    'button.katzenklo_scoop': { state: 'unavailable' },
+  }),
+  cards: [
+    card('pk-litter', { show_controls: true }),
+    card('pk-litter', { variant: 'compact' }),
+    card('pk-litter', { variant: 'row' }),
+  ],
+});
+
 export const sheet: SheetSpec = {
   states: [],
   frames: [
@@ -242,5 +264,8 @@ export const sheet: SheetSpec = {
         },
       ],
     },
+    litter('Pets · a litter box lit', 'light'),
+    litter('Pets · a litter box calibrating', 'calibrating'),
+    litter('Pets · a litter box resetting itself', 'resetting_device'),
   ],
 };

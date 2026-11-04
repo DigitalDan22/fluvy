@@ -2312,6 +2312,7 @@
     "state_refreshing": "Rafraîchissement",
     "state_cooking": "Cuisson",
     "state_cleaning": "Nettoyage",
+    "state_light_on": "Lumière allumée",
     "cycle_turbo": "Turbo",
     "cycle_heavy": "Intensif",
     "cycle_auto": "Auto",

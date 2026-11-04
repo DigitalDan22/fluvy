@@ -2312,6 +2312,7 @@
     "state_refreshing": "Refrescando",
     "state_cooking": "Cozinhando",
     "state_cleaning": "Limpando",
+    "state_light_on": "Luz acesa",
     "cycle_turbo": "Turbo",
     "cycle_heavy": "Intensivo",
     "cycle_auto": "Auto",

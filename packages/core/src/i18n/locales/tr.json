@@ -2312,6 +2312,7 @@
     "state_refreshing": "Tazeleme",
     "state_cooking": "Pişirme",
     "state_cleaning": "Temizlik",
+    "state_light_on": "Işık açık",
     "cycle_turbo": "Turbo",
     "cycle_heavy": "Yoğun",
     "cycle_auto": "Otomatik",
