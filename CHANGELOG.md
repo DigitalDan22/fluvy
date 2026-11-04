@@ -117,6 +117,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   page, and every chunk lighter. Every page of the playground draws the same box for box with them so.
 - The sources the Activity and History pages narrow to are `@fluvy/core/sources`, in the pages' chunk: 0.5 KB less
   on every page.
+- Copying a text (the wall's address) is the settings panel's own (`panel/clipboard.ts`), its only reader: 0.2 KB
+  less on every page.
 
 ## [1.12.0] — 2026-11-04
 

@@ -2,7 +2,6 @@ import {
   type CardLanguage,
   areaOf,
   clock12,
-  copyText,
   dayPeriods,
   DEVICE_ZOOMS,
   type HomeAssistant,
@@ -84,6 +83,7 @@ import {
   type StringKey,
   TRANSLATING_URL,
 } from './model.js';
+import { copyText } from './clipboard.js';
 
 /** One rhythm for every choice inside a card: 8 between cells on a phone, 12 on a wide panel. */
 export const gap = (ctx: PanelContext): number => (ctx.wide ? 12 : 8);

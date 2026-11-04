@@ -5,7 +5,6 @@ export * from './lists.js';
 export * from './layout-heights.js';
 export * from './format.js';
 export * from './storage.js';
-export * from './clipboard.js';
 export * from './actions.js';
 export * from './motion.js';
 export * from './history/series.js';
