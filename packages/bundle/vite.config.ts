@@ -7,10 +7,36 @@ const { version, license } = JSON.parse(
   readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
 ) as { version: string; license: string };
 
+/** A tagged template's static part, as the parser gives it: where its raw text starts and ends. */
+interface Quasi {
+  readonly start: number;
+  readonly end: number;
+}
+
+/** A node of the parser's tree, as far as a tagged template is told from the rest. */
+interface Node {
+  readonly type?: string;
+  readonly tag?: { readonly type: string; readonly name?: string };
+  readonly quasi?: { readonly quasis: readonly Quasi[] };
+}
+
+/** The static parts of every template tagged `tag` in a module's syntax tree, one list a template. */
+function taggedQuasis(node: unknown, tag: string, found: (readonly Quasi[])[] = []) {
+  if (Array.isArray(node)) for (const child of node) taggedQuasis(child, tag, found);
+  else if (node && typeof node === 'object') {
+    const { type, tag: name, quasi } = node as Node;
+    if (type === 'TaggedTemplateExpression' && name?.type === 'Identifier' && name.name === tag)
+      found.push(quasi!.quasis);
+    for (const child of Object.values(node)) taggedQuasis(child, tag, found);
+  }
+  return found;
+}
+
 /**
  * Lit `css` literals are written for reading (Prettier lays them out rule by rule); the bundle carries them
  * compact. Only their static text changes — comments go, whitespace runs become one space, none is kept
- * beside `{`, `}` or `;` — never an interpolation, and only in fluvy's own sources.
+ * beside `{`, `}` or `;`, none opens or closes the literal — never an interpolation, and only in fluvy's own
+ * sources. The literals are found by the parser, so a `.css` named in a comment or a string is never taken for one.
  */
 function compactCssLiterals(): Plugin {
   const compact = (text: string): string =>
@@ -23,13 +49,18 @@ function compactCssLiterals(): Plugin {
     transform(code, id) {
       if (!id.includes('/packages/') || id.includes('/node_modules/') || !code.includes('css`'))
         return null;
-      const out = code.replace(/\bcss`((?:[^`\\]|\\.)*)`/g, (_whole, body: string) => {
-        const parts = body.split(/(\$\{[^}]*\})/);
-        return `css\`${parts
-          .map((part) => (part.startsWith('${') ? part : compact(part)))
-          .join('')
-          .trim()}\``;
-      });
+      const edits = taggedQuasis(this.parse(code), 'css').flatMap((quasis) =>
+        quasis.map(({ start, end }, i) => {
+          let text = compact(code.slice(start, end));
+          if (i === 0) text = text.trimStart();
+          if (i === quasis.length - 1) text = text.trimEnd();
+          return { start, end, text };
+        }),
+      );
+      let out = code;
+      // from the last part back, so every earlier part's offsets still hold
+      for (const { start, end, text } of edits.sort((a, b) => b.start - a.start))
+        out = out.slice(0, start) + text + out.slice(end);
       return { code: out, map: null };
     },
   };

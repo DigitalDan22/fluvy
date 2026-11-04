@@ -108,6 +108,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   and row and in the appliances card's tiles and whole cards, a long name ending in its ellipsis beside it. Thanks to
   @rammium (#103).
 
+### Development
+
+- The bundle finds its Lit `css` literals with the parser, where a pattern took a `.css` named in a comment for the
+  start of one and left the calendar card's rules and the Activity page's layers as written: they are carried compact,
+  0.8 KB less on every page.
+
 ## [1.12.0] — 2026-11-04
 
 ### Visible on upgrade
