@@ -1,4 +1,4 @@
-import { stateText, strings, type LovelaceGridOptions } from '@fluvy/core';
+import { plural, stateText, strings, type LovelaceGridOptions } from '@fluvy/core';
 import { forgetTextWidths, sheetStyles } from '@fluvy/ui';
 import { nothing, type CSSResultGroup, type PropertyValues, type TemplateResult } from 'lit';
 import { Card, type CardEditor } from '../shared/base.js';
@@ -375,7 +375,7 @@ export class FluvyCalendarCard extends Card<CalendarCardConfig> {
     if (!out.length || out.length === ids.length) return '';
     return out.length === 1
       ? s(this.hass, 'one_unavailable', { name: this.entity(out[0]).name })
-      : s(this.hass, 'some_unavailable', { count: out.length });
+      : plural(this.hass, 'calendar.some_unavailable', out.length, { count: out.length });
   }
 
   /* ---------- what the views may do ---------- */

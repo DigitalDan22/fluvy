@@ -84,7 +84,7 @@ export function upcomingView(ctx: ViewContext): TemplateResult {
         icon: 'list',
         tone: headTone(ctx),
         title: ctx.config.title ?? words.t('calendar.upcoming'),
-        sub: headSub(ctx, [words.t('calendar.next_days', { count: days })], ctx.width - 57),
+        sub: headSub(ctx, [words.count('calendar.next_days', days)], ctx.width - 57),
       })}
       ${
         broken ??

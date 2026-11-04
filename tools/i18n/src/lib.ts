@@ -117,9 +117,102 @@ export const placeholders = (text: string): string[] =>
 
 const isWords = (namespace: string): boolean => namespace === 'words';
 
+/** A count's form: its key and the CLDR category the suffix names (`devices_one`, `devices_few`). */
+const FORM = /^(.+)_(zero|one|two|few|many|other)$/;
+
+/** The categories English's rules give a whole number: what its counts are written in. */
+const ENGLISH_FORMS = new Set(['one', 'other']);
+
+/**
+ * A table's counts: each key said with a number in its forms by number, `plural()`'s families. `devices_one` with the
+ * bare `devices` (the other form) is a count of any number; `days_other` alone, one English says only of two or more.
+ * Each maps to its other form and the least number it is said of.
+ */
+export function counts(
+  table: Table,
+): Map<string, { readonly other: string; readonly from: number }> {
+  const found = new Map<string, { readonly other: string; readonly from: number }>();
+  for (const key of Object.keys(table)) {
+    const [, base, category] = FORM.exec(key) ?? [];
+    if (!base || !ENGLISH_FORMS.has(category ?? '') || found.has(base)) continue;
+    found.set(base, {
+      other: `${base}_other` in table ? `${base}_other` : base,
+      from: `${base}_one` in table ? 0 : 2,
+    });
+  }
+  return found;
+}
+
+/**
+ * The categories a language's rules give the whole numbers from `from` to 1000, each with the first number it gives:
+ * the forms a count needs. A million's `many` (French, Italian, Portuguese, Spanish) and a fraction's (Slovak) are
+ * never written: a house counts its things in ones.
+ */
+export function reached(language: string, from: number): Map<string, number> {
+  const rules = new Intl.PluralRules(language);
+  const first = new Map<string, number>();
+  for (let n = from; n <= 1000; n++) {
+    const category = rules.select(n);
+    if (!first.has(category)) first.set(category, n);
+  }
+  return first;
+}
+
+/**
+ * What a language's counts hold beside English's keys: the forms its rules have that English does not write (Slovak's
+ * `_few`), each with the English form whose placeholders it keeps (the other form); and every form it needs, English's
+ * or its own, with the number that needs it.
+ */
+function countForms(
+  language: string,
+  table: Table,
+): { readonly forms: Map<string, string>; readonly needed: Map<string, number> } {
+  const categories = new Intl.PluralRules(language).resolvedOptions().pluralCategories;
+  const forms = new Map<string, string>();
+  const needed = new Map<string, number>();
+  for (const [base, { other, from }] of counts(table)) {
+    for (const category of categories)
+      if (category !== 'other' && !(`${base}_${category}` in table))
+        forms.set(`${base}_${category}`, other);
+    for (const [category, n] of reached(language, from))
+      needed.set(category === 'other' ? other : `${base}_${category}`, n);
+  }
+  return { forms, needed };
+}
+
+/**
+ * English's counts as `plural()` reads them: a form only in the categories English says (`one`, `other`), and every
+ * count with its other form.
+ */
+export function englishCounts(english: Catalogue): Problem[] {
+  const problems: Problem[] = [];
+  for (const [namespace, table] of Object.entries(english)) {
+    if (isWords(namespace)) continue;
+    for (const key of Object.keys(table)) {
+      const category = FORM.exec(key)?.[2];
+      if (category && !ENGLISH_FORMS.has(category))
+        problems.push({
+          level: 'error',
+          language: 'en',
+          text: `${namespace}.${key}: a form English never says (its counts are _one and the other form)`,
+        });
+    }
+    for (const [base, { other }] of counts(table as Table))
+      if (!(other in table))
+        problems.push({
+          level: 'error',
+          language: 'en',
+          text: `${namespace}.${base}_one: a count without its other form (${base})`,
+        });
+  }
+  return problems;
+}
+
 /**
  * A language against English: every key present (missing ones are warnings, or errors when `strict`), none that
- * English lacks, none empty, the same placeholders, every word category present.
+ * English lacks, none empty, the same placeholders, every word category present; and every count in each form the
+ * language's rules give a whole number (a missing one is always an error: the count would say another number's words),
+ * its own forms beside English's allowed.
  */
 export function compare(
   language: string,
@@ -150,16 +243,20 @@ export function compare(
       continue;
     }
     const keys = Object.keys(table);
-    for (const key of keys) {
+    const { forms, needed } = countForms(language, table as Table);
+    const ownForms = [...forms.keys()].filter((form) => needed.has(form) || form in own);
+    for (const key of [...keys, ...ownForms]) {
       const text = (own as Table)[key];
       if (text === undefined) {
-        problem(strict ? 'error' : 'warning', `${namespace}.${key}: missing`);
+        const n = needed.get(key);
+        if (n !== undefined) problem('error', `${namespace}.${key}: missing, the form for ${n}`);
+        else problem(strict ? 'error' : 'warning', `${namespace}.${key}: missing`);
         continue;
       }
       if (typeof text !== 'string' || text.trim() === '')
         problem('error', `${namespace}.${key}: empty`);
       else {
-        const expected = placeholders((table as Table)[key] ?? '');
+        const expected = placeholders((table as Table)[forms.get(key) ?? key] ?? '');
         const found = placeholders(text);
         if (expected.join(',') !== found.join(','))
           problem(
@@ -169,7 +266,8 @@ export function compare(
       }
     }
     for (const key of Object.keys(own))
-      if (!(key in table)) problem('error', `${namespace}.${key}: not in English`);
+      if (!(key in table) && !forms.has(key))
+        problem('error', `${namespace}.${key}: not in English`);
     const order = keys.filter((k) => k in own);
     const ownOrder = Object.keys(own).filter((k) => k in table);
     if (order.join('\n') !== ownOrder.join('\n'))

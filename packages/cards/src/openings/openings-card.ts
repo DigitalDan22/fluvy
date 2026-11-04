@@ -2,6 +2,7 @@ import {
   isActive,
   isUsable,
   numberAttr,
+  plural,
   stateText,
   strings,
   type ActionConfig,
@@ -239,6 +240,16 @@ export class FluvyOpeningsCard extends Card<OpeningsCardConfig> {
     );
   }
 
+  /** "3 sensors", "2 rooms": a count of the card's own. */
+  private count(key: 'sensors' | 'rooms', n: number): string {
+    return plural(this.hass, `openings.${key}`, n, { count: n });
+  }
+
+  /** What is alerting, counted: "2 open" when every one of them is an opening, else "2 alerts" (a leak, smoke). */
+  private alerts(n: number, openOnly: boolean): string {
+    return plural(this.hass, openOnly ? 'openings.open' : 'openings.alerts', n, { count: n });
+  }
+
   /** The state, said once: in the row's own words for it, else in those the device class deserves. */
   private valueText(view: EntityView, item: OpeningItem): string {
     if (view.status !== 'ok') return stateText(this.hass, view);
@@ -363,12 +374,7 @@ export class FluvyOpeningsCard extends Card<OpeningsCardConfig> {
       !keep ||
       this.headFit.ruler.width('fv-row__title', title) >
         this.contentWidth - (compact ? 52 : 56) - 12 - 44;
-    const alert =
-      hidden.count === 0
-        ? ''
-        : hidden.count === 1
-          ? s(this.hass, hidden.openOnly ? 'open_one' : 'alert_one')
-          : s(this.hass, hidden.openOnly ? 'open_many' : 'alert_many', { count: hidden.count });
+    const alert = hidden.count === 0 ? '' : this.alerts(hidden.count, hidden.openOnly);
     const folded = s(this.hass, 'more', { count: more });
     // folded, the line says the alert it hides before anything else: "2 more · 1 alert", else "+2 · 1 alert", else the
     // alert alone — never the count without it
@@ -448,25 +454,13 @@ export class FluvyOpeningsCard extends Card<OpeningsCardConfig> {
     const tone = this.config?.tone ?? 'warning';
 
     const rooms = new Set(views.map((view) => view.areaName).filter(Boolean));
-    const countText =
-      views.length === 1
-        ? s(this.hass, 'sensor_one')
-        : s(this.hass, 'sensors', { count: views.length });
-    const roomText =
-      rooms.size === 0
-        ? ''
-        : rooms.size === 1
-          ? s(this.hass, 'room_one')
-          : s(this.hass, 'rooms', { count: rooms.size });
+    const countText = this.count('sensors', views.length);
+    const roomText = rooms.size === 0 ? '' : this.count('rooms', rooms.size);
 
     // "1 open" when everything alerting is an opening; a leak or smoke makes it "1 alert"
     const openOnly = alerts.every((view) => isOpening(view));
     const badgeText =
-      alerts.length === 0
-        ? s(this.hass, 'all_clear')
-        : alerts.length === 1
-          ? s(this.hass, openOnly ? 'open_one' : 'alert_one')
-          : s(this.hass, openOnly ? 'open_many' : 'alert_many', { count: alerts.length });
+      alerts.length === 0 ? s(this.hass, 'all_clear') : this.alerts(alerts.length, openOnly);
 
     const max = this.maxRows();
     const collapsible = views.length > max + 1; // one extra sensor is a row, not a "1 more" row

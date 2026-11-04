@@ -5,6 +5,7 @@ import {
   formatNumber,
   formatTime,
   isUsable,
+  plural,
   scaleUnit,
   stateText,
   strings,
@@ -618,8 +619,9 @@ export class FluvySensorCard extends Card<SensorCardConfig> {
   /** "Temperature · last 24 h": the context (config, else the device class in Home Assistant's words) and the window. */
   private subLine(view: EntityView, title: string): string {
     const days = this.hours > 24 && this.hours % 24 === 0;
-    const window = s(this.hass, days ? 'window_days' : 'window_hours', {
-      count: days ? this.hours / 24 : this.hours,
+    const count = days ? this.hours / 24 : this.hours;
+    const window = plural(this.hass, days ? 'sensor.window_days' : 'sensor.window_hours', count, {
+      count,
     });
     let context = this.config?.subtitle ?? '';
     if (this.config?.subtitle === undefined) {

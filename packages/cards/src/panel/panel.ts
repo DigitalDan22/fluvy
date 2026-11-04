@@ -20,6 +20,7 @@ import {
   wallDark,
   navigate,
   onWords,
+  plural,
   readDevice,
   resyncCardThemes,
   strings,
@@ -1060,7 +1061,7 @@ export class FluvyPanel extends LitElement {
       lines.length === 1
         ? lines[0]
         : lines.length
-          ? ctx.t('apply.changes', { n: lines.length })
+          ? plural(ctx.hass, 'panel.apply.changes', lines.length)
           : ctx.t('apply.trying');
     const pair = ctx.dirty && ctx.admin;
     // an equal pair while the longer label holds its half (the bar's 12 sides and the 8 between them); else one over

@@ -4,7 +4,7 @@ import {
   areaContents,
   areaEntities,
   LANGUAGE_CODES,
-  localize,
+  plural,
   preloadLanguages,
   type HomeAssistant,
 } from '@fluvy/core';
@@ -488,7 +488,7 @@ describe('a room in a narrow column', () => {
     };
     for (const language of LANGUAGE_CODES) {
       const hass = { ...house(), language, locale: { language, number_format: 'language' } };
-      const full = localize(hass as HomeAssistant, 'room.kept_out', { n: 2 });
+      const full = plural(hass as HomeAssistant, 'room.kept_out', 2);
       const why = full.split(' · ')[0]!;
       const narrow = await roomAt(
         { area: 'wohnzimmer', ...REPORTER },

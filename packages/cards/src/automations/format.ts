@@ -4,6 +4,7 @@ import {
   formatTime,
   houseZone,
   localize,
+  plural,
   relativeTime,
   strings,
   wallClock,
@@ -86,7 +87,7 @@ export function daysText(hass: Hass | undefined, days: Days): string {
 /** The days in fewer words where a row is narrow: a list of four days or more is "4 days"; the rest as `daysText`. */
 export function daysShort(hass: Hass | undefined, days: Days): string {
   return days.kind === 'custom' && days.days.length >= 4
-    ? s(hass, 'days_count', { count: days.days.length })
+    ? plural(hass, 'automations.days_count', days.days.length, { count: days.days.length })
     : daysText(hass, days);
 }
 

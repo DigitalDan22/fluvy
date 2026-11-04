@@ -1,5 +1,6 @@
 import { devicesHeight } from '../energy-family.js';
 import {
+  plural,
   stateText,
   strings,
   valueParts,
@@ -689,8 +690,7 @@ export class FluvyEnergyDevicesCard extends Card<EnergyDevicesCardConfig> {
       );
     if (devices)
       segments.push({
-        text:
-          devices === 1 ? this.t('common.device') : this.t('common.devices', { count: devices }),
+        text: plural(this.hass, 'common.devices', devices, { count: devices }),
         optional: segments.length > 0,
       });
     const cost = row.config.cost_entity

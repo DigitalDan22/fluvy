@@ -42,7 +42,7 @@ import {
 /** "N new": sticky over the column, back to the top on a tap. */
 export function renderFresh(page: FluvyActivity): TemplateResult | typeof nothing {
   if (!page.freshCount) return nothing;
-  const text = page.t(page.freshCount === 1 ? 'new_one' : 'new', { n: page.freshCount });
+  const text = page.count('new', page.freshCount);
   const width = page.pill([text], 14, 52);
   return html`<div class="av-fresh">
     <button
@@ -390,21 +390,21 @@ export function renderGroup(
   let area = '';
   if (row.kind === 'burst') {
     const minutes = Math.max(1, Math.round((until - since) / MINUTE));
-    const n = page.number(row.items.length);
+    const n = row.items.length;
     name = row.restart
       ? page.t('restart')
       : until - since >= MINUTE
-        ? page.t('burst', { n, m: minutes })
-        : page.t('burst_short', { n });
+        ? page.count('burst', n, { m: minutes })
+        : page.count('burst_short', n);
     look = { glyph: row.restart ? 'ha' : 'bolt', tone: 'neutral', major: true };
-    change = countPill(page, page.count('changes', row.items.length));
+    change = countPill(page, page.count('changes', n));
   } else {
     const view = resolveEntity(hass, row.entityId);
     name = nameOf(newest.event, view);
     look = lookOf(page, newest.event, view);
     area = view.areaName;
     change = html`<span class="av-change"
-      >${countPill(page, page.t('repeat', { n: page.number(row.items.length) }))}${
+      >${countPill(page, page.count('changes', row.items.length))}${
         newest.event.state !== undefined ? statePill(page, view, newest.event.state, true) : nothing
       }</span
     >`;

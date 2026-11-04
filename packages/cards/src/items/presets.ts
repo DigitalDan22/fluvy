@@ -1,4 +1,10 @@
-import { formatNumber, localize, type HomeAssistant, type MessageKey } from '@fluvy/core';
+import {
+  formatNumber,
+  localize,
+  type CountKey,
+  type HomeAssistant,
+  type MessageKey,
+} from '@fluvy/core';
 import type { IconRef } from '@fluvy/ui';
 import {
   formatValue,
@@ -53,7 +59,7 @@ export interface Preset {
   /** The title's short form, for a head too narrow for the full one ("Flights nearby" → "Flights"). */
   readonly short: MessageKey;
   /** The head's count of the items, a plural. */
-  readonly count: MessageKey;
+  readonly count: CountKey;
   readonly empty: MessageKey;
   /** What the sheet's link round says. */
   readonly link: MessageKey;

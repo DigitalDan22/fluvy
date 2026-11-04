@@ -1,4 +1,4 @@
-import { strings } from '@fluvy/core';
+import { plural, strings } from '@fluvy/core';
 import type { EntityView, FluvyCardConfig, LovelaceGridOptions } from '@fluvy/core';
 import { head, sheetStyles } from '@fluvy/ui';
 
@@ -363,9 +363,7 @@ export class FluvyHelpersCard extends Card<HelpersCardConfig> {
     // none counted is said by the panel, not as "0 helpers"
     const count = panel
       ? ''
-      : views.length === 1
-        ? s(this.hass, 'one')
-        : s(this.hass, 'count', { count: views.length });
+      : plural(this.hass, 'helpers.count', views.length, { count: views.length });
     const title = this.config?.title ?? s(this.hass, 'title');
     // the line's trailing segments go whole before the circle gives way, and the circle before a word is cut
     const fitted = this.head.fit({

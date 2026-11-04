@@ -14,6 +14,7 @@ import {
   setLanguageOverride,
   strings,
   wordsIn,
+  type CountKey,
   type MessageKey,
 } from '../i18n/index.js';
 import {
@@ -148,7 +149,7 @@ describe('the words', () => {
   });
 
   it('say one more as one, then two: "+1 autre", never "+1 autres"', () => {
-    const said = (language: string, key: MessageKey) =>
+    const said = (language: string, key: CountKey) =>
       [1, 2].map((n) => plural({ language }, key, n, { count: n }));
     expect(said('fr', 'calendar.more')).toEqual(['+1 autre', '+2 autres']);
     expect(said('it', 'calendar.more')).toEqual(['+1 altro', '+2 altri']);
@@ -157,6 +158,18 @@ describe('the words', () => {
     expect(said('fr', 'history.more')).toEqual(['+1 autre', '+2 autres']);
     expect(said('it', 'history.more')).toEqual(['+1 altro', '+2 altri']);
     expect(said('en', 'history.more')).toEqual(['+1 more', '+2 more']);
+  });
+
+  it('count in Slovak with its own word for two to four: 1 zariadenie, 3 zariadenia, 5 zariadení', () => {
+    const said = (key: CountKey) =>
+      [1, 3, 5].map((n) => plural({ language: 'sk' }, key, n, { count: n }));
+    expect(said('alerts.devices')).toEqual(['1 zariadenie', '3 zariadenia', '5 zariadení']);
+    expect(said('common.devices')).toEqual(['1 zariadenie', '3 zariadenia', '5 zariadení']);
+    // a count said only of two or more: its few, then its other
+    expect([3, 5].map((n) => plural({ language: 'sk' }, 'page.days', n))).toEqual([
+      '3 dni',
+      '5 dní',
+    ]);
   });
 
   it('can be read in a fixed language whatever the person chose', () => {

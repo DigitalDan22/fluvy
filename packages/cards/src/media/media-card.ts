@@ -688,7 +688,7 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
     const next = mode === 'off' ? 'all' : mode === 'all' ? 'one' : 'off';
     const text = s(
       this.hass,
-      mode === 'one' ? 'repeat_one' : mode === 'all' ? 'repeat_all' : 'repeat_off',
+      mode === 'one' ? 'repeat_single' : mode === 'all' ? 'repeat_all' : 'repeat_off',
     );
     return this.transportRound(
       mode === 'one' ? 'repeatOne' : 'repeat',

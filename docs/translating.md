@@ -24,6 +24,11 @@ catalogue per language, and a person may choose theirs in the panel's *Preferenc
 - **One catalogue per language**, `packages/core/src/i18n/locales/<code>.json`: a table per namespace (the shared
   words — `common`, `climate`, `editor` — and one per card or page — `cover`, `panel`, `history`), each key with its
   text. Placeholders are `{name}`; every key of English exists in every other language, with the same placeholders.
+- **A count** is a key in its forms by number, CLDR's plural categories: English writes `devices_one` ("{n} device")
+  beside `devices` ("{n} devices", the form of every other number), or `days_other` alone for a count it only ever
+  says of two or more. A language adds the forms its own rules give a whole number, beside English's: Slovak writes
+  `devices_few` for 2 to 4 ("3 zariadenia") and keeps the bare key for 5 and more ("5 zariadení"); Japanese says
+  every number one way, in the bare key. A card says every count through `plural()`, which picks the form.
 - **English is in parts**, `packages/core/src/i18n/locales/en/`: `core.json` ships inline and is behind every
   lookup; each lazy family's words (`panel.json`, `history.json`, `energy.json`, `media.json`, …) travel with that
   family's chunk, so a page that never opens the settings panel never carries the panel's words. A new key goes in
@@ -60,7 +65,8 @@ catalogue per language, and a person may choose theirs in the panel's *Preferenc
 ## Improving a translation
 
 Edit the language's catalogue and open a pull request. `pnpm i18n` checks every language against English (missing
-keys, keys English lacks, empty texts, placeholders, the word stems) and prints how many keys each language has;
+keys, keys English lacks, empty texts, placeholders, a count's form its language says of a whole number, the word
+stems) and prints how many keys each language has;
 `pnpm i18n --release` refuses a release with anything missing. The playground shows any sheet in any language:
 `http://127.0.0.1:5183/?sheet=climate&lang=de`. Keep a card's words short — a chip, a tile label and a readout have
 a fixed width — and keep Home Assistant's register: the same word Home Assistant uses on the same screen, the same
@@ -85,7 +91,8 @@ update of a device or an add-on, and saving or refreshing a page).
 ## Adding a language
 
 1. `pnpm i18n scaffold <code>` writes `<code>.json` key for key from English (every part of it), in English, and an
-   empty `words/<code>.json`: translate the one, fill the other.
+   empty `words/<code>.json`: translate the one, fill the other. A language with more forms of a count than English
+   (Slovak's few, Czech's or Polish's) writes them beside English's: `pnpm i18n` names each one missing.
 2. Add the language to `LANGUAGE_CODES` and `LANGUAGES` in `packages/core/src/i18n/languages.ts` (its names and its
    day parts), and its loader to `LOADERS` in `packages/core/src/i18n/index.ts`.
 3. Fill `words/<code>.json` with the stems people use in that language, then `pnpm i18n build`.

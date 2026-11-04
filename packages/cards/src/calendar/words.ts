@@ -5,7 +5,9 @@ import {
   LANGUAGES,
   languageOf,
   localize,
+  plural,
   strings,
+  type CountKey,
   type HomeAssistant,
   type MessageKey,
 } from '@fluvy/core';
@@ -52,6 +54,11 @@ export class Words {
 
   t(key: MessageKey, values?: Record<string, string | number>): string {
     return localize(this.hass, key, values);
+  }
+
+  /** A count ("4 events", "Next 7 days"): `{count}` in the form the language gives the number. */
+  count(key: CountKey, count: number): string {
+    return plural(this.hass, key, count, { count });
   }
 
   /** Whether the user reads a 12-hour clock: the profile first, then the language's own habit. */
@@ -140,11 +147,7 @@ export class Words {
 
   /** "4 events" · "1 event" · "No events" */
   events(count: number): string {
-    return count === 0
-      ? this.t('common.no_events')
-      : count === 1
-        ? this.t('common.event')
-        : this.t('common.events', { count });
+    return count === 0 ? this.t('common.no_events') : this.count('common.events', count);
   }
 
   /** What joins the two parts of a day's label: " · ", or the language's own mark (Japanese 「・」). */

@@ -4,6 +4,7 @@ import {
   formatTime,
   isPaletteRef,
   isUsable,
+  plural,
   stateText,
   strings,
   type EntityView,
@@ -958,10 +959,9 @@ export class FluvyChartCard extends Card<ChartCardConfig> {
         ? s(this.hass, 'today_tomorrow')
         : this.t('common.today');
     const days = span.hours >= 48 && span.hours % 24 === 0;
+    const count = days ? span.hours / 24 : span.hours;
     return capitalise(
-      this.t(days ? 'sensor.window_days' : 'sensor.window_hours', {
-        count: days ? span.hours / 24 : span.hours,
-      }),
+      plural(this.hass, days ? 'sensor.window_days' : 'sensor.window_hours', count, { count }),
     );
   }
 

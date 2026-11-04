@@ -19,7 +19,7 @@
     "since": "since {time}",
     "repeat_off": "Repeat off",
     "repeat_all": "Repeat all",
-    "repeat_one": "Repeat one",
+    "repeat_single": "Repeat one",
     "artwork": "Album art",
     "editor_image_mode": "Own picture shown",
     "o_fallback": "Without artwork",

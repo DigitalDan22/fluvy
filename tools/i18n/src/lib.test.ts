@@ -15,11 +15,15 @@ import {
   catalogueCodes,
   compare,
   compareIntegration,
+  counts,
+  englishCounts,
   englishParts,
   integrationFile,
   LOCALES,
+  reached,
   readCatalogue,
   ROOT,
+  type Catalogue,
 } from './lib.js';
 
 describe('the catalogues on disk', () => {
@@ -72,6 +76,10 @@ describe('the catalogues on disk', () => {
       expect(Object.keys((await readCatalogue(code))['words'] ?? {}).length).toBeGreaterThan(0);
   });
 
+  it('say English’s counts in English’s two forms, each with its other form', async () => {
+    expect(englishCounts(await readCatalogue('en')).map((p) => p.text)).toEqual([]);
+  });
+
   it('have their integration translation, key for key with strings.json', async () => {
     for (const code of await catalogueCodes())
       expect((await compareIntegration(code)).map((p) => p.text)).toEqual([]);
@@ -105,6 +113,113 @@ describe('the catalogues on disk', () => {
             );
         }
     }
+  });
+});
+
+describe('a count', () => {
+  const english = {
+    alerts: {
+      devices_one: '{n} device',
+      devices: '{n} devices',
+      title: 'Alerts',
+    },
+    page: { days_other: '{n} days' },
+  };
+  const errors = (language: string, catalogue: Catalogue): string[] =>
+    compare(language, catalogue, english).flatMap((p) => (p.level === 'error' ? [p.text] : []));
+
+  it('is a key in its forms by number: with _one, of any number; _other alone, of two or more', () => {
+    expect([...counts(english.alerts)]).toEqual([['devices', { other: 'devices', from: 0 }]]);
+    expect([...counts(english.page)]).toEqual([['days', { other: 'days_other', from: 2 }]]);
+  });
+
+  it('needs each form its language’s rules give a whole number up to 1000', () => {
+    expect([...reached('sk', 0)]).toEqual([
+      ['other', 0],
+      ['one', 1],
+      ['few', 2],
+    ]);
+    expect([...reached('sk', 2)]).toEqual([
+      ['few', 2],
+      ['other', 5],
+    ]);
+    // a million's many in French, a fraction's in Slovak: never a house's count
+    expect([...reached('fr', 0).keys()]).toEqual(['one', 'other']);
+    expect([...reached('ja', 0).keys()]).toEqual(['other']);
+  });
+
+  it('fails a language without a form it says: Slovak’s 2 to 4, never English’s word for them', () => {
+    expect(
+      errors('sk', {
+        alerts: { devices_one: '{n} zariadenie', devices: '{n} zariadení', title: 'Upozornenia' },
+        page: { days_other: '{n} dní' },
+      }),
+    ).toEqual([
+      'alerts.devices_few: missing, the form for 2',
+      'page.days_few: missing, the form for 2',
+    ]);
+    expect(
+      errors('sk', {
+        alerts: {
+          devices_one: '{n} zariadenie',
+          devices_few: '{n} zariadenia',
+          devices: '{n} zariadení',
+          title: 'Upozornenia',
+        },
+        page: { days_few: '{n} dni', days_other: '{n} dní' },
+      }),
+    ).toEqual([]);
+    // a form English writes is needed as any: without its one, a single device would say "1 zariadení"
+    expect(
+      errors('sk', {
+        alerts: { devices_few: '{n} zariadenia', devices: '{n} zariadení', title: 'Upozornenia' },
+        page: { days_few: '{n} dni', days_other: '{n} dní' },
+      }),
+    ).toEqual(['alerts.devices_one: missing, the form for 1']);
+  });
+
+  it('holds a language’s own forms to English’s placeholders, and only the forms its rules have', () => {
+    expect(
+      errors('sk', {
+        alerts: {
+          devices_one: '{n} zariadenie',
+          devices_few: '{count} zariadenia',
+          devices: '{n} zariadení',
+          title: 'Upozornenia',
+        },
+        page: { days_few: '{n} dni', days_other: '{n} dní' },
+      }),
+    ).toEqual(['alerts.devices_few: placeholders {count} ≠ English {n}']);
+    expect(
+      errors('de', {
+        alerts: {
+          devices_one: '{n} Gerät',
+          devices_few: '{n} Geräte',
+          devices: '{n} Geräte',
+          title: 'Warnungen',
+        },
+        page: { days_other: '{n} Tage' },
+      }),
+    ).toEqual(['alerts.devices_few: not in English']);
+    // a language with one form for every number keeps English's other ones, and needs nothing more
+    expect(
+      errors('ja', {
+        alerts: { devices_one: '{n}台', devices: '{n}台', title: 'アラート' },
+        page: { days_other: '{n}日' },
+      }),
+    ).toEqual([]);
+  });
+
+  it('is written in English in its two forms, with its other form', () => {
+    expect(
+      englishCounts({
+        openings: { open_one: '1 open', open_many: '{count} open', sensor_one: '1 sensor' },
+      }).map((p) => p.text),
+    ).toEqual([
+      'openings.open_many: a form English never says (its counts are _one and the other form)',
+      'openings.open_one: a count without its other form (open)',
+      'openings.sensor_one: a count without its other form (sensor)',
+    ]);
   });
 });
 

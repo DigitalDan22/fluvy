@@ -92,11 +92,11 @@
   },
   "history-bars": {
     "title": "History bars",
-    "last_day": "Yesterday",
+    "last_days_one": "Yesterday",
     "last_days": "Last {count} days",
-    "last_week": "Last week",
+    "last_weeks_one": "Last week",
     "last_weeks": "Last {count} weeks",
-    "last_month": "Last month",
+    "last_months_one": "Last month",
     "last_months": "Last {count} months",
     "kind_total": "Total",
     "kind_average": "Average",
@@ -202,7 +202,7 @@
   "batteries": {
     "title": "Batteries",
     "title_one": "Battery",
-    "count": "{count} batteries",
+    "count_other": "{count} batteries",
     "state_of_charge": "State of charge",
     "full_in": "Full in",
     "empty_in": "Empty in",

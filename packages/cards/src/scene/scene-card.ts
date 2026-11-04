@@ -1,5 +1,6 @@
 import {
   haptic,
+  plural,
   stateText,
   strings,
   type EntityView,
@@ -172,9 +173,7 @@ export class FluvySceneCard extends Card<SceneCardConfig> {
     if (this.config?.subtitle !== undefined) return this.config.subtitle;
     const members = view.attr<readonly string[] | null>('entity_id');
     if (Array.isArray(members) && members.length > 0) {
-      return members.length === 1
-        ? s(this.hass, 'device')
-        : s(this.hass, 'devices', { count: members.length });
+      return plural(this.hass, 'scene.devices', members.length, { count: members.length });
     }
     // scenes and buttons keep the time they last ran in their state, scripts and automations in an attribute
     const last =

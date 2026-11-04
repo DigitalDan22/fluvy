@@ -20,7 +20,7 @@
     "workdays": "Workdays",
     "weekend": "Weekends",
     "custom": "Custom",
-    "days_count": "{count} days",
+    "days_count_other": "{count} days",
     "what": "What",
     "do": "Do",
     "when": "When",

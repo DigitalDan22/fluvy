@@ -4,6 +4,7 @@ import {
   formatNumber,
   houseZone,
   isUsable,
+  plural,
   stateText,
   strings as words,
   type EntityView,
@@ -1145,20 +1146,7 @@ export class FluvyHistoryBarsCard extends Card<HistoryBarsCardConfig> {
   /** The default sub: "Last 7 days", "Last week", and "· Today" when the bucket in progress is drawn. */
   private periodLine(): string {
     const n = this.count;
-    const period = this.period;
-    const key =
-      n === 1
-        ? period === 'day'
-          ? 'last_day'
-          : period === 'week'
-            ? 'last_week'
-            : 'last_month'
-        : period === 'day'
-          ? 'last_days'
-          : period === 'week'
-            ? 'last_weeks'
-            : 'last_months';
-    const line = strings(this.hass, key, { count: n });
+    const line = plural(this.hass, `history-bars.last_${this.period}s`, n, { count: n });
     return this.config?.include_today ? `${line} · ${this.currentWord()}` : line;
   }
 
@@ -1377,7 +1365,7 @@ export class FluvyHistoryBarsCard extends Card<HistoryBarsCardConfig> {
     // "Entity not found" is "Not found" (ja エンティティが見つかりません → 見つかりません)
     const shorter =
       sub === this.periodLine() && this.period === 'day' && this.count > 1
-        ? [this.t('page.days', { n: this.count })]
+        ? [plural(this.hass, 'page.days', this.count)]
         : unusable && view.status === 'missing'
           ? [`${this.t('state.not_found')} · ${period}`]
           : [];

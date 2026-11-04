@@ -1,5 +1,6 @@
 import type { Tint } from '../shared/colour.js';
 import {
+  plural,
   stateText,
   strings,
   toggleEntity,
@@ -188,8 +189,7 @@ export class FluvyScenesCard extends Card<ScenesCardConfig> {
     if (item.subtitle !== undefined) return item.subtitle;
     const members = view.attr<readonly string[] | null>('entity_id');
     const count = Array.isArray(members) ? members.length : 0;
-    if (count > 0)
-      return count === 1 ? s(this.hass, 'device_one') : s(this.hass, 'devices', { count });
+    if (count > 0) return plural(this.hass, 'scenes.devices', count, { count });
     return at > 0 ? agoShort(this.hass, new Date(at), now) : s(this.hass, 'never');
   }
 

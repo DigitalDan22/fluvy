@@ -30,9 +30,7 @@ function daySummary(ctx: ViewContext, day: Date): readonly string[] {
   if (!items.length) return [count];
   if (sameDay(day, agenda.today)) {
     const left = agenda.left(day);
-    return left > 0
-      ? [`${count} · ${s(ctx.hass, left === 1 ? 'left_one' : 'left', { count: left })}`, count]
-      : [count];
+    return left > 0 ? [`${count} · ${words.count('calendar.left', left)}`, count] : [count];
   }
   const first = items.find((item) => !item.whole);
   if (!first) return [`${count} · ${words.t('common.all_day').toLocaleLowerCase()}`, count];
@@ -56,11 +54,7 @@ export function agendaView(ctx: ViewContext): TemplateResult {
   const left = ready && onToday ? agenda.left(day) : 0;
   // the state is said once: "1 left" while the day runs, the count once it is over, nothing when there is nothing
   const pill =
-    left > 0
-      ? s(ctx.hass, left === 1 ? 'badge_left_one' : 'badge_left', { count: left })
-      : count > 0
-        ? words.events(count)
-        : '';
+    left > 0 ? words.count('calendar.badge_left', left) : count > 0 ? words.events(count) : '';
 
   const otherReady = ready && agenda.covers(other);
   const otherEmpty = otherReady && agenda.count(other) === 0;

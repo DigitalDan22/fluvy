@@ -5,7 +5,7 @@ import { html, nothing, type TemplateResult } from 'lit';
 
 import { keyed } from 'lit/directives/keyed.js';
 
-import { goBack, resolveEntity } from '@fluvy/core';
+import { goBack, plural, resolveEntity } from '@fluvy/core';
 
 import { faceOf, glyph, textWidth } from '@fluvy/ui';
 import { download } from './csv.js';
@@ -76,7 +76,7 @@ export function describeRange(page: FluvyActivity): PeriodTitle {
       period: page.t('period'),
       week: page.t('preset.week'),
       lastDay: page.t('last_day'),
-      days: (n) => page.t('days', { n }),
+      days: (n) => plural({ language: page.language }, 'page.days', n),
       since: (when) => page.t('since', { when }),
     },
   });

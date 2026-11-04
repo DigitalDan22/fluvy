@@ -1024,9 +1024,13 @@ function themeNote(ctx: PanelContext, theme: ThemeInUse): TemplateResult {
   const other = theme.source === 'other';
   const profile = theme.source === 'profile';
   const can = other || profile || ctx.admin;
-  const title = other ? 'scope.theme_other' : profile ? 'scope.theme_profile' : 'scope.theme_house';
+  const title = other
+    ? 'scope.theme_another'
+    : profile
+      ? 'scope.theme_profile'
+      : 'scope.theme_house';
   const text = other
-    ? ctx.t('scope.theme_other_sub', { theme: theme.name ?? '' })
+    ? ctx.t('scope.theme_another_sub', { theme: theme.name ?? '' })
     : ctx.t(
         profile
           ? 'scope.theme_profile_sub'

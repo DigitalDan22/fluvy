@@ -9,6 +9,7 @@ import {
   formatTime,
   languageOf,
   navigate,
+  plural,
   PREFERENCES_EVENT,
   readStored,
   strings,
@@ -533,8 +534,16 @@ export class FluvyActivity extends LitElement {
   readonly t = (key: ActivityString, values?: Record<string, string | number>): string =>
     s({ language: this.language }, key, values);
 
-  count(key: 'changes' | 'automations' | 'restarts', n: number): string {
-    return this.t(n === 1 ? `${key}_one` : key, { n: this.number(n) });
+  /** A count in the page's words ("3 changes"), its figure as the language writes numbers. */
+  count(
+    key: 'changes' | 'automations' | 'restarts' | 'new' | 'burst' | 'burst_short',
+    n: number,
+    values?: Record<string, string | number>,
+  ): string {
+    return plural({ language: this.language }, `activity.${key}`, n, {
+      n: this.number(n),
+      ...values,
+    });
   }
 
   number(n: number): string {

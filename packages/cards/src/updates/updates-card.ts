@@ -323,9 +323,7 @@ export class FluvyUpdatesCard extends Card<UpdatesCardConfig> {
         ? away.length
           ? plural(this.hass, 'room.unavailable', away.length, { count: away.length })
           : s(this.hass, 'up_to_date')
-        : waiting.length === 1
-          ? s(this.hass, 'one_available')
-          : s(this.hass, 'available', { count: waiting.length });
+        : plural(this.hass, 'updates.available', waiting.length, { count: waiting.length });
 
     // the head fitted to its column: the badge, then the line's trailing segments, then the circle — never the title
     // cut ("Actualizaciones" at 211)

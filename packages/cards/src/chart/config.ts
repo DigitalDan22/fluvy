@@ -1,4 +1,4 @@
-import { strings, type HaFormSchemaItem } from '@fluvy/core';
+import { plural, strings, type HaFormSchemaItem } from '@fluvy/core';
 import type { Tone } from '@fluvy/ui';
 import type { ChartCaps, ChartPreset, Curve, FillKind } from '../shared/chart-config.js';
 import {
@@ -161,7 +161,7 @@ const capitalise = (text: string): string => text.charAt(0).toLocaleUpperCase() 
 /** The span's choices: the usual windows by their words; any other typed (`12h`, `3d`). */
 export function spanField(): HaFormSchemaItem {
   const windows = (count: number, key: 'sensor.window_hours' | 'sensor.window_days'): string =>
-    capitalise(editorWord(key).replace('{count}', String(count)));
+    capitalise(plural(editorLanguage(), key, count, { count }));
   return {
     name: 'span',
     selector: {

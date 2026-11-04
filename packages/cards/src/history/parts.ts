@@ -5,7 +5,7 @@
 import { emptyState, glyph } from '@fluvy/ui';
 import { html, nothing, type TemplateResult } from 'lit';
 
-import { goBack } from '@fluvy/core';
+import { goBack, plural } from '@fluvy/core';
 import { countFilters, countTargets } from '@fluvy/core/sources';
 import { describePeriod } from '../shared/period.js';
 import { dayRange, sameRange } from '../shared/range.js';
@@ -64,7 +64,7 @@ export function renderHead(page: FluvyHistory): TemplateResult {
       period: page.t('period'),
       week: page.t('preset.week'),
       lastDay: page.t('last_day'),
-      days: (n) => page.t('days', { n }),
+      days: (n) => plural({ language: page.language }, 'page.days', n),
       since: (when) => page.t('since', { when }),
     },
   });
@@ -73,18 +73,12 @@ export function renderHead(page: FluvyHistory): TemplateResult {
   // "Today" takes the page back to the window it opened on; it is not offered while the page is already on today,
   // whether it followed the clock there or the calendar picked it
   const isToday = page.following || sameRange(page.range, dayRange(new Date(page.now)));
+  const count = (key: 'sources_count' | 'measures' | 'states_count', n: number): string =>
+    plural({ language: page.language }, `history.${key}`, n);
   const facts = [
-    sources === 1 ? page.t('sources_one') : page.t('sources_count', { n: sources }),
-    ...(shown.tracks
-      ? [shown.tracks === 1 ? page.t('measures_one') : page.t('measures', { n: shown.tracks })]
-      : []),
-    ...(shown.lines.length
-      ? [
-          shown.lines.length === 1
-            ? page.t('states_one')
-            : page.t('states_count', { n: shown.lines.length + shown.hidden }),
-        ]
-      : []),
+    count('sources_count', sources),
+    ...(shown.tracks ? [count('measures', shown.tracks)] : []),
+    ...(shown.lines.length ? [count('states_count', shown.lines.length + shown.hidden)] : []),
   ];
   return html`<header class="hs-head">
     <div class="hs-head__titles">

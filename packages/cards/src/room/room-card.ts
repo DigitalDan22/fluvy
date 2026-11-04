@@ -659,7 +659,7 @@ export class FluvyRoomCard extends FluvyTileCard {
     const hint =
       keptOut > 0 && this.hass?.user?.is_admin
         ? fitLine(
-            s(this.hass, keptOut === 1 ? 'kept_out_one' : 'kept_out', { n: keptOut })
+            plural(this.hass, 'room.kept_out', keptOut)
               .split(' · ')
               .map((text, index) => ({ text, optional: index > 0 })),
             room,

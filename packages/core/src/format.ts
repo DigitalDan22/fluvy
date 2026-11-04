@@ -1,6 +1,6 @@
 import type { EntityView } from './entity.js';
 import type { FrontendLocaleData, HomeAssistant } from './ha/types.js';
-import { languageOf, localize, speaks } from './i18n/index.js';
+import { languageOf, localize, plural, speaks } from './i18n/index.js';
 
 /** Locale used for numbers: Home Assistant lets the user override the language's own grouping. */
 function numberLocale(
@@ -406,11 +406,9 @@ export function relativeTime(
     if (abs < 86_400)
       return localize(hass, past ? 'time.hours_ago' : 'time.in_hours', { n: hours });
     if (days === 1) return localize(hass, past ? 'time.yesterday' : 'time.tomorrow');
-    return localize(
-      hass,
-      past ? (short ? 'time.days_ago_short' : 'time.days_ago') : 'time.in_days',
-      { n: days },
-    );
+    return past
+      ? localize(hass, short ? 'time.days_ago_short' : 'time.days_ago', { n: days })
+      : plural(hass, 'time.in_days', days);
   }
   const rtf = new Intl.RelativeTimeFormat(hass?.language ?? 'en', {
     numeric: 'auto',

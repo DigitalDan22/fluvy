@@ -1,9 +1,16 @@
 import type { HomeAssistant } from '../ha/types.js';
 import { safeStorage } from '../storage.js';
-import { english, type KeyOf, type MessageKey, type Namespace, type Values } from './catalogue.js';
+import {
+  english,
+  type CountKey,
+  type KeyOf,
+  type MessageKey,
+  type Namespace,
+  type Values,
+} from './catalogue.js';
 import { LANGUAGE_CODES, resolveLanguage, type LanguageCode } from './languages.js';
 
-export type { Catalogue, KeyOf, MessageKey, Namespace, Values } from './catalogue.js';
+export type { Catalogue, CountKey, KeyOf, MessageKey, Namespace, Values } from './catalogue.js';
 export { english } from './catalogue.js';
 export * from './languages.js';
 
@@ -136,7 +143,7 @@ function word(code: LanguageCode, namespaces: readonly string[], key: string): s
   return key;
 }
 
-const split = (key: MessageKey): [namespace: string, key: string] => {
+const split = (key: MessageKey | CountKey): [namespace: string, key: string] => {
   const dot = key.indexOf('.');
   return [key.slice(0, dot), key.slice(dot + 1)];
 };
@@ -171,12 +178,13 @@ export function strings<const N extends readonly [Namespace, ...Namespace[]]>(
 }
 
 /**
- * A plural: `${key}_${category}` when the catalogue has the CLDR category (`_one`, `_other`, a language's `_few`
- * and `_many`), else the key itself; `{n}` is always at hand in the template.
+ * A count: `${key}_${category}` when the catalogue has the CLDR category (`_one`, `_other`, a language's `_few`
+ * and `_many`), else the key itself; `{n}` is always at hand in the template. Every count is said here: a card that
+ * picked its words by `n === 1` would give Slovak's 3 the words of 5.
  */
 export function plural(
   hass: Pick<HomeAssistant, 'language'> | undefined,
-  key: MessageKey,
+  key: CountKey,
   n: number,
   values?: Values,
 ): string {

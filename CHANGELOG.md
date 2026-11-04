@@ -9,6 +9,17 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 - Slovak (`sk`) translation for the Fluvy interface, panel and cards, appliance naming words, the demo and Home Assistant integration messages.
 
+### Fixed
+
+- The calendar card's upcoming list of a single day (`days: 1`) says Tomorrow under its title, where it said "Next 1
+  days".
+
+### Development
+
+- A count is a key in its forms by number (`devices_one`, `devices`, Slovak's `devices_few`), said by `plural()`
+  alone, its key typed as a count; `pnpm i18n` fails a catalogue without a form its language gives a whole number up
+  to 1000, and English with a form it never says.
+
 ## [1.13.1] — 2026-11-04
 
 ### Visible on upgrade

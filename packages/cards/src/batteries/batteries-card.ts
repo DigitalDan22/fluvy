@@ -1,6 +1,7 @@
 import { batteriesHeight } from '../energy-family.js';
 import {
   formatNumber,
+  plural,
   strings,
   type FluvyCardConfig,
   type HomeAssistant,
@@ -304,7 +305,7 @@ export class FluvyBatteriesCard extends Card<BatteriesCardConfig> {
     const capacity = totalCapacity(all.map((b) => b.cell));
     if (all.length > 1)
       return [
-        s(this.hass, 'count', { count: all.length }),
+        plural(this.hass, 'batteries.count', all.length, { count: all.length }),
         capacity !== undefined ? kwh(this.hass, capacity) : '',
       ]
         .filter(Boolean)

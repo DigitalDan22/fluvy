@@ -59,6 +59,16 @@ export type KeyOf<N extends Namespace> = N extends unknown ? keyof Catalogue[N] 
 /** A key with its namespace (`'climate.mode.heat'`, `'editor.title'`): what `localize()` and a card's `t()` take. */
 export type MessageKey = { [N in Namespace]: `${N}.${KeyOf<N>}` }[Namespace];
 
+/** The count a form belongs to: `devices` for `devices_one` and for `days_other`. */
+type Counted<K extends string> = K extends `${infer Base}_${'one' | 'other'}` ? Base : never;
+
+/**
+ * A count with its namespace (`'alerts.devices'`): what `plural()` takes. English writes a count in its forms by number,
+ * `devices_one` beside `devices` (the other form), or `days_other` alone for one it says only of two or more; every
+ * other language adds the forms its own rules give a whole number (Slovak's `_few`).
+ */
+export type CountKey = { [N in Namespace]: `${N}.${Counted<KeyOf<N>>}` }[Namespace];
+
 export type Values = Readonly<Record<string, string | number>>;
 
 /** English's inline part, the fallback of every lookup: the words any page may say before a family lands. */

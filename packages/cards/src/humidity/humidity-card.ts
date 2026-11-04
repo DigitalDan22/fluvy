@@ -3,6 +3,7 @@ import {
   fetchHistory,
   formatNumber,
   isUsable,
+  plural,
   stateText,
   strings as words,
   toggleEntity,
@@ -208,7 +209,7 @@ export class FluvyHumidityCard extends Card<HumidityCardConfig> {
 
   /** The trend's window, "Last 6 h": a figure with its unit, so its row's circle gives way before it is cut. */
   private trendWindow(): string {
-    return strings(this.hass, 'last_hours', {
+    return plural(this.hass, 'humidity.last_hours', this.trendHours, {
       hours: formatNumber(this.hass, this.trendHours, { digits: 1 }),
     });
   }

@@ -1,7 +1,8 @@
 /**
- * The catalogues checked against English — every key, none extra, none empty, the same placeholders, every plural
- * with its base, every naming-word category — and, for every language the registry names, the integration's
- * translation file and its line in the docs. Warnings (missing keys) become errors with `--release`.
+ * The catalogues checked against English — every key, none extra, none empty, the same placeholders, every count in
+ * each form its language says of a whole number, every naming-word category — English's counts in its own two forms,
+ * and, for every language the registry names, the integration's translation file and its line in the docs. Warnings
+ * (missing keys) become errors with `--release`.
  *
  *   pnpm i18n              what `pnpm check` runs
  *   pnpm i18n --release    before a release: nothing may be missing
@@ -13,6 +14,7 @@ import {
   compare,
   compareIntegration,
   DOCS_TABLE,
+  englishCounts,
   readCatalogue,
   ROOT,
   type Problem,
@@ -33,7 +35,7 @@ const registered =
     ?.match(/'([^']+)'/g)
     ?.map((s) => s.slice(1, -1)) ?? [];
 
-const problems: Problem[] = [];
+const problems: Problem[] = [...englishCounts(english)];
 for (const code of codes) {
   if (!registered.includes(code))
     problems.push({

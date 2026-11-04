@@ -7,6 +7,7 @@ import {
   formatTime,
   houseZone,
   isUsable,
+  plural,
   stateText,
   strings,
   wallClock,
@@ -1394,7 +1395,7 @@ export class FluvyEnergyCard extends Card<EnergyCardConfig> {
           ? `${view.areaName || this.t('energy.home')} · ${rangeWords(this.hass, range, this.now())}`
           : day
             ? `${view.areaName || this.t('energy.home')} · ${this.t('common.today').toLowerCase()}`
-            : s(this.hass, 'last_hours', {
+            : plural(this.hass, 'energy.last_hours', hours, {
                 hours: formatNumber(this.hass, hours, { digits: 0 }),
               })));
     const cost =

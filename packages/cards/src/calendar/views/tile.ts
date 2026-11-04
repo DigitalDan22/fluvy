@@ -67,10 +67,7 @@ function dateTile(ctx: ViewContext): TemplateResult {
   const state =
     left > 0
       ? fitText(
-          [
-            `${counted} · ${s(ctx.hass, left === 1 ? 'left_one' : 'left', { count: left })}`,
-            counted,
-          ],
+          [`${counted} · ${words.count('calendar.left', left)}`, counted],
           ctx.width - 1,
           FACE.tile,
         )
@@ -125,9 +122,7 @@ function nextTile(ctx: ViewContext): TemplateResult {
         ${
           ready
             ? html`<p class="fv-tile__name">${name}</p>
-                <p class="fv-tile__state">
-                  ${words.t('calendar.next_days', { count: NEXT_DAYS - 1 })}
-                </p>`
+                <p class="fv-tile__state">${words.count('calendar.next_days', NEXT_DAYS - 1)}</p>`
             : restingLines(ctx, name)
         }`,
     );
