@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { BMW, carHouse, KIA, MG, RENAULT, TESLA, VOLVO, VW } from './fixtures.js';
+import { BMW, carHouse, KIA, MG, RENAULT, TESLA, VOLVO, VW, type CarFixture } from './fixtures.js';
 import { vehicleDevice, vehicleDevices, vehicleEntities, wheelOf } from './roles.js';
 
 const hass = carHouse();
 const found = (device: string) => vehicleEntities(hass, device);
+/** A battery's charge, as a sensor of an integration the card does not know says it. */
+const BATTERY = { unit_of_measurement: '%', device_class: 'battery' };
 
 describe('a car’s entities', () => {
   it('finds a Tesla’s by its keys: one key a sensor, a switch and a binary sensor; the rated range over the estimate', () => {
@@ -43,6 +45,30 @@ describe('a car’s entities', () => {
     expect(ids).not.toContain('lock.model_y_charge_cable_lock');
     expect(ids).not.toContain('device_tracker.model_y_route');
     expect(ids).not.toContain('climate.model_y_cabin_overheat_protection');
+  });
+
+  it('never takes a charge port’s latch for the doors’ lock of an integration it does not know, in either order', () => {
+    // tesla_custom's latch is a lock as its doors' is: by its id, by its key, a binary sensor of the lock's class
+    const lockOf = (seeds: CarFixture['seeds']): string | undefined => {
+      const car = { device: 'd-custom', name: 'Model 3', platform: 'tesla_custom', seeds };
+      return vehicleEntities(carHouse([car]), car.device).roles.lock;
+    };
+    const battery = ['sensor.model_3_battery', '71', undefined, BATTERY] as const;
+    const locks: CarFixture['seeds'] = [
+      ['lock.model_3_charge_port_latch', 'locked'],
+      ['lock.model_3_charge_port', 'locked', 'charge_port_latch'],
+      ['lock.model_3_doors', 'locked'],
+    ];
+    expect(lockOf([battery, ...locks])).toBe('lock.model_3_doors');
+    expect(lockOf([battery, ...[...locks].reverse()])).toBe('lock.model_3_doors');
+    const sensors: CarFixture['seeds'] = [
+      ['binary_sensor.model_3_charge_cable_lock', 'on', undefined, { device_class: 'lock' }],
+      ['binary_sensor.model_3_locked', 'on', undefined, { device_class: 'lock' }],
+    ];
+    expect(lockOf([battery, ...sensors])).toBe('binary_sensor.model_3_locked');
+    expect(lockOf([battery, ...[...sensors].reverse()])).toBe('binary_sensor.model_3_locked');
+    // a latch is never a lock at all: a car with nothing else has none
+    expect(lockOf([battery, ['lock.model_3_charger_lock', 'locked']])).toBeUndefined();
   });
 
   it('never makes a control of what sounds, wakes or opens a garage', () => {

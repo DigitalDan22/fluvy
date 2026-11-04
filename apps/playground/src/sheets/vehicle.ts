@@ -15,7 +15,7 @@ if (!customElements.get('fluvy-vehicle-card'))
  * away from home with its time to full as a duration, an i4 on BMW's CarData with a handful of entities read by their
  * names, and a Leaf that dropped off the network. Then the layouts: compact, the strip, the ring, the picture over the
  * battery and in the head, the tyres from above, the card's own controls and rows, half a section, a phone's column
- * and a desktop's.
+ * and a desktop's. Last, a Model 3 on tesla_custom, whose charge port's latch is never its lock.
  */
 
 /** The mock's moment: the times to full are counted from it. */
@@ -424,6 +424,23 @@ const I4: readonly StateSeed[] = [
   ['device_tracker.i4_location', 'home', { friendly_name: 'i4 Location' }],
 ];
 
+/**
+ * A Model 3 on tesla_custom (from HACS), read by what its entities are: its charge port's latch is a lock as its doors'
+ * is, and first in its registry, yet never the car's lock; its doors left unlocked.
+ */
+const MIDNIGHT: readonly StateSeed[] = [
+  ['sensor.midnight_battery', '73', percent('Midnight Battery')],
+  ['sensor.midnight_range', '341', km('Midnight Range')],
+  ['lock.midnight_charge_port_latch', 'locked', { friendly_name: 'Midnight Charge port latch' }],
+  ['lock.midnight_doors', 'unlocked', { friendly_name: 'Midnight Doors' }],
+  [
+    'device_tracker.midnight_location_tracker',
+    'home',
+    { friendly_name: 'Midnight Location tracker', source_type: 'gps' },
+  ],
+  ['sensor.midnight_mileage', '30215', km('Midnight Mileage')],
+];
+
 /** A Leaf whose integration dropped it: everything out of reach. */
 const GONE: readonly StateSeed[] = [
   ['sensor.leaf_battery_level', 'unavailable', percent('Leaf Battery level')],
@@ -568,7 +585,17 @@ const card = (device: string, extra: Record<string, unknown> = {}) => ({
 });
 
 export const sheet: SheetSpec = {
-  states: [...MODEL_Y, ...MODEL_3, ...MODEL_S, ...MODEL_X, ...EV6, ...IONIQ5, ...I4, ...GONE],
+  states: [
+    ...MODEL_Y,
+    ...MODEL_3,
+    ...MODEL_S,
+    ...MODEL_X,
+    ...EV6,
+    ...IONIQ5,
+    ...I4,
+    ...GONE,
+    ...MIDNIGHT,
+  ],
   registry: {
     entities: Object.fromEntries([
       ...entries('d-model-y', 'teslemetry', MODEL_Y, teslaKeys('model_y', MODEL_Y), [
@@ -590,6 +617,8 @@ export const sheet: SheetSpec = {
       // CarData names its entities in English and keys only its tracker
       ...entries('d-i4', 'cardata', I4, { 'device_tracker.i4_location': 'car' }),
       ...entries('d-leaf', 'tesla_fleet', GONE, teslaKeys('leaf', GONE)),
+      // tesla_custom keys none of them: the card reads it by its ids' ends and by what its entities are
+      ...entries('d-midnight', 'tesla_custom', MIDNIGHT),
     ]),
     devices: Object.fromEntries([
       device('d-model-y', 'Model Y', 'Model Y Long Range'),
@@ -600,6 +629,7 @@ export const sheet: SheetSpec = {
       device('d-ioniq-5', 'IONIQ 5', 'IONIQ 5'),
       device('d-i4', 'i4 eDrive40', 'i4'),
       device('d-leaf', 'Leaf', 'Leaf'),
+      device('d-midnight', 'Midnight', 'Model 3'),
     ]),
   },
   frames: [
@@ -724,6 +754,10 @@ export const sheet: SheetSpec = {
     {
       title: 'Miles and its own low range',
       cards: [card('d-model-x', { range_unit: 'mi', low_range: 160, variant: 'compact' })],
+    },
+    {
+      title: 'tesla_custom · its charge port’s latch, never its lock',
+      cards: [card('d-midnight')],
     },
   ],
 };

@@ -20,6 +20,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   a month offers Today again.
 - A card editor's select whose choices follow another field (a chart's style, by the sensor picked) offers the choices
   that apply as that field changes, where it kept the first ones.
+- The Vehicle card takes a charge port's latch or a charge cable's lock for the car's lock on no integration: a car on
+  tesla_custom whose latch came first in its registry had its lock round say and unlock the latch, which opens the
+  charge port's door, where the doors' lock was meant.
 
 ### Development
 

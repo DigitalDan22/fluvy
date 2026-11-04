@@ -686,6 +686,13 @@ const SUFFIXES: Ends = [
 const NEVER =
   /(^|_)(wake|wake_up|wakeup|honk|horn|sound_horn|flash|flash_lights|honk_flash|boombox|homelink|trigger_homelink|keyless|enable_keyless_driving|keep_accessory_power_mode|remote_start|engine_start|engine_stop|res_state|valet|valet_mode|guest_mode|guest_mode_enabled|speed_limit|force_refresh|force_data_refresh|refresh_data|hazard|panic|firmware|reboot|restart|identify|rssi|signal_strength|wifi)(_|$)/;
 
+/**
+ * A charge port's latch or its cable's lock, by a key or an id without the device's name, whatever its integration:
+ * never the doors' lock (tesla_custom's `charge_port_latch` is a lock as the doors' is, and would play it by the
+ * registry's order alone).
+ */
+const LATCH = /(^|_)(latch|cable_lock|charger_lock|charge_port_lock)$/;
+
 /** How surely a role is known: by the integration's own key, a key it holds second, an id's end, what it is. */
 const RANK = { platform: 4, second: 3, suffix: 2, domain: 0 } as const;
 
@@ -729,9 +736,18 @@ function fitting(word: Word | undefined, candidate: Candidate): VehicleRole | Ga
  * The part an entity plays on a car and how surely it is known: by its integration's own key (4, or 3 for a key it
  * holds second), by the end of its id — its integration's, then anyone's (2) — by what it is (0: a battery's charge,
  * a lock, a climate, a tracker, an update, a cable, a charge). None where the integration says it is not the card's
- * business, nor for what could move, wake or sound the car.
+ * business, nor for what could move, wake or sound the car; a charge port's latch never plays its lock.
  */
 export function partOf(candidate: Candidate): Part | undefined {
+  const { key, object } = candidate;
+  const part = played(candidate);
+  return part?.role === 'lock' && (LATCH.test(object) || (key && LATCH.test(key)))
+    ? undefined
+    : part;
+}
+
+/** The part an entity plays by its words and by what it is, before the latch is told from the lock. */
+function played(candidate: Candidate): Part | undefined {
   const { key, object } = candidate;
   if (NEVER.test(object) || (key && NEVER.test(key))) return undefined;
   const platform = known(candidate.platform) ? candidate.platform : undefined;

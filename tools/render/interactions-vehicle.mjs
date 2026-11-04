@@ -110,6 +110,12 @@ const handed = () => page.evaluate(() => window.__handed.splice(0));
     bmw.rounds[0]?.word === 'Locked' && bmw.line === 'Limit 80 %' && bmw.badge === 'Parked',
     JSON.stringify(bmw),
   );
+  const custom = await read(card(page, 'tesla_custom · its charge port’s latch, never its lock'));
+  check(
+    'tesla_custom: its doors’ lock, never its charge port’s latch first in its registry',
+    custom.rounds.length === 1 && custom.rounds[0]?.label === 'Lock · Unlocked',
+    JSON.stringify(custom.rounds),
+  );
   const gone = await read(card(page, 'Out of reach'));
   check(
     'out of reach: the badge says so, every round still, the rows dashes',
