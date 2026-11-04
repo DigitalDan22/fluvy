@@ -8,7 +8,7 @@ import {
   type Namespace,
   type Values,
 } from './catalogue.js';
-import { LANGUAGE_CODES, resolveLanguage, type LanguageCode } from './languages.js';
+import { LANGUAGE_CODES, resolveLanguage, speaks, type LanguageCode } from './languages.js';
 
 export type { Catalogue, CountKey, KeyOf, MessageKey, Namespace, Values } from './catalogue.js';
 export { english } from './catalogue.js';
@@ -72,6 +72,18 @@ export function setLanguageOverride(language: LanguageCode | undefined): void {
 /** The language a person chose, if any. */
 export function languageOverride(): LanguageCode | undefined {
   return override;
+}
+
+/**
+ * Marks what says Fluvy's words (a card, the panel, a page of ours) with their language, where the person chose one
+ * that is not the page's (`page`: Home Assistant's), so the browser draws them as that language — a kanji in its
+ * Japanese form, a word hyphenated by its own rules; and takes the mark off where they are the page's language again.
+ */
+export function markLanguage(host: Element, page: string | undefined): void {
+  const lang = override && !(speaks(page) && resolveLanguage(page) === override) ? override : null;
+  if (host.getAttribute('lang') === lang) return;
+  if (lang) host.setAttribute('lang', lang);
+  else host.removeAttribute('lang');
 }
 
 /**

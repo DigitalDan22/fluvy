@@ -1,4 +1,4 @@
-import { strings, type HomeAssistant } from '@fluvy/core';
+import { markLanguage, strings, type HomeAssistant } from '@fluvy/core';
 import { baseStyles } from '@fluvy/ui';
 import { css, html, LitElement } from 'lit';
 
@@ -70,6 +70,10 @@ export class FluvyWallToast extends LitElement {
   constructor() {
     super();
     this.kind = 'paused';
+  }
+
+  protected override willUpdate(): void {
+    markLanguage(this, this.hass?.language);
   }
 
   protected override render() {

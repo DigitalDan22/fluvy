@@ -7,9 +7,10 @@
  * chooses and the apply bar names the change; Escape closes with nothing changed, the focus still on the field and
  * the key kept from the window (Home Assistant's dialogs); a tap outside and a scroll close it; at 360 the menu is
  * as wide as the field; in a short viewport it opens over the field, as tall as the room there; letters find a
- * name; Tab chooses and moves on to the next control; a browser without the Popover API draws the same box; the
- * help row opens the translating guide in a new tab; under reduced motion the menu shows and hides without an
- * animation. The Charts tab (1.11): it opens after Appearance with every style and gauge drawn as a tile and the
+ * name; Tab chooses and moves on to the next control; a language chosen that is not the page's marks the panel and its
+ * cards with its `lang`, and Automatic (or a page in it) takes the mark off; a browser without the Popover API draws
+ * the same box; the help row opens the translating guide in a new tab; under reduced motion the menu shows and hides
+ * without an animation. The Charts tab (1.11): it opens after Appearance with every style and gauge drawn as a tile and the
  * preview in both modes; a style tile applies at once and a card on the page that names no style redraws in it; the
  * fine settings show and hide with the style, the waves with a gauge that moves; motion off freezes the preview, the
  * tiles (the moving gauges' too) and the card; a new set of series colours starts on the palette's six, followed, and
@@ -254,6 +255,57 @@ const keysSeen = (page) => page.evaluate(() => window.__keys.splice(0));
     JSON.stringify(next),
   );
   await page.close();
+}
+
+/* ---------- the language's mark: `lang` on what speaks Fluvy's words, where it is not the page's ---------- */
+{
+  /** The `lang` of the page, of the panel and of every card it draws. */
+  const marks = (page) =>
+    page.evaluate(() => {
+      const panel = document.querySelector('fluvy-panel');
+      const cards = [...panel.shadowRoot.querySelectorAll('*')].filter((el) =>
+        /^fluvy-.*-card$/.test(el.localName),
+      );
+      return {
+        page: document.documentElement.lang,
+        panel: panel.getAttribute('lang'),
+        cards: [...new Set(cards.map((card) => card.getAttribute('lang')))],
+      };
+    });
+  /** Chooses a language by its own name; Automatic, the first row, by none. */
+  const choose = async (page, name) => {
+    const d = dropdown(page);
+    await d.field.click();
+    await settle(page, 300);
+    await (name ? d.rows.filter({ hasText: name }) : d.rows).first().click();
+    await settle(page, 400);
+  };
+  const page = await suite.page(PREFERENCES);
+  const before = await marks(page);
+  await choose(page, '日本語');
+  const chosen = await marks(page);
+  await choose(page);
+  const back = await marks(page);
+  await page.close();
+  // a page already in the language chosen: no mark
+  const same = await suite.page(`${PREFERENCES}&lang=ja`);
+  await choose(same, '日本語');
+  const already = await marks(same);
+  await same.close();
+  check(
+    'Japanese chosen on an English page: the panel and its cards say lang="ja"; Automatic, or a Japanese page, none',
+    before.panel === null &&
+      before.cards.join() === '' &&
+      chosen.page === 'en' &&
+      chosen.panel === 'ja' &&
+      chosen.cards.join() === 'ja' &&
+      back.panel === null &&
+      back.cards.join() === '' &&
+      already.page === 'ja' &&
+      already.panel === null &&
+      already.cards.join() === '',
+    JSON.stringify({ before, chosen, back, already }),
+  );
 }
 
 /* ---------- without the Popover API: the same box ---------- */

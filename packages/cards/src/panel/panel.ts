@@ -18,6 +18,7 @@ import {
   type SunLike,
   type WallSettings,
   wallDark,
+  markLanguage,
   navigate,
   onWords,
   plural,
@@ -397,6 +398,8 @@ export class FluvyPanel extends LitElement {
       (changed.has('draft') && this.tryOnApp)
     )
       this.showEdits();
+    // its words in the language chosen (on trial too), marked where it is not the page's
+    markLanguage(this, this.hass?.language);
     // the bar leaves the way it came, keeping its words while it goes
     const shown = this.pending();
     if (this.barShown && !shown) {

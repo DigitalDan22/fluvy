@@ -8,6 +8,7 @@ import {
   formatDate,
   formatTime,
   languageOf,
+  markLanguage,
   navigate,
   plural,
   PREFERENCES_EVENT,
@@ -315,6 +316,7 @@ export class FluvyActivity extends LitElement {
       this.timeWidth = this.measureTime();
       this.resubscribe();
     }
+    markLanguage(this, this.hass?.language);
   }
 
   protected override updated(changed: PropertyValues<this>): void {

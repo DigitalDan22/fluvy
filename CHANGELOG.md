@@ -57,6 +57,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   asked about and moved only those that took the set's own service: blinds that only tilt beside blinds that close,
   or a player that can only stop beside one that pauses, were left to a tap that did not ask. Where the tap gives the
   dialog no words, such a set's dialog names the round ("Blinds").
+- A card, the sheets it opens, Fluvy's settings panel, its Activity and History pages and a wall's own buttons say they
+  speak the language chosen for Fluvy (`lang`) where it is not Home Assistant's, so the browser draws Japanese kanji
+  in their Japanese forms and hyphenates by that language's rules, where it drew them as the page's language.
 
 ## [1.13.1] — 2026-11-04
 

@@ -10,7 +10,13 @@ import type {
   LovelaceCardConfig,
   LovelaceGridOptions,
 } from './ha/types.js';
-import { languageOverride, localize, onWords, type MessageKey } from './i18n/index.js';
+import {
+  languageOverride,
+  localize,
+  markLanguage,
+  onWords,
+  type MessageKey,
+} from './i18n/index.js';
 import { idsOf, type EntityEntry } from './lists.js';
 import { AccentSheet } from './look/accent.js';
 import { CHART_DEFAULTS, type ChartSettings, type SavedSeries } from './settings/charts.js';
@@ -200,6 +206,8 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
     const previous = this.viewHass;
     this.rawHass = value;
     this.viewHass = withLanguage(value);
+    // its sheets and dialogs are its own: the mark covers them
+    markLanguage(this, value?.language);
     this.requestUpdate('hass', previous);
   }
   declare config?: C;

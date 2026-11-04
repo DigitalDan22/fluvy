@@ -9,6 +9,7 @@ import {
   ensureFonts,
   formatTime,
   languageOf,
+  markLanguage,
   navigate,
   onWords,
   readStored,
@@ -309,6 +310,7 @@ export class FluvyHistory extends LitElement {
       this.reduced = motionPreference() === 'reduced' || reducedMotion();
       if (!this.entitySources) void this.readSources();
     }
+    markLanguage(this, this.hass?.language);
     // whoever moves the window — a link, a button, the panel around us — the readings follow it
     if (
       changed.has('hass') ||

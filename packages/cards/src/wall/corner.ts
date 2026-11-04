@@ -1,4 +1,4 @@
-import { haptic, strings, type HomeAssistant, type WallExit } from '@fluvy/core';
+import { haptic, markLanguage, strings, type HomeAssistant, type WallExit } from '@fluvy/core';
 import { glyph } from '@fluvy/ui';
 import { css, html, LitElement, svg } from 'lit';
 
@@ -206,6 +206,10 @@ export class FluvyWallCorner extends LitElement {
     clearTimeout(this.timer);
     this.pressing = false;
   };
+
+  protected override willUpdate(): void {
+    markLanguage(this, this.hass?.language);
+  }
 
   protected override render() {
     if (this.mode === 'button') {

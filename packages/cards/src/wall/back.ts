@@ -1,4 +1,4 @@
-import { haptic, strings, type HomeAssistant } from '@fluvy/core';
+import { haptic, markLanguage, strings, type HomeAssistant } from '@fluvy/core';
 import { glyph } from '@fluvy/ui';
 import { css, html, LitElement } from 'lit';
 
@@ -106,6 +106,10 @@ export class FluvyWallBack extends LitElement {
     haptic(this, 'light');
     this.onBack();
   };
+
+  protected override willUpdate(): void {
+    markLanguage(this, this.hass?.language);
+  }
 
   protected override render() {
     const words = this.title || s(this.hass, 'back');
