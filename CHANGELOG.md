@@ -5,6 +5,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.13.0] — 2026-11-04
+
 ### Visible on upgrade
 
 - The helpers card opens a select of more than six options in Fluvy's own dropdown, from the value at the end of its
