@@ -1415,6 +1415,8 @@
     "state_cooking": "調理中",
     "state_cleaning": "洗浄中",
     "state_light_on": "ライト点灯中",
+    "state_odor_removal": "消臭中",
+    "state_deodorant_reset": "消臭剤リセット中",
     "cycle_turbo": "ターボ",
     "cycle_heavy": "強力",
     "cycle_auto": "自動",

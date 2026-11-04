@@ -278,6 +278,12 @@ describe('what it is doing', () => {
     }
     for (const word of ['cleaning', 'dumping', 'maintenance'])
       expect(actions(word), word).toContain('pause');
+    // its deodorizing and its deodorant's resets, which its translations leave unnamed: our words, no pause
+    expect(at('odor_removal')).toMatchObject({ status: 'running', word: 'Removing odours' });
+    for (const word of ['reset_deodorant', 'reset_max_deodorant']) {
+      expect(at(word), word).toMatchObject({ status: 'running', word: 'Resetting deodorant' });
+      expect(actions(word), word).not.toContain('pause');
+    }
   });
 
   it('feeds while its flag says so, and is out of reach where it says it is not reached', () => {

@@ -2313,6 +2313,8 @@
     "state_cooking": "A cozinhar",
     "state_cleaning": "A limpar",
     "state_light_on": "Luz acesa",
+    "state_odor_removal": "A remover odores",
+    "state_deodorant_reset": "A repor o desodorizante",
     "cycle_turbo": "Turbo",
     "cycle_heavy": "Intensivo",
     "cycle_auto": "Auto",

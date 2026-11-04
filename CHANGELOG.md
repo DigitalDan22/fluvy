@@ -26,6 +26,10 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- A compact appliance card with its buttons asked for (`show_controls: true`) is as tall as it draws them, where its
+  height left their row out and the card under it in a column rose over them.
+- A PetKit litter box removing odours or resetting its deodorant says so (Removing odours, Resetting deodorant),
+  where it said the integration's raw words.
 - A room card's quick action written without its dash (`quick_actions: lights`) is a list of one, where the card
   drew the room's lights and blinds instead, or broke on one written as an object; a number says what is wrong.
 - A picture of your own on the thermostat, appliance or Vehicle card that would not load once (while Home Assistant

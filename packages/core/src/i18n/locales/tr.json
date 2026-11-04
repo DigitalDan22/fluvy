@@ -2313,6 +2313,8 @@
     "state_cooking": "Pişirme",
     "state_cleaning": "Temizlik",
     "state_light_on": "Işık açık",
+    "state_odor_removal": "Koku giderme",
+    "state_deodorant_reset": "Koku giderici sıfırlama",
     "cycle_turbo": "Turbo",
     "cycle_heavy": "Yoğun",
     "cycle_auto": "Otomatik",

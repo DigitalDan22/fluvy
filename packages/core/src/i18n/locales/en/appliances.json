@@ -294,6 +294,8 @@
     "state_cooking": "Cooking",
     "state_cleaning": "Cleaning",
     "state_light_on": "Light on",
+    "state_odor_removal": "Removing odours",
+    "state_deodorant_reset": "Resetting deodorant",
     "cycle_turbo": "Turbo",
     "cycle_heavy": "Intensive",
     "cycle_auto": "Auto",

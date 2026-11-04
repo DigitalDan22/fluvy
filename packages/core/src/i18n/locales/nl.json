@@ -2313,6 +2313,8 @@
     "state_cooking": "Bereiden",
     "state_cleaning": "Reinigen",
     "state_light_on": "Licht aan",
+    "state_odor_removal": "Geurverwijdering",
+    "state_deodorant_reset": "Deodorant resetten",
     "cycle_turbo": "Turbo",
     "cycle_heavy": "Intensief",
     "cycle_auto": "Auto",

@@ -2313,6 +2313,8 @@
     "state_cooking": "Cuisson",
     "state_cleaning": "Nettoyage",
     "state_light_on": "Lumière allumée",
+    "state_odor_removal": "Élimination des odeurs",
+    "state_deodorant_reset": "Réinitialisation du désodorisant",
     "cycle_turbo": "Turbo",
     "cycle_heavy": "Intensif",
     "cycle_auto": "Auto",

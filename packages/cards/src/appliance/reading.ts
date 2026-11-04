@@ -306,8 +306,10 @@ const SHARED: Readonly<Partial<Record<KeyOf<'appliance'>, string>>> = {
   state_refreshing: 'refreshing',
   state_cooking: 'cook cooking cooking_in_progress',
   state_cleaning: 'clean cleaning',
-  // PetKit's litter box lit (its translations have no word for it)
+  // PetKit's litter box lit, removing odours, resetting its deodorant (its translations have no words for them)
   state_light_on: 'light',
+  state_odor_removal: 'odor_removal',
+  state_deodorant_reset: 'reset_deodorant reset_max_deodorant',
   cycle_turbo: 'turbo',
   cycle_heavy: 'heavy',
   cycle_auto: 'auto',

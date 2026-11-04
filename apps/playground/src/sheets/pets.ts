@@ -184,6 +184,7 @@ const litter = (title: string, state: string): FrameSpec => ({
   cards: [
     card('pk-litter', { show_controls: true }),
     card('pk-litter', { variant: 'compact' }),
+    card('pk-litter', { variant: 'compact', show_controls: true }),
     card('pk-litter', { variant: 'row' }),
   ],
 });
@@ -267,5 +268,7 @@ export const sheet: SheetSpec = {
     litter('Pets · a litter box lit', 'light'),
     litter('Pets · a litter box calibrating', 'calibrating'),
     litter('Pets · a litter box resetting itself', 'resetting_device'),
+    litter('Pets · a litter box removing odours', 'odor_removal'),
+    litter('Pets · a litter box resetting its deodorant', 'reset_max_deodorant'),
   ],
 };
