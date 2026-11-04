@@ -361,6 +361,8 @@ export const sheet: SheetSpec = {
         hello({ name: 'Marta' }),
         hello({ person: 'person.ana', weather: 'weather.broken' }),
         hello({ name: 'Marta', weather: 'weather.gone', _now: '2026-09-17T07:12:00' }),
+        // half past ten: English's and German's morning still, Slovak's and Hungarian's day
+        hello({ name: 'Marta', weather: 'weather.clouds', _now: '2026-09-17T10:30:00' }),
         hello({ weather: 'weather.sunny_after_dark', _now: '2026-09-17T14:05:00' }),
         hello({ name: 'Marta', weather: 'weather.clouds', _now: '2026-09-17T23:30:00' }),
         hello({ name: 'Marta', weather: 'weather.no_temperature' }),

@@ -140,8 +140,9 @@ export const LANGUAGES: Readonly<Record<LanguageCode, LanguageInfo>> = {
     code: 'sk',
     name: 'Slovenčina',
     english: 'Slovak',
-    // Dobré ráno, dobré popoludnie, dobrý večer; neskoro v noci dobrú noc.
-    dayParts: { morning: 5, afternoon: 12, evening: 18, night: 23 },
+    // "dobré ráno" until 9:00 (the early morning only), "dobrý deň" through the day, "dobrý večer" from 18:00, and
+    // "dobrú noc" late, as German's "gute Nacht"
+    dayParts: { morning: 5, afternoon: 9, evening: 18, night: 23 },
   },
 };
 
