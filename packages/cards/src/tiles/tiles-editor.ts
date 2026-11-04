@@ -11,6 +11,7 @@ import {
   holdsLight,
   lightColourFields,
   nameIconFields,
+  nameLinesField,
   onlyWhen,
   selectField,
   sinceChoices,
@@ -33,6 +34,7 @@ export const base: readonly BaseKey[] = ['entities', 'tone', 'color', 'card_colo
 
 export const keys = configKeys<TilesCardConfig>()([
   'size',
+  'name_lines',
   'readouts',
   'tiles',
   'columns',
@@ -75,6 +77,7 @@ export const choices: EditorChoices = sinceChoices;
 // the columns a group takes when it names none: three minis a row, else two
 export const defaults: EditorDefaults = (config) => ({
   size: 'compact',
+  name_lines: '1',
   columns: config['size'] === 'mini' ? '3' : '2',
   tint: 'on',
   light_colors: lightDefaults().colors,
@@ -86,6 +89,8 @@ export function getConfigForm(): LovelaceConfigForm {
     schema: [
       entitiesField('entities', undefined, true),
       fieldRow(selectField('size', SIZES), selectField('columns', COLUMNS)),
+      // a small tile's name may take two lines
+      onlyWhen(({ size }) => size !== 'large', nameLinesField()),
       ...colourFields(),
       tintField(),
       // a light's colours where the group holds a light

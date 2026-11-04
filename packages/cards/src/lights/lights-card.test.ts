@@ -15,7 +15,7 @@ import {
 } from '../shared/fixtures/editor.js';
 import type { FormLabeler } from '../shared/form.js';
 import { FluvyTilesCard } from '../tiles/tiles-card.js';
-import { FluvyLightsCard } from './lights-card.js';
+import { FluvyLightsCard, type LightsCardConfig } from './lights-card.js';
 
 // the index fetches the lazy families: they land before this file's page goes
 afterAll(() => familiesDefined);
@@ -150,6 +150,24 @@ describe('the room lights in their bulbs’ colours, in every style (#58)', () =
         .textContent!.trim();
     expect(await line({})).toBe('On · 24 %');
     expect(await line({ show_level: false })).toBe('On');
+  });
+
+  it('its tiles take a name in two lines where asked, each a line taller, from the config alone (#100)', async () => {
+    const tiles = (await mount({ variant: 'tiles', name_lines: 2 })).querySelectorAll('.fv-tile');
+    expect([...tiles].every((tile) => tile.classList.contains('fv-tile--lines'))).toBe(true);
+    const config: LightsCardConfig = {
+      type: 'custom:fluvy-lights-card',
+      variant: 'tiles',
+      lights: ['light.a', 'light.b'],
+    };
+    expect(
+      FluvyLightsCard.layoutHeight({ ...config, name_lines: 2 }) -
+        FluvyLightsCard.layoutHeight(config),
+    ).toBe(12);
+    // the rounds and the chips have no tile to make taller
+    expect(FluvyLightsCard.layoutHeight({ ...config, variant: 'row', name_lines: 2 })).toBe(
+      FluvyLightsCard.layoutHeight({ ...config, variant: 'row' }),
+    );
   });
 });
 

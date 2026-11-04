@@ -30,6 +30,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- A compact or mini tile's long name in two lines where one would end it in an ellipsis (`name_lines: 2`), on the
+  tile and tiles cards, the template card, the room lights' tiles and the room card's tiles and row: the tile is a
+  line taller whatever its name says, so a row of tiles stays level. Thanks to @rammium (#100).
 - Chips whose words are Home Assistant templates, rendered and kept live, such as who is home or how many rooms have
   a light on, and whose icon and colour may be templates too; a chip whose words render nothing keeps its icon, or
   steps out of the row when it has none. Thanks to @Gnomi2 (#87).

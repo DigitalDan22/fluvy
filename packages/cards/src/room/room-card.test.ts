@@ -496,6 +496,24 @@ describe('the room card’s editor offers what acts in the room’s style (#58)'
     expect(await shown({})).not.toContain('picture');
   });
 
+  it('a name in two lines where a compact tile is drawn: its tiles, or the row (#100)', async () => {
+    expect(await shown({ variant: 'tile', controls: 'tiles' })).toContain('name_lines');
+    expect(await shown({ variant: 'row' })).toContain('name_lines');
+    expect(await shown({ variant: 'tile' })).not.toContain('name_lines');
+    expect(await shown({ variant: 'photo', controls: 'none' })).not.toContain('name_lines');
+    // each tile, and the row, a line taller, from the config alone
+    const tiles: RoomCardConfig = {
+      type: 'custom:fluvy-room-card',
+      area: 'garten',
+      variant: 'tile',
+      controls: 'tiles',
+    };
+    expect(
+      FluvyRoomCard.layoutHeight({ ...tiles, name_lines: 2 }) - FluvyRoomCard.layoutHeight(tiles),
+    ).toBe(2 * 12);
+    expect(FluvyRoomCard.layoutHeight({ ...tiles, variant: 'row', name_lines: '2' })).toBe(88);
+  });
+
   it('never the size and the readouts it never read (their YAML keys stay, ignored)', async () => {
     const names = await shown({ variant: 'tile', size: 'mini', readouts: ['sensor.garten_t'] });
     expect(names).not.toContain('size');

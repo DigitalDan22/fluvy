@@ -24,6 +24,15 @@ export const EMPTY = 120;
 /** A card's content column at a 360 column. */
 export const COLUMN = 320;
 
+/**
+ * A small tile's name in two lines where one would end it in an ellipsis (`name_lines: 2`, #100; the editor writes
+ * it as the word `'2'`): the tile is a line of its name taller whatever its name says — a compact tile 12 (76 → 88,
+ * 84 → 96 inside a card: its name's 20 less the 8 its words had to spare), a mini 16 (108 → 124).
+ */
+export const twoLines = (config: LovelaceCardConfig | undefined): boolean =>
+  Number(config?.['name_lines']) === 2;
+export const NAME_LINE = { compact: 12, mini: 16 } as const;
+
 /** The first of `keys` a config holds a list under. */
 const firstList = (config: LovelaceCardConfig, keys: readonly string[]): unknown[] | undefined =>
   keys.map((key) => config[key]).find(Array.isArray);

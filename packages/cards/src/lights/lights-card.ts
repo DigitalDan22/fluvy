@@ -35,10 +35,19 @@ import { toneOf } from '../shared/colour.js';
 import { ITEM_ALIASES, type AliasSpec } from '../shared/config.js';
 import { onOfShort } from '../shared/counted.js';
 import { iconOf } from '../shared/domain.js';
-import { chipRows, EMPTY, entryCount, HEAD, rowsOf, type NameOf } from '../shared/heights.js';
+import {
+  chipRows,
+  EMPTY,
+  entryCount,
+  HEAD,
+  NAME_LINE,
+  rowsOf,
+  twoLines,
+  type NameOf,
+} from '../shared/heights.js';
 import { hideEmpty, itemsOf, listOf, type EmptyList } from '../shared/lists.js';
 import { DIMMABLE, lightLook, litColour, withMembers, type LightWhites } from '../shared/light.js';
-import { FluvyTileCard } from '../tile/tile-card.js';
+import { FluvyTileCard, type NameLines } from '../tile/tile-card.js';
 import { fittedColumns } from '../shared/chips.js';
 
 const s = strings('lights');
@@ -77,6 +86,8 @@ export interface LightsCardConfig extends FluvyCardConfig, EmptyList {
   light_colors?: boolean;
   /** A lit white in its bulb's colour: by its temperature (the default, 1.10), or as the palette's light (`palette`). */
   light_whites?: LightWhites;
+  /** `tiles`: a light's name in two lines where one would cut it (`2`), every tile a line taller (#100). */
+  name_lines?: NameLines;
 }
 
 /** A round and the gap between rounds. */
@@ -123,7 +134,10 @@ export function lightsHeight(config: LightsCardConfig, house?: RoomLights): numb
   if (area && !area.length) return HEAD + (config.empty_text || !house?.admin ? EMPTY : EMPTY_HINT);
   const n = listed || area?.length || 3;
   const ruler = config.show_brightness ? RULER : 0;
-  if (config.variant === 'tiles') return 20 + 44 + ruler + 16 + rowsOf(n, 2) * (INNER + 8) - 8 + 20;
+  if (config.variant === 'tiles') {
+    const inner = INNER + (twoLines(config) ? NAME_LINE.compact : 0);
+    return 20 + 44 + ruler + 16 + rowsOf(n, 2) * (inner + 8) - 8 + 20;
+  }
   if (config.variant === 'chips') {
     // filled chips in the rows their names take: as many a row as hold, three or two past four
     const items = entriesOf<LightItem>(config.lights ?? config.entities);

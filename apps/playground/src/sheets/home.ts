@@ -236,5 +236,53 @@ export const sheet: SheetSpec = {
         },
       ],
     },
+    // #100: the reporter's names, cut in one line at half a phone, take two where asked; the tiles are a line taller
+    // whatever their names say (a short one sits centred), so a row of them stays level
+    {
+      title: 'Compact tiles · names in two lines (#100)',
+      cards: [
+        {
+          type: 'custom:fluvy-tiles-card',
+          name_lines: 2,
+          tiles: [
+            { entity: 'switch.kitchen', name: 'Rares’ Bedroom' },
+            { entity: 'switch.hall', name: 'Technical Room' },
+            { entity: 'sensor.living_humidity', name: 'Devices connected' },
+            { entity: 'light.ceiling', name: 'Hall' },
+          ],
+        },
+        {
+          type: 'custom:fluvy-tile-card',
+          entity: 'switch.office',
+          name: 'Downstairs guest bathroom mirror',
+          size: 'compact',
+          name_lines: 2,
+          cols: 6,
+        },
+        {
+          type: 'custom:fluvy-tile-card',
+          entity: 'switch.garden_led',
+          name: 'Technical Room',
+          size: 'compact',
+          name_lines: 2,
+          cols: 6,
+        },
+      ],
+    },
+    {
+      title: 'Mini tiles · names in two lines (#100)',
+      cards: [
+        {
+          type: 'custom:fluvy-tiles-card',
+          size: 'mini',
+          name_lines: 2,
+          tiles: [
+            { entity: 'switch.kitchen', name: 'Rares’ Bedroom' },
+            { entity: 'switch.hall', name: 'Technical Room' },
+            { entity: 'light.ceiling', name: 'Hall' },
+          ],
+        },
+      ],
+    },
   ],
 };

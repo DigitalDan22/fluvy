@@ -15,6 +15,7 @@ import {
   formLabels,
   lightColourFields,
   nameIconFields,
+  nameLinesField,
   onlyWhen,
   selectField,
   showIconField,
@@ -70,6 +71,7 @@ export const keys = configKeys<RoomCardConfig>()([
   'temperature_entity',
   'humidity_entity',
   'tint',
+  'name_lines',
   'light_colors',
   'light_whites',
 ]);
@@ -94,6 +96,7 @@ export const defaults: EditorDefaults = (config, hass) => {
   return {
     variant: config['picture'] || area?.picture ? 'photo' : 'tile',
     controls: 'rows',
+    name_lines: '1',
     show_count: true,
     show_climate: true,
     tint: 'on',
@@ -125,7 +128,11 @@ export function getConfigForm(): LovelaceConfigForm {
         readingField('humidity', 'climate', 'humidifier'),
       ),
       ...colourFields(),
-      onlyWhen(drawsTiles, tintField()),
+      // its tiles' colour at rest; their names' lines, and the row's (a compact tile)
+      fieldRow(
+        onlyWhen(drawsTiles, tintField()),
+        onlyWhen((form) => drawsTiles(form) || form['variant'] === 'row', nameLinesField()),
+      ),
       onlyWhen(drawsLights, lightColourFields()),
       fieldRow(actionField('tap_action'), actionField('hold_action')),
     ],

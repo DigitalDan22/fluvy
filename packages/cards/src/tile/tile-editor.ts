@@ -4,9 +4,11 @@ import {
   colourFields,
   entitiesField,
   entityField,
+  fieldRow,
   formLabels,
   lightColourFields,
   nameIconFields,
+  nameLinesField,
   onlyWhen,
   selectField,
   sinceChoices,
@@ -24,6 +26,7 @@ export const base = ENTITY_BASE;
 
 export const keys = configKeys<TileCardConfig>()([
   'size',
+  'name_lines',
   'readouts',
   'since',
   'tint',
@@ -33,6 +36,7 @@ export const keys = configKeys<TileCardConfig>()([
 
 export const defaults: EditorDefaults = () => ({
   size: 'large',
+  name_lines: '1',
   since: '',
   tint: 'on',
   light_colors: lightDefaults().colors,
@@ -47,7 +51,11 @@ export function getConfigForm(): LovelaceConfigForm {
     schema: [
       entityField(),
       nameIconFields(),
-      selectField('size', TILE_SIZES),
+      // a small tile's name may take two lines
+      fieldRow(
+        selectField('size', TILE_SIZES),
+        onlyWhen(({ size }) => size !== 'large', nameLinesField()),
+      ),
       sinceField(),
       ...colourFields(),
       onlyWhen(tintsAtRest, tintField()),

@@ -332,5 +332,21 @@ export const sheet: SheetSpec = {
         lights({ name: 'Living', variant: 'tiles', lights: LIVING.slice(0, 2), cols: 6 }),
       ],
     },
+    // #100: a light's long name in two lines where one would cut it, every tile a line taller
+    {
+      title: 'Tiles · names in two lines (#100)',
+      cards: [
+        lights({
+          name: 'Living room',
+          variant: 'tiles',
+          name_lines: 2,
+          lights: [
+            'light.lt_long',
+            'light.lt_reading',
+            { entity: 'light.lt_floor', name: 'Floor lamp by the sofa' },
+          ],
+        }),
+      ],
+    },
   ],
 };

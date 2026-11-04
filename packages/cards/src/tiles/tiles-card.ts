@@ -16,7 +16,7 @@ import {
   type KnownKeys,
 } from '../shared/config.js';
 import { sinceIds } from '../shared/since.js';
-import { EMPTY, entryCount, rowsOf } from '../shared/heights.js';
+import { EMPTY, entryCount, NAME_LINE, rowsOf, twoLines } from '../shared/heights.js';
 import { emptyPanel, itemsOf, listOf, type EmptyList } from '../shared/lists.js';
 import { withMembers } from '../shared/light.js';
 
@@ -63,7 +63,9 @@ export class FluvyTilesCard extends FluvyTileCard {
       1,
       Math.min(asked === 'auto' ? (size === 'mini' ? 3 : 2) : asked, room),
     );
-    return rowsOf(n, perRow) * { mini: 116, compact: 84, large: 176 }[size] - 8;
+    // a small tile's name in two lines makes every tile a line taller (`name_lines: 2`)
+    const lines = size !== 'large' && twoLines(config) ? NAME_LINE[size] : 0;
+    return rowsOf(n, perRow) * ({ mini: 116, compact: 84, large: 176 }[size] + lines) - 8;
   }
 
   static override styles: CSSResultGroup = [

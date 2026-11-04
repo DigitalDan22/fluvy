@@ -41,12 +41,12 @@ import { counted } from '../shared/counted.js';
 import { ITEM_ALIASES, type AliasSpec } from '../shared/config.js';
 import { lampsOf, lightLook, meanHex, withMembers } from '../shared/light.js';
 import { sinceIds } from '../shared/since.js';
-import { EMPTY, ROW, rowsOf } from '../shared/heights.js';
+import { EMPTY, NAME_LINE, ROW, rowsOf, twoLines } from '../shared/heights.js';
 import { fitLine, type Segment } from '../shared/fit.js';
 import { statsRow } from '../shared/readouts.js';
 import type { CardEditor } from '../shared/base.js';
 import type { LightColours, Tint } from '../shared/colour.js';
-import { FluvyTileCard, type TileItem } from '../tile/tile-card.js';
+import { FluvyTileCard, type NameLines, type TileItem } from '../tile/tile-card.js';
 
 const s = strings('room');
 
@@ -76,6 +76,8 @@ export interface RoomCardConfig extends FluvyCardConfig, LightColours {
   humidity_entity?: string;
   /** `always`: its tiles show their colour at rest too (`on`, the default: only when on). */
   tint?: Tint;
+  /** Its tiles' names (and the row's) in two lines where one would cut them (`2`), each a line taller (#100). */
+  name_lines?: NameLines;
 }
 
 const HERO = 160;
@@ -125,7 +127,8 @@ export interface RoomHolds {
  * administrator reads why under it) where the rest would be.
  */
 export function roomHeight(config: RoomCardConfig, room?: RoomHolds): number {
-  if (config.variant === 'row') return 76;
+  const lines = twoLines(config) ? NAME_LINE.compact : 0;
+  if (config.variant === 'row') return 76 + lines;
   const found = room?.found;
   const climate = config.show_climate === false ? {} : (found?.climate ?? {});
   const empty =
@@ -145,7 +148,7 @@ export function roomHeight(config: RoomCardConfig, room?: RoomHolds): number {
     : config.controls === 'none'
       ? 0
       : config.controls === 'tiles'
-        ? 16 + rowsOf(tiles, 2) * (INNER + 8) - 8
+        ? 16 + rowsOf(tiles, 2) * (INNER + lines + 8) - 8
         : 16 + ROW * rows;
   const variant = config.variant ?? (config.picture || !found || room?.picture ? 'photo' : 'tile');
   if (variant === 'tile') return 20 + 44 + controls + 20;
@@ -593,7 +596,7 @@ export class FluvyRoomCard extends FluvyTileCard {
     if (variant === 'row') {
       const line = this.roomLine();
       return html`<article
-        class="fv-tile fv-tile--compact fv-tile--accent fv-tile--tap rm-tile ${on ? 'is-on' : ''}"
+        class="fv-tile fv-tile--compact fv-tile--accent fv-tile--tap rm-tile ${twoLines(this.room) ? 'fv-tile--lines' : ''} ${on ? 'is-on' : ''}"
         data-card
       >
         ${this.renderIco(glyph, on > 0)}

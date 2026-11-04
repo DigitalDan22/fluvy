@@ -388,6 +388,9 @@ export const lightColourFields = (): HaFormSchemaItem =>
 /** What a device card shows while the device is off: everything (the default), or the essentials alone. */
 export const whenOffField = (): HaFormSchemaItem => selectField('when_off', ['all', 'essentials']);
 
+/** A small tile's name in one line (the default) or two where one would cut it (`name_lines`, #100). */
+export const nameLinesField = (): HaFormSchemaItem => selectField('name_lines', ['1', '2']);
+
 /** A card's head: its title and its subtitle, on one row. */
 export const titleFields = (): HaFormSchemaItem =>
   fieldRow(textField('title'), textField('subtitle'));

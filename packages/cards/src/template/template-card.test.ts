@@ -226,6 +226,11 @@ describe('heights: a tile as the tile card draws it', () => {
     [{ layout: 'horizontal' }, 76],
     [{ vertical: true }, 108],
     [{ vertical: false }, 76],
+    // a small tile's name in two lines is a line taller (#100); a large one's is not
+    [{ name_lines: 2 }, 88],
+    [{ variant: 'mini', name_lines: '2' }, 124],
+    [{ layout: 'vertical', name_lines: 2 }, 124],
+    [{ variant: 'large', name_lines: 2 }, 168],
   ])('%j: %i', (config, height) => {
     const full = { type: 'custom:fluvy-template-card', ...config };
     expect(templateHeight(full)).toBe(height);

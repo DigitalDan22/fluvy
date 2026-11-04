@@ -38,6 +38,7 @@ import { DIMMABLE, lightLook, litColour, withMembers } from '../shared/light.js'
 import { fitLine, TextRuler, type Segment } from '../shared/fit.js';
 import { FontsSettled } from '../shared/fonts.js';
 import { statusToneOf, washesAtRest, type LightColours, type Tint } from '../shared/colour.js';
+import { NAME_LINE, twoLines } from '../shared/heights.js';
 import { changedAt, sinceIds } from '../shared/since.js';
 import {
   NUMBERS,
@@ -55,6 +56,8 @@ import {
 
 export type TileSize = 'large' | 'compact' | 'mini';
 export const TILE_SIZES: readonly TileSize[] = ['large', 'compact', 'mini'];
+/** The lines a small tile's name may take (`name_lines`): YAML's figure, or the editor's word for it. */
+export type NameLines = 1 | 2 | '1' | '2';
 
 /** One tile's own settings — the single card's config, or one item of a tiles group. */
 export interface TileItem {
@@ -75,6 +78,8 @@ export interface TileItem {
 export interface TileCardConfig extends FluvyCardConfig, LightColours, Omit<TileItem, 'entity'> {
   /** `large` (default): icon + switch, name, state and a foot. `compact`: one 76 px row. `mini`: icon over name, 108 px. */
   size?: TileSize;
+  /** A compact or mini tile's name in two lines where one would cut it (`2`), the tile a line taller; one (`1`, the default). */
+  name_lines?: NameLines;
   /** `always`: a tile shows its colour at rest too — a wash of it and its hairline (`on`, the default: only when on). */
   tint?: Tint;
 }
@@ -211,7 +216,12 @@ export const tintsAtRest = (
 export class FluvyTileCard extends Card<TileCardConfig> {
   /** The card's height at a 360 column, for the automatic dashboard's columns. */
   static override layoutHeight(config: TileCardConfig): number {
-    return config.size === 'compact' ? 76 : config.size === 'mini' ? 108 : 168;
+    const lines = twoLines(config);
+    return config.size === 'compact'
+      ? 76 + (lines ? NAME_LINE.compact : 0)
+      : config.size === 'mini'
+        ? 108 + (lines ? NAME_LINE.mini : 0)
+        : 168;
   }
 
   static override styles: CSSResultGroup = [
@@ -268,6 +278,24 @@ export class FluvyTileCard extends Card<TileCardConfig> {
       .fv-tile__body {
         display: block;
         cursor: pointer;
+      }
+      /* a small tile's name in two lines where one would end it in an ellipsis (name_lines: 2, #100), balanced, an
+         ellipsis only past the second; the tile is the taller one whatever its name says, so a row stays level */
+      .fv-tile--lines .fv-tile__name {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        white-space: normal;
+        text-wrap: balance;
+      }
+      .fv-tile--compact.fv-tile--lines {
+        height: 88px;
+      }
+      .fv-tile--compact.fv-tile--inner.fv-tile--lines {
+        height: 96px;
+      }
+      .fv-tile--mini.fv-tile--lines {
+        height: 124px;
       }
     `,
   ];
@@ -579,7 +607,9 @@ export class FluvyTileCard extends Card<TileCardConfig> {
   protected renderTile(item: TileItem, size: TileSize, inside = false): TemplateResult {
     const view = this.entity(item.entity);
     const small = size !== 'large';
-    const sizeClass = small ? ` fv-tile--${size}${inside ? ' fv-tile--inner' : ''}` : '';
+    const sizeClass = small
+      ? ` fv-tile--${size}${inside ? ' fv-tile--inner' : ''}${twoLines(this.config) ? ' fv-tile--lines' : ''}`
+      : '';
 
     // a missing or unreachable entity wears the off skin on the live tile's own anatomy and size — the ban circle, the
     // name, its state line, a dash in every reading, a switch that does not move: only the colours change, so it never

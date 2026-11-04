@@ -389,6 +389,7 @@
     "entity": "Varlık",
     "entities": "Varlıklar",
     "name": "Ad",
+    "name_lines": "Ad satırları",
     "icon": "Simge",
     "image": "Kendi resmi (adres veya varlık)",
     "tone": "Ton",

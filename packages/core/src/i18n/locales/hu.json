@@ -338,6 +338,7 @@
     "entity": "Entitás",
     "entities": "Entitások",
     "name": "Név",
+    "name_lines": "A név sorai",
     "icon": "Ikon",
     "image": "Saját kép (cím vagy entitás)",
     "tone": "Színárnyalat",

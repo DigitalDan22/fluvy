@@ -14,6 +14,7 @@ import {
   iconField,
   lightColourFields,
   nameIconFields,
+  nameLinesField,
   onlyWhen,
   selectField,
   showIconField,
@@ -41,6 +42,7 @@ export const keys = configKeys<LightsCardConfig>()([
   'area',
   'lights',
   'variant',
+  'name_lines',
   'show_count',
   'show_level',
   'show_brightness',
@@ -66,6 +68,7 @@ export const lists: readonly RowsListSpec[] = [
 
 export const defaults: EditorDefaults = () => ({
   variant: 'row',
+  name_lines: '1',
   show_count: true,
   show_level: true,
   show_brightness: false,
@@ -84,8 +87,8 @@ export function getConfigForm(): LovelaceConfigForm {
       fieldRow(boolField('show_count'), boolField('show_level')),
       lightColourFields(),
       ...colourFields(),
-      // the tiles' colour at rest: the row and the chips have no surface to wash
-      onlyWhen(({ variant }) => variant === 'tiles', tintField()),
+      // the tiles' colour at rest and their names' lines: the row and the chips have no surface to wash, no tile
+      onlyWhen(({ variant }) => variant === 'tiles', fieldRow(tintField(), nameLinesField())),
       emptyFields(),
       actionFields(),
     ],

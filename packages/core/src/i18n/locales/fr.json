@@ -389,6 +389,7 @@
     "entity": "Entité",
     "entities": "Entités",
     "name": "Nom",
+    "name_lines": "Lignes du nom",
     "icon": "Icône",
     "image": "Image personnelle (adresse ou entité)",
     "tone": "Tonalité",

@@ -10,6 +10,7 @@ import type { TemplateResult } from 'lit';
 
 import {
   FluvyTileCard,
+  type NameLines,
   type TileCardConfig,
   type TileItem,
   type TileLevel,
@@ -43,6 +44,8 @@ export interface TemplateCardConfig extends FluvyCardConfig {
   tint?: Tint;
   /** `compact` (the default): one 76 row. `mini`: 108, its icon over its name. `large`: 168, a switch and a foot. */
   variant?: TileSize;
+  /** A compact or mini tile's name in two lines where one would cut it (`2`), the tile a line taller. */
+  name_lines?: NameLines;
   /** Sensors as small readouts in a large tile's foot. */
   readouts?: readonly string[];
 }

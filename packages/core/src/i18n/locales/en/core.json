@@ -338,6 +338,7 @@
     "entity": "Entity",
     "entities": "Entities",
     "name": "Name",
+    "name_lines": "Lines for the name",
     "icon": "Icon",
     "image": "Own picture (address or entity)",
     "tone": "Tone",

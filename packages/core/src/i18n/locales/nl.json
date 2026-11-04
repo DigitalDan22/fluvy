@@ -389,6 +389,7 @@
     "entity": "Entiteit",
     "entities": "Entiteiten",
     "name": "Naam",
+    "name_lines": "Regels voor de naam",
     "icon": "Icoon",
     "image": "Eigen afbeelding (adres of entiteit)",
     "tone": "Toon",

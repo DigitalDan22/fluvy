@@ -12,6 +12,7 @@ import {
   entityField,
   fieldRow,
   nameIconFields,
+  nameLinesField,
   onlyWhen,
   selectField,
   sinceChoices,
@@ -42,11 +43,13 @@ export const keys = configKeys<TemplateCardConfig>()([
   'active',
   'tint',
   'variant',
+  'name_lines',
   'readouts',
 ]);
 
 export const defaults: EditorDefaults = (config) => ({
   variant: 'compact',
+  name_lines: '1',
   secondary: config['entity'] ? 'state' : 'none',
   since: '',
   active: 'auto',
@@ -68,6 +71,8 @@ export function getConfigForm(): LovelaceConfigForm {
         selectField('variant', VARIANTS),
         selectField('active', ['auto', 'always', 'never'], { custom: true }),
       ),
+      // a compact or mini tile's name may take two lines
+      onlyWhen((data) => data['variant'] !== 'large', nameLinesField()),
       ...colourFields(),
       // a colour at rest needs a rest and something to show then (a colour, or a tone that washes); readouts need
       // a large tile's foot

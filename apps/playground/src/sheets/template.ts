@@ -294,5 +294,48 @@ export const sheet: SheetSpec = {
         { type: TEMPLATE, entity: 'light.tp_desk', cols: 6 },
       ],
     },
+    // #100: a template's name in two lines where one would cut it, compact and mini, each a line taller
+    {
+      title: 'Names in two lines (#100)',
+      cards: [
+        {
+          type: TEMPLATE,
+          entity: 'switch.tp_washer',
+          name: "{{ 'Washing machine in the utility room' }}",
+          secondary: "{{ states('sensor.tp_power') | round }} W",
+          name_lines: 2,
+          cols: 6,
+        },
+        { type: TEMPLATE, entity: 'light.tp_desk', name_lines: 2, cols: 6 },
+      ],
+    },
+    {
+      title: 'Mini · names in two lines (#100)',
+      cards: [
+        {
+          type: TEMPLATE,
+          entity: 'light.tp_hall',
+          name: 'Hall light by the stairs',
+          variant: 'mini',
+          name_lines: 2,
+          cols: 4,
+        },
+        {
+          type: TEMPLATE,
+          entity: 'binary_sensor.tp_door',
+          name: "{{ 'Front door open' if is_state(entity, 'on') else 'Front door shut' }}",
+          variant: 'mini',
+          name_lines: 2,
+          cols: 4,
+        },
+        {
+          type: TEMPLATE,
+          entity: 'switch.tp_pump',
+          variant: 'mini',
+          name_lines: 2,
+          cols: 4,
+        },
+      ],
+    },
   ],
 };

@@ -506,4 +506,47 @@ describe('the tile’s editor offers what acts for its entity and its size (#58)
     expect(await shown({ entity: 'light.plug' })).toContain('readouts');
     expect(await shown({ entity: 'switch.washer' })).toContain('readouts');
   });
+
+  it('offers a name in two lines to a compact or a mini tile alone (#100)', async () => {
+    expect(await shown({ entity: 'light.desk', size: 'compact' })).toContain('name_lines');
+    expect(await shown({ entity: 'light.desk', size: 'mini' })).toContain('name_lines');
+    expect(await shown({ entity: 'light.desk' })).not.toContain('name_lines');
+  });
+});
+
+describe('a small tile’s name in two lines, the tile a line taller (#100)', () => {
+  afterEach(() => document.body.replaceChildren());
+
+  it('declares the taller height from its config alone: compact 88, mini 124', () => {
+    for (const name_lines of [2, '2'] as const) {
+      const tile = { type: 'custom:fluvy-tile-card', entity: 'light.desk', name_lines };
+      expect(FluvyTileCard.layoutHeight({ ...tile, size: 'compact' })).toBe(88);
+      expect(FluvyTileCard.layoutHeight({ ...tile, size: 'mini' })).toBe(124);
+      // a large tile already gives a name the foot's room where it has none: one line more is not its
+      expect(FluvyTileCard.layoutHeight({ ...tile, size: 'large' })).toBe(168);
+    }
+    const group = {
+      type: 'custom:fluvy-tiles-card',
+      entities: ['light.a', 'light.b', 'light.c'],
+      name_lines: 2,
+    };
+    expect(FluvyTilesCard.layoutHeight(group)).toBe(2 * 96 - 8);
+    expect(FluvyTilesCard.layoutHeight({ ...group, size: 'mini' })).toBe(132 - 8);
+    expect(FluvyTilesCard.layoutHeight({ ...group, size: 'large' })).toBe(2 * 176 - 8);
+    expect(FluvyTilesCard.layoutHeight({ ...group, name_lines: 1 })).toBe(2 * 84 - 8);
+  });
+
+  it('draws a compact and a mini tile’s name to two lines, a large one’s as it was', async () => {
+    const lines = async (size: string, more: Record<string, unknown> = {}): Promise<boolean> => {
+      const [tile] = await drawn(
+        { type: 'custom:fluvy-tile-card', entity: 'light.desk', size, ...more },
+        LIVE,
+      );
+      return tile!.classList.contains('fv-tile--lines');
+    };
+    expect(await lines('compact', { name_lines: 2 })).toBe(true);
+    expect(await lines('mini', { name_lines: '2' })).toBe(true);
+    expect(await lines('large', { name_lines: 2 })).toBe(false);
+    expect(await lines('compact')).toBe(false);
+  });
 });

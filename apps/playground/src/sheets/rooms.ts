@@ -569,5 +569,20 @@ export const sheet: SheetSpec = {
         return roomPage(GALLEY_AREA, GALLEY, GALLEY_ENTITIES, GALLEY_DEVICE);
       },
     } satisfies FrameSpec,
+    // #100: a room's tiles and its row with their names in two lines where one would cut them, each a line taller
+    {
+      title: 'Room · names in two lines (#100)',
+      cards: [
+        room({ area: 'rm_living', variant: 'tile', controls: 'tiles', name_lines: 2 }),
+        room({
+          area: 'rm_bedroom',
+          name: 'Rares’ Bedroom',
+          variant: 'row',
+          name_lines: 2,
+          cols: 6,
+        }),
+        room({ area: 'rm_living', name: 'Technical Room', variant: 'row', name_lines: 2, cols: 6 }),
+      ],
+    },
   ],
 };
