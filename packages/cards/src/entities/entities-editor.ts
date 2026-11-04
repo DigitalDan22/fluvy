@@ -14,12 +14,11 @@ import {
   onlyWhen,
   selectField,
   showIconField,
-  sinceChoices,
   textField,
   titleFields,
 } from '../shared/form.js';
-import type { EditorChoices, EditorDefaults, RowsListSpec } from '../shared/rows-editor.js';
-import { ROW_KEYS, rowSchema } from '../lock/rows.js';
+import type { EditorDefaults, RowsListSpec } from '../shared/rows-editor.js';
+import { rowItems } from '../lock/rows.js';
 import { configKeys } from '../shared/config.js';
 import { EMPTY_KEYS } from '../shared/lists.js';
 import type { EntitiesCardConfig } from './entities-card.js';
@@ -54,13 +53,9 @@ export const lists: readonly RowsListSpec[] = [
     key: 'rows',
     alias: 'entities',
     title: 'editor.rows',
-    keys: ROW_KEYS,
-    schema: rowSchema(undefined, true),
+    ...rowItems(true),
   },
 ];
-
-/** A row's `since` offers the house's timestamp sensors. */
-export const choices: EditorChoices = sinceChoices;
 
 /** What the editor shows where the config says nothing: what the card does then. */
 export const defaults: EditorDefaults = () => ({

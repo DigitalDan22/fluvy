@@ -278,6 +278,116 @@ const keysSeen = (page) => page.evaluate(() => window.__keys.splice(0));
   await page.close();
 }
 
+/* ---------- an entities row and a lock's row open the same dropdown from a select's value (#96) ---------- */
+{
+  const page = await open('lists');
+  await page.evaluate(() => {
+    window.__more = [];
+    window.addEventListener('hass-more-info', (e) => window.__more.push(e.detail.entityId));
+  });
+  for (const { title, tag, value, rows, next, service, option } of [
+    {
+      title: 'Entities · a select’s dropdown',
+      tag: 'fluvy-entities-card',
+      value: 'Hot air',
+      rows: 30,
+      next: 'Hot air eco',
+      service: 'select.select_option',
+      option: 'hot_air_eco',
+    },
+    {
+      title: 'Lock · a select’s dropdown',
+      tag: 'fluvy-lock-card',
+      value: '2 minutes',
+      rows: 12,
+      next: '3 minutes',
+      service: 'input_select.select_option',
+      option: '3 minutes',
+    },
+  ]) {
+    const card = frame(page, title).locator(tag);
+    const pill = card.locator('.in-value[aria-haspopup]').first();
+    const list = card.locator('fluvy-select').first().locator('.fv-menu');
+    check(
+      `${tag}: a select's row ends in its value, which says it opens a list`,
+      (await pill.textContent()).trim() === value &&
+        (await pill.getAttribute('aria-expanded')) === 'false',
+    );
+    await pill.click();
+    await list.waitFor();
+    await page.waitForTimeout(250);
+    const opened = await list.evaluate((menu) => ({
+      top: menu.matches(':popover-open'),
+      focused: menu.getRootNode().activeElement === menu,
+      rows: menu.querySelectorAll('.fv-menu__item').length,
+      chosen: menu.querySelector('[aria-selected="true"]')?.textContent.trim(),
+    }));
+    check(
+      `${tag}: a tap opens the list in the top layer, with the keys, its option checked`,
+      opened.top &&
+        opened.focused &&
+        opened.rows === rows &&
+        opened.chosen === value &&
+        (await pill.getAttribute('aria-expanded')) === 'true',
+      JSON.stringify(opened),
+    );
+    const box = await list.boundingBox();
+    const at = await pill.boundingBox();
+    check(
+      `${tag}: the list unfolds 4 from the value (under it, over it near the page's foot), ending where it ends`,
+      (Math.abs(box.y - (at.y + at.height + 4)) <= 1 ||
+        Math.abs(box.y + box.height + 4 - at.y) <= 1) &&
+        Math.abs(box.x + box.width - (at.x + at.width)) <= 1,
+      `${JSON.stringify(box)} ${JSON.stringify(at)}`,
+    );
+    await keysSeen(page);
+    await page.keyboard.press('ArrowDown');
+    const leaked = await keysSeen(page);
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(250);
+    const c = await calls(page);
+    check(
+      `${tag}: ↓ and Enter choose the next option, one select_option of its domain, no key reaching the window`,
+      leaked.length === 0 && c.length === 1 && c[0].s === service && c[0].d.option === option,
+      `${JSON.stringify(leaked)} ${JSON.stringify(c)}`,
+    );
+    check(
+      `${tag}: …the value says it at once, and the focus is back on it`,
+      (await pill.textContent()).trim() === next &&
+        (await pill.evaluate((el) => el.getRootNode().activeElement === el)),
+    );
+    await reset(page);
+    await pill.click();
+    await list.waitFor();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(250);
+    check(
+      `${tag}: Escape closes it with nothing sent`,
+      (await calls(page)).length === 0 && (await list.count()) === 0,
+    );
+  }
+
+  // a row with a tap of its own keeps it; one gone from the house says "—" on a button that does nothing
+  const kitchen = frame(page, 'Entities · a select’s dropdown').locator('fluvy-entities-card');
+  const mode = kitchen.locator('.fv-row').filter({ hasText: 'Oven mode' });
+  await mode.click();
+  await page.waitForTimeout(150);
+  check(
+    'a select row with a tap of its own shows its value and opens its details',
+    (await mode.locator('.in-value').count()) === 0 &&
+      (await mode.locator('.fv-row__value').textContent()).trim() === 'Hot air eco' &&
+      JSON.stringify(await page.evaluate(() => window.__more)) === '["select.oven_mode"]',
+    JSON.stringify(await page.evaluate(() => window.__more)),
+  );
+  const ghost = kitchen.locator('.fv-row').filter({ hasText: 'Lower zone' }).locator('.in-value');
+  check(
+    'a select row out of reach says "—" on a button that does nothing',
+    (await ghost.textContent()).trim() === '—' && (await ghost.isDisabled()),
+  );
+  await page.close();
+}
+
 /* ---------- to-do ---------- */
 {
   const page = await open('inputs');
@@ -958,7 +1068,7 @@ for (const lang of ['de', 'fr', 'nl', 'pt-BR', 'es']) {
 // once the row gave it to the name, on the 4 grid), under the name it has the row; a date takes its figures where its
 // month's name would not hold ("10 de nov." in Portuguese at 211), and nothing in a pill is ever cut
 {
-  const ROWS = `/@fs${join(here, '..', '..', 'packages', 'cards', 'src', 'helpers', 'rows.ts')}`;
+  const ROWS = `/@fs${join(here, '..', '..', 'packages', 'cards', 'src', 'shared', 'row-end.ts')}`;
   const schedules = (page) => frame(page, 'Schedules').locator('fluvy-helpers-card').first();
   // the cap: the button forced wide takes exactly its max-width, which the function must say
   const off = [];

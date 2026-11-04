@@ -543,7 +543,8 @@ export interface ListRowOptions {
   /** The title is a name (a device's, a person's): it may end in an ellipsis in a narrow column, as names do. */
   readonly name?: boolean;
   readonly sub?: string;
-  readonly trailing?: 'switch' | 'chevron' | 'value' | 'button' | 'none';
+  /** What ends the row; a template: an end of the row's own (a select's value and the list it opens). */
+  readonly trailing?: 'switch' | 'chevron' | 'value' | 'button' | 'none' | TemplateResult;
   readonly on?: boolean;
   readonly value?: string;
   /** A 16 glyph before the value (a trend's arrow). */
@@ -595,26 +596,28 @@ const wordsClass = (value: string | undefined): string =>
 export function listRow(o: ListRowOptions): TemplateResult {
   const trailing = o.trailing ?? 'chevron';
   const tail =
-    trailing === 'switch'
-      ? toggle(
-          o.on ?? false,
-          o.switchTone ?? 'accent',
-          o.onToggle ?? (() => undefined),
-          o.title,
-          (o.unavailable ?? false) || (o.readonly ? 'readonly' : false),
-        )
-      : trailing === 'value'
-        ? html`<span
-            class="fv-row__value ${o.valueTone ? `fv-row__value--${o.valueTone}` : ''} ${o.quiet ? 'fv-row__value--quiet' : ''} ${o.valueGlyph ? 'fv-row__value--glyph' : ''} ${wordsClass(o.value)}"
-            >${o.valueGlyph ? icon(o.valueGlyph) : nothing}${o.value ?? ''}</span
-          >`
-        : trailing === 'chevron'
-          ? html`<span class="fv-row__chevron">${glyph('chevron')}</span>`
-          : trailing === 'button'
-            ? html`<span class="fv-btn fv-btn--quiet fv-row__btn" data-fit="28"
-                >${o.button ?? ''}</span
-              >`
-            : nothing;
+    typeof trailing === 'object'
+      ? trailing
+      : trailing === 'switch'
+        ? toggle(
+            o.on ?? false,
+            o.switchTone ?? 'accent',
+            o.onToggle ?? (() => undefined),
+            o.title,
+            (o.unavailable ?? false) || (o.readonly ? 'readonly' : false),
+          )
+        : trailing === 'value'
+          ? html`<span
+              class="fv-row__value ${o.valueTone ? `fv-row__value--${o.valueTone}` : ''} ${o.quiet ? 'fv-row__value--quiet' : ''} ${o.valueGlyph ? 'fv-row__value--glyph' : ''} ${wordsClass(o.value)}"
+              >${o.valueGlyph ? icon(o.valueGlyph) : nothing}${o.value ?? ''}</span
+            >`
+          : trailing === 'chevron'
+            ? html`<span class="fv-row__chevron">${glyph('chevron')}</span>`
+            : trailing === 'button'
+              ? html`<span class="fv-btn fv-btn--quiet fv-row__btn" data-fit="28"
+                  >${o.button ?? ''}</span
+                >`
+              : nothing;
   return html`<div
     class="fv-row ${o.onTap ? 'fv-row--tap' : ''} ${o.unavailable ? 'is-unavailable' : ''} ${o.compact ? 'fv-row--compact' : ''} ${o.icon === null ? 'fv-row--bare' : ''} ${o.stack ? 'fv-row--stack' : ''} ${o.open ? 'is-open' : ''}"
     data-accent=${o.accent ?? nothing}

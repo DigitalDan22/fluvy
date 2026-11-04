@@ -9,22 +9,15 @@ import { Card, type CardEditor } from '../shared/base.js';
 import { nameOf, type HelperHost, type HelperRowConfig } from './context.js';
 import { compactNumber, isBoxedNumber, numberBlocks } from './number.js';
 
-import {
-  buttonRow,
-  momentRow,
-  momentValue,
-  plainRow,
-  plainValue,
-  rowsKeepIcon,
-  switchRow,
-  type RowEnd,
-} from './rows.js';
+import { buttonRow, momentRow, momentValue, plainRow, plainValue, switchRow } from './rows.js';
 
-import { asChips, offered, ownLabel, selectEnd, selectPiece } from './select.js';
+import { asChips, selectEnd, selectPiece } from './select.js';
 
 import { rowStyles } from './styles.js';
 
 import { textBlocks } from './text.js';
+import { offered, ownLabel, SELECTS } from '../shared/dropdown.js';
+import { rowEndStyles, rowsKeepIcon, type RowEnd } from '../shared/row-end.js';
 import { sinceIds } from '../shared/since.js';
 import { ITEM_ALIASES, type AliasSpec, type RowStyle } from '../shared/config.js';
 import { HeadFit, SWITCH_SLOT } from '../energy/head.js';
@@ -47,7 +40,6 @@ export interface HelpersCardConfig extends FluvyCardConfig, EmptyList {
 }
 
 const NUMBERS = new Set(['input_number', 'number', 'counter']);
-const SELECTS = new Set(['input_select', 'select']);
 const TEXTS = new Set(['input_text', 'text']);
 const SWITCHES = new Set(['input_boolean', 'switch']);
 const MOMENTS = new Set(['input_datetime', 'date', 'time', 'datetime']);
@@ -133,6 +125,7 @@ export class FluvyHelpersCard extends Card<HelpersCardConfig> {
     ...(Card.styles as CSSResultGroup[]),
     sheetStyles.inputs,
     rowStyles,
+    rowEndStyles,
     css`
       /* the sheet places the ruler with .in-card > .fv-ruler (a fixed 360 card); here it is a custom element */
       fluvy-ruler {
@@ -222,7 +215,7 @@ export class FluvyHelpersCard extends Card<HelpersCardConfig> {
       if (!SELECTS.has(domain))
         return [{ name, end: this.ruler.width('fv-row__value', plainValue(host, view)) }];
       const end = selectEnd(host, view, row);
-      return end ? [{ ...end, name }] : [];
+      return end ? [end] : [];
     });
     return rowsKeepIcon(this.ruler, this.contentWidth, ends);
   }
@@ -235,9 +228,7 @@ export class FluvyHelpersCard extends Card<HelpersCardConfig> {
       ruler: this.ruler,
       texts: this.texts,
       bare: false,
-      state: (view) => this.stateOf(view),
-      expect: (id, state) => this.expect(id, state),
-      call: (domain, service, data, id) => this.call(domain, service, data, id),
+      ...this.controlHost,
       moreInfo: (id) => this.tap(id, { action: 'more-info' }),
       preview: (id) => this.preview_[id],
       setPreview: (id, value) => {

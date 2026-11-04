@@ -1,4 +1,17 @@
 import type { SheetSpec } from '../scenes.js';
+import { OVEN_MODE } from './inputs.js';
+
+/** A select's row on the entities card (#96): the oven's thirty modes, a part of them in its own words, its tap. */
+const OVEN_ROWS = [
+  { entity: 'select.oven_mode', name: 'Oven' },
+  {
+    entity: 'select.oven_mode',
+    name: 'Upper zone',
+    options: ['grill_large_area', 'hot_air', 'pizza_setting', 'top_bottom_heating'],
+    labels: { grill_large_area: 'Large grill' },
+  },
+  { entity: 'select.ls_oven_ghost', name: 'Lower zone' },
+];
 
 export const sheet: SheetSpec = {
   states: [
@@ -16,6 +29,34 @@ export const sheet: SheetSpec = {
       { friendly_name: 'Hall temperature', unit_of_measurement: '°C', device_class: 'temperature' },
     ],
     ['lock.front_door', 'locked', { friendly_name: 'Front door' }],
+    // #96: an oven's thirty modes, a zone of it gone from the house, the door's auto-lock in steps
+    OVEN_MODE,
+    [
+      'select.ls_oven_ghost',
+      'unavailable',
+      { friendly_name: 'Oven lower zone', options: ['grill', 'hot_air', 'steam'] },
+    ],
+    [
+      'input_select.ls_auto_lock',
+      '2 minutes',
+      {
+        friendly_name: 'Auto-lock',
+        options: [
+          'Off',
+          '10 seconds',
+          '30 seconds',
+          '1 minute',
+          '2 minutes',
+          '3 minutes',
+          '5 minutes',
+          '10 minutes',
+          '15 minutes',
+          '20 minutes',
+          '30 minutes',
+          '1 hour',
+        ],
+      },
+    ],
     ['switch.ghost', 'unavailable', { friendly_name: 'Garden pump' }],
     // #67: the helper that keeps the washer's real last change across restarts
     [
@@ -154,6 +195,50 @@ export const sheet: SheetSpec = {
                 "{{ state_attr('climate.ls_living', 'current_temperature') | round(1) }} °C",
             },
           ],
+        },
+      ],
+    },
+    // #96: a select's row ends in its value, which opens Fluvy's dropdown; a row with a tap of its own keeps it, one
+    // gone from the house says "—"
+    {
+      title: 'Entities · a select’s dropdown',
+      cards: [
+        {
+          type: 'custom:fluvy-entities-card',
+          title: 'Kitchen',
+          rows: [
+            ...OVEN_ROWS,
+            {
+              entity: 'select.oven_mode',
+              name: 'Oven mode',
+              tap_action: { action: 'more-info' },
+            },
+            'switch.kitchen_light',
+          ],
+        },
+      ],
+    },
+    // half a section: the circles give way to the names, a long value goes under its name; compact rows hold theirs
+    {
+      title: 'Entities · dropdowns, half a section',
+      cards: [
+        { type: 'custom:fluvy-entities-card', title: 'Oven', cols: 6, rows: OVEN_ROWS },
+        {
+          type: 'custom:fluvy-entities-card',
+          title: 'Oven',
+          cols: 6,
+          variant: 'compact',
+          rows: [...OVEN_ROWS, 'input_select.ls_auto_lock'],
+        },
+      ],
+    },
+    {
+      title: 'Lock · a select’s dropdown',
+      cards: [
+        {
+          type: 'custom:fluvy-lock-card',
+          entity: 'lock.front_door',
+          rows: ['binary_sensor.kitchen_window', 'input_select.ls_auto_lock'],
         },
       ],
     },

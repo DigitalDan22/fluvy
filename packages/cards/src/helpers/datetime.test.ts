@@ -2,7 +2,7 @@ import { LANGUAGE_CODES, type HomeAssistant } from '@fluvy/core';
 import { describe, expect, it } from 'vitest';
 import { textWidth } from '../shared/heights.js';
 import { dayText, dayTextShort, parseMomentText } from './datetime.js';
-import { BUTTON_SIDES, valueCap } from './rows.js';
+import { BUTTON_SIDES, valueCap } from '../shared/row-end.js';
 
 /** A house speaking `language`, its profile's date order where it has one. */
 const house = (language: string, date_format?: 'DMY' | 'MDY' | 'YMD'): HomeAssistant =>

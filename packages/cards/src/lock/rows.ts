@@ -21,7 +21,16 @@ import { Card } from '../shared/base.js';
 import { currentTone, iconOf, toneFor } from '../shared/domain.js';
 import { statusToneOf, toneOf } from '../shared/colour.js';
 import { type Secondary } from '../shared/config.js';
+import {
+  chosenLabel,
+  dropdown,
+  dropdownEnd,
+  SELECTS,
+  type SelectRowConfig,
+} from '../shared/dropdown.js';
 import { withUnit } from '../shared/duration.js';
+import { buttonWidth, rowsKeepIcon, rowStacks } from '../shared/row-end.js';
+import type { RowsListSpec } from '../shared/rows-editor.js';
 import { secondaryText } from '../shared/secondary.js';
 import { changedAt, sinceIds } from '../shared/since.js';
 import { TemplateTexts } from '../shared/templates.js';
@@ -30,13 +39,17 @@ import {
   actionField,
   entityField,
   fieldRow,
+  isSelectRow,
   nameIconFields,
   selectField,
+  selectRowChoices,
+  selectRowFields,
   sinceField,
   toneField,
 } from '../shared/form.js';
 
-export interface RowConfig {
+/** A row of a list of entities; a select's offers its options in its order and words (#96). */
+export interface RowConfig extends SelectRowConfig {
   entity: string;
   name?: string;
   icon?: string;
@@ -56,23 +69,47 @@ export const ROW_KEYS = [
   'icon',
   'secondary',
   'since',
+  'options',
+  'labels',
   'tap_action',
   'tone',
   'color',
 ] as const;
 
 /**
- * A row's form: the entity, its name and icon, what it says, its colours, its tap. Its colour has none chosen by
- * default: a light wears its bulb's on a card that shows them (`bulb`), the row the card's otherwise.
+ * A row's form: the entity, its name and icon, what it says, a select's (`select`: what its dropdown offers, its
+ * words), its colours, its tap. Its colour has none chosen by default: a light wears its bulb's on a card that shows
+ * them (`bulb`), the row the card's otherwise.
  */
-export const rowSchema = (domains?: readonly string[], bulb = false): HaFormSchemaItem[] => [
-  entityField(domains),
+const rowSchema = (bulb: boolean, select: readonly HaFormSchemaItem[] = []): HaFormSchemaItem[] => [
+  entityField(),
   nameIconFields(),
   selectField('secondary', ['area', 'last-changed', 'state', 'none'], { custom: true }),
   sinceField(),
+  ...select,
   fieldRow(toneField(), accentField('color', bulb ? { bulb } : { item: true })),
   actionField(),
 ];
+
+/**
+ * A list of rows as its editor shows each: the keys a row may carry and its form, a select's with the options its
+ * dropdown offers (of those it lists, in Home Assistant's words) and its words for them (#96) — its words alone where
+ * the row names a tap of its own, which opens no dropdown.
+ */
+export function rowItems(
+  bulb = false,
+): Pick<RowsListSpec, 'keys' | 'schema' | 'schemaOf' | 'choices'> {
+  const [options, labels] = selectRowFields();
+  const plain = rowSchema(bulb);
+  const select = rowSchema(bulb, [options, labels]);
+  const worded = rowSchema(bulb, [labels]);
+  return {
+    keys: ROW_KEYS,
+    schema: select,
+    schemaOf: (item) => (!isSelectRow(item) ? plain : item['tap_action'] ? worded : select),
+    choices: selectRowChoices,
+  };
+}
 
 export interface RowsCardConfig extends FluvyCardConfig {
   /** Entities shown as 60 px rows under the card's own control. */
@@ -165,7 +202,7 @@ interface RowPlan {
   readonly row: RowConfig;
   readonly view: EntityView;
   readonly usable: boolean;
-  readonly trailing: 'switch' | 'value' | 'chevron';
+  readonly trailing: 'switch' | 'value' | 'chevron' | 'menu';
   readonly value: string;
   readonly end: number;
   readonly title: string;
@@ -177,7 +214,8 @@ interface RowPlan {
 
 /**
  * Cards that end in a list of entity rows (lock, alarm, camera). One trailing element per row, chosen
- * by the entity: a switch for what is safe to toggle, the value for what is measured, a chevron for the rest.
+ * by the entity: a switch for what is safe to toggle, the value for what is measured, a select's value that opens
+ * its dropdown (#96), a chevron for the rest.
  */
 export abstract class RowsCard<C extends RowsCardConfig = RowsCardConfig> extends Card<C> {
   private rowList: readonly RowConfig[] = [];
@@ -215,10 +253,17 @@ export abstract class RowsCard<C extends RowsCardConfig = RowsCardConfig> extend
     if (!this.rowList.length || this.config?.show_rows === false) return nothing;
     const plans = this.rowList.map((row) => this.plan(row, events));
     // a column too narrow for a name beside what ends its row gives every row's circle to its words, as every list does
-    const keep = this.headFit.rowsKeepIcon(
-      this.contentWidth,
-      plans.map((p) => ({ title: p.title, value: p.value, end: p.end })),
-    );
+    const keep =
+      this.headFit.rowsKeepIcon(
+        this.contentWidth,
+        plans.map((p) => ({ title: p.title, value: p.value, end: p.end })),
+      ) &&
+      // …and a dropdown's value holds within its cap beside its name (the rows' rule for a button)
+      rowsKeepIcon(
+        this.headFit.ruler,
+        this.contentWidth,
+        plans.flatMap((p) => (p.trailing === 'menu' ? [dropdownEnd(p.title, p.value)] : [])),
+      );
     // an age in its full words ("21 days ago") where every row's fits beside what ends it, else every age short
     // ("21 d"): one form a list, never cut
     const short = plans.some(
@@ -243,38 +288,55 @@ export abstract class RowsCard<C extends RowsCardConfig = RowsCardConfig> extend
     const view = this.entity(row.entity);
     const usable = isUsable(view);
     const canToggle = usable && TOGGLE_DOMAINS.has(view.domain) && !NEVER_A_SWITCH.has(view.domain);
-    const trailing: RowPlan['trailing'] = canToggle
-      ? 'switch'
-      : !events && view.status === 'ok' && (view.number !== null || READ_OUT.has(view.domain))
-        ? 'value'
-        : 'chevron';
+    // a select's value opens its dropdown (#96), unless the row names a tap of its own
+    const trailing: RowPlan['trailing'] =
+      SELECTS.has(view.domain) && !row.tap_action
+        ? 'menu'
+        : canToggle
+          ? 'switch'
+          : !events && view.status === 'ok' && (view.number !== null || READ_OUT.has(view.domain))
+            ? 'value'
+            : 'chevron';
     const parts = trailing === 'value' ? valueParts(this.hass, view) : null;
+    // a select says its option in the row's words (`labels`)
     const value =
-      trailing === 'value'
-        ? parts
-          ? `${parts.value}${parts.unit ? ` ${parts.unit}` : ''}`
-          : stateText(this.hass, view)
-        : '';
+      trailing === 'switch' || trailing === 'chevron'
+        ? ''
+        : SELECTS.has(view.domain)
+          ? chosenLabel(this.hass, view, row, this.stateOf(view))
+          : parts
+            ? `${parts.value}${parts.unit ? ` ${parts.unit}` : ''}`
+            : stateText(this.hass, view);
     // the line says when it changed unless the row asks for another one (the area, its state, an attribute, a template,
     // none); in history that is the time of day (its age, once it is over half a day old)
     const mode = row.secondary ?? 'last-changed';
     const changed = lastChanged(this.hass, view, row.since);
     const time = events && mode === 'last-changed' && view.status === 'ok';
     const line = (short: boolean): string =>
-      secondaryText(this.hass, view, mode, trailing === 'value', this.texts, short, row.since);
+      secondaryText(
+        this.hass,
+        view,
+        mode,
+        trailing === 'value' || trailing === 'menu',
+        this.texts,
+        short,
+        row.since,
+      );
     return {
       row,
       view,
       usable,
       trailing,
       value,
-      // the end's own width: the value's words, a switch's 56 (its hit area), a chevron's 44
+      // the end's own width: the value's words, a dropdown's button, a switch's 56 (its hit area), a chevron's 44
       end:
         trailing === 'value'
           ? this.headFit.ruler.width('fv-row__value', value)
-          : trailing === 'switch'
-            ? 56
-            : 44,
+          : trailing === 'menu'
+            ? buttonWidth(this.headFit.ruler, value, true)
+            : trailing === 'switch'
+              ? 56
+              : 44,
       title: row.name ?? view.name,
       words: time ? changedTime(this.hass, view, row.since) : line(false),
       short: time ? '' : line(true),
@@ -311,10 +373,17 @@ export abstract class RowsCard<C extends RowsCardConfig = RowsCardConfig> extend
     const state = this.stateOf(view);
     const on = state === view.state ? isActive(view) : state === 'on';
     const tone = statusToneOf(row, toneFor(view));
+    const menu = trailing === 'menu';
+    // a dropdown that would not hold beside the words even without the circle goes under them, the line its whole row
+    const stack =
+      menu &&
+      !keep &&
+      rowStacks(this.headFit.ruler, this.contentWidth, dropdownEnd(p.title, p.value, p.short));
     // a row that cannot be read says its state's word where it fits; where it would be cut, the dashed skin says it
     // alone and the word is the row's label (as a gone tile's)
     const fits = (text: string): boolean =>
-      this.headFit.ruler.width('fv-row__sub', text) <= this.wordsRoom(p, keep);
+      this.headFit.ruler.width('fv-row__sub', text) <=
+      (stack ? this.contentWidth : this.wordsRoom(p, keep));
     const word = view.status !== 'ok' && !fits(p.words) ? p.words : '';
     // a line the row cannot hold whole takes its shorter form ("32 d ago", "Not found"), read in full
     const sub = p.age && short ? this.shortAge(p) : word ? '' : fits(p.words) ? p.words : p.short;
@@ -334,14 +403,28 @@ export abstract class RowsCard<C extends RowsCardConfig = RowsCardConfig> extend
         : sub !== p.words
           ? { label: `${p.title} · ${p.words}` }
           : {}),
-      trailing,
+      stack,
+      trailing: menu
+        ? dropdown({
+            host: this.controlHost,
+            hass: this.hass,
+            view,
+            row,
+            name: p.title,
+            value: p.value,
+            stack,
+            ruler: this.headFit.ruler,
+            width: this.contentWidth,
+          })
+        : trailing,
       on,
       switchTone: tone === 'warning' ? 'accent' : tone,
       value: p.value,
       valueTone: view.domain === 'binary_sensor' && on && tone === 'warning' ? 'warning' : '',
       unavailable: !usable,
       accent: this.accents.item(row.color),
-      onTap: () => this.tap(view.id, row.tap_action ?? DETAILS),
+      // a dropdown's row is no button of its own: its value is
+      onTap: menu ? undefined : () => this.tap(view.id, row.tap_action ?? DETAILS),
       onToggle: (next) => {
         if (!this.hass) return;
         this.expect(view.id, next ? 'on' : 'off');

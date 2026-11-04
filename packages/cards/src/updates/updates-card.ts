@@ -13,7 +13,13 @@ import { head, icon, listRow, sheetStyles, type Tone } from '@fluvy/ui';
 
 import { css, html, nothing, type CSSResultGroup, type TemplateResult } from 'lit';
 
-import { rowButton, rowsKeepIcon, rowStacks, type RowEnd } from '../helpers/rows.js';
+import {
+  rowButton,
+  rowEndStyles,
+  rowsKeepIcon,
+  rowStacks,
+  type RowEnd,
+} from '../shared/row-end.js';
 
 import { rowStyles } from '../helpers/styles.js';
 
@@ -69,6 +75,7 @@ export class FluvyUpdatesCard extends Card<UpdatesCardConfig> {
     ...(Card.styles as CSSResultGroup[]),
     sheetStyles.inputs,
     rowStyles,
+    rowEndStyles,
     css`
       /* the sheet's 76 progress row, free to grow by a line like every other row; laid out as the bar rows are: the circle
          on the title / sub pair (8 from the top), the text 12 down, the bar under it — not centred on the taller row */

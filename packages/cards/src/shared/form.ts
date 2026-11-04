@@ -184,6 +184,32 @@ export const sinceChoices: EditorChoices = (_config, hass) => ({
 });
 
 /**
+ * A select's row (#96): the options its list offers, in their order (of those the select lists, `selectRowChoices`),
+ * and its own words for them.
+ */
+export const selectRowFields = (): [options: HaFormSchemaItem, labels: HaFormSchemaItem] => [
+  { name: 'options', selector: { select: { multiple: true, reorder: true, options: [] } } },
+  { name: 'labels', selector: { object: {} } },
+];
+
+/** Whether a row's entity is a select: its form offers its options and their words. */
+export const isSelectRow = (item: Readonly<Record<string, unknown>>): boolean =>
+  /^(input_)?select\./.test(String(item['entity']));
+
+/** A row's `since` offers the house's timestamp sensors, a select's `options` what it lists, in its words. */
+export const selectRowChoices: EditorChoices = (item, hass) => {
+  const state = hass?.states[String(item['entity'])];
+  const listed: unknown = state?.attributes['options'];
+  return {
+    ...sinceChoices(item, hass),
+    options: (Array.isArray(listed) ? listed : []).map((option) => {
+      const value = String(option);
+      return { value, label: (state && hass?.formatEntityState?.(state, value)) || value };
+    }),
+  };
+};
+
+/**
  * A choice among values, each named by a word of the catalogue — a family's own words among them, where `selectField`
  * takes the core's option words alone.
  */

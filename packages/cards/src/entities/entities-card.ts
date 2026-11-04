@@ -19,10 +19,12 @@ import { css, html, nothing, type CSSResultGroup, type TemplateResult } from 'li
 import { Card, type CardEditor } from '../shared/base.js';
 
 import { currentTone, iconOf, toneFor } from '../shared/domain.js';
+import { chosenLabel, dropdown, dropdownEnd, SELECTS } from '../shared/dropdown.js';
 import { DETAILS, type RowConfig } from '../lock/rows.js';
 import { ITEM_ALIASES, type AliasSpec } from '../shared/config.js';
 import { statusToneOf, toneOf, type LightColours } from '../shared/colour.js';
 import { lightLook, litColour, withMembers } from '../shared/light.js';
+import { buttonWidth, rowEndStyles, rowsKeepIcon, rowStacks } from '../shared/row-end.js';
 import { secondaryText } from '../shared/secondary.js';
 import { sinceIds } from '../shared/since.js';
 import { isTemplate, TemplateTexts } from '../shared/templates.js';
@@ -73,6 +75,7 @@ export class FluvyEntitiesCard extends Card<EntitiesCardConfig> {
 
   static override styles: CSSResultGroup = [
     ...(Card.styles as CSSResultGroup[]),
+    rowEndStyles,
     css`
       .fv-rows {
         margin-top: 8px;
@@ -197,11 +200,13 @@ export class FluvyEntitiesCard extends Card<EntitiesCardConfig> {
           })
         : nothing;
 
-    // what ends each row (its switch, its value's words, its chevron) is decided before the rows are drawn: a column
-    // too narrow for a name beside its end gives every row's circle to the names, as every list does
-    const laid = rows.map((_row, i) => {
+    // what ends each row (its switch, its value's words, its chevron, a select's dropdown) is decided before the rows
+    // are drawn: a column too narrow for a name beside its end gives every row's circle to the names, as every list does
+    const laid = rows.map((row, i) => {
       const view = views[i] as EntityView;
       const usable = isUsable(view);
+      // a select's value opens its dropdown (#96), unless the row names a tap of its own
+      const menu = SELECTS.has(view.domain) && !row.tap_action;
       // a row switch is for what is safe to flip by accident: never a lock, and not the things that are not on/off
       const canToggle =
         usable &&
@@ -210,40 +215,53 @@ export class FluvyEntitiesCard extends Card<EntitiesCardConfig> {
           view.domain,
         );
       const measured = view.domain === 'sensor' || view.number !== null;
-      const trailing: 'switch' | 'value' | 'chevron' = canToggle
-        ? 'switch'
-        : usable &&
-            (measured ||
-              view.domain === 'binary_sensor' ||
-              view.domain === 'person' ||
-              view.domain === 'sun' ||
-              view.domain === 'weather' ||
-              view.domain === 'input_select' ||
-              view.domain === 'select' ||
-              view.domain === 'lock' ||
-              view.domain === 'vacuum' ||
-              view.domain === 'media_player')
-          ? 'value'
-          : 'chevron';
+      const trailing: 'switch' | 'value' | 'chevron' | 'menu' = menu
+        ? 'menu'
+        : canToggle
+          ? 'switch'
+          : usable &&
+              (measured ||
+                view.domain === 'binary_sensor' ||
+                view.domain === 'person' ||
+                view.domain === 'sun' ||
+                view.domain === 'weather' ||
+                view.domain === 'input_select' ||
+                view.domain === 'select' ||
+                view.domain === 'lock' ||
+                view.domain === 'vacuum' ||
+                view.domain === 'media_player')
+            ? 'value'
+            : 'chevron';
       const parts = valueParts(this.hass, view);
+      // a select says its option in the row's words (`labels`)
       const value =
-        trailing === 'value'
-          ? view.number !== null
-            ? `${parts.value}${parts.unit ? ` ${parts.unit}` : ''}`
-            : stateText(this.hass, view)
-          : '';
-      const end = trailing === 'switch' ? SWITCH_SLOT : trailing === 'chevron' ? 44 : undefined;
+        trailing === 'switch' || trailing === 'chevron'
+          ? ''
+          : SELECTS.has(view.domain)
+            ? chosenLabel(this.hass, view, row, this.stateOf(view))
+            : view.number !== null
+              ? `${parts.value}${parts.unit ? ` ${parts.unit}` : ''}`
+              : stateText(this.hass, view);
+      // the end's own width where it is not a value's words: a switch's 56, a chevron's 44, a dropdown's button
+      const end =
+        trailing === 'switch'
+          ? SWITCH_SLOT
+          : trailing === 'chevron'
+            ? 44
+            : menu
+              ? buttonWidth(this.head.ruler, value, true)
+              : undefined;
       const sub = (short = false): string =>
         secondaryText(
           this.hass,
           view,
-          rows[i]?.secondary,
-          trailing === 'value',
+          row.secondary,
+          trailing === 'value' || menu,
           this.texts,
           short,
-          rows[i]?.since,
+          row.since,
         );
-      return { view, usable, trailing, value, end, sub };
+      return { view, usable, trailing, title: row.name ?? view.name, value, end, sub };
     });
     // the "N more" row says it in words where they hold beside its chevron, else as "+N"
     const moreWords = more ? this.t('common.more_count', { count: more.count }) : '';
@@ -253,31 +271,58 @@ export class FluvyEntitiesCard extends Card<EntitiesCardConfig> {
         this.head.ruler.width('fv-row__title', moreWords)
         ? `+${more.count}`
         : moreWords;
-    const keep = this.head.rowsKeepIcon(
-      this.contentWidth,
-      [
-        ...laid.map(({ view, value, end, sub }, i) => ({
-          title: rows[i]?.name ?? view.name,
-          value,
-          // the least the line says (a time's short form), so a passing minute never moves the circles
-          sub: compact ? '' : sub(true),
-          ...(end === undefined ? {} : { end }),
-        })),
-        ...(more ? [{ title: moreTitle, value: '', end: 44 }] : []),
-      ],
-      compact,
-    );
+    const keep =
+      this.head.rowsKeepIcon(
+        this.contentWidth,
+        [
+          ...laid.map(({ title, value, end, sub }) => ({
+            title,
+            value,
+            // the least the line says (a time's short form), so a passing minute never moves the circles
+            sub: compact ? '' : sub(true),
+            ...(end === undefined ? {} : { end }),
+          })),
+          ...(more ? [{ title: moreTitle, value: '', end: 44 }] : []),
+        ],
+        compact,
+      ) &&
+      // …and a dropdown's value holds within its cap beside its name (the rows' rule for a button)
+      rowsKeepIcon(
+        this.head.ruler,
+        this.contentWidth,
+        laid.flatMap(({ trailing, title, value }) =>
+          trailing === 'menu' ? [dropdownEnd(title, value)] : [],
+        ),
+      );
     // a line too long for its row even so takes its short form ("32 d geleden", "Not found"); where not even that
-    // holds beside a state in words at its narrowest (its longest word), the state goes under the words
-    const line = ({ value, end, sub }: (typeof laid)[number]): { sub: string; stack: boolean } => {
-      const full = sub();
-      const short = sub(true);
+    // holds beside a state in words at its narrowest (its longest word), the state goes under the words. A dropdown
+    // goes under them where even without the circle it would not hold beside them (`rowStacks`), a compact row's (its
+    // name alone) too: its value is never cut where the row can hold it
+    const line = ({
+      trailing,
+      title,
+      value,
+      end,
+      sub,
+    }: (typeof laid)[number]): {
+      sub: string;
+      stack: boolean;
+    } => {
+      const full = compact ? '' : sub();
+      const short = compact ? '' : sub(true);
+      const width = (text: string): number => this.head.ruler.width('fv-row__sub', text);
+      if (
+        trailing === 'menu' &&
+        !keep &&
+        rowStacks(this.head.ruler, this.contentWidth, dropdownEnd(title, value, short))
+      )
+        return { sub: width(full) <= this.contentWidth ? full : short, stack: true };
+      if (compact) return { sub: '', stack: false };
       const room = this.head.rowRoom(
         this.contentWidth,
         value,
         end === undefined ? { icon: keep } : { icon: keep, end },
       );
-      const width = (text: string): number => this.head.ruler.width('fv-row__sub', text);
       if (width(full) <= room) return { sub: full, stack: false };
       const least = Math.max(
         0,
@@ -292,7 +337,7 @@ export class FluvyEntitiesCard extends Card<EntitiesCardConfig> {
       <div class="fv-rows ${this.config?.title ? '' : 'fv-rows--bare'}">
         ${panel}
         ${rows.map((row, i) => {
-          const { view, usable, trailing, value } = laid[i]!;
+          const { view, usable, trailing, title, value } = laid[i]!;
           const state = this.stateOf(view);
           const on =
             state === view.state ? isActive(view) : !['off', 'closed', 'locked'].includes(state);
@@ -307,17 +352,30 @@ export class FluvyEntitiesCard extends Card<EntitiesCardConfig> {
                   glows ? litColour(view, on, this.config?.light_whites, this.hass) : undefined,
                 )
               : ([row.color, statusToneOf(row, toneFor(view))] as const);
-          const said = compact ? { sub: '', stack: false } : line(laid[i]!);
+          const said = line(laid[i]!);
+          const menu = trailing === 'menu';
           return listRow({
             icon: keep ? iconOf(view, row.icon) : null,
             tone: currentTone(view, on ? rowTone : 'neutral'),
-            title: row.name ?? view.name,
+            title,
             name: true,
             sub: said.sub,
             stack: said.stack,
             // a template's line is the owner's words: a name, that may end in its ellipsis
             subName: isTemplate(row.secondary ?? ''),
-            trailing,
+            trailing: menu
+              ? dropdown({
+                  host: this.controlHost,
+                  hass: this.hass,
+                  view,
+                  row,
+                  name: title,
+                  value,
+                  stack: said.stack,
+                  ruler: this.head.ruler,
+                  width: this.contentWidth,
+                })
+              : trailing,
             on,
             compact,
             accent: this.accents.item(colour),
@@ -325,7 +383,8 @@ export class FluvyEntitiesCard extends Card<EntitiesCardConfig> {
             value,
             valueTone: warn ? 'warning' : '',
             unavailable: !usable,
-            onTap: () => this.tap(view.id, row.tap_action ?? DETAILS),
+            // a dropdown's row is no button of its own: its value is
+            onTap: menu ? undefined : () => this.tap(view.id, row.tap_action ?? DETAILS),
             onToggle: (next) => {
               if (!this.hass) return;
               this.expect(

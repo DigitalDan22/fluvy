@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import type { HassEntity, HomeAssistant } from '@fluvy/core';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { familiesDefined } from '../index.js';
 
 // the devices family lands with the index: the cards' tags are defined before a page needs them
@@ -30,7 +30,14 @@ const STATES = [
   state('lock.front_door', 'locked'),
   state('binary_sensor.front_door', 'off', { device_class: 'door' }),
   state('switch.auto_lock', 'on'),
+  state('input_select.auto_lock_after', '2 minutes', {
+    options: ['Off', '30 seconds', '1 minute', '2 minutes', '5 minutes', '10 minutes', '1 hour'],
+  }),
+  state('select.night_vision', 'auto', { options: ['auto', 'on', 'off'] }),
+  state('select.lock_mode', 'unavailable', { options: ['normal', 'vacation', 'privacy'] }),
 ];
+
+const callService = vi.fn(() => Promise.resolve());
 
 const hass = {
   language: 'en',
@@ -42,6 +49,7 @@ const hass = {
   areas: { drive: { area_id: 'drive', name: 'Driveway' } },
   localize: (key: string) => key,
   formatEntityState: (s: { state: string }) => s.state,
+  callService,
   hassUrl: (path: string) => path,
   callWS: () => new Promise(() => undefined),
   connection: { subscribeMessage: () => Promise.resolve(() => undefined) },
@@ -148,5 +156,58 @@ describe('a lock’s rows', () => {
       { sub: '5 min ago', tone: 'neutral', accent: null, end: 'value' },
       { sub: '5 min ago', tone: 'accent', accent: null, end: 'value' },
     ]);
+  });
+});
+
+/* #96: a select's row ends in its value, which opens Fluvy's dropdown, on a lock, an alarm and a camera alike. */
+describe('a select’s row on a device card', () => {
+  const ends = (card: CardElement) =>
+    [...card.shadowRoot!.querySelectorAll('.dv-rows .fv-row')].map((row) => ({
+      value: row.querySelector('.in-value')?.textContent?.trim(),
+      disabled: row.querySelector<HTMLButtonElement>('.in-value')?.disabled,
+      menu: row.querySelector('.in-value + fluvy-select[anchored]') !== null,
+      tap: row.getAttribute('role') === 'button',
+    }));
+
+  it('opens the dropdown from its value and chooses with select_option, out of reach a "—" that does nothing', async () => {
+    callService.mockClear();
+    const card = await draw('fluvy-lock-card', {
+      entity: 'lock.front_door',
+      rows: [
+        { entity: 'input_select.auto_lock_after', labels: { '2 minutes': '2 min' } },
+        'select.lock_mode',
+      ],
+    });
+    expect(ends(card)).toEqual([
+      { value: '2 min', disabled: false, menu: true, tap: false },
+      { value: '—', disabled: true, menu: true, tap: false },
+    ]);
+    card
+      .shadowRoot!.querySelector('fluvy-select')!
+      .dispatchEvent(new CustomEvent('fluvy-change', { detail: { value: '5 minutes' } }));
+    expect(callService.mock.calls).toEqual([
+      [
+        'input_select',
+        'select_option',
+        { option: '5 minutes' },
+        { entity_id: 'input_select.auto_lock_after' },
+      ],
+    ]);
+    await card.updateComplete;
+    expect(ends(card)[0]?.value).toBe('5 minutes');
+  });
+
+  it('keeps a tap of its own, and draws its dropdown on a camera’s rows too', async () => {
+    const lock = await draw('fluvy-lock-card', {
+      entity: 'lock.front_door',
+      rows: [{ entity: 'select.night_vision', tap_action: { action: 'more-info' } }],
+    });
+    expect(ends(lock)).toEqual([{ value: undefined, disabled: undefined, menu: false, tap: true }]);
+    expect(rows(lock)[0]?.end).toBe('value');
+    const camera = await draw('fluvy-camera-card', {
+      entity: 'camera.driveway',
+      rows: ['select.night_vision'],
+    });
+    expect(ends(camera)).toEqual([{ value: 'auto', disabled: false, menu: true, tap: false }]);
   });
 });

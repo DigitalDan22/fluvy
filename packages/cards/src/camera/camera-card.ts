@@ -12,7 +12,7 @@ import { head, round, sheetStyles } from '@fluvy/ui';
 
 import { css, html, type CSSResultGroup, type TemplateResult } from 'lit';
 
-import { ROW_KEYS, RowsCard, rowSchema, type RowsCardConfig } from '../lock/rows.js';
+import { rowItems, RowsCard, type RowsCardConfig } from '../lock/rows.js';
 
 import { Card, HEAD_BASE } from '../shared/base.js';
 
@@ -35,6 +35,7 @@ import {
 import type { EditorDefaults, RowsListSpec } from '../shared/rows-editor.js';
 import { configKeys, ITEM_ALIASES, type AliasSpec } from '../shared/config.js';
 import { toneOf } from '../shared/colour.js';
+import { rowEndStyles } from '../shared/row-end.js';
 import { CameraFeed } from './feed.js';
 import { plateLayout, plateStyles, renderPlate } from './plate.js';
 import { CAMERA_RATIOS, cameraHeight, cameraRatio, plateHeight } from '../devices-family.js';
@@ -74,6 +75,7 @@ export class FluvyCameraCard extends RowsCard<CameraCardConfig> {
   static override styles: CSSResultGroup = [
     ...(Card.styles as CSSResultGroup[]),
     sheetStyles.devices,
+    rowEndStyles,
     plateStyles,
     css`
       .dv-card {
@@ -113,7 +115,7 @@ export class FluvyCameraCard extends RowsCard<CameraCardConfig> {
     'fit_mode',
   ]);
   static override lists: readonly RowsListSpec[] = [
-    { key: 'rows', title: 'editor.rows', keys: ROW_KEYS, schema: rowSchema() },
+    { key: 'rows', title: 'editor.rows', ...rowItems() },
   ];
   static override aliases: AliasSpec = {
     keys: [{ from: 'sub', to: 'subtitle' }],

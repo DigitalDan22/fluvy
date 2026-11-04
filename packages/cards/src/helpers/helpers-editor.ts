@@ -9,8 +9,11 @@ import {
   fieldRow,
   formLabels,
   iconField,
+  isSelectRow,
   nameIconFields,
   selectField,
+  selectRowChoices,
+  selectRowFields,
   showIconField,
   sinceChoices,
   sinceField,
@@ -52,11 +55,8 @@ const PRESETS: HaFormSchemaItem = {
   selector: { select: { multiple: true, custom_value: true, options: [] } },
 };
 /** A select's (#96): the options it offers in their order (of those it lists), chips or a dropdown, and its words. */
-const SELECT = [
-  { name: 'options', selector: { select: { multiple: true, reorder: true, options: [] } } },
-  selectField('display', ['auto', 'chips', 'dropdown']),
-  { name: 'labels', selector: { object: {} } },
-];
+const [OPTIONS, LABELS] = selectRowFields();
+const SELECT = [OPTIONS, selectField('display', ['auto', 'chips', 'dropdown']), LABELS];
 const OTHER_ROW = [...ROW, PRESETS];
 const SELECT_ROW = [...ROW, ...SELECT];
 
@@ -77,20 +77,8 @@ export const lists: readonly RowsListSpec[] = [
       'labels',
     ],
     schema: [...ROW, PRESETS, ...SELECT],
-    schemaOf: (item) =>
-      /^(input_)?select\./.test(String(item['entity'])) ? SELECT_ROW : OTHER_ROW,
-    // a row's `since` offers the house's timestamp sensors, a select's `options` what it lists, in its words
-    choices: (item, hass) => {
-      const state = hass?.states[String(item['entity'])];
-      const listed: unknown = state?.attributes['options'];
-      return {
-        ...sinceChoices(item, hass),
-        options: (Array.isArray(listed) ? listed : []).map((option) => {
-          const value = String(option);
-          return { value, label: (state && hass?.formatEntityState?.(state, value)) || value };
-        }),
-      };
-    },
+    schemaOf: (item) => (isSelectRow(item) ? SELECT_ROW : OTHER_ROW),
+    choices: selectRowChoices,
   },
 ];
 

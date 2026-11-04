@@ -52,16 +52,10 @@ import {
   textField,
 } from '../shared/form.js';
 
-import {
-  changedLine,
-  changedShort,
-  ROW_KEYS,
-  RowsCard,
-  rowSchema,
-  type RowsCardConfig,
-} from './rows.js';
+import { changedLine, changedShort, RowsCard, rowItems, type RowsCardConfig } from './rows.js';
 import type { EditorDefaults, RowsListSpec } from '../shared/rows-editor.js';
 import { configKeys, ITEM_ALIASES, type AliasSpec } from '../shared/config.js';
+import { rowEndStyles } from '../shared/row-end.js';
 import { lockHeight } from '../devices-family.js';
 
 const s = strings('lock');
@@ -105,6 +99,7 @@ export class FluvyLockCard extends RowsCard<LockCardConfig> {
   static override styles: CSSResultGroup = [
     ...(Card.styles as CSSResultGroup[]),
     sheetStyles.devices,
+    rowEndStyles,
     css`
       .dv-card {
         width: auto;
@@ -209,7 +204,7 @@ export class FluvyLockCard extends RowsCard<LockCardConfig> {
   static override base = HEAD_BASE;
   static override keys = configKeys<LockCardConfig>()(['rows', 'show_rows', 'subtitle', 'variant']);
   static override lists: readonly RowsListSpec[] = [
-    { key: 'rows', title: 'editor.rows', keys: ROW_KEYS, schema: rowSchema(), when: drawsRows },
+    { key: 'rows', title: 'editor.rows', ...rowItems(), when: drawsRows },
   ];
   static override aliases: AliasSpec = { items: { rows: ITEM_ALIASES } };
   /** What the editor shows where the config says nothing: what the card does then. */

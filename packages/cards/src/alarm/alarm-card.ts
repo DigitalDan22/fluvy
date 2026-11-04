@@ -28,9 +28,8 @@ import { css, html, type CSSResultGroup, type PropertyValues, type TemplateResul
 import {
   changedLine,
   changedShort,
-  ROW_KEYS,
   RowsCard,
-  rowSchema,
+  rowItems,
   type RowsCardConfig,
 } from '../lock/rows.js';
 
@@ -62,6 +61,7 @@ import { chipRow, fitsOneRow } from '../shared/chips.js';
 import { optionCell, optionColumnsFor, optionsHold, valuesHold } from '../shared/options.js';
 import { TextRuler } from '../shared/fit.js';
 import { FontsSettled } from '../shared/fonts.js';
+import { rowEndStyles } from '../shared/row-end.js';
 import { alarmHeight } from '../devices-family.js';
 
 const s = strings('alarm');
@@ -202,6 +202,7 @@ export class FluvyAlarmCard extends RowsCard<AlarmCardConfig> {
   static override styles: CSSResultGroup = [
     ...(Card.styles as CSSResultGroup[]),
     sheetStyles.devices,
+    rowEndStyles,
     css`
       .dv-card {
         width: auto;
@@ -253,7 +254,7 @@ export class FluvyAlarmCard extends RowsCard<AlarmCardConfig> {
     'variant',
   ]);
   static override lists: readonly RowsListSpec[] = [
-    { key: 'rows', title: 'editor.rows', keys: ROW_KEYS, schema: rowSchema() },
+    { key: 'rows', title: 'editor.rows', ...rowItems() },
   ];
   static override aliases: AliasSpec = { items: { rows: ITEM_ALIASES } };
   /** What the editor shows where the config says nothing: what the card does then (every mode the panel has). */

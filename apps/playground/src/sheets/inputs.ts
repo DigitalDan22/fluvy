@@ -3,7 +3,7 @@ import { FluvyHelpersCard } from '../../../../packages/cards/src/helpers/helpers
 import { FluvyTimerCard } from '../../../../packages/cards/src/timer/timer-card.js';
 import { FluvyTodoCard } from '../../../../packages/cards/src/todo/todo-card.js';
 import { FluvyUpdatesCard } from '../../../../packages/cards/src/updates/updates-card.js';
-import type { MockHouse } from '../hass.js';
+import type { MockHouse, StateSeed } from '../hass.js';
 import type { SheetSpec } from '../scenes.js';
 
 if (!customElements.get('fluvy-helpers-card'))
@@ -109,6 +109,47 @@ const list = (message: Record<string, unknown>, house?: MockHouse): { items: Tod
 });
 
 const HELPERS_PAGE = { action: 'navigate', navigation_path: '/config/helpers' } as const;
+
+/** An oven's thirty modes (#96): a select whose options are a list, its row's value opening Fluvy's dropdown. */
+export const OVEN_MODE: StateSeed = [
+  'select.oven_mode',
+  'hot_air',
+  {
+    friendly_name: 'Oven mode',
+    options: [
+      'conventional',
+      'fan_conventional',
+      'hot_air',
+      'hot_air_eco',
+      'hot_air_grilling',
+      'top_bottom_heating',
+      'top_bottom_heating_eco',
+      'bottom_heating',
+      'pizza_setting',
+      'slow_cook',
+      'intensive_heat',
+      'keep_warm',
+      'preheat_ovenware',
+      'frozen_heatup_special',
+      'desiccation',
+      'defrost',
+      'proof',
+      'hot_air_30_steam',
+      'hot_air_60_steam',
+      'hot_air_80_steam',
+      'hot_air_100_steam',
+      'sabbath_programme',
+      'grill_large_area',
+      'grill_small_area',
+      'steam',
+      'reheat',
+      'sous_vide',
+      'dough_proving',
+      'plate_warming',
+      'descaling',
+    ],
+  },
+];
 
 export const sheet: SheetSpec = {
   /* Built when the page asks, after its clock is pinned (`?at=`): the countdowns count from the page's clock, and the
@@ -597,45 +638,7 @@ const STATES = (): SheetSpec['states'] => [
       ],
     },
   ],
-  [
-    'select.oven_mode',
-    'hot_air',
-    {
-      friendly_name: 'Oven mode',
-      options: [
-        'conventional',
-        'fan_conventional',
-        'hot_air',
-        'hot_air_eco',
-        'hot_air_grilling',
-        'top_bottom_heating',
-        'top_bottom_heating_eco',
-        'bottom_heating',
-        'pizza_setting',
-        'slow_cook',
-        'intensive_heat',
-        'keep_warm',
-        'preheat_ovenware',
-        'frozen_heatup_special',
-        'desiccation',
-        'defrost',
-        'proof',
-        'hot_air_30_steam',
-        'hot_air_60_steam',
-        'hot_air_80_steam',
-        'hot_air_100_steam',
-        'sabbath_programme',
-        'grill_large_area',
-        'grill_small_area',
-        'steam',
-        'reheat',
-        'sous_vide',
-        'dough_proving',
-        'plate_warming',
-        'descaling',
-      ],
-    },
-  ],
+  OVEN_MODE,
   // a zone of the same oven, gone from the house: its row keeps its anatomy, its value a dash
   [
     'select.oven_ghost',

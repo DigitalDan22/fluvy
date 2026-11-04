@@ -6,8 +6,9 @@ import { html, render } from 'lit';
 import { drawEditor, type FormStub } from '../shared/fixtures/editor.js';
 import type { HelperHost, HelperRowConfig } from './context.js';
 import { FluvyHelpersCard, helpersHeight } from './helpers-card.js';
-import { rowsKeepIcon } from './rows.js';
-import { asChips, offered, selectEnd, selectPiece } from './select.js';
+import { offered } from '../shared/dropdown.js';
+import { rowsKeepIcon } from '../shared/row-end.js';
+import { asChips, selectEnd, selectPiece } from './select.js';
 
 /*
  * #96: a select offers the row's own options in their order (of those it lists), in the row's words before Home
@@ -181,7 +182,12 @@ describe('a select in the card', () => {
     menu.dispatchEvent(new CustomEvent('fluvy-change', { detail: { value: 'movie' } }));
     expect(calls).toEqual([['select', 'select_option', { option: 'movie' }, 'select.tv']]);
     // the row's end is the pill and its chevron
-    expect(selectEnd(host, view, row)).toEqual({ button: 'AI Mode', menu: true, capped: true });
+    expect(selectEnd(host, view, row)).toMatchObject({
+      name: 'Picture mode',
+      button: 'AI Mode',
+      menu: true,
+      capped: true,
+    });
   });
 
   it('lets the chevron give way under the name before the words would be cut', () => {

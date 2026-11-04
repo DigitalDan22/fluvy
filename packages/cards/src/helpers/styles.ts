@@ -60,8 +60,8 @@ export const rowStyles = css`
     -webkit-line-clamp: 3;
   }
 
-  /* where even without its circle a row's button would leave the name under its room, the button goes under the name,
-     at the words' start, as wide as its words */
+  /* where even without its circle what ends a row (a button, a state in words) would leave the name under its room,
+     it goes under the name, at the words' start, as wide as its words */
   .fv-row--stack {
     flex-wrap: wrap;
     row-gap: 8px;
@@ -69,56 +69,5 @@ export const rowStyles = css`
 
   .fv-row--stack > .fv-row__text {
     flex-basis: 100%;
-  }
-
-  /* an editable value wears the link-button shape; a very long one gives way to the name, never the reverse — its
-     cap on the 4 grid, so a capped button keeps whole pixels (the rows' valueCap mirrors the two caps: a date takes
-     its figures where its month's name would not hold) */
-  .in-value {
-    max-width: round(down, calc(68% - 68px), 4px);
-  }
-
-  /* a row that gave its circle to its name gives the button the circle's room too */
-  .fv-row--bare > .in-value:not(.in-value--action) {
-    max-width: round(down, calc(68% - 12px), 4px);
-  }
-
-  /* …and under the name, the whole row (after the cap's rule, which it ties on specificity) */
-  .fv-row--bare.fv-row--stack > .in-value {
-    max-width: 100%;
-  }
-
-  /* an action's word ("Install", "Run") is never cut: its button keeps its measured width, uncapped */
-  .in-value--action {
-    flex: none;
-    max-width: none;
-  }
-
-  .in-value__text {
-    max-width: 100%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* a value its list opens from (#96): a 16 chevron 4 after its words, turned over while the list is open; the list
-     itself lays out as nothing, before and after its file arrives */
-  .in-value[aria-haspopup] {
-    gap: 4px;
-  }
-
-  .in-value[aria-haspopup] > svg {
-    width: 16px;
-    height: 16px;
-    transition: transform 180ms var(--fv-ease, ease);
-  }
-
-  .in-value[aria-expanded='true'] > svg {
-    transform: rotate(180deg);
-  }
-
-  [anchored] {
-    display: contents;
   }
 `;

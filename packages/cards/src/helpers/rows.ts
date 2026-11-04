@@ -1,7 +1,6 @@
 import { isActive, stateText, strings, valueParts, type EntityView } from '@fluvy/core';
-import { chips, glyph, icon, listRow, type ChipItem, type Tone } from '@fluvy/ui';
-import type { FluvySelect, SelectChangeDetail, SelectOption } from '@fluvy/ui/select';
-import { html, nothing, type TemplateResult } from 'lit';
+import { chips, listRow, type ChipItem, type Tone } from '@fluvy/ui';
+import { html, type TemplateResult } from 'lit';
 import { currentTone, iconOf, toneFor } from '../shared/domain.js';
 import {
   contextOf,
@@ -11,7 +10,8 @@ import {
   type HelperHost,
   type HelperRowConfig,
 } from './context.js';
-import { type TextRuler } from '../shared/fit.js';
+import { dropdown, dropdownEnd } from '../shared/dropdown.js';
+import { buttonWidth, rowButton, rowStacks, valueCap, type RowEnd } from '../shared/row-end.js';
 import { changedAt } from '../shared/since.js';
 import {
   dayText,
@@ -30,74 +30,6 @@ const s = strings('helpers');
 
 /** Below this content width a row's extras stop indenting to the text column. */
 const NARROW = 300;
-/** A row button's sides: its words plus 16 on either side, on the 4 grid (`fitPills`). */
-export const BUTTON_SIDES = 32;
-/** A value's chevron where its list opens from it, 4 after its words (`styles.ts`). */
-const CHEVRON = 4 + 16;
-/** The class a row button's words are laid out in. */
-const BUTTON_TEXT = 'fv-btn > in-value__text';
-/** A row's 44 circle and the 12 gaps on either side of its words. */
-const ROW_SIDES = 44 + 12 + 12;
-/** The least a row's name may have beside an action before the circles give way to it (the name itself when shorter). */
-const NAME_MIN = 96;
-
-/** What ends a list row: a button's words ("Run", "06:45", "Kitchen"), or the width of what else does (a switch). */
-export interface RowEnd {
-  readonly name: string;
-  readonly button?: string;
-  readonly end?: number;
-  /** The line under the name: its first segment holds the same room as the name ("Sets at 20:12"). */
-  readonly sub?: string;
-  /** The button is a value's, capped at `valueCap`: it holds within the cap too, or the row gives way as for its name. */
-  readonly capped?: boolean;
-  /** The button opens a list (a long select's): its chevron beside its words. */
-  readonly menu?: boolean;
-}
-
-/**
- * The most a row's value button may take, as `styles.ts` caps `.in-value` (its lines 78 and 83): 68 % of the row
- * less the circle's room (68, the circle and its gaps), less the one gap once the row gave the circle to its name —
- * down to the 4 grid, as the browser rounds it.
- */
-export const valueCap = (width: number, bare: boolean): number =>
-  Math.floor((0.68 * width - (bare ? 12 : ROW_SIDES)) / 4) * 4;
-
-/**
- * Whether a list's rows keep their circles. What ends a row is never cut — an action's word, a value's button, a
- * switch — so a row whose end would leave its name under 96 (or under the name itself) gives the circle's room to the
- * name, and every row of the list with it, so the names keep one column: the rows' rule (`HeadFit.rowsKeepIcon`).
- */
-export function rowsKeepIcon(ruler: TextRuler, width: number, rows: readonly RowEnd[]): boolean {
-  return rows.every((row) => holds(ruler, width, false, row));
-}
-
-/**
- * Whether a row puts its end under its name: where even without its circle the end would leave the name — or its
- * line's first segment — under 96 (or under itself), or would not hold within its cap: a German "Installieren" at
- * 211, the sun's "Above horizon", a date at a third of a section. The words then have the row, the end the line under
- * them, as wide as it is.
- */
-export const rowStacks = (ruler: TextRuler, width: number, row: RowEnd): boolean =>
-  !holds(ruler, width, true, row) ||
-  !holds(ruler, width, true, { ...row, name: row.sub?.split(' · ')[0] ?? '' }, 'fv-row__sub');
-
-/**
- * Whether a row's name keeps its room beside what ends it, with its circle (the end has the row less the circle and
- * the gaps) or without (`bare`: less the one gap), and a capped end holds within its cap.
- */
-const holds = (
-  ruler: TextRuler,
-  width: number,
-  bare: boolean,
-  { name, button = '', end, capped, menu }: RowEnd,
-  cls = 'fv-row__title',
-): boolean => {
-  const pill = end ?? ruler.pill(BUTTON_TEXT, button, BUTTON_SIDES + (menu ? CHEVRON : 0));
-  return (
-    (!capped || pill <= valueCap(width, bare)) &&
-    width - (bare ? 12 : ROW_SIDES) - pill >= Math.min(NAME_MIN, ruler.width(cls, name))
-  );
-};
 
 /**
  * Where the entity is, else when it last changed (as the row's `since` says where that reads, #67): a row's sub is
@@ -113,10 +45,9 @@ function rowSub(host: HelperHost, view: EntityView, row: HelperRowConfig): strin
 }
 
 /**
- * The sheet's list row with a free trailing element — `listRow` only knows switch, value and chevron — a button with
- * `end.button` for its words (`capped`: a value's, held to `valueCap`; `menu`: with its chevron). Where the rows gave
- * their circles to their names (`host.bare`) and even so the button would leave the name under its room, the button
- * goes under the name (`rowStacks`).
+ * A helper's list row ending in a button (`rowButton`, or a select's dropdown): where the rows gave their circles to
+ * their names (`host.bare`) and even so the button would leave the name under its room, it goes under the name
+ * (`stack`, as `rowStacks` says).
  */
 function row(
   host: HelperHost,
@@ -125,61 +56,23 @@ function row(
   tone: Tone,
   sub: string,
   trailing: TemplateResult,
-  end: Omit<RowEnd, 'name' | 'sub'>,
+  stack: boolean,
 ): TemplateResult {
-  const bare = host.bare;
-  const stack =
-    bare && rowStacks(host.ruler, host.contentWidth, { ...end, name: nameOf(view, config), sub });
-  return html`<div
-    class="fv-row ${bare ? 'fv-row--bare' : ''} ${stack ? 'fv-row--stack' : ''} ${isUnusable(view) ? 'is-unavailable' : ''}"
-  >
-    ${
-      bare
-        ? nothing
-        : html`<span class="fv-ico fv-ico--${tone}" data-icon
-            >${icon(iconOf(view, config.icon))}</span
-          >`
-    }
-    <span class="fv-row__text"
-      ><span class="fv-row__title" data-name>${nameOf(view, config)}</span
-      >${sub ? html`<span class="fv-row__sub">${sub}</span>` : nothing}</span
-    >
-    ${trailing}
-  </div>`;
+  return listRow({
+    icon: host.bare ? null : iconOf(view, config.icon),
+    tone,
+    title: nameOf(view, config),
+    name: true,
+    sub,
+    trailing,
+    stack,
+    unavailable: isUnusable(view),
+  });
 }
 
-/**
- * The sheet's content-sized row button (44 in a row, text + 16 px sides on the 4 grid). `label` is the
- * accessible name: a card holds several "Run" and several "Install", each must say what it acts on.
- * `name`: the words are a name (a select's chosen option) and may end in an ellipsis where the row is narrow;
- * otherwise they are an action's word, never cut: the row's name gives way to it. `menu`: a list opens from it, its
- * chevron after the words unless `chevron` says it gave way (the list says on it whether it is open).
- */
-export function rowButton(
-  kind: 'quiet' | 'link',
-  text: string,
-  label: string,
-  onClick: (event: Event) => void,
-  disabled = false,
-  name = false,
-  menu = false,
-  chevron = menu,
-): TemplateResult {
-  return html`<button
-    class="fv-btn fv-btn--${kind} in-value ${name ? '' : 'in-value--action'}"
-    data-control
-    data-target
-    data-fit=${BUTTON_SIDES}
-    aria-label=${label}
-    aria-haspopup=${menu ? 'listbox' : nothing}
-    aria-expanded=${menu ? 'false' : nothing}
-    ?disabled=${disabled}
-    @click=${onClick}
-  >
-    <span class="in-value__text" data-name=${name ? '' : nothing}>${text}</span
-    >${chevron ? glyph('down') : nothing}
-  </button>`;
-}
+/** Whether a row's button goes under its name: the rows gave their circles to their names, and even so it would not hold. */
+const stacks = (host: HelperHost, end: RowEnd): boolean =>
+  host.bare && rowStacks(host.ruler, host.contentWidth, end);
 
 /** An editable value wears the link-button shape; tapping it opens Home Assistant's own editor for the entity. */
 const valueButton = (
@@ -197,50 +90,28 @@ const valueButton = (
     true,
   );
 
-/**
- * A select whose options are a list (#96): the row says where it stands, and its list opens from its value — Fluvy's
- * dropdown, laid out as nothing after the button and fetched with the pages' controls the first time one opens, so
- * a dashboard that never opens one never pays for it. The value is held to its cap as a date's is (the row stacks
- * where it would not hold), and under its name its chevron gives way before its words would be cut.
- */
+/** A select whose options are a list (#96): the row says where it stands, and its value opens Fluvy's dropdown. */
 export function menuRow(
   host: HelperHost,
   view: EntityView,
   config: HelperRowConfig,
   value: string,
-  options: readonly SelectOption[],
-  choose: (option: string) => void,
 ): TemplateResult {
   const name = nameOf(view, config);
-  const unusable = isUnusable(view);
   const sub = rowSub(host, view, config);
-  const end = { button: value, menu: true, capped: true };
-  const chevron =
-    !(host.bare && rowStacks(host.ruler, host.contentWidth, { ...end, name, sub })) ||
-    host.ruler.pill(BUTTON_TEXT, value, BUTTON_SIDES + CHEVRON) <= host.contentWidth;
-  const open = (event: Event): void => {
-    const button = event.currentTarget as HTMLElement;
-    void import('@fluvy/ui/select').then(() => {
-      const menu = button.nextElementSibling as FluvySelect | null;
-      if (menu) menu.open = !menu.open;
-    });
-  };
-  return row(
+  const stack = stacks(host, dropdownEnd(name, value, sub));
+  const end = dropdown({
     host,
+    hass: host.hass,
     view,
-    config,
-    currentTone(view, 'neutral'),
-    sub,
-    html`${rowButton('link', value, `${name} · ${value}`, open, unusable, true, true, chevron)}<fluvy-select
-        anchored
-        .label=${name}
-        .value=${host.state(view)}
-        .options=${options}
-        ?disabled=${unusable}
-        @fluvy-change=${(event: CustomEvent<SelectChangeDetail>) => choose(event.detail.value)}
-      ></fluvy-select>`,
-    end,
-  );
+    row: config,
+    name,
+    value,
+    stack,
+    ruler: host.ruler,
+    width: host.contentWidth,
+  });
+  return row(host, view, config, currentTone(view, 'neutral'), sub, end, stack);
 }
 
 /** `input_boolean` / `switch`: the sheet's list row with its switch. */
@@ -296,7 +167,7 @@ function momentParts(
  */
 function dateValue(host: HelperHost, moment: Moment): string {
   const long = dayText(host.hass, moment);
-  return host.ruler.pill(BUTTON_TEXT, long, BUTTON_SIDES) <= valueCap(host.contentWidth, host.bare)
+  return buttonWidth(host.ruler, long) <= valueCap(host.contentWidth, host.bare)
     ? long
     : dayTextShort(host.hass, moment);
 }
@@ -313,14 +184,15 @@ export function momentRow(
   const state = host.state(view); // a quick-set chip is ahead of the report: the value follows the tap
   const moment = momentOf(host, view);
   const parts = momentParts(host, view, config, moment);
+  const name = nameOf(view, config);
   const main = row(
     host,
     view,
     config,
     currentTone(view, 'neutral'),
     parts.sub,
-    valueButton(host, view, nameOf(view, config), parts.value),
-    { button: parts.value, capped: true },
+    valueButton(host, view, name, parts.value),
+    stacks(host, { name, sub: parts.sub, button: parts.value, capped: true }),
   );
   const settable = view.domain === 'input_datetime' || view.domain === 'time';
   if (!moment || moment.hasDate || !settable || !config.presets?.length) return main;
@@ -373,7 +245,15 @@ export function buttonRow(
     () => host.call(view.domain, 'press', {}, view.id),
     isUnusable(view),
   );
-  return row(host, view, config, currentTone(view, 'neutral'), sub, run, { button: word });
+  return row(
+    host,
+    view,
+    config,
+    currentTone(view, 'neutral'),
+    sub,
+    run,
+    stacks(host, { name, sub, button: word }),
+  );
 }
 
 /** What a moment helper's row shows at its end ("06:45", "Oct 18"). */

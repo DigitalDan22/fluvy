@@ -12,6 +12,15 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   whose words for them differ in length, the car's own row can hold one round more, or one fewer, at the same width.
 - A room card whose `quick_actions` is not a list (`quick_actions: lights`, without its dash) says so in its error,
   where it drew the room's lights and blinds instead, or broke on an entry written as one object.
+- A select's row on the entities card, and among the rows of the lock, alarm and camera cards, ends in its value,
+  which opens Fluvy's own dropdown as the helpers card's does, where it opened Home Assistant's dialog: the keys, a
+  letter to find a name, the option chosen at once. A row with a `tap_action` of its own keeps it.
+
+### Added
+
+- A select's row on the entities, lock, alarm and camera cards offers a part of its options in its own order
+  (`options`) and names an option in its own words (`labels`), as the helpers card's does, in YAML and in the
+  editor; the editor offers those rows' `since` the house's timestamp sensors, as it does the entities card's.
 
 ### Fixed
 

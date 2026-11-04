@@ -1,6 +1,7 @@
 import {
   actionRuns,
   FluvyCard,
+  type EntityView,
   type FluvyCardConfig,
   type LovelaceCardConfig,
   type LovelaceConfigForm,
@@ -41,6 +42,16 @@ export interface HeadActions {
   readonly onTap?: () => void;
   readonly onHold?: () => void;
   readonly label?: string;
+}
+
+/**
+ * What a control drawn by a module of its own needs from the card that draws it: the state to draw (the expected one
+ * while a change is in flight), and the card's optimistic state and calls, protected on the card itself.
+ */
+export interface ControlHost {
+  state(view: EntityView): string;
+  expect(entityId: string, state: string): void;
+  call(domain: string, service: string, data: Record<string, unknown>, entityId: string): void;
 }
 
 /** What a card's editor shows: the contract's parts (see `Card`), all but the older names, which the card reads itself. */
@@ -116,6 +127,13 @@ export abstract class Card<C extends FluvyCardConfig = FluvyCardConfig> extends 
         : normaliseConfig(config, COMMON_ALIASES),
     );
   }
+
+  /** The card as a control of a module of its own sees it (a select's dropdown, a helper's control). */
+  protected readonly controlHost: ControlHost = {
+    state: (view) => this.stateOf(view),
+    expect: (id, state) => this.expect(id, state),
+    call: (domain, service, data, id) => this.call(domain, service, data, id),
+  };
 
   constructor() {
     super();

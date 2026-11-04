@@ -1,9 +1,11 @@
 import { stateText, type EntityView, type HomeAssistant } from '@fluvy/core';
 import { html, nothing, type TemplateResult } from 'lit';
+import type { ControlHost } from '../shared/base.js';
+import type { SelectRowConfig } from '../shared/dropdown.js';
 import { type TextRuler } from '../shared/fit.js';
 import type { TemplateTexts } from '../shared/templates.js';
 
-export interface HelperRowConfig {
+export interface HelperRowConfig extends SelectRowConfig {
   entity: string;
   name?: string;
   icon?: string;
@@ -13,10 +15,6 @@ export interface HelperRowConfig {
   since?: string;
   /** Quick-set chips under a time-only helper, as "HH:MM" (the sheet's Wake-up row). */
   presets?: readonly string[];
-  /** A select's options offered, in this order: those it lists (#96). */
-  options?: readonly string[];
-  /** A select's options in the owner's words (`gen_589828: AI Mode`), before Home Assistant's. */
-  labels?: Readonly<Record<string, string>>;
   /** A select as chips or as a dropdown; `auto`: chips up to six options. */
   display?: 'auto' | 'chips' | 'dropdown';
 }
@@ -25,7 +23,7 @@ export interface HelperRowConfig {
  * What a control needs from the card that draws it. The card's own helpers are protected, so the
  * controls (one module per kind of helper) receive this narrow view of it instead of the element.
  */
-export interface HelperHost {
+export interface HelperHost extends ControlHost {
   readonly hass: HomeAssistant | undefined;
   /** Width of the card's content column: rulers are drawn to it. */
   readonly contentWidth: number;
@@ -35,10 +33,6 @@ export interface HelperHost {
   readonly texts: TemplateTexts;
   /** The rows have given their circles to their names: what ends one of them squeezed its name (`rowsKeepIcon`). */
   readonly bare: boolean;
-  /** The state to draw: the expected one while a change is in flight. */
-  state(view: EntityView): string;
-  expect(entityId: string, state: string): void;
-  call(domain: string, service: string, data: Record<string, unknown>, entityId: string): void;
   moreInfo(entityId: string): void;
   /** Value under the finger while a ruler drag is in flight. */
   preview(entityId: string): number | undefined;
