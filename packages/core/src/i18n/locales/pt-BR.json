@@ -2184,6 +2184,8 @@
     "editor_finished_after": "Concluído após (min)",
     "editor_roles": "Entidades escolhidas à mão",
     "editor_role": "Função",
+    "editor_roles_helper": "Indique as entidades que o cartão não encontrou.",
+    "editor_own_entities": "Apenas as entidades do eletrodoméstico",
     "editor_scan": "Procurar o resto no dispositivo",
     "editor_scan_helper": "Desligado: o cartão lê apenas a sua entidade e as entidades escolhidas aqui.",
     "editor_appliances": "Eletrodomésticos",

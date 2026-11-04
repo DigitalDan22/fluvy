@@ -10,6 +10,7 @@ import {
   type FluvyCardConfig,
   type HassEntity,
   type HomeAssistant,
+  type KeyOf,
   type LovelaceConfigForm,
   type LovelaceGridOptions,
   type MessageKey,
@@ -85,7 +86,13 @@ import {
 } from '../shared/form.js';
 import { jobWords, when, whenText } from '../shared/job-time.js';
 import { statsRow } from '../shared/readouts.js';
-import type { EditorChoices, EditorDefaults, RowsListSpec } from '../shared/rows-editor.js';
+import type {
+  EditorChoices,
+  EditorDefaults,
+  OwnEntities,
+  SelectOption,
+  RowsListSpec,
+} from '../shared/rows-editor.js';
 import { Ticker, MINUTE } from '../shared/ticker.js';
 import {
   fitValueRow,
@@ -184,7 +191,14 @@ import {
   type ApplianceReading,
   type Attention,
 } from './reading.js';
-import { METER_ENERGY, NO_DEVICE, type ApplianceRole, type ApplianceRoles } from './roles.js';
+import {
+  applianceDevice,
+  entriesOf,
+  METER_ENERGY,
+  NO_DEVICE,
+  type ApplianceRole,
+  type ApplianceRoles,
+} from './roles.js';
 import { busy, stepsOf, wordOf } from './status.js';
 import {
   attentionText,
@@ -392,42 +406,74 @@ const ZONE_GLYPH: Readonly<Partial<Record<ZoneKind, string>>> = {
   wine: 'drop',
 };
 
-/** The editor's role choices: the parts a person names by hand, each by its word. */
-const NAMED_ROLES = [
-  'state',
-  'phase',
-  'program',
-  'finish',
-  'remaining',
-  'total',
-  'elapsed',
-  'progress',
-  'start_at',
-  'door',
-  'remote',
-  'power',
-  'start',
-  'pause',
-  'resume',
-  'stop',
-  'light',
-  'error',
-  'temperature',
-  'target',
-  'probe',
-  'energy',
-  'water',
-  'watts',
-  'running',
-  'online',
-  'feed',
-  'clean',
-  'schedule',
-  'next_feed',
-  'last_feed',
-  'fed_today',
-  'last_pet',
-] as const satisfies readonly ApplianceRole[];
+/** A role the editor names by its word, `appliance.role_<role>`. */
+type NamedRole = Extract<ApplianceRole, RoleWord<KeyOf<'appliance'>>>;
+type RoleWord<K> = K extends `role_${infer Role}` ? Role : never;
+
+/**
+ * The parts a person names by hand in the editor, each by its word, in the order they think of them — what it is doing,
+ * its power, its programme and its times, its temperatures, its door, its buttons, what it reads, a pet device's own —
+ * and where each is offered: on every kind, or on the heroes and kinds it names (a coffee machine is never offered a
+ * litter box's clean). YAML names any role on any kind.
+ */
+const NAMED_ROLES: ReadonlyArray<readonly [NamedRole, ...Array<Hero | ApplianceKind>]> = [
+  ['state'],
+  ['power'],
+  ['program', 'cycle', 'heat', 'coffee'],
+  ['phase', 'cycle'],
+  ['remaining', 'cycle', 'heat'],
+  ['finish', 'cycle', 'heat'],
+  ['elapsed', 'cycle', 'heat'],
+  ['total', 'cycle', 'heat'],
+  ['progress', 'cycle', 'heat'],
+  ['start_at', 'cycle', 'heat'],
+  ['temperature', 'cycle', 'heat', 'cold', 'coffee'],
+  ['target', 'heat', 'air_fryer'],
+  ['probe', 'oven'],
+  ['door', 'cycle', 'oven', 'cold'],
+  ['remote', 'cycle', 'heat'],
+  ['start', 'cycle', 'heat', 'coffee'],
+  ['pause', 'cycle', 'oven', 'litter_box'],
+  ['resume', 'cycle', 'oven', 'litter_box'],
+  ['stop', 'cycle', 'heat', 'coffee', 'litter_box'],
+  ['light', 'oven', 'microwave', 'hood', 'litter_box'],
+  ['error'],
+  ['energy'],
+  ['water', 'washer', 'washer_dryer', 'dishwasher'],
+  ['watts'],
+  ['running'],
+  ['online'],
+  ['feed', 'feeder'],
+  ['schedule', 'feeder'],
+  ['next_feed', 'feeder'],
+  ['last_feed', 'feeder'],
+  ['fed_today', 'feeder'],
+  ['clean', 'litter_box'],
+  ['last_pet', 'fountain', 'litter_box'],
+];
+
+/** The roles the editor offers an appliance of a kind, and those its config names already, each by its word. */
+function rolesOffered(kind: ApplianceKind, named: ApplianceCardConfig['roles']): SelectOption[] {
+  const hero = KIND_DEFAULTS[kind].hero;
+  return NAMED_ROLES.filter(
+    ([role, ...where]) =>
+      !where.length ||
+      where.includes(kind) ||
+      where.includes(hero) ||
+      named?.some((entry) => entry.role === role),
+  ).map(([role]) => ({ value: role, label: editorWord(`appliance.role_${role}`) }));
+}
+
+/** What the editor's lists offer while the card names its appliance's device: the device's own entities (#115). */
+const OWN: OwnEntities = {
+  entities: (config, hass) => {
+    const c = config as ApplianceCardConfig;
+    return entriesOf(hass, applianceDevice(hass, c.device, c.entity)).map(
+      (entry) => entry.entity_id,
+    );
+  },
+  label: 'appliance.editor_own_entities',
+};
 
 /** A readout of the card: which it is, what it says, the entity a tap opens. */
 interface Stat {
@@ -1377,6 +1423,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       domains: ['sensor', 'binary_sensor', 'number', 'select'],
       keys: ['entity', 'name'],
       schema: [entityField(undefined, 'entity'), textField('name')],
+      own: OWN,
     },
     {
       key: 'maintenance',
@@ -1406,6 +1453,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         actionField('tap_action'),
         actionField('hold_action'),
       ],
+      own: OWN,
     },
     {
       key: 'roles',
@@ -1418,6 +1466,8 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       schema: [rolePicker(), entityField(undefined, 'entity')],
       // whether the card searches its device for the rest, over the roles named by hand
       fields: ['scan'],
+      helper: 'appliance.editor_roles_helper',
+      own: OWN,
     },
   ];
 
@@ -1464,16 +1514,21 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     };
   };
 
-  /** The drinks a coffee machine offers, as its programme select lists them, in its words. */
+  /**
+   * The drinks a coffee machine offers, as its programme select lists them, in its words; the roles a person may name
+   * for what the appliance is (`rolesOffered`).
+   */
   static override choices: EditorChoices = (config, hass) => {
     const c = config as ApplianceCardConfig;
-    const program = hass
-      ? findAppliance(hass, { device: c.device, entity: c.entity, roles: c.roles, scan: c.scan })
-          .entities.roles.program
-      : undefined;
+    const found = hass ? findAppliance(hass, c) : undefined;
+    const program = found?.entities.roles.program;
     const state = program ? hass?.states[program] : undefined;
     return {
       drinks: optionsOf(state).map((value) => ({ value, label: optionWord(hass, state, value) })),
+      role: rolesOffered(
+        found?.verdict && 'kind' in found.verdict ? found.verdict.kind : 'appliance',
+        c.roles,
+      ),
     };
   };
 
@@ -5189,11 +5244,11 @@ function optionsOf(state: HassEntity | undefined): string[] {
   return Array.isArray(list) ? list.filter((item): item is string => typeof item === 'string') : [];
 }
 
-/** The role picker: the parts a person names by hand, each by its word. */
+/** The role picker: the parts a person names by hand, each by its word (the editor offers the kind's, `choices`). */
 function rolePicker() {
   return choiceField(
     'role',
-    NAMED_ROLES.map((role) => [role, `appliance.role_${role}`] as const),
+    NAMED_ROLES.map(([role]) => [role, `appliance.role_${role}`] as const),
   );
 }
 
@@ -5223,6 +5278,7 @@ function rowsList(key: 'rows' | 'tiles', title: MessageKey): RowsListSpec {
     computeLabel: (schema) =>
       schema.name === 'key' ? editorWord('appliance.editor_row') : undefined,
     picker: rowPicker(),
+    own: OWN,
     read: (raw) =>
       typeof raw === 'string' || (typeof raw === 'object' && raw !== null)
         ? { ...rowEntry(raw as string | RowEntry) }

@@ -10,6 +10,10 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The Appliance card's device picker, and the Appliances card's, lists every device of the house with a sensor, a
   binary sensor or a switch, whatever its integration (#115), where it listed only the integrations the cards read
   and said "No devices available" for an espresso machine over MQTT or a washer of another integration.
+- The Appliance card's editor offers the roles that make sense for what the appliance is, in the order a person thinks
+  of them (its state, its power, its programme and times first), where it offered every role of every kind; its
+  lists of roles, rows, readouts and compartments offer the appliance's own entities, and a switch over each offers
+  every entity of the house again. A role the card names already stays offered.
 
 ### Added
 
@@ -19,6 +23,7 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   its last shot by its counters and its tank in millilitres, and a Bosch or Siemens washer or dryer on hcpy says its
   state, time left, progress, programme and door and takes its pause and stop; a device whose name says nothing is
   known by its maker's ("Decent Espresso").
+- The Appliance card's editor says what its roles are for: "Name the entities the card did not find."
 
 ### Fixed
 

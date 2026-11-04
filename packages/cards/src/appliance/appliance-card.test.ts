@@ -993,6 +993,59 @@ describe('the appliance card’s editor', () => {
     expect(items?.schema[0]).toEqual(picker);
   });
 
+  it('offers the roles that make sense for what the appliance is, in the order a person thinks of them (#115)', () => {
+    const hass = house();
+    const roles = (config: Record<string, unknown>): string[] =>
+      (
+        FluvyApplianceCard.choices?.({ type: 'custom:fluvy-appliance-card', ...config }, hass)[
+          'role'
+        ] ?? []
+      ).map((option) => option.value);
+    expect(roles({ device: 'de1' })).toEqual([
+      'state',
+      'power',
+      'program',
+      'temperature',
+      'start',
+      'stop',
+      'error',
+      'energy',
+      'watts',
+      'running',
+      'online',
+    ]);
+    // a litter box's own, never a coffee machine's; a washer's times and door, never a meal
+    const litter = roles({ device: 'de1', kind: 'litter_box' });
+    expect(litter).toEqual(expect.arrayContaining(['clean', 'pause', 'last_pet']));
+    expect(litter).not.toContain('program');
+    const washer = roles({ device: 'hcpy-washer' });
+    expect(washer.slice(0, 5)).toEqual(['state', 'power', 'program', 'phase', 'remaining']);
+    expect(washer).toEqual(expect.arrayContaining(['door', 'water', 'pause']));
+    expect(washer).not.toContain('feed');
+    // a role the card names already stays offered, whatever the kind
+    expect(roles({ device: 'de1', roles: [{ role: 'feed', entity: 'button.x' }] })).toContain(
+      'feed',
+    );
+  });
+
+  it('offers its device’s own entities in every list that picks one, none without a device (#115)', () => {
+    const hass = house();
+    const own = (key: string, config: Record<string, unknown>): readonly string[] =>
+      FluvyApplianceCard.lists
+        ?.find((list) => list.key === key)
+        ?.own?.entities({ type: 'custom:fluvy-appliance-card', ...config }, hass) ?? [];
+    const de1 = own('roles', { device: 'de1' });
+    expect(de1).toHaveLength(12);
+    expect(de1).toContain('select.decent_espresso_de1pro_de1_profile');
+    for (const key of ['rows', 'sensors', 'zones'])
+      expect(own(key, { device: 'de1' })).toEqual(de1);
+    // its entity's device where it names an entity
+    expect(own('roles', { entity: 'switch.decent_espresso_de1pro_de1_on' })).toEqual(de1);
+    expect(
+      own('roles', { device: 'none', entity: 'switch.decent_espresso_de1pro_de1_on' }),
+    ).toEqual([]);
+  });
+
   it('shows what the card does for the appliance it is about where the config says nothing', () => {
     const hass = house();
     const defaults = FluvyApplianceCard.defaults?.(

@@ -162,6 +162,8 @@
     "editor_finished_after": "Finished after (min)",
     "editor_roles": "Entities named by hand",
     "editor_role": "Role",
+    "editor_roles_helper": "Name the entities the card did not find.",
+    "editor_own_entities": "Only the appliance’s entities",
     "editor_scan": "Search its device for the rest",
     "editor_scan_helper": "Off: the card reads only its entity and the entities named here.",
     "editor_appliances": "Appliances",

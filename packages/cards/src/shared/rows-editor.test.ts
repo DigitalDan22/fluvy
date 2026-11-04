@@ -32,6 +32,7 @@ import {
   itemHelpers,
   listsEditor,
   withChoices,
+  withEntities,
   type RowsListSpec,
 } from './rows-editor.js';
 import { inverted } from './config.js';
@@ -497,6 +498,79 @@ describe('a select’s options as the house has them', () => {
     await editor.updateComplete;
     expect(forms()[0]).toBe(power);
     expect(forms()[1]).toBe(rain);
+  });
+});
+
+describe('a list’s own entities (`own`, an appliance’s device’s, #115)', () => {
+  afterEach(() => document.body.replaceChildren());
+  const roles: RowsListSpec = {
+    key: 'roles',
+    idKey: 'role',
+    title: 'editor.rows',
+    helper: 'appliance.editor_roles_helper',
+    picker: { name: 'role', selector: { select: { options: [] } } },
+    schema: [
+      { name: 'role', selector: { select: { options: [] } } },
+      { name: 'entity', selector: { entity: {} } },
+    ],
+    own: {
+      entities: (config) => (config['device'] ? ['sensor.de1_state', 'switch.de1_on'] : []),
+      label: 'appliance.editor_own_entities',
+    },
+  };
+  const offered = [{ value: 'state', label: 'State' }];
+  const editor = (config: Record<string, unknown>): Promise<FluvyRowsEditor> =>
+    drawEditor(
+      listsEditor({ schema: [] }, [roles], undefined, undefined, () => ({ role: offered })),
+      {
+        type: 'custom:x',
+        roles: [{ role: 'watts', entity: 'sensor.plug_power' }],
+        ...config,
+      },
+    );
+  const forms = (element: FluvyRowsEditor): FormStub[] => [
+    ...element.shadowRoot!.querySelectorAll<FormStub>('.list ha-form'),
+  ];
+
+  it('offers an item’s entity fields only those entities, and what the list names already', () => {
+    expect(
+      withEntities([{ name: 'row', type: 'grid', schema: roles.schema }], ['sensor.a'])[0]?.schema,
+    ).toEqual([
+      roles.schema[0],
+      { name: 'entity', selector: { entity: { include_entities: ['sensor.a'] } } },
+    ]);
+    // none to offer: the schema as it is
+    expect(withEntities(roles.schema, undefined)).toBe(roles.schema);
+  });
+
+  it('says what the list is for, and offers the device’s entities until its switch lets the house in', async () => {
+    const element = await editor({ device: 'de1' });
+    expect(element.shadowRoot!.querySelector('.list__helper')?.textContent).toBe(
+      'Name the entities the card did not find.',
+    );
+    const [own, item, picker] = forms(element);
+    expect(own?.data).toEqual({ roles: true });
+    expect(own?.schema).toEqual([{ name: 'roles', selector: { boolean: {} } }]);
+    const include = ['sensor.de1_state', 'switch.de1_on', 'sensor.plug_power'];
+    expect(item?.schema[1]?.selector).toEqual({ entity: { include_entities: include } });
+    // the add-picker offers the card's roles for the appliance, as its items do
+    expect(picker?.schema[0]?.selector).toEqual({ select: { options: offered } });
+    expect(item?.schema[0]?.selector).toEqual({ select: { options: offered } });
+    // the switch off, the house's entities; nothing is written
+    let wrote = false;
+    element.addEventListener('config-changed', () => (wrote = true));
+    own?.change('roles', false);
+    await element.updateComplete;
+    expect(forms(element)[0]?.data).toEqual({ roles: false });
+    expect(forms(element)[1]?.schema[1]?.selector).toEqual({ entity: {} });
+    expect(wrote).toBe(false);
+  });
+
+  it('draws no switch where the card names no device: the house’s entities', async () => {
+    const element = await editor({});
+    const [item] = forms(element);
+    expect(item?.schema[1]?.selector).toEqual({ entity: {} });
+    expect(forms(element)).toHaveLength(2);
   });
 });
 

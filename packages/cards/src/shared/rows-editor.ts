@@ -70,6 +70,23 @@ export interface RowsListSpec {
    * own sensor's class): a list that says none offers the card's.
    */
   readonly choices?: EditorChoices;
+  /** What its section says under its title, in a line (an appliance's roles: what they are for). */
+  readonly helper?: MessageKey;
+  /**
+   * The entities its entity fields offer while the card names whose they are (an appliance's device's): its items',
+   * and its picker where it picks an entity; a switch at the head of its section, on by default, offers the house's.
+   */
+  readonly own?: OwnEntities;
+}
+
+/** The entities a list offers while its card names whose they are, and its switch's word. */
+export interface OwnEntities {
+  /** The entities, asked of the card's config and the house; none, and the list offers the house's. */
+  readonly entities: (
+    config: LovelaceCardConfig,
+    hass: HomeAssistant | undefined,
+  ) => readonly string[];
+  readonly label: MessageKey;
 }
 
 type Labeler = FormLabeler;
@@ -121,6 +138,37 @@ export function withChoices(
       : item;
   });
 }
+
+/**
+ * A schema with its entity fields offering only `include` (a device's entities, and what its items name already),
+ * through its grids; with none, the schema as it is.
+ */
+export function withEntities(
+  schema: readonly HaFormSchemaItem[],
+  include: readonly string[] | undefined,
+): readonly HaFormSchemaItem[] {
+  if (!include) return schema;
+  return schema.map((item) => {
+    if (item.schema) return { ...item, schema: withEntities(item.schema, include) };
+    const entity = item.selector?.['entity'] as Record<string, unknown> | undefined;
+    return entity
+      ? {
+          ...item,
+          selector: { ...item.selector, entity: { ...entity, include_entities: [...include] } },
+        }
+      : item;
+  });
+}
+
+/** The names of a schema's entity fields, through its grids. */
+const entityFields = (schema: readonly HaFormSchemaItem[]): string[] =>
+  schema.flatMap((item) =>
+    item.schema
+      ? entityFields(item.schema)
+      : item.selector?.['entity'] !== undefined
+        ? [item.name]
+        : [],
+  );
 
 export interface RowsEditorSpec {
   /** The card's own fields (title, tone …) — everything but the lists, and the fields their sections draw. */
@@ -389,6 +437,13 @@ export class FluvyRowsEditor extends LitElement {
       font-weight: 500;
       color: var(--secondary-text-color);
     }
+    /* what a list is for, under its title: Home Assistant's helper text */
+    .list__helper {
+      margin: -4px 0 8px;
+      font-size: 12px;
+      line-height: 16px;
+      color: var(--secondary-text-color);
+    }
     /* the card's own fields a list draws over its items */
     .list__fields {
       display: block;
@@ -449,8 +504,18 @@ export class FluvyRowsEditor extends LitElement {
   declare spec: RowsEditorSpec | undefined;
   declare ready: boolean;
 
-  /** The add-picker's schema per list: built once, so its `ha-form` is not handed a new schema on every render. */
-  private readonly pickers = new WeakMap<RowsListSpec, HaFormSchemaItem[]>();
+  /**
+   * The add-picker's schema per list, with the house's options and the entities it offers: kept while they are the
+   * same, so its `ha-form` is not handed a new schema on every render.
+   */
+  private readonly pickers = new WeakMap<
+    RowsListSpec,
+    { readonly key: string; readonly schema: readonly HaFormSchemaItem[] }
+  >();
+  /** Each list's switch that offers the house's entities again (`own`): one field, named by the list. */
+  private readonly ownSwitches = new WeakMap<RowsListSpec, readonly HaFormSchemaItem[]>();
+  /** The lists whose switch offers the house's entities again, over those the card names whose they are. */
+  private readonly everywhere = new Set<string>();
   /** The words of each list's item forms, and the helpers under them: built once per list, for the same reason. */
   private readonly labelers = new WeakMap<RowsListSpec, Labeler>();
   /** The card's form as it stands (the fields that can act, the house's options), kept while it is the same, likewise. */
@@ -556,17 +621,35 @@ export class FluvyRowsEditor extends LitElement {
     item: Item,
     choices: Choices,
     key: string,
+    scope: readonly string[] | undefined,
   ): readonly HaFormSchemaItem[] {
     const own = list.schemaOf?.(item) ?? list.schema;
     const asked = list.choices?.(item as LovelaceCardConfig, this.hass);
-    const answer = asked ? JSON.stringify(asked) : key;
+    const answer = `${asked ? JSON.stringify(asked) : key}${scope ? JSON.stringify(scope) : ''}`;
     const forms = this.itemForms.get(own) ?? new Map<string, readonly HaFormSchemaItem[]>();
     this.itemForms.set(own, forms);
     const kept = forms.get(answer);
     if (kept) return kept;
-    const schema = withChoices(own, asked ?? choices);
+    const schema = withEntities(withChoices(own, asked ?? choices), scope);
     forms.set(answer, schema);
     return schema;
+  }
+
+  /**
+   * The entities a list's entity fields offer: those its card names whose they are (`own`, an appliance's device's)
+   * with what its items name already, while its switch is on; none, and they offer the house's.
+   */
+  private scope(
+    list: RowsListSpec,
+    items: readonly Item[],
+    own: readonly string[],
+  ): readonly string[] | undefined {
+    if (!own.length || this.everywhere.has(list.key)) return undefined;
+    const fields = entityFields(list.schema);
+    const named = items.flatMap((item) =>
+      fields.map((name) => item[name]).filter((id): id is string => typeof id === 'string'),
+    );
+    return [...new Set([...own, ...named])];
   }
 
   /**
@@ -639,26 +722,51 @@ export class FluvyRowsEditor extends LitElement {
     );
   }
 
-  private picker(list: RowsListSpec): HaFormSchemaItem[] {
-    let schema = this.pickers.get(list);
-    if (!schema && list.picker) {
-      schema = [list.picker];
-      this.pickers.set(list, schema);
-    }
+  /** The add-picker: the list's own, else an entity's or a text's, with the house's options and the entities offered. */
+  private picker(
+    list: RowsListSpec,
+    choices: Choices,
+    key: string,
+    scope: readonly string[] | undefined,
+  ): readonly HaFormSchemaItem[] {
+    const answer = `${key}${scope ? JSON.stringify(scope) : ''}`;
+    const kept = this.pickers.get(list);
+    if (kept?.key === answer) return kept.schema;
+    const idKey = idKeyOf(list);
+    const domains =
+      list.domains ??
+      (list.schema[0]?.selector as { entity?: { domain?: string[] } } | undefined)?.entity?.domain;
+    const field: HaFormSchemaItem =
+      list.picker ??
+      (idKey === 'entity'
+        ? { name: 'entity', selector: { entity: domains ? { domain: [...domains] } : {} } }
+        : { name: idKey, selector: { text: {} } });
+    const schema = withEntities(withChoices([field], choices), scope);
+    this.pickers.set(list, { key: answer, schema });
+    return schema;
+  }
+
+  private ownSwitch(list: RowsListSpec): readonly HaFormSchemaItem[] {
+    let schema = this.ownSwitches.get(list);
     if (!schema) {
-      const idKey = idKeyOf(list);
-      const domains =
-        list.domains ??
-        (list.schema[0]?.selector as { entity?: { domain?: string[] } } | undefined)?.entity
-          ?.domain;
-      schema = [
-        idKey === 'entity'
-          ? { name: 'entity', selector: { entity: domains ? { domain: [...domains] } : {} } }
-          : { name: idKey, selector: { text: {} } },
-      ];
-      this.pickers.set(list, schema);
+      schema = [{ name: list.key, selector: { boolean: {} } }];
+      this.ownSwitches.set(list, schema);
     }
     return schema;
+  }
+
+  /** A list's switch says its own word. */
+  private readonly ownLabel: Labeler = (schema) => {
+    const own = this.spec?.lists.find((list) => list.key === schema.name)?.own;
+    return own ? this.t(own.label) : undefined;
+  };
+
+  /** The switch turned: the list's entity fields offer its own entities, or the house's. */
+  private onOwn(list: RowsListSpec, event: CustomEvent<{ value: Item }>): void {
+    event.stopPropagation();
+    if (event.detail.value[list.key] === false) this.everywhere.add(list.key);
+    else this.everywhere.delete(list.key);
+    this.requestUpdate();
   }
 
   private readonly addLabel: Labeler = () => this.t('editor.add');
@@ -701,8 +809,11 @@ export class FluvyRowsEditor extends LitElement {
   ): TemplateResult {
     const items = this.items(list);
     const head = this.head(list, card.asked);
+    const own = list.own && this.config ? list.own.entities(this.config, this.hass) : [];
+    const scope = this.scope(list, items, own);
     return html`<div class="list">
       <p class="list__title">${this.t(list.title)}</p>
+      ${list.helper ? html`<p class="list__helper">${this.t(list.helper)}</p>` : nothing}
       ${
         head.length
           ? html`<ha-form
@@ -716,13 +827,25 @@ export class FluvyRowsEditor extends LitElement {
             ></ha-form>`
           : nothing
       }
+      ${
+        own.length
+          ? html`<ha-form
+              class="list__fields"
+              .hass=${this.hass}
+              .data=${{ [list.key]: !this.everywhere.has(list.key) }}
+              .schema=${this.ownSwitch(list)}
+              .computeLabel=${this.ownLabel}
+              @value-changed=${(event: CustomEvent<{ value: Item }>) => this.onOwn(list, event)}
+            ></ha-form>`
+          : nothing
+      }
       <ha-sortable
         handle-selector=".handle"
         @item-moved=${(event: CustomEvent<{ oldIndex: number; newIndex: number }>) => this.onMove(list, event)}
       >
         <div class="items">
           ${items.map((item, index) => {
-            const schema = this.itemSchema(list, item, choices, key);
+            const schema = this.itemSchema(list, item, choices, key, scope);
             // an item's selects read a number its YAML holds as their word, as the card's form does (`decimals: 2`)
             return html`<div class="item ${pickedFirst(list) ? 'item--entity' : ''}">
               <div class="handle" aria-hidden="true">
@@ -749,7 +872,7 @@ export class FluvyRowsEditor extends LitElement {
         <ha-form
           .hass=${this.hass}
           .data=${{}}
-          .schema=${this.picker(list)}
+          .schema=${this.picker(list, choices, key, scope)}
           .computeLabel=${this.addLabel}
           @value-changed=${(event: CustomEvent<{ value: Item }>) => this.onAdd(list, event)}
         ></ha-form>
