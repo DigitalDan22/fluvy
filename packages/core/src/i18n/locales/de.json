@@ -464,6 +464,7 @@
     "color_help": "Wähle eine Farbe oder „Eigene Farbe“ und such dir im Feld darunter jede beliebige aus",
     "item_color_helper": "Leer: bei einem Licht die Farbe seiner Lampe, wo die Karte sie zeigt, sonst die der Karte",
     "item_color_card_helper": "Leer: die Farbe der Karte",
+    "item_color_own_helper": "Leer: die Farbe, die ihm die Karte gibt",
     "rgb": "Beliebige Farbe",
     "swatch_name_help": "Was der Kreis sagt; leer: das Wort der Farbe oder ihr Hexcode",
     "show_tilt": "Neigung zeigen",

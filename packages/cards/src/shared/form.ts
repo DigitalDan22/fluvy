@@ -354,24 +354,36 @@ export const onlyWhen = (
 export const toneField = (): HaFormSchemaItem => ({ name: 'tone', selector: toneSelector() });
 
 /**
+ * What an item's colour (or a part's) is while none is chosen: its bulb's where the card shows bulbs' colours, else
+ * the card's (`bulb`: an item of a card of lights, tiles or rows); the card's alone (`card`: a scene, a chip, a person,
+ * a row of a lock, a camera or an alarm, the history bars' bar below zero or in progress); or the one the card gives it
+ * (`own`: an appliance's kind's, a source's, an alert's severity's, a figure's or a reading's neutral).
+ */
+export type ItemColour = 'bulb' | 'card' | 'own';
+
+const ITEM_HELPER: Record<ItemColour, MessageKey> = {
+  bulb: 'editor.item_color_helper',
+  card: 'editor.item_color_card_helper',
+  own: 'editor.item_color_own_helper',
+};
+
+/**
  * A card's or an item's own colour: Home Assistant's colour picker — its named swatches, shown in the palette's
  * colours where the look reaches the editor, or any colour typed — with the palette's accent as its default. A colour
  * that may be none (`card_color`) is none until one is chosen: the picker then says what the card draws, and offers
  * to clear it. One that follows its entity (`state`: a light card's, its bulb's) says so as Home Assistant's own
- * tile does, State by default. An item's has no default of its own — the picker would call the card's colour
- * "Primary" — and shows none chosen, its helper saying what it wears then: its bulb's where the card shows bulbs'
- * colours, else the card's (`bulb`: an item of a card of lights, tiles or rows), or the card's alone (`item`: a
- * scene, a chip, a row of a lock, a camera or an alarm).
+ * tile does, State by default. An item's (`item`) has no default of its own — the picker would call it "Primary",
+ * whatever it wears — and shows none chosen, its helper saying what it wears then (`ItemColour`).
  */
 export const accentField = (
   name = 'color',
-  { none = false, state = false, bulb = false, item = false } = {},
+  {
+    none = false,
+    state = false,
+    item,
+  }: { none?: boolean; state?: boolean; item?: ItemColour } = {},
 ): HaFormSchemaItem => {
-  const helper = bulb
-    ? 'editor.item_color_helper'
-    : item
-      ? 'editor.item_color_card_helper'
-      : undefined;
+  const helper = item && ITEM_HELPER[item];
   return {
     name,
     selector: {

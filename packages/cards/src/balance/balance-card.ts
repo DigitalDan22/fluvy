@@ -242,7 +242,7 @@ export class FluvyEnergyBalanceCard extends Card<EnergyBalanceCardConfig> {
       schema: [
         kindField(),
         ...measureFields(),
-        fieldRow(textField('name'), accentField()),
+        fieldRow(textField('name'), accentField('color', { item: 'own' })),
         numberField('threshold', 0, 10000, 1),
       ],
       computeLabel: editorLabels(f, MEASURE_WORDS).computeLabel,

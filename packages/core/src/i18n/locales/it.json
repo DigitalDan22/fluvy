@@ -464,6 +464,7 @@
     "color_help": "Scegline uno, oppure Colore personalizzato e scegli qualsiasi colore nel suo campo",
     "item_color_helper": "Vuoto, il colore della lampadina di una luce dove la scheda li mostra, altrimenti quello della scheda",
     "item_color_card_helper": "Vuoto, il colore della scheda",
+    "item_color_own_helper": "Vuoto, il colore che gli dà la scheda",
     "rgb": "Qualsiasi colore",
     "swatch_name_help": "Ciò che dice il cerchio; vuoto, la parola del colore o il suo esadecimale",
     "show_tilt": "Mostra l’inclinazione",

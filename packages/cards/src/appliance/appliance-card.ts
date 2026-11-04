@@ -1437,7 +1437,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       schema: [
         reminderPicker(),
         nameIconFields(),
-        accentField(),
+        accentField('color', { item: 'own' }),
         actionField('tap_action'),
         actionField('hold_action'),
       ],
@@ -1450,7 +1450,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       schema: [
         entityField(undefined, 'entity'),
         nameIconFields(),
-        accentField(),
+        accentField('color', { item: 'own' }),
         actionField('tap_action'),
         actionField('hold_action'),
       ],
@@ -5277,7 +5277,7 @@ function rowsList(key: 'rows' | 'tiles', title: MessageKey): RowsListSpec {
       rowPicker(),
       entityField(undefined, 'entity', false),
       nameIconFields(),
-      accentField(),
+      accentField('color', { item: 'own' }),
       actionField('tap_action'),
       actionField('hold_action'),
     ],

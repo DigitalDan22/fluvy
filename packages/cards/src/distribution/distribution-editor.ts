@@ -57,7 +57,11 @@ export const lists: readonly RowsListSpec[] = [
     title: 'editor.entities',
     domains: ['sensor'],
     keys: ['entity', 'name', 'tone', 'color'],
-    schema: [entityField(['sensor']), textField('name'), fieldRow(toneField(), accentField())],
+    schema: [
+      entityField(['sensor']),
+      textField('name'),
+      fieldRow(toneField(), accentField('color', { item: 'own' })),
+    ],
   },
 ];
 

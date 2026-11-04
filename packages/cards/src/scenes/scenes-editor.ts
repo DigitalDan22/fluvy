@@ -44,7 +44,7 @@ export const lists: readonly RowsListSpec[] = [
       entityField(DOMAINS),
       nameIconFields(),
       textField('subtitle'),
-      accentField('color', { item: true }),
+      accentField('color', { item: 'card' }),
       actionField(),
     ],
   },

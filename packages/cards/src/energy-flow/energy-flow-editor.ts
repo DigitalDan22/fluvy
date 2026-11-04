@@ -67,7 +67,7 @@ const SOURCE_FIELDS: HaFormSchemaItem[] = [
   boolField('invert'),
   fieldRow(entityField(['sensor'], 'level', false), numberField('capacity', 0, 1000, 0.1)),
   fieldRow(textField('name'), iconField()),
-  fieldRow(accentField(), numberField('threshold', 0, 10000, 1)),
+  fieldRow(accentField('color', { item: 'own' }), numberField('threshold', 0, 10000, 1)),
   fieldRow(selectField('arrows', ARROWS), selectField('show', SHOWS)),
 ];
 
@@ -169,7 +169,11 @@ export const lists: readonly RowsListSpec[] = [
     title: 'energy-flow.editor_consumers',
     domains: ['sensor'],
     keys: ['entity', 'name', 'icon', 'color'],
-    schema: [entityField(['sensor']), fieldRow(textField('name'), iconField()), accentField()],
+    schema: [
+      entityField(['sensor']),
+      fieldRow(textField('name'), iconField()),
+      accentField('color', { item: 'own' }),
+    ],
   },
   {
     key: 'readouts',

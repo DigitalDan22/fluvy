@@ -809,7 +809,10 @@ export class FluvyHistoryBarsCard extends Card<HistoryBarsCardConfig> {
           wordsField('source', SOURCES, SOURCE_WORDS),
           selectField('date_format', ['date', 'weekday', 'short']),
         ),
-        fieldRow(accentField('negative_color'), accentField('current_color')),
+        fieldRow(
+          accentField('negative_color', { item: 'card' }),
+          accentField('current_color', { item: 'card' }),
+        ),
         fieldRow(boolField('include_today'), boolField('show_head')),
         fieldRow(boolField('show_values'), boolField('show_axis')),
         fieldRow(boolField('show_grid'), boolField('show_dates')),

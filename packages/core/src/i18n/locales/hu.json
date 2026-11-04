@@ -413,6 +413,7 @@
     "color_help": "Válassz egyet, vagy válaszd az Egyedi színt, és jelölj ki bármilyen színt a színválasztóban",
     "item_color_helper": "Üresen: a lámpa izzójának színe, ahol a kártya az izzók színét mutatja, egyébként a kártya színe",
     "item_color_card_helper": "Üresen: a kártya színe",
+    "item_color_own_helper": "Üresen: a szín, amelyet a kártya ad neki",
     "rgb": "Bármilyen szín",
     "swatch_name_help": "Amit a kör felirata mutat; üresen a szín neve vagy hexadecimális kódja",
     "show_tilt": "Döntés megjelenítése",

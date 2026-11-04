@@ -108,7 +108,7 @@ const groupField = choiceField('group', [
 const GROUP_ITEM: readonly HaFormSchemaItem[] = [
   groupField,
   nameIconFields(),
-  fieldRow(toneField(), accentField('color', { bulb: true })),
+  fieldRow(toneField(), accentField('color', { item: 'bulb' })),
   actionFields(),
 ];
 const ENTITY_ITEM: readonly HaFormSchemaItem[] = [

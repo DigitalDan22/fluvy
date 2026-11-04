@@ -57,7 +57,7 @@ export const lists: readonly RowsListSpec[] = [
     schema: [
       entityField(['person', 'device_tracker']),
       fieldRow(textField('name'), entityField(['sensor'], 'battery', false)),
-      accentField(),
+      accentField('color', { item: 'card' }),
       sinceField(),
       actionFields(),
     ],

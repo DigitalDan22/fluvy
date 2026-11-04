@@ -402,7 +402,7 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
         deviceField(),
         entityField(undefined, 'entity', false),
         nameIconFields(),
-        fieldRow(accentField(), kindField()),
+        fieldRow(accentField('color', { item: 'own' }), kindField()),
         actionField('tap_action'),
         actionField('hold_action'),
       ],

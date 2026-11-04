@@ -266,7 +266,7 @@ export const KIND_PICKER: HaFormSchemaItem = { name: 'kind', selector: KIND_OPTI
 export const FACT_FIELDS: HaFormSchemaItem[] = [
   KIND_PICKER,
   fieldRow(textField('name'), iconField()),
-  accentField(),
+  accentField('color', { item: 'own' }),
   fieldRow(textField('unit'), numberField('decimals', 0, 3)),
   numberField('factor', 0, 100_000, 0.001),
   entityField(['sensor'], 'of', false),

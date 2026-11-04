@@ -62,7 +62,7 @@ const FIELDS: readonly HaFormSchemaItem[] = [
     ),
     toneField(),
   ),
-  accentField(),
+  accentField('color', { item: 'own' }),
   // what a custom alert matches
   pickerField('entity', 'entity'),
   fieldRow(valuesField('domain'), valuesField('device_class')),

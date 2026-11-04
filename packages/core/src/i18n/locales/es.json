@@ -464,6 +464,7 @@
     "color_help": "Elige uno, o elige Color personalizado y escoge cualquier color en su pocillo",
     "item_color_helper": "Vacío, el color de la bombilla de una luz donde la tarjeta los muestra; si no, el de la tarjeta",
     "item_color_card_helper": "Vacío, el color de la tarjeta",
+    "item_color_own_helper": "Vacío, el color que le da la tarjeta",
     "rgb": "Cualquier color",
     "swatch_name_help": "Lo que dice el círculo; vacío, la palabra del color o su hexadecimal",
     "show_tilt": "Mostrar la inclinación",

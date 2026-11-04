@@ -155,7 +155,7 @@ export class FluvyBatteriesCard extends Card<BatteriesCardConfig> {
         boolField('invert'),
         fieldRow(entityField(['sensor'], 'level', false), numberField('capacity', 0, 1000, 0.1)),
         fieldRow(textField('name'), iconField()),
-        accentField(),
+        accentField('color', { item: 'own' }),
       ],
       computeLabel: editorLabels(s, {
         power: 'editor_power',

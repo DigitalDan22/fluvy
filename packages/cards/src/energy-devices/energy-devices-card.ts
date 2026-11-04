@@ -235,7 +235,7 @@ export class FluvyEnergyDevicesCard extends Card<EnergyDevicesCardConfig> {
           entityField(['sensor'], 'parent', false),
           entityField(['sensor'], 'cost_entity', false),
         ),
-        fieldRow(toneField(), accentField()),
+        fieldRow(toneField(), accentField('color', { item: 'own' })),
         numberFields({ units: WATT_LADDERS }),
         actionField(),
       ],

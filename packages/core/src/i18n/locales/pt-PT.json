@@ -464,6 +464,7 @@
     "color_help": "Escolha uma cor ou selecione «Cor personalizada» para escolher outra no campo",
     "item_color_helper": "Vazio: a cor da lâmpada, se o cartão mostrar a cor das lâmpadas; caso contrário, a do cartão",
     "item_color_card_helper": "Vazio: a cor do cartão",
+    "item_color_own_helper": "Vazio: a cor que o cartão lhe dá",
     "rgb": "Qualquer cor",
     "swatch_name_help": "O texto do círculo; vazio, mostra o nome da cor ou o código hexadecimal",
     "show_tilt": "Mostrar a inclinação",

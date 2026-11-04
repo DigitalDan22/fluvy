@@ -1116,6 +1116,7 @@
     "color_help": "Vyberte farbu alebo zvoľte Vlastnú farbu a nastavte ľubovoľnú",
     "item_color_helper": "Prázdne: farba žiarovky, ak ju karta zobrazuje; inak farba karty",
     "item_color_card_helper": "Prázdne: farba karty",
+    "item_color_own_helper": "Prázdne: farba, ktorú mu dá karta",
     "rgb": "Ľubovoľná farba",
     "swatch_name_help": "Popis vzorky; ak je prázdny, použije sa názov farby alebo hexadecimálny kód",
     "show_tilt": "Zobraziť naklonenie",

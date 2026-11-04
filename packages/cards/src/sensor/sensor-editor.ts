@@ -95,7 +95,7 @@ export const lists: readonly RowsListSpec[] = [
     schema: [
       entityField(['sensor', 'number', 'input_number', 'counter']),
       fieldRow(textField('name'), iconField()),
-      accentField(),
+      accentField('color', { item: 'own' }),
     ],
     computeHelper: (schema) =>
       schema.name === 'name' ? editorWord('editor.extra_name_helper') : undefined,

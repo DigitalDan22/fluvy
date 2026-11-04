@@ -348,7 +348,7 @@ export class FluvyCamerasCard extends Card<CamerasCardConfig> {
           numberField('refresh', 0.5, 300, 0.5),
         ),
         selectField('fit_mode', ['cover', 'contain']),
-        fieldRow(toneField(), accentField()),
+        fieldRow(toneField(), accentField('color', { item: 'own' })),
         actionFields(),
       ],
     },

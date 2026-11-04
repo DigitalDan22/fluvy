@@ -84,7 +84,7 @@ export const lists: readonly RowsListSpec[] = [
       nameIconFields(),
       textField('secondary'),
       entitiesField('sub_entity'),
-      fieldRow(toneField(), accentField()),
+      fieldRow(toneField(), accentField('color', { item: 'own' })),
       fieldRow(anyNumber('min'), anyNumber('max')),
       fieldRow(anyNumber('low'), anyNumber('high')),
       fieldRow(boolField('plain'), actionField()),

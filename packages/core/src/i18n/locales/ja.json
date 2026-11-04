@@ -413,6 +413,7 @@
     "color_help": "1つ選ぶか、「カスタムカラー」を選んでその欄で任意の色を指定してください",
     "item_color_helper": "空のときは、カードが電球の色を表示していれば照明の電球の色、それ以外はカードの色",
     "item_color_card_helper": "空のときはカードの色",
+    "item_color_own_helper": "空のときはカードが決める色",
     "rgb": "任意の色",
     "swatch_name_help": "色の丸に表示する文字。空のときは色の名前またはHEXコード",
     "show_tilt": "チルトを表示",

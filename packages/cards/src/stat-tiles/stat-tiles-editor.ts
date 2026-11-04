@@ -82,7 +82,7 @@ export const lists: readonly RowsListSpec[] = [
       entityField(),
       nameIconFields(),
       textField('secondary'),
-      fieldRow(toneField(), accentField()),
+      fieldRow(toneField(), accentField('color', { item: 'own' })),
       actionField(),
     ],
   },

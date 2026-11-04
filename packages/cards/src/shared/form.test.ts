@@ -73,12 +73,15 @@ describe('a colour field', () => {
   });
   it('shows none chosen for an item’s colour, and says under it what the item wears then', () => {
     // the picker would call the card's colour "Primary": no default of its own, the word under the field instead
-    const bulb = accentField('color', { bulb: true });
+    const bulb = accentField('color', { item: 'bulb' });
     expect(picker(bulb)['default_color']).toBeUndefined();
     expect(bulb.helper).toBe('editor.item_color_helper');
-    const item = accentField('color', { item: true });
-    expect(picker(item)['default_color']).toBeUndefined();
-    expect(item.helper).toBe('editor.item_color_card_helper');
+    const card = accentField('color', { item: 'card' });
+    expect(picker(card)['default_color']).toBeUndefined();
+    expect(card.helper).toBe('editor.item_color_card_helper');
+    const own = accentField('color', { item: 'own' });
+    expect(picker(own)['default_color']).toBeUndefined();
+    expect(own.helper).toBe('editor.item_color_own_helper');
     expect(accentField().helper).toBeUndefined();
   });
 });

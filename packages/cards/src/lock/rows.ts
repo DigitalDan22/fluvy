@@ -87,7 +87,7 @@ const rowSchema = (bulb: boolean, select: readonly HaFormSchemaItem[] = []): HaF
   selectField('secondary', ['area', 'last-changed', 'state', 'none'], { custom: true }),
   sinceField(),
   ...select,
-  fieldRow(toneField(), accentField('color', bulb ? { bulb } : { item: true })),
+  fieldRow(toneField(), accentField('color', { item: bulb ? 'bulb' : 'card' })),
   actionField(),
 ];
 

@@ -184,21 +184,30 @@ describe('the editors’ contract', () => {
   });
 
   /**
-   * An item's colour never says "Primary" for a default that is the card's: none chosen, nothing written, and the
-   * word under it says what the item wears then — its bulb's on a card that shows bulbs' colours, else the card's.
+   * An item's colour never says "Primary" for a default that is not its own: none chosen, nothing written, and the
+   * word under it says what the item wears then — its bulb's on a card that shows bulbs' colours, else the card's; the
+   * card's; or the one the card gives it by what it is (a kind's, a source's, a severity's, a figure's neutral).
    */
   const CARDS_COLOUR = 'Empty: the card’s colour';
   const BULBS_COLOUR =
     'Empty: the light’s bulb colour where the card shows bulbs’ colours, else the card’s';
+  const OWN_COLOUR = 'Empty: the colour the card gives it';
   it.each([
     ['fluvy-lock-card', 'rows', CARDS_COLOUR],
     ['fluvy-camera-card', 'rows', CARDS_COLOUR],
     ['fluvy-alarm-card', 'rows', CARDS_COLOUR],
     ['fluvy-scenes-card', 'scenes', CARDS_COLOUR],
     ['fluvy-chips-card', 'chips', CARDS_COLOUR],
+    ['fluvy-people-card', 'people', CARDS_COLOUR],
     ['fluvy-lights-card', 'lights', BULBS_COLOUR],
     ['fluvy-tiles-card', 'tiles', BULBS_COLOUR],
     ['fluvy-entities-card', 'rows', BULBS_COLOUR],
+    ['fluvy-distribution-card', 'entities', OWN_COLOUR],
+    ['fluvy-appliances-card', 'appliances', OWN_COLOUR],
+    ['fluvy-stat-tiles-card', 'rows', OWN_COLOUR],
+    ['fluvy-energy-balance-card', 'sources', OWN_COLOUR],
+    ['fluvy-alerts-card', 'alerts', OWN_COLOUR],
+    ['fluvy-cameras-card', 'cameras', OWN_COLOUR],
   ])(
     '%s: an item’s colour shows none chosen, and says what the item wears then',
     (tag, key, helper) => {
@@ -210,6 +219,21 @@ describe('the editors’ contract', () => {
       expect(picker?.default_color).toBeUndefined();
       expect(colour?.default).toBeUndefined();
       expect(itemHelpers(colour!, (k) => k)).toBe(helper);
+    },
+  );
+
+  it.each(cards)(
+    '$tag: no item colour of its lists says "Primary" while none is chosen',
+    ({ tag, lists }) => {
+      for (const list of lists)
+        for (const colour of fields(list.schema).filter((item) => item.selector?.['ui_color'])) {
+          const picker = (colour.selector as { ui_color: { default_color?: string } }).ui_color;
+          expect(picker.default_color, `${tag}: ${list.key}.${colour.name}`).toBeUndefined();
+          expect(
+            colour.helper,
+            `${tag}: ${list.key}.${colour.name} says what it wears`,
+          ).toBeDefined();
+        }
     },
   );
 

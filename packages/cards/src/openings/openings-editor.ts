@@ -98,7 +98,10 @@ export const lists: readonly RowsListSpec[] = [
     schema: [
       entityField(['binary_sensor', 'cover', 'lock']),
       nameIconFields(),
-      fieldRow(accentField(), selectField('device_class', [], { custom: true })),
+      fieldRow(
+        accentField('color', { item: 'own' }),
+        selectField('device_class', [], { custom: true }),
+      ),
       { name: 'states', selector: { object: {} } },
       sinceField(),
       fieldRow(actionField('tap_action'), actionField('hold_action')),

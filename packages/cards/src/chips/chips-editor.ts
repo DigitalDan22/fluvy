@@ -34,7 +34,7 @@ export const lists: readonly RowsListSpec[] = [
       { ...textField('name'), helper: 'editor.template_helper' },
       fieldRow(iconField(), textField('path')),
       entityField(undefined, 'entity', false),
-      accentField('color', { item: true }),
+      accentField('color', { item: 'card' }),
       actionField('action'),
     ],
   },

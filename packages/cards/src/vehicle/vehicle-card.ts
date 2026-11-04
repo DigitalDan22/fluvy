@@ -825,7 +825,7 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
       schema: [
         controlPicker(),
         nameIconFields(),
-        fieldRow(accentField('color', { item: true }), boolField('confirm')),
+        fieldRow(accentField('color', { item: 'card' }), boolField('confirm')),
         actionField('tap_action'),
         actionField('hold_action'),
       ],
@@ -843,7 +843,7 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
         rowPicker(),
         entityField(undefined, 'entity', false),
         nameIconFields(),
-        accentField('color', { item: true }),
+        accentField('color', { item: 'card' }),
         actionField('tap_action'),
         actionField('hold_action'),
       ],

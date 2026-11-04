@@ -61,7 +61,7 @@ export const lists: readonly RowsListSpec[] = [
     schema: [
       entityField(['light']),
       fieldRow(textField('name'), iconField()),
-      accentField('color', { bulb: true }),
+      accentField('color', { item: 'bulb' }),
     ],
   },
 ];

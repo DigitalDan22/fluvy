@@ -72,6 +72,10 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   where it took the neutral one.
 - Under reduced motion nothing on a card or the settings panel eases any more, where every property of every element
   eased for a millisecond, so a change of layout showed its old value for a frame.
+- An item's colour in the editor's lists shows none chosen and says what the item wears then, on the appliances,
+  appliance, distribution, stat tiles, balance, alerts, cameras, energy flow, batteries, bars, energy devices,
+  calendar, people, openings, sensor and history bars cards, where it showed Primary chosen while the item wore its
+  kind's, its source's, its severity's or a neutral colour.
 
 ## [1.13.1] — 2026-11-04
 
