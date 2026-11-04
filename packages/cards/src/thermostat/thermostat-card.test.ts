@@ -307,4 +307,35 @@ describe('a picture of the person’s own in the head (#99)', () => {
     expect(card.renderRoot.querySelector('.fv-card__head .fv-ico')).not.toBeNull();
     card.remove();
   });
+
+  it('comes back once it loads again (Home Assistant restarted), the circle kept until then', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    // the picture as the house serves it, tried out of sight: not there while it restarts, then back
+    let serving = false;
+    vi.stubGlobal(
+      'Image',
+      class {
+        src = '';
+        decode = (): Promise<void> => (serving ? Promise.resolve() : Promise.reject(new Error()));
+      },
+    );
+    try {
+      const card = await draw({ image: '/local/ac.png' });
+      card.renderRoot
+        .querySelector('.fv-card__head .fv-ico--picture > img')
+        ?.dispatchEvent(new Event('error'));
+      await card.updateComplete;
+      await vi.advanceTimersByTimeAsync(10_000);
+      await card.updateComplete;
+      expect(picture(card)).toBeUndefined();
+      serving = true;
+      await vi.advanceTimersByTimeAsync(20_000);
+      await card.updateComplete;
+      expect(picture(card)).toBe('/local/ac.png');
+      card.remove();
+    } finally {
+      vi.unstubAllGlobals();
+      vi.useRealTimers();
+    }
+  });
 });

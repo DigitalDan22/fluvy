@@ -5,6 +5,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- A picture of your own on the thermostat, appliance or Vehicle card that would not load once (while Home Assistant
+  restarted) comes back by itself once it loads again, where the card kept its circle, its drawing or its glyph until
+  the picture's address changed.
+
 ## [1.13.0] — 2026-11-04
 
 ### Visible on upgrade
