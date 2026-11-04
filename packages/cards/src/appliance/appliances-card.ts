@@ -65,6 +65,7 @@ import {
   findAppliance,
   isPlug,
   readAppliance,
+  type ApplianceConfig,
   type ApplianceFound,
   type ApplianceReading,
 } from './reading.js';
@@ -504,10 +505,15 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
     const list = items
       .filter((item) => item.device || item.entity)
       .map((item) => {
+        // an item's roles and its scan, as its whole card reads them
         const found = findAppliance(this.hass, {
           device: item.device,
           entity: item.entity,
           kind: item.kind,
+          ...(Array.isArray(item['roles'])
+            ? { roles: item['roles'] as ApplianceConfig['roles'] }
+            : {}),
+          ...(item['scan'] === false ? { scan: false } : {}),
         });
         return [item.device ?? item.entity ?? '', item, found] as const;
       });

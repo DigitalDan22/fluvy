@@ -38,6 +38,11 @@ export interface RowsListSpec {
   readonly also?: readonly string[];
   /** The add field when it is neither an entity nor text (a source's kind, from a list): its name is the `idKey`. */
   readonly picker?: HaFormSchemaItem;
+  /**
+   * Fields of the card's own form its section draws over its items, by name (the appliance's roles: whether the card
+   * searches its device for the rest): taken out of the card's form, edited as the card's.
+   */
+  readonly fields?: readonly string[];
   /** The keys an item may carry, as its interface declares them: what the editors' contract checks the schema against. */
   readonly keys?: readonly string[];
   /** Words for the item's own fields; the card's, then the shared item words, name the rest. */
@@ -118,9 +123,11 @@ export function withChoices(
 }
 
 export interface RowsEditorSpec {
-  /** The card's own fields (title, tone …) — everything but the lists. */
+  /** The card's own fields (title, tone …) — everything but the lists, and the fields their sections draw. */
   readonly schema: readonly HaFormSchemaItem[];
   readonly lists: readonly RowsListSpec[];
+  /** The card's fields each list's section draws over its items (`RowsListSpec.fields`), by the list's key. */
+  readonly heads?: Readonly<Record<string, readonly HaFormSchemaItem[]>>;
   readonly computeLabel: Labeler;
   readonly computeHelper?: FormHelper;
   readonly defaults?: EditorDefaults;
@@ -131,6 +138,17 @@ export interface RowsEditorSpec {
 
 type Item = Record<string, unknown>;
 type Entry = string | Item;
+
+/** The card's form as a list's section draws its fields: its data, what can act, its helpers. */
+interface CardForm {
+  readonly data: Readonly<Record<string, unknown>>;
+  readonly asked: Readonly<Record<string, unknown>>;
+  readonly helper: Labeler;
+}
+
+/** Every field of the card's own: its form's, and those its lists' sections draw. */
+const cardFields = (spec: RowsEditorSpec | undefined): readonly HaFormSchemaItem[] =>
+  spec ? [...spec.schema, ...Object.values(spec.heads ?? {}).flat()] : [];
 
 /** Editor words for the fields an item may carry; a card adds its own through `computeLabel`. */
 export const itemLabels: Labeler = formLabels({
@@ -375,6 +393,11 @@ export class FluvyRowsEditor extends LitElement {
       font-weight: 500;
       color: var(--secondary-text-color);
     }
+    /* the card's own fields a list draws over its items */
+    .list__fields {
+      display: block;
+      margin-bottom: 8px;
+    }
     /* an item is a panel (the 16 of an inner tile) round its fields: the handle and the remove button on the first
        field's box — a plain field's 56, or an entity picker's box under its label (24) */
     .item {
@@ -437,6 +460,11 @@ export class FluvyRowsEditor extends LitElement {
   /** The card's form as it stands (the fields that can act, the house's options), kept while it is the same, likewise. */
   private chosen:
     { readonly key: string; readonly schema: readonly HaFormSchemaItem[] } | undefined;
+  /** The card's fields each list's section draws, those that can act, kept while they are the same, likewise. */
+  private readonly drawn = new WeakMap<
+    RowsListSpec,
+    { readonly key: string; readonly schema: readonly HaFormSchemaItem[] }
+  >();
   /** Each list's item forms with the house's options in them, by the form the list says an item shows, then by the options. */
   private readonly itemForms = new WeakMap<
     readonly HaFormSchemaItem[],
@@ -506,6 +534,22 @@ export class FluvyRowsEditor extends LitElement {
   }
 
   /**
+   * The card's fields a list's section draws over its items, those that can act (`asked`): the same array while they
+   * are.
+   */
+  private head(
+    list: RowsListSpec,
+    asked: Readonly<Record<string, unknown>>,
+  ): readonly HaFormSchemaItem[] {
+    const shown = visibleFields(this.spec?.heads?.[list.key] ?? [], asked, this.hass);
+    const key = JSON.stringify(namesOf(shown));
+    const kept = this.drawn.get(list);
+    if (kept?.key === key) return kept.schema;
+    this.drawn.set(list, { key, schema: shown });
+    return shown;
+  }
+
+  /**
    * An item's form: what its list says the item shows, its selects offering what the house has where the card says
    * so (`choices`: a row's `since` from the house's timestamp sensors), or where the list asks the item (a legend
    * entry's units) — the same array for the same answer, whichever item asks.
@@ -528,7 +572,10 @@ export class FluvyRowsEditor extends LitElement {
     return schema;
   }
 
-  /** The card's form edits everything but the lists: its value is the whole of that part (a cleared field is absent from it). */
+  /**
+   * The card's form (and the fields a list's section draws of it) edits everything but the lists: its value is the
+   * whole of that part (a cleared field is absent from it).
+   */
   private onCard(event: CustomEvent<{ value: Record<string, unknown> }>): void {
     event.stopPropagation();
     const config = this.config;
@@ -540,7 +587,7 @@ export class FluvyRowsEditor extends LitElement {
         .map((key) => [key, config[key]]),
     );
     const own = withoutUntouchedDefaults(
-      unworded(event.detail.value, config, selectsOf(this.spec?.schema ?? [])),
+      unworded(event.detail.value, config, selectsOf(cardFields(this.spec))),
       config,
       this.defaults(),
     );
@@ -645,10 +692,33 @@ export class FluvyRowsEditor extends LitElement {
       itemHelpers(schema, localize);
   }
 
-  private renderList(list: RowsListSpec, choices: Choices, key: string): TemplateResult {
+  /**
+   * A list's section: its title, the card's fields it draws (`card`: its form's data, what can act, its helpers), its
+   * items, its picker.
+   */
+  private renderList(
+    list: RowsListSpec,
+    choices: Choices,
+    key: string,
+    card: CardForm,
+  ): TemplateResult {
     const items = this.items(list);
+    const head = this.head(list, card.asked);
     return html`<div class="list">
       <p class="list__title">${this.t(list.title)}</p>
+      ${
+        head.length
+          ? html`<ha-form
+              class="list__fields"
+              .hass=${this.hass}
+              .data=${card.data}
+              .schema=${head}
+              .computeLabel=${this.spec?.computeLabel}
+              .computeHelper=${card.helper}
+              @value-changed=${this.onCard}
+            ></ha-form>`
+          : nothing
+      }
       <ha-sortable
         handle-selector=".handle"
         @item-moved=${(event: CustomEvent<{ oldIndex: number; newIndex: number }>) => this.onMove(list, event)}
@@ -706,7 +776,7 @@ export class FluvyRowsEditor extends LitElement {
     const defaults = this.defaults();
     const data = worded(
       { ...withoutLists(defaults), ...withoutLists(this.config) },
-      selectsOf(spec.schema),
+      selectsOf(cardFields(spec)),
     );
     // what can act is asked of the whole card, its lists too (a camera of the list asked live)
     const asked = { ...defaults, ...this.config };
@@ -716,19 +786,22 @@ export class FluvyRowsEditor extends LitElement {
     // the card's helpers are told what the form shows and the house (one that reads the sensor picked); a field with
     // a word of its own says it where the card says nothing
     const own = spec.computeHelper;
+    const helper = (
+      schema: HaFormSchemaItem,
+      localize: (key: string) => string,
+    ): string | undefined => own?.(schema, localize, data, this.hass) ?? ownHelper(schema);
     return html`
       <ha-form
         .hass=${this.hass}
         .data=${data}
         .schema=${this.schema(spec, asked, choices)}
         .computeLabel=${spec.computeLabel}
-        .computeHelper=${(schema: HaFormSchemaItem, localize: (key: string) => string) =>
-          own?.(schema, localize, data, this.hass) ?? ownHelper(schema)}
+        .computeHelper=${helper}
         @value-changed=${this.onCard}
       ></ha-form>
       ${spec.lists
         .filter((list) => list.when?.(asked, this.hass) ?? true)
-        .map((list) => this.renderList(list, choices, key))}
+        .map((list) => this.renderList(list, choices, key, { data, asked, helper }))}
     `;
   }
 }
@@ -740,7 +813,16 @@ export function rowsEditor(spec: RowsEditorSpec): HTMLElement {
   return element;
 }
 
-/** The list fields taken out of a card's form: the editor draws those itself. */
+/** The fields of a schema with these names, through its rows. */
+const fieldsNamed = (
+  schema: readonly HaFormSchemaItem[],
+  names: ReadonlySet<string>,
+): HaFormSchemaItem[] =>
+  schema.flatMap((item) =>
+    item.schema ? fieldsNamed(item.schema, names) : names.has(item.name) ? [item] : [],
+  );
+
+/** The list fields, and those their sections draw, taken out of a card's form: the editor draws those itself. */
 function withoutLists(
   schema: readonly HaFormSchemaItem[],
   keys: ReadonlySet<string>,
@@ -788,10 +870,21 @@ export function listsEditor(
   choices?: EditorChoices,
 ): HTMLElement {
   const keys = new Set(lists.flatMap((list) => [list.key, ...(list.alias ? [list.alias] : [])]));
+  const drawn = lists.filter((list) => list.fields?.length);
   const defaults = editorDefaults(form, own);
   return rowsEditor({
-    schema: withoutLists(form.schema, keys),
+    schema: withoutLists(
+      form.schema,
+      new Set([...keys, ...drawn.flatMap((list) => list.fields ?? [])]),
+    ),
     lists,
+    ...(drawn.length
+      ? {
+          heads: Object.fromEntries(
+            drawn.map((list) => [list.key, fieldsNamed(form.schema, new Set(list.fields))]),
+          ),
+        }
+      : {}),
     computeLabel: (schema, localize) => form.computeLabel?.(schema, localize),
     ...(form.computeHelper ? { computeHelper: form.computeHelper } : {}),
     ...(defaults ? { defaults } : {}),

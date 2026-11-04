@@ -97,6 +97,10 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The appliance card presses the Start, Pause, Resume and Stop its `roles` name, for any integration: a device's
   button (found by itself where the integration names it so), a helper's button or a script. Stopping asks first.
   Thanks to @rammium (#97).
+- `scan: false` makes an appliance card read only the entities it names (`entity` and `roles`), nothing else of its
+  device, which still names the appliance; a switch in the editor's roles section says so. `device: none`, the way
+  until now, reads the same, the card named after its entity's device. The appliances card's rows and tiles read an
+  item's `roles` and `scan` as its whole card does. Thanks to @rammium (#98).
 
 ## [1.12.0] — 2026-11-04
 

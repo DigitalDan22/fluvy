@@ -34,14 +34,14 @@ if (!customElements.get('fluvy-alerts-card'))
  * with a door open; Miele's washer rinsing, its fridge super cooling, its hob with two plates on; SmartThings' washer
  * with its upper drum at rest and its oven's two cavities; Matter's dishwasher and paused washer; Whirlpool's dryer and
  * double oven; Tuya's kettle; the community's hOn, AEG and SmartThinQ washers; LocalThings' dishwasher (#91), washer
- * and oven by its keys, their buttons pressed by the card's (#97); a washer and a dryer on smart plugs (their power's
- * history answered here). Then every variant, the list of the house's appliances, an appliance out of reach beside its
- * live twin, a failure that says why, and a house in Fahrenheit. The state words are Home Assistant's in the page's
- * language (`lang`), as its translations say them. Last, the reporter's own LG house as he dumped it (#47): his four
- * appliances on both integrations he runs, at rest and at work, whole, compact and as rows — the words of LG's states
- * left to the card, as the older integration's plain English would be. And the house's status colours (1.9): the four
- * statuses on an alerts card and on a dishwasher due its salt, the palette's own and then a warning of the house's own
- * (#47's orange), light or dark as the page is.
+ * and oven by its keys, their buttons pressed by the card's (#97), and a card that scans nothing (#98); a washer and a
+ * dryer on smart plugs (their power's history answered here). Then every variant, the list of the house's appliances,
+ * an appliance out of reach beside its live twin, a failure that says why, and a house in Fahrenheit. The state words
+ * are Home Assistant's in the page's language (`lang`), as its translations say them. Last, the reporter's own LG house
+ * as he dumped it (#47): his four appliances on both integrations he runs, at rest and at work, whole, compact and as
+ * rows — the words of LG's states left to the card, as the older integration's plain English would be. And the house's
+ * status colours (1.9): the four statuses on an alerts card and on a dishwasher due its salt, the palette's own and
+ * then a warning of the house's own (#47's orange), light or dark as the page is.
  */
 
 const now = NOW.getTime();
@@ -500,6 +500,16 @@ const DISH_DONE = said({
   'sensor.geschirrspuler_kuche_fertigstellungszeit': '0',
 });
 
+/** The washer's roles named by hand on a card that scans nothing (#98): its state, step, time left and buttons. */
+const WASHER_ROLES = [
+  { role: 'state', entity: 'sensor.waschmaschine_flur_maschinenzustand' },
+  { role: 'phase', entity: 'sensor.waschmaschine_flur_fortschritt' },
+  { role: 'remaining', entity: 'sensor.waschmaschine_flur_fertigstellungszeit' },
+  { role: 'start', entity: 'button.waschmaschine_flur_start' },
+  { role: 'pause', entity: 'button.waschmaschine_flur_pause' },
+  { role: 'stop', entity: 'button.waschmaschine_flur_stopp' },
+];
+
 const list = (more: Record<string, unknown> = {}): LovelaceCardConfig => ({
   type: 'custom:fluvy-appliances-card',
   _now: at,
@@ -745,6 +755,22 @@ export const sheet: SheetSpec = {
       hass: changed(DISH_WASHING),
     }),
     frame({ title: 'LocalThings · as #91’s owner named its roles', cards: [localthings()] }),
+    // a card that scans nothing (#98): the washer's state, phase, time left and buttons named, nothing else of its
+    // device (no programme, no softener to refill, no energy); `device: none`, the way until now, reads the same
+    frame({
+      title: 'Scan off · only the roles named',
+      cards: [
+        card('lt-washer', { scan: false, show_controls: true, roles: WASHER_ROLES }),
+        {
+          type: 'custom:fluvy-appliance-card',
+          device: 'none',
+          entity: 'sensor.waschmaschine_flur_maschinenzustand',
+          show_controls: true,
+          roles: WASHER_ROLES,
+          _now: at,
+        },
+      ],
+    }),
     // on a plug: running (its power's history), and done, waiting to be unloaded
     frame({ title: 'A washer on a plug · running', cards: [card('plug-washer')] }),
     frame({ title: 'A dryer on a plug · done', cards: [card('plug-dryer')] }),

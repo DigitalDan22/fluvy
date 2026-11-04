@@ -1586,7 +1586,9 @@ temperature on its way, a hob's plates, a fridge's compartments, a state and its
   device's name, so a Miele coffee machine nobody renamed — the "Coffee system", every id saying "system" — is never
   taken for a system's. A system entity (firmware, reboot, identify, wifi) is never a role; nothing filed under
   diagnostics acts. A second drum or cavity on one device (SmartThings' upper washer and second cavity, Whirlpool's
-  lower oven) is read apart, never silently left out.
+  lower oven) is read apart, never silently left out. A card that scans nothing (`scan: false`, #98) reads only the
+  entities it names (`entity` and `roles`): its device still names it and says what it is and whose it is
+  (`device: none`, the way until then, reads the same).
 - **What it is doing** folds every integration's words into the card's few: off, ready, scheduled, running,
   preheating, paused, needs attention, done, error, offline. The words shown stay Home Assistant's (its translation of
   the state: "Spülen", "Rinsing"); where they say nothing (hOn's numbers, the older LG integration's plain English),
@@ -1770,7 +1772,8 @@ temperature on its way, a hob's plates, a fridge's compartments, a state and its
   row where two would not hold a tile's state whole. The head counts each in its number ("1 läuft · 2 fertig", "1
   terminado").
 - **The house's appliances as whole cards** (`variant: cards`): each listed appliance its whole card — its item is
-  the appliance card's config, so it takes any of its keys, the list's `picture` where it names none — side by side
+  the appliance card's config, so it takes any of its keys, the list's `picture` where it names none (its `roles` and
+  `scan` the rows and tiles read too) — side by side
   as many as hold: a whole card 300 at least (four across a desktop's band, 360 each), a row 240 (five), 16 apart as
   Home Assistant's section spaces its cards; no head, no surface of its own. The cards keep their places (`sort:
   none`, the order given, their default; by name where asked); its height at a 360 column is its cards' one under

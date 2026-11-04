@@ -2181,6 +2181,8 @@
     "editor_finished_after": "Bitiş süresi (dk)",
     "editor_roles": "Elle seçilen varlıklar",
     "editor_role": "Görev",
+    "editor_scan": "Gerisini cihazında ara",
+    "editor_scan_helper": "Kapalı: kart yalnızca kendi varlığını ve burada seçilen varlıkları okur.",
     "editor_appliances": "Ev aletleri",
     "editor_show": "Göster",
     "editor_sort": "Sıra",

@@ -78,6 +78,8 @@ export interface ApplianceConfig {
   readonly kind?: ApplianceKind | 'auto' | undefined;
   /** Entities named by hand for what the card does not find: `{ role, entity }`. */
   readonly roles?: ReadonlyArray<{ readonly role: string; readonly entity: string }> | undefined;
+  /** Whether the card searches the appliance's device for its entities (default); off, it reads only those it names. */
+  readonly scan?: boolean | undefined;
   /** Whether a finished cycle waits to be unloaded (the kind's say by default). */
   readonly unload_reminder?: boolean | undefined;
   /** Minutes after a finish before it is said to wait (30). */
@@ -106,18 +108,21 @@ export interface ApplianceFound {
   readonly device: string | undefined;
   readonly platform: string | undefined;
   readonly entities: ApplianceEntities;
-  /** Every entity of its device, as discovery reads it (its compartments are read from them). */
+  /** Every entity of its device, as discovery reads it (its compartments are read from them); none unscanned. */
   readonly candidates: readonly Candidate[];
   /** What it is, or why it is not one; none where nothing says. */
   readonly verdict: KindVerdict | undefined;
 }
 
 /**
- * The appliance a card is about: the device it names (or its entity's), its entities, what it is. Costly on a large
- * house: a card keeps it while the registries and its config stay the same, as the printer card keeps its printer.
+ * The appliance a card is about: the device it names (or its entity's), its entities, what it is. A card that scans
+ * nothing (`scan: false`) reads only the entities it names, `entity` and `roles`: its device still says what the
+ * appliance is, what it is called and whose it is. Costly on a large house: a card keeps it while the registries and
+ * its config stay the same, as the printer card keeps its printer.
  */
 export function findAppliance(hass: House | undefined, config: ApplianceConfig): ApplianceFound {
   const device = applianceDevice(hass, config.device, config.entity);
+  const scanned = config.scan === false ? undefined : device;
   const entry = device ? hass?.devices?.[device] : undefined;
   const entries = entriesOf(hass, device);
   const platform =
@@ -134,8 +139,8 @@ export function findAppliance(hass: House | undefined, config: ApplianceConfig):
   return {
     device,
     platform,
-    entities: applianceEntities(hass, device, config.roles ?? [], config.entity),
-    candidates: candidatesOf(hass, entries, entry?.name_by_user ?? entry?.name),
+    entities: applianceEntities(hass, scanned, config.roles ?? [], config.entity),
+    candidates: scanned ? candidatesOf(hass, entries, entry?.name_by_user ?? entry?.name) : [],
     verdict: verdict ?? byWords(named, config.entity),
   };
 }

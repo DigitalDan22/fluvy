@@ -444,6 +444,33 @@ describe('a select’s options as the house has them', () => {
     expect(items[1]!.data).toEqual({ entity: 'sensor.b' });
   });
 
+  it('draws the card’s fields a list names over its items, edited as the card’s (an appliance’s scan, #98)', async () => {
+    const schema = [textField('title'), boolField('scan')];
+    const list: RowsListSpec = { ...rows, fields: ['scan'] };
+    const editor = await drawEditor(
+      listsEditor({ schema }, [list], () => ({ scan: true })),
+      { type: 'custom:x', title: 'Washer', rows: ['sensor.a'] },
+    );
+    // out of the card's form, at the head of the list's section, the default shown
+    expect(shownNames(cardForm(editor).schema)).toEqual(['title']);
+    const fields = editor.shadowRoot!.querySelector<FormStub>('.list .list__fields')!;
+    expect(shownNames(fields.schema)).toEqual(['scan']);
+    expect(fields.data).toMatchObject({ title: 'Washer', scan: true });
+    // its change is the card's: the rest of the config and the list kept
+    const next = nextConfig(editor);
+    fields.change('scan', false);
+    expect(await next).toEqual({
+      type: 'custom:x',
+      title: 'Washer',
+      scan: false,
+      rows: ['sensor.a'],
+    });
+    // the same form while it is the same
+    editor.requestUpdate();
+    await editor.updateComplete;
+    expect(editor.shadowRoot!.querySelector<FormStub>('.list__fields')!.schema).toBe(fields.schema);
+  });
+
   it('a list that asks its items offers each its own answer, never the card’s (a legend entry’s units)', async () => {
     const unit = { name: 'unit', selector: { select: { custom_value: true, options: [] } } };
     const watts = [{ value: 'kW', label: 'kW' }];

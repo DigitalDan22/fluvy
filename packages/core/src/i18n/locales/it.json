@@ -2181,6 +2181,8 @@
     "editor_finished_after": "Finito dopo (min)",
     "editor_roles": "Entità scelte a mano",
     "editor_role": "Ruolo",
+    "editor_scan": "Cerca il resto sul suo dispositivo",
+    "editor_scan_helper": "Disattivato: la scheda legge solo la sua entità e le entità scelte qui.",
     "editor_appliances": "Elettrodomestici",
     "editor_show": "Mostra",
     "editor_sort": "Ordine",

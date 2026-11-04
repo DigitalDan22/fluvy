@@ -316,6 +316,37 @@ describe('an appliance read', () => {
     expect(actions(oven)).toEqual(['stop', 'power_off', 'light']);
   });
 
+  it('reads only the entities a card names where it scans nothing (#98): its device still says what it is', () => {
+    const roles = [
+      { role: 'state', entity: 'sensor.waschmaschine_flur_maschinenzustand' },
+      { role: 'stop', entity: 'button.waschmaschine_flur_stopp' },
+    ];
+    const found = findAppliance(HOUSE, { device: 'lt-washer', scan: false, roles });
+    expect(found).toMatchObject({
+      device: 'lt-washer',
+      platform: 'localthings',
+      verdict: { kind: 'washer' },
+      candidates: [],
+      entities: { maintenance: [], zones: [] },
+    });
+    expect(found.entities.roles).toEqual({
+      state: 'sensor.waschmaschine_flur_maschinenzustand',
+      stop: 'button.waschmaschine_flur_stopp',
+    });
+    const washer = read('lt-washer', { scan: false, roles });
+    expect(washer).toMatchObject({ status: 'running', readouts: {}, maintenance: [] });
+    expect(washer.commands.map((command) => command.action)).toEqual(['stop']);
+    // the entity it names plays its part all the same; its device, its own name
+    const dish = findAppliance(HOUSE, {
+      entity: 'switch.geschirrspuler_kuche_ein_aus',
+      scan: false,
+    });
+    expect(dish.entities.roles).toEqual({ power: 'switch.geschirrspuler_kuche_ein_aus' });
+    expect(
+      read('lt-dish', { entity: 'switch.geschirrspuler_kuche_ein_aus', scan: false }).name,
+    ).toBe('Geschirrspüler Küche');
+  });
+
   it('says a fridge’s door has stood open after a minute, with when it opened', () => {
     const fridge = later(hcFridge, 0);
     expect(fridge.door).toEqual({ open: true, since: NOW - 180_000, changed: NOW - 180_000 });

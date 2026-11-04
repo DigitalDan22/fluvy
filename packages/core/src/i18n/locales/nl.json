@@ -2181,6 +2181,8 @@
     "editor_finished_after": "Klaar na (min)",
     "editor_roles": "Entiteiten met de hand",
     "editor_role": "Rol",
+    "editor_scan": "De rest op het apparaat zoeken",
+    "editor_scan_helper": "Uit: de kaart leest alleen haar eigen entiteit en de entiteiten die hier staan.",
     "editor_appliances": "Apparaten",
     "editor_show": "Tonen",
     "editor_sort": "Volgorde",

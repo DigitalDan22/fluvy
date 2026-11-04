@@ -1283,6 +1283,8 @@
     "editor_finished_after": "Befejezettnek számít ennyi idő után (perc)",
     "editor_roles": "Kézzel megnevezett entitások",
     "editor_role": "Szerep",
+    "editor_scan": "A többi keresése a készüléken",
+    "editor_scan_helper": "Kikapcsolva: a kártya csak a saját entitását és az itt megnevezett entitásokat olvassa.",
     "editor_appliances": "Készülékek",
     "editor_show": "Megjelenítés",
     "editor_sort": "Sorrend",

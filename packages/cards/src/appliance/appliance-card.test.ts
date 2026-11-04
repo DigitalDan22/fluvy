@@ -3,6 +3,7 @@ import type { HassEntity, HomeAssistant, LovelaceCardConfig } from '@fluvy/core'
 import { OUT_OF_REACH, outOfReachStates } from '@fluvy/demo-home/out-of-reach';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { applianceHeight, APPLIANCE_VARIANTS } from '../appliances-family.js';
+import { normaliseConfig } from '../shared/config.js';
 import { applianceHouseHeight, FluvyApplianceCard } from './appliance-card.js';
 import { appliancesHouseHeight, FluvyAppliancesCard } from './appliances-card.js';
 import { allFixtures, houseOf, laterFixtures, minutesFrom, plugFridge } from './fixtures/index.js';
@@ -450,6 +451,17 @@ describe('the appliance card', () => {
     } finally {
       document.body.removeEventListener('hass-action', listen);
     }
+  });
+
+  it('reads `device: none`, the way until now, as `scan: false` (#98)', () => {
+    const aliases = FluvyApplianceCard.aliases;
+    expect(
+      aliases && normaliseConfig({ type: 'x', device: 'none', entity: 'switch.a' }, aliases),
+    ).toEqual({ type: 'x', entity: 'switch.a', scan: false });
+    expect(aliases && normaliseConfig({ type: 'x', device: 'abc' }, aliases)).toEqual({
+      type: 'x',
+      device: 'abc',
+    });
   });
 
   it('a washer on a plug says what it draws and what this cycle used, from its power’s history; its rows never again', async () => {

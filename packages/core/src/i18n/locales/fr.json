@@ -2181,6 +2181,8 @@
     "editor_finished_after": "Terminé après (min)",
     "editor_roles": "Entités choisies à la main",
     "editor_role": "Rôle",
+    "editor_scan": "Chercher le reste sur son appareil",
+    "editor_scan_helper": "Désactivé : la carte ne lit que son entité et les entités choisies ici.",
     "editor_appliances": "Appareils",
     "editor_show": "Afficher",
     "editor_sort": "Ordre",

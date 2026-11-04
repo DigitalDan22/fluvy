@@ -56,7 +56,7 @@ import { sharedGap } from '../cover/common.js';
 import { HeadFit } from '../energy/head.js';
 import { Card, HEAD_BASE, type HeadConfig } from '../shared/base.js';
 import { statusToneOf, toneOf } from '../shared/colour.js';
-import { configKeys } from '../shared/config.js';
+import { configKeys, type AliasSpec } from '../shared/config.js';
 import { unitWord, widestDuration } from '../shared/duration.js';
 import { fitLine, type Segment } from '../shared/fit.js';
 import { COLUMN, textWidth } from '../shared/heights.js';
@@ -306,6 +306,8 @@ export interface ApplianceCardConfig extends FluvyCardConfig, HeadConfig {
   finished_after?: number;
   /** Entities named by hand for what the card does not find: `{ role, entity }`. */
   roles?: ReadonlyArray<{ readonly role: ApplianceRole; readonly entity: string }>;
+  /** Whether it searches the appliance's device for the rest (default); off, it reads only `entity` and `roles`. */
+  scan?: boolean;
   /** Test hook: an ISO instant the card takes for "now". */
   _now?: string;
 }
@@ -1326,7 +1328,12 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     'running_power',
     'finished_after',
     'roles',
+    'scan',
   ]);
+  /** `device: none` was the way to read only the roles named by hand: it reads as `scan: false` (#98). */
+  static override aliases: AliasSpec = {
+    keys: [{ from: 'device', to: 'scan', when: (value) => value === 'none', map: () => false }],
+  };
 
   static override lists: readonly RowsListSpec[] = [
     rowsList('rows', 'appliance.editor_rows'),
@@ -1377,6 +1384,8 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         schema.name === 'role' ? editorWord('appliance.editor_role') : undefined,
       picker: rolePicker(),
       schema: [rolePicker(), entityField(undefined, 'entity')],
+      // whether the card searches its device for the rest, over the roles named by hand
+      fields: ['scan'],
     },
   ];
 
@@ -1418,6 +1427,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       low_level: 20,
       running_power: RUNNING_POWER,
       finished_after: FINISHED_AFTER,
+      scan: true,
     };
   };
 
@@ -1425,8 +1435,8 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
   static override choices: EditorChoices = (config, hass) => {
     const c = config as ApplianceCardConfig;
     const program = hass
-      ? findAppliance(hass, { device: c.device, entity: c.entity, roles: c.roles }).entities.roles
-          .program
+      ? findAppliance(hass, { device: c.device, entity: c.entity, roles: c.roles, scan: c.scan })
+          .entities.roles.program
       : undefined;
     const state = program ? hass?.states[program] : undefined;
     return {
@@ -1522,6 +1532,8 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         fieldRow(toneField(), accentField()),
         accentField('card_color', { none: true }),
         actionFields(),
+        // drawn in the roles' section
+        { ...boolField('scan'), helper: 'appliance.editor_scan_helper' },
       ],
       ...editorLabels(s, {
         device: 'editor_device',
@@ -1558,6 +1570,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         done_for: 'editor_done_for',
         running_power: 'editor_running_power',
         finished_after: 'editor_finished_after',
+        scan: 'editor_scan',
       }),
     };
   }
@@ -1619,7 +1632,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
   /** The appliance, as found: once per registry and config. */
   private appliance(): ApplianceFound {
     const c = this.config;
-    const key = JSON.stringify([c?.device, c?.entity, c?.kind, c?.roles]);
+    const key = JSON.stringify([c?.device, c?.entity, c?.kind, c?.roles, c?.scan]);
     const at = [this.hass?.entities, this.hass?.devices];
     if (this.found && this.found.key === key && sameAt(this.found.at, at)) return this.found.found;
     const found = findAppliance(this.hass, {
@@ -1627,6 +1640,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       entity: c?.entity,
       kind: c?.kind,
       roles: c?.roles,
+      scan: c?.scan,
     });
     this.found = { key, at, found };
     return found;

@@ -2181,6 +2181,8 @@
     "editor_finished_after": "Fertig nach (min)",
     "editor_roles": "Entitäten von Hand",
     "editor_role": "Rolle",
+    "editor_scan": "Den Rest auf seinem Gerät suchen",
+    "editor_scan_helper": "Aus: Die Karte liest nur ihre Entität und die hier genannten Entitäten.",
     "editor_appliances": "Geräte",
     "editor_show": "Zeigen",
     "editor_sort": "Reihenfolge",
