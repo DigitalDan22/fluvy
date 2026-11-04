@@ -311,6 +311,8 @@ export const sheet: SheetSpec = {
       'light.kitchen_counter': { entity_id: 'light.kitchen_counter', area_id: 'ex_kitchen' },
       'light.study_lamp': { entity_id: 'light.study_lamp', area_id: 'ex_study' },
       'light.bedroom_lamp': { entity_id: 'light.bedroom_lamp', area_id: 'ex_bedroom' },
+      // an automation of a room is on its page's Automations card, never among its devices (#118)
+      'automation.wake': { entity_id: 'automation.wake', area_id: 'ex_bedroom' },
     },
   },
 

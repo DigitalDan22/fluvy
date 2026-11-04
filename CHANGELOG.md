@@ -5,6 +5,11 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Visible on upgrade
+
+- A room's page on the automatic dashboards shows the room's automations on an Automations card of their own, each
+  with its switch and when it last ran (#118), where they were rows among the room's devices.
+
 ## [1.14.1] — 2026-11-04
 
 ### Visible on upgrade

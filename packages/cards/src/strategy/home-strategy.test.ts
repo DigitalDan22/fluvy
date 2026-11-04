@@ -1334,6 +1334,42 @@ describe('custom:fluvy-home strategy — a room counts its devices, never an app
     expect(new HomeRegistry(hass).applianceTiles).not.toContain('switch.dishwasher_power');
   });
 
+  it('gives a room’s automations a card of their own, never rows among its devices (#118)', async () => {
+    const hass = kitchen();
+    const automation = entity(
+      'automation.galley_lights',
+      'on',
+      { friendly_name: 'Galley lights', last_triggered: null },
+      { area_id: 'galley' },
+    );
+    const adapt = entity(
+      'switch.adaptive_lighting_galley_adapt_brightness',
+      'on',
+      { friendly_name: 'Adapt Brightness' },
+      { area_id: 'galley' },
+    );
+    const more = house([automation, adapt]) as unknown as HomeAssistant;
+    Object.assign(hass.states, more.states);
+    Object.assign(hass.entities, more.entities);
+    const parts = roomParts(new HomeRegistry(hass), 'galley');
+    expect(parts.automations).toEqual(['automation.galley_lights']);
+    expect(parts.rest).not.toContain('automation.galley_lights');
+    // a switch is still the room's: a tile or a row on its page
+    expect([...parts.appliances, ...parts.rest]).toContain(
+      'switch.adaptive_lighting_galley_adapt_brightness',
+    );
+    const { views } = await generate({ type: 'custom:fluvy-rooms' }, hass as never);
+    const cards = cardsIn([views.find((view) => view.path === 'room-galley')!]);
+    expect(cards.find((card) => card.type === 'custom:fluvy-automations-card')).toMatchObject({
+      title: 'Automations',
+      entities: ['automation.galley_lights'],
+    });
+    const rows = cards
+      .filter((card) => card.type === 'custom:fluvy-entities-card')
+      .flatMap((card) => (card['rows'] as { entity: string }[]).map((row) => row.entity));
+    expect(rows).not.toContain('automation.galley_lights');
+  });
+
   it('takes each room’s own include and exclude from the dashboard’s `rooms`: its card, its count and its page', async () => {
     const hass = kitchen();
     const galley = {
