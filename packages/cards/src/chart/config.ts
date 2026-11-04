@@ -189,7 +189,8 @@ const sourceField = (): HaFormSchemaItem =>
 const kindField = (): HaFormSchemaItem =>
   choiceField('kind', [
     ['line', 'chart-card.editor.kind_line'],
-    ['area', 'option.area'],
+    // the chart's filled series, never the house's area (Fläche, not Bereich)
+    ['area', 'chart-card.editor.kind_area'],
     ['columns', 'option.columns'],
     ['band', 'option.band'],
   ]);

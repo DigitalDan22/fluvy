@@ -3742,7 +3742,15 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     const current = busy(shown.status) && r.step ? steps.indexOf(r.step) : -1;
     const progress = this.progressOf(view);
     const done = shown.status === 'finished';
-    const words = steps.map((step) => s(this.hass, `step_${step}`));
+    // a dishwasher's steps in its own words, where a language says dishes apart from laundry (Klarspülen, not Spülen)
+    const words = steps.map((step) =>
+      s(
+        this.hass,
+        view.kind === 'dishwasher' && (step === 'prewash' || step === 'wash' || step === 'rinse')
+          ? `step_dish_${step}`
+          : `step_${step}`,
+      ),
+    );
     const w = this.contentWidth;
     // whole pixels a segment, the pixels a division leaves over at the row's end
     const cell = Math.floor((w - 4 * (steps.length - 1)) / steps.length);

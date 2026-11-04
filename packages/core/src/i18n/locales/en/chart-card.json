@@ -29,6 +29,7 @@
     "editor.period_month": "A month",
     "editor.kind": "Drawn as",
     "editor.kind_line": "Line",
+    "editor.kind_area": "Area",
     "editor.span": "Window",
     "editor.span_helper": "24h, today, today+tomorrow, 7d, or any 12h or 3d",
     "editor.thresholds": "Thresholds",

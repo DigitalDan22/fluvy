@@ -1,5 +1,10 @@
 // @vitest-environment happy-dom
-import type { HassEntity, HomeAssistant, LovelaceCardConfig } from '@fluvy/core';
+import {
+  ensureLanguage,
+  type HassEntity,
+  type HomeAssistant,
+  type LovelaceCardConfig,
+} from '@fluvy/core';
 import { OUT_OF_REACH, outOfReachStates } from '@fluvy/demo-home/out-of-reach';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { applianceHeight, APPLIANCE_VARIANTS } from '../appliances-family.js';
@@ -335,6 +340,21 @@ describe('the appliance card', () => {
     // when it ends instead of the time left
     const end = await mount({ device: 'lg-washer', time: 'end' });
     expect(text(root(end).querySelector('.ap-figures__label'))).toBe('Ends');
+  });
+
+  it('says a dishwasher’s steps in its own words where the language has them, a washer’s in laundry’s', async () => {
+    await ensureLanguage('de');
+    const de = { ...house(), language: 'de' } as HomeAssistant;
+    const said = async (device: string): Promise<string> => {
+      const card = await mount({ device, progress_style: 'steps' }, de, 412);
+      const words = text(root(card).querySelector('.ap-steps'));
+      card.remove();
+      return words;
+    };
+    const dishes = await said('hc-dish');
+    expect(dishes).toMatch(/Vorspülen|Reinigen|Klarspülen|Trocknen/);
+    expect(dishes).not.toMatch(/Vorwäsche|Waschen/);
+    expect(await said('lg-washer')).toMatch(/Waschen|Spülen|Schleudern/);
   });
 
   it('says its rows as the kind does: a washer’s values beside their words, a dryer’s at the end, a fridge’s as phrases', async () => {
