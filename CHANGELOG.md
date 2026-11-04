@@ -86,6 +86,11 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   the room card does, where both said the room's own name, and the openings card counts the rooms only where there
   are several, where it said "· 1 room" on the room's own page.
 
+### Development
+
+- `heights.mjs` reads the playground under reduced motion, as the measurer does: under load it could read a card
+  mid-entrance, at its 0.985 scale, which its width check then left out.
+
 ## [1.13.1] — 2026-11-04
 
 ### Visible on upgrade
