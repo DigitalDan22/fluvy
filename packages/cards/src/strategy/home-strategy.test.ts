@@ -9,6 +9,7 @@ import { FluvyHomeStrategy } from './home-strategy.js';
 import { HomeRegistry } from './home-registry.js';
 import { roomParts } from './rooms.js';
 import type { View } from './types.js';
+import { BATTERY_POWER, TODAY } from './words.generated.js';
 import {
   hcCoffee,
   hcDishwasher,
@@ -179,6 +180,14 @@ describe('custom:fluvy-home strategy — a house named in Japanese', () => {
     expect(findEnergyRoles(powerHouse([power('sensor.dom', 'Dom')], 'sk'), null).homePower).toBe(
       'sensor.dom',
     );
+  });
+
+  it('takes Slovak’s today and its home battery as words, never inside another (hardness, Bessie)', () => {
+    for (const text of ['water hardness', 'bessie plug', 'kindness lamp'])
+      expect([TODAY.test(text), BATTERY_POWER.test(text)], text).toEqual([false, false]);
+    expect(TODAY.test('spotreba dnes')).toBe(true);
+    expect(TODAY.test('dnesna spotreba')).toBe(true);
+    expect(BATTERY_POWER.test('bess power')).toBe(true);
   });
 });
 

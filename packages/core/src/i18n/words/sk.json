@@ -26,7 +26,7 @@
   "solar": ["fotovolt", "solar", "fve", "menic", "invertor", "inverter", "solarne[ _-]panely"],
   "grid": ["distribuc", "elektromer", "siet", "grid", "odber", "elektricka[ _-]siet"],
   "grid_export": ["pretok", "export", "dodavka[ _-]do[ _-]siete", "prebytok", "vykup"],
-  "battery": ["bateria", "baterie", "akumulator", "ulozisko", "bess"],
+  "battery": ["bateria", "baterie", "akumulator", "ulozisko", "(^|[ _-])bess([ _-]|$)"],
   "charger": [
     "wallbox",
     "nabijacka[ _-]auta",
@@ -42,7 +42,7 @@
     "celkova[ _-]spotreba",
     "odber[ _-]domu"
   ],
-  "today": ["dnes", "denna", "denny", "denne", "denn(?!i)", "za[ _-]den"],
+  "today": ["(^|[ _-])dnes", "denna", "denny", "denne", "denn(?!i)", "za[ _-]den"],
   "not_appliance": [
     "casovac",
     "dovolenka",
