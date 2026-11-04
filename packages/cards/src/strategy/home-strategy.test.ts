@@ -1363,7 +1363,12 @@ describe('custom:fluvy-home strategy — a room counts its devices, never an app
     expect(cards.find((card) => card.type === 'custom:fluvy-automations-card')).toMatchObject({
       title: 'Automations',
       entities: ['automation.galley_lights'],
+      show_add: false,
     });
+    // its page still reaches it, as it reaches everything the room holds
+    expect(reachedFrom(views, 'room-galley', hass as never).has('automation.galley_lights')).toBe(
+      true,
+    );
     const rows = cards
       .filter((card) => card.type === 'custom:fluvy-entities-card')
       .flatMap((card) => (card['rows'] as { entity: string }[]).map((row) => row.entity));

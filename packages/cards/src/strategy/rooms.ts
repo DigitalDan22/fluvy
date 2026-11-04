@@ -306,12 +306,14 @@ export function roomSections(
         cameras,
       ),
       ...when(rest.shown.length, () => [[rows(t('strategy.devices'), rest.shown, moreKeys(rest))]]),
-      // its automations on their own card, each with its switch, its last and next run (the card folds the rest)
+      // its automations on their own card, each with its switch, its last and next run (the card folds the rest); no
+      // `+`: a schedule added there would be of no room, and never on this card
       ...when(parts.automations.length, () => [
         [
           full('automations', {
             title: t('strategy.automations'),
             entities: [...parts.automations],
+            show_add: false,
           }),
         ],
       ]),
