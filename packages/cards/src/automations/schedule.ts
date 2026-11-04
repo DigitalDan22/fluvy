@@ -1,4 +1,4 @@
-import { isTimeZone, wallClock } from '@fluvy/core';
+import { isEntityId, isTimeZone, wallClock } from '@fluvy/core';
 
 /**
  * A schedule as Fluvy writes it into Home Assistant: a native automation of a stable shape, with an id of its own
@@ -187,8 +187,6 @@ export const OPPOSITE: Readonly<Record<Verb, Verb | undefined>> = {
   run: undefined,
 };
 
-const ENTITY_ID = /^[a-z0-9_]+\.[a-z0-9_]+$/;
-const isEntityId = (id: unknown): id is string => typeof id === 'string' && ENTITY_ID.test(id);
 const domainOf = (id: string): string => id.slice(0, id.indexOf('.'));
 
 /** The domains of those targets, each once, in alphabetical order. */

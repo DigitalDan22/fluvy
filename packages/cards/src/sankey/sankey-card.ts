@@ -1,5 +1,6 @@
 import { SANKEY_BODY, sankeyHeight } from '../energy-family.js';
 import {
+  isEntityId,
   strings,
   type FluvyCardConfig,
   type LovelaceConfigForm,
@@ -24,7 +25,7 @@ import {
   type EnergyDataLike,
 } from '../energy-model/collection.js';
 import { fetchPrefs } from '../energy-model/house.js';
-import { isEntityId as isEntity, meterOutage } from '../energy-model/outage.js';
+import { meterOutage } from '../energy-model/outage.js';
 import {
   allocateFollowed,
   fetchPeriod,
@@ -281,7 +282,7 @@ export class FluvyEnergySankeyCard extends Card<EnergySankeyCardConfig> {
       }));
     return this.house().devices.map((d) => ({
       id: d.stat,
-      name: d.name ?? (isEntity(d.stat) ? deviceName(this.entity(d.stat)) : d.stat),
+      name: d.name ?? (isEntityId(d.stat) ? deviceName(this.entity(d.stat)) : d.stat),
       parent: d.parent,
       idName: idName(d.name, d.stat),
     }));
@@ -291,7 +292,7 @@ export class FluvyEnergySankeyCard extends Card<EnergySankeyCardConfig> {
     return [
       ...this.sources().flatMap((p) => [...p.energyIn, ...p.energyOut]),
       ...this.devices().map((d) => d.id),
-    ].filter(isEntity);
+    ].filter(isEntityId);
   }
 
   /* ---------- lifecycle ---------- */
@@ -383,7 +384,7 @@ export class FluvyEnergySankeyCard extends Card<EnergySankeyCardConfig> {
       sources
         .filter((p) => p.kind === kind)
         .flatMap((p) => p[side])
-        .find(isEntity);
+        .find(isEntityId);
     const entityOf: Record<string, string | undefined> = {
       grid: meter('grid', 'energyIn'),
       battery: meter('battery', 'energyIn'),
@@ -425,7 +426,7 @@ export class FluvyEnergySankeyCard extends Card<EnergySankeyCardConfig> {
           : {}),
         value: scaled(this.hass, n.value * 1000, scale),
         unit: scale.unit,
-        ...(isEntity(entity) ? { entity } : {}),
+        ...(isEntityId(entity) ? { entity } : {}),
       });
     }
     return { model, scale, words };

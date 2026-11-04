@@ -21,6 +21,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - A card editor's select whose choices follow another field (a chart's style, by the sensor picked) offers the choices
   that apply as that field changes, where it kept the first ones.
 
+### Development
+
+- What an entity's id is is core's one rule (`isEntityId`, as Home Assistant writes one), where the pictures, the
+  energy cards, the automations, the alerts and the car charger each had a pattern of their own: the energy, alerts
+  and automations chunks are 0.2 KB lighter, every page the same.
+
 ## [1.13.0] — 2026-11-04
 
 ### Visible on upgrade

@@ -2,6 +2,7 @@ import { metersHeight } from '../energy-family.js';
 import {
   formatTime,
   isActive,
+  isEntityId,
   stateText,
   strings,
   toggleService,
@@ -27,7 +28,6 @@ import { CollectionFollower, collectionKeyOf, followedMoment } from '../energy-m
 import { fetchPrefs } from '../energy-model/house.js';
 import { houseMidnight } from '../energy-model/period.js';
 import { readPrefs, type EnergyPrefs } from '../energy-model/prefs.js';
-import { isEntityId } from '../energy-model/outage.js';
 import { rangeWords } from '../energy-model/range-words.js';
 import { RecordedSensors } from '../energy-model/recorded.js';
 import {
@@ -560,7 +560,7 @@ export class FluvyMetersCard extends Card<MetersCardConfig> {
       this.head.fit({ width: w, title, sub, ...(round ? { trailing: 44 } : {}) });
     // the "…" round opens the first meter's details, as the energy card's does (fig-029); it gives way before the
     // title or the day ("Aujourd'hui" in half a column) is cut, after the icon
-    let more = first !== undefined && isEntityId(first);
+    let more = isEntityId(first);
     let fitted = fit(more);
     const r = this.head.ruler;
     if (

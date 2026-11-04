@@ -2,6 +2,7 @@ import {
   clock12,
   dateFormat,
   houseZone,
+  isEntityId,
   isPaletteRef,
   localize,
   strings,
@@ -58,7 +59,7 @@ import {
   type EnergyDataLike,
 } from '../energy-model/collection.js';
 import { fetchPrefs } from '../energy-model/house.js';
-import { isEntityId, meterOutage } from '../energy-model/outage.js';
+import { meterOutage } from '../energy-model/outage.js';
 import { allocatePeriod, fetchRange, stepFor, type Range } from '../energy-model/period.js';
 import {
   readPrefs,

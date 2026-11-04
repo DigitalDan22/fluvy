@@ -2,6 +2,7 @@ import {
   formatDuration,
   formatNumber,
   formatTime,
+  isEntityId,
   isUsable,
   numberAttr,
   relativeTime,
@@ -83,7 +84,7 @@ import { configKeys, type RowStyle } from '../shared/config.js';
 import { iconOf } from '../shared/domain.js';
 import { chipRow } from '../shared/chips.js';
 import { fitLine } from '../shared/fit.js';
-import { imageEntity, imageOf, isControl, isEntityId } from '../shared/picture.js';
+import { imageEntity, imageOf, isControl } from '../shared/picture.js';
 import { isTemplate, TemplateTexts } from '../shared/templates.js';
 import type { EditorDefaults } from '../shared/rows-editor.js';
 
@@ -418,11 +419,7 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
   protected override watched(): readonly string[] {
     const line = this.config?.secondary;
     const image = imageEntity(this.config?.image);
-    return [
-      ...super.watched(),
-      ...(typeof line === 'string' && isEntityId(line) ? [line] : []),
-      ...(image ? [image] : []),
-    ];
+    return [...super.watched(), ...(isEntityId(line) ? [line] : []), ...(image ? [image] : [])];
   }
 
   /* ---------- lifecycle ---------- */

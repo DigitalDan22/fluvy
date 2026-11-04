@@ -1,7 +1,7 @@
 import type { HomeAssistant } from '@fluvy/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactiveControllerHost } from 'lit';
-import { BrokenPictures, imageEntity, imageOf, isEntityId, safePicture } from './picture.js';
+import { BrokenPictures, imageEntity, imageOf, safePicture } from './picture.js';
 
 /** A house with the pictures a person may point at: an image entity's, a camera's still, a face. */
 const hass = {
@@ -82,13 +82,6 @@ describe('a picture of the person’s own (#99)', () => {
     expect(imageEntity('/local/tv.png')).toBeUndefined();
     expect(imageEntity('https://example.com/tv.png')).toBeUndefined();
     expect(imageEntity(undefined)).toBeUndefined();
-  });
-
-  it('tells an entity’s id from words and addresses', () => {
-    for (const id of ['sensor.tv_status', 'image.lounge_tv', 'input_text.now_on'])
-      expect(isEntityId(id), id).toBe(true);
-    for (const text of ['On · HDMI 1', '/local/tv.png', 'Sensor.TV', 'sensor.', 'sensor.tv status'])
-      expect(isEntityId(text), text).toBe(false);
   });
 });
 

@@ -1,3 +1,4 @@
+import { isEntityId } from '@fluvy/core';
 import { DEFAULT_THRESHOLD } from '../energy-model/sources.js';
 
 /**
@@ -38,7 +39,7 @@ export function targetOf(raw: unknown): Target | undefined {
   if (text === '') return undefined;
   if (/^\d+([.,]\d+)?$/.test(text))
     return { percent: clampPercent(Number(text.replace(',', '.'))) };
-  return /^[a-z_]+\.[a-z0-9_]+$/.test(text) ? { entity: text } : undefined;
+  return isEntityId(text) ? { entity: text } : undefined;
 }
 
 export const clampPercent = (v: number): number => Math.min(100, Math.max(0, v));
@@ -73,7 +74,7 @@ export function readyByOf(
   if (typeof raw !== 'string' || raw.trim() === '') return undefined;
   const due = dueOf(raw);
   if (due) return { due };
-  return /^[a-z_]+\.[a-z0-9_]+$/.test(raw.trim()) ? { entity: raw.trim() } : undefined;
+  return isEntityId(raw.trim()) ? { entity: raw.trim() } : undefined;
 }
 
 const NOT_CHARGING = new Set([

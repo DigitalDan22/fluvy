@@ -1,3 +1,4 @@
+import { isEntityId } from '@fluvy/core';
 import { SCHEDULE_ID, VERBS, verbsFor, type Schedule, type Verb } from './schedule.js';
 
 /**
@@ -30,8 +31,6 @@ export interface TargetChoice {
   readonly temperature?: number;
 }
 
-const ENTITY_ID = /^[a-z0-9_]+\.[a-z0-9_]+$/;
-
 const text = (value: unknown): string | undefined =>
   typeof value === 'string' && value.trim() ? value.trim() : undefined;
 
@@ -53,7 +52,7 @@ export function targetChoices(raw: unknown): readonly TargetChoice[] {
           : {};
     const id = typeof item.entity === 'string' ? item.entity.trim() : '';
     const domain = id.slice(0, id.indexOf('.'));
-    if (!ENTITY_ID.test(id) || !VERBS[domain] || seen.has(id)) continue;
+    if (!isEntityId(id) || !VERBS[domain] || seen.has(id)) continue;
     seen.add(id);
     const name = text(item.name);
     const icon = text(item.icon);

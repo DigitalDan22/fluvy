@@ -1,4 +1,4 @@
-import { houseZone, personOf, type HassEntity, type HomeAssistant } from '@fluvy/core';
+import { houseZone, isEntityId, personOf, type HassEntity, type HomeAssistant } from '@fluvy/core';
 import { clockSeconds, instantAt, plusDays, wallNow, WEEKDAYS, type Weekday } from './time.js';
 
 /*
@@ -40,11 +40,9 @@ const list = (value: unknown): readonly unknown[] =>
 const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const ENTITY_ID = /^[a-z_]+\.[a-z0-9_]+$/;
-
 /** A value that names an entity reads as that entity's state too (Home Assistant's `getValueFromEntityId`). */
 const throughEntity = (hass: HomeAssistant, value: unknown): string | undefined =>
-  typeof value === 'string' && ENTITY_ID.test(value) ? hass.states[value]?.state : undefined;
+  isEntityId(value) ? hass.states[value]?.state : undefined;
 
 const entityOf = (condition: VisibilityCondition): string | undefined => {
   const id = condition['entity_id'] ?? condition['entity'];

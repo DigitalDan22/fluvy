@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { domainOf, isActive, resolveEntity } from '../entity.js';
+import { domainOf, isActive, isEntityId, resolveEntity } from '../entity.js';
 import type { HomeAssistant } from '../ha/types.js';
 
 const hass = (
@@ -259,5 +259,29 @@ describe('domainOf', () => {
   it('splits on the first dot', () => {
     expect(domainOf('sensor.a_b.c')).toBe('sensor');
     expect(domainOf('')).toBe('');
+  });
+});
+
+describe('isEntityId', () => {
+  it('tells an entity’s id from words, addresses and another integration’s statistic', () => {
+    for (const id of [
+      'sensor.tv_status',
+      'image.lounge_tv',
+      'input_text.now_on',
+      'sensor.ld2410_1',
+    ])
+      expect(isEntityId(id), id).toBe(true);
+    for (const other of [
+      'On · HDMI 1',
+      '/local/tv.png',
+      'Sensor.TV',
+      'sensor.',
+      '.tv',
+      'sensor.tv status',
+      'tibber:energy_consumption_home',
+      undefined,
+      42,
+    ])
+      expect(isEntityId(other), String(other)).toBe(false);
   });
 });

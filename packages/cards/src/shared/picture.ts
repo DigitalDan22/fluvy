@@ -1,8 +1,5 @@
-import type { HomeAssistant } from '@fluvy/core';
+import { isEntityId, type HomeAssistant } from '@fluvy/core';
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
-
-/** An entity's id (`image.tv`, `camera.porch`, `sensor.tv_status`): what a field taking an entity or words tells apart. */
-export const isEntityId = (text: string): boolean => /^[a-z_]+\.[a-z0-9_]+$/.test(text);
 
 /** A control character: a line break, a tab, a NUL, a delete. */
 export const isControl = (char: string): boolean => {

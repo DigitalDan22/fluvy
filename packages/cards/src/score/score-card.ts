@@ -1,6 +1,7 @@
 import { scoreHeight } from '../energy-family.js';
 import {
   formatNumber,
+  isEntityId,
   strings,
   type FluvyCardConfig,
   type LovelaceConfigForm,
@@ -27,7 +28,7 @@ import {
 } from '../energy-model/collection.js';
 import { co2SignalOf, fetchFossil, fetchFossilRange, fossilOf } from '../energy-model/fossil.js';
 import { fetchPrefs } from '../energy-model/house.js';
-import { isEntityId as isEntity, meterOutage } from '../energy-model/outage.js';
+import { meterOutage } from '../energy-model/outage.js';
 import {
   allocatePeriod,
   fetchPeriod,
@@ -277,7 +278,7 @@ export class FluvyEnergyScoreCard extends Card<EnergyScoreCardConfig> {
 
   protected override watched(): readonly string[] {
     return [...this.sources().flatMap((p) => [...p.energyIn, ...p.energyOut]), this.co2()].filter(
-      isEntity,
+      isEntityId,
     );
   }
 
@@ -475,7 +476,7 @@ export class FluvyEnergyScoreCard extends Card<EnergyScoreCardConfig> {
     const ring = (r: Ring): TemplateResult => {
       const percent = ringPercent(r.value);
       const open =
-        r.key === 'low_carbon' && isEntity(co2)
+        r.key === 'low_carbon' && isEntityId(co2)
           ? () => this.tap(co2, { action: 'more-info' })
           : undefined;
       return html`<div
@@ -573,7 +574,7 @@ export class FluvyEnergyScoreCard extends Card<EnergyScoreCardConfig> {
       entity?: string,
     ): TemplateResult => {
       const body = readout({ label, ...parts, size: 's' });
-      if (!isEntity(entity)) return body;
+      if (!isEntityId(entity)) return body;
       const open = (): void => this.tap(entity, { action: 'more-info' });
       return html`<div
         class="en-tap fv-row--tap"
@@ -590,8 +591,8 @@ export class FluvyEnergyScoreCard extends Card<EnergyScoreCardConfig> {
       style=${fit.layout === 'columns' ? `grid-template-columns:repeat(3, ${column}px)` : ''}
       data-net=${fit.way ? 'way' : 'signed'}
     >
-      ${cell(labels[0] as string, figure(imported), imports.find(isEntity))}
-      ${cell(labels[1] as string, figure(exported), exports.find(isEntity))}
+      ${cell(labels[0] as string, figure(imported), imports.find(isEntityId))}
+      ${cell(labels[1] as string, figure(exported), exports.find(isEntityId))}
       ${cell(labels[2] as string, fit.way ? withWay : signed)}
     </div>`;
   }

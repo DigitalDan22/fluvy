@@ -51,6 +51,13 @@ export function textAttr(view: EntityView, key: string): string {
 export const domainOf = (entityId: string): string =>
   entityId.slice(0, Math.max(0, entityId.indexOf('.')));
 
+/**
+ * An entity's id as Home Assistant writes one (`sensor.tv_status`, `image.lounge_tv`): what tells it from words, an
+ * address, or a statistic of another integration (`tibber:energy_…`).
+ */
+export const isEntityId = (id: unknown): id is string =>
+  typeof id === 'string' && /^[a-z0-9_]+\.[a-z0-9_]+$/.test(id);
+
 const titleCase = (id: string): string => {
   const object = id.slice(id.indexOf('.') + 1).replace(/_/g, ' ');
   return object.charAt(0).toUpperCase() + object.slice(1);
