@@ -113,8 +113,8 @@ const GARAGE_DEVICE = {
 const GARAGE_AREA = { area_id: 'rm_garage', name: 'Garage', icon: 'mdi:garage' };
 
 /*
- * #95's kitchen: two lights, and a dishwasher of an integration the appliance card does not read (LocalThings), its
- * options switches beside its programme, its zone, its delay and its rounds — the card counts the two lights.
+ * #95's kitchen: two lights, and a dishwasher of an integration the appliance card does not read (an ESPHome build),
+ * its options switches beside its programme, its zone, its delay and its rounds — the card counts the two lights.
  */
 const dishwasher = (
   id: string,
@@ -159,7 +159,7 @@ const GALLEY_ENTITIES = Object.fromEntries(
   GALLEY.map(([entity_id]) => [
     entity_id,
     entity_id.includes('dishwasher')
-      ? { entity_id, device_id: 'rm-dishwasher', platform: 'localthings' }
+      ? { entity_id, device_id: 'rm-dishwasher', platform: 'esphome' }
       : { entity_id, area_id: 'rm_galley' },
   ]),
 );

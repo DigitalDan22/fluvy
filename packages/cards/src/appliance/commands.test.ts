@@ -12,15 +12,17 @@ import {
   type Action,
   type CommandInput,
 } from './commands.js';
-import { allFixtures, hcDishwasherDone, houseOf } from './fixtures/index.js';
+import { allFixtures, device, entriesFor, hcDishwasherDone, houseOf } from './fixtures/index.js';
 import { applianceEntities } from './roles.js';
 import type { ApplianceStatus } from './status.js';
 
 /*
  * The writes, pinned. Each brand's contract cites the source that says exactly which service a command calls and with
  * what data — Home Assistant's own integrations at home-assistant/core@54c620cef968dd042184735d9a58070aaee901fb
- * (2026-10-17), under homeassistant/components/ — so a change upstream that breaks one is a change these tests make
- * someone read. hOn, Electrolux and LG's older integration are read only (1.9.1).
+ * (2026-10-17), under homeassistant/components/, and LocalThings at
+ * mbillow/localthings@0b268a94ec2b5b56144b0ededb3f1b9b19684e6f (2026-11-02), under custom_components/localthings/ —
+ * so a change upstream that breaks one is a change these tests make someone read. hOn, Electrolux and LG's older
+ * integration are read only (1.9.1), but for a button a role names.
  */
 
 const NOW = Date.parse('2026-10-17T12:00:00Z');
@@ -221,6 +223,108 @@ describe('the writes each brand pins', () => {
     });
   });
 
+  it('LocalThings: its start, pause and stop buttons (resume is its start), its power switch, its lamp (#97)', () => {
+    // registry/capabilities/operational.py:328-347 (start writes "Run", pause "Pause"), :215-225 (stop writes
+    // "Ready"), button.py:36-38 (a press sends its button's payload)
+    for (const [action, id] of [
+      ['start', 'button.geschirrspuler_kuche_start'],
+      ['pause', 'button.geschirrspuler_kuche_pause'],
+      ['resume', 'button.geschirrspuler_kuche_start'],
+      ['stop', 'button.geschirrspuler_kuche_stopp'],
+    ] as const)
+      expect(call('lt-dish', action), action).toEqual({
+        domain: 'button',
+        service: 'press',
+        data: { entity_id: id },
+      });
+    // common.py:361-382 (power_switch), switch.py:53-58
+    expect(call('lt-dish', 'power_on')).toEqual({
+      domain: 'switch',
+      service: 'turn_on',
+      data: { entity_id: 'switch.geschirrspuler_kuche_ein_aus' },
+    });
+    // a washer that cannot be switched from afar says so with a flag, which switches nothing
+    expect(call('lt-washer', 'power_off')).toBeUndefined();
+    // an oven's start sends the cook it holds (oven.py:410-415, coordinator.py:2771-2774); its lamp (oven.py:838-847)
+    expect(call('lt-oven', 'start')?.data).toEqual({
+      entity_id: 'button.backofen_kuche_garen_starten',
+    });
+    expect(call('lt-oven', 'light')).toEqual({
+      domain: 'switch',
+      service: 'toggle',
+      data: { entity_id: 'switch.backofen_kuche_lampe' },
+    });
+    expect(call('lt-oven', 'pause')).toBeUndefined();
+  });
+
+  it('presses the button a role names for a start, a pause or a stop, whatever the integration (#97)', () => {
+    // an integration the card does not know, its buttons found by their keys
+    const e = entriesFor('unknown_integration', 'other-dish');
+    const other = houseOf(
+      [
+        {
+          title: 'a dishwasher of an integration the card does not know',
+          platform: 'unknown_integration',
+          device: device('other-dish', 'Spülmaschine Keller', null),
+          entities: [
+            e('sensor.spulmaschine_keller_status', 'operation_state'),
+            e('button.spulmaschine_keller_start', 'start'),
+            e('button.spulmaschine_keller_pause', 'pause'),
+            e('button.spulmaschine_keller_stopp', 'stop'),
+          ],
+          states: [
+            ['sensor.spulmaschine_keller_status', 'run'],
+            ['button.spulmaschine_keller_start', 'unknown'],
+            ['button.spulmaschine_keller_pause', 'unknown'],
+            ['button.spulmaschine_keller_stopp', 'unknown'],
+          ],
+          expected: {},
+        },
+      ],
+      NOW,
+    );
+    const press = (entity_id: string) => ({
+      domain: 'button',
+      service: 'press',
+      data: { entity_id },
+    });
+    expect(call('other-dish', 'start', other)).toEqual(press('button.spulmaschine_keller_start'));
+    expect(call('other-dish', 'pause', other)).toEqual(press('button.spulmaschine_keller_pause'));
+    expect(call('other-dish', 'resume', other)).toEqual(press('button.spulmaschine_keller_start'));
+    expect(call('other-dish', 'stop', other)).toEqual(press('button.spulmaschine_keller_stopp'));
+    expect(commandsOf(input('other-dish', 'running', other)).map((c) => c.action)).toEqual([
+      'pause',
+      'stop',
+    ]);
+    // named by hand: a helper's button, a script; never a switch, which is no button
+    const named = {
+      start: 'script.spulmaschine_starten',
+      pause: 'input_button.spulmaschine_pause',
+      stop: 'switch.spulmaschine_stopp',
+    };
+    expect(callFor(HOUSE, 'unknown_integration', named, 'start')).toEqual({
+      domain: 'script',
+      service: 'turn_on',
+      data: { entity_id: 'script.spulmaschine_starten' },
+    });
+    expect(callFor(HOUSE, 'unknown_integration', named, 'pause')).toEqual({
+      domain: 'input_button',
+      service: 'press',
+      data: { entity_id: 'input_button.spulmaschine_pause' },
+    });
+    expect(callFor(HOUSE, 'unknown_integration', named, 'stop')).toBeUndefined();
+    // a community integration's button too, its own ways still read only
+    expect(callFor(HOUSE, 'hon', { stop: 'button.haier_stopp' }, 'stop')).toEqual(
+      press('button.haier_stopp'),
+    );
+    expect(callFor(HOUSE, 'hon', { power: 'switch.haier_strom' }, 'power_off')).toBeUndefined();
+    // an integration's own way first: SmartThings' operating state over a start button named beside it
+    const st = input('st-washer', 'idle');
+    expect(
+      callFor(HOUSE, 'smartthings', { ...st.roles, start: 'button.samsung_start' }, 'start')?.data,
+    ).toEqual({ entity_id: 'select.samsung_waschmaschine', option: 'run' });
+  });
+
   it('the community’s integrations are read only; a plug of any other is a switch', () => {
     for (const action of [
       'start',
@@ -305,6 +409,17 @@ describe('the commands an appliance takes now', () => {
       'pause pause  remote_off',
       'stop stop stop remote_off',
     ]);
+    // LocalThings for what runs its machine, never for its stop (#97)
+    const smart = 'binary_sensor.waschmaschine_flur_intelligente_steuerung';
+    expect(cells('lt-washer', 'running', withStates({ [smart]: 'off' }))).toEqual([
+      'pause pause  remote_off',
+      'stop stop stop',
+    ]);
+    expect(cells('lt-washer', 'paused', withStates({ [smart]: 'off' }))).toEqual([
+      'start resume  remote_off',
+      'stop stop stop',
+    ]);
+    expect(cells('lt-washer', 'running')).toEqual(['pause pause', 'stop stop stop']);
   });
 
   it('offers only an option the select lists', () => {

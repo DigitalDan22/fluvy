@@ -1577,20 +1577,22 @@ temperature on its way, a hob's plates, a fridge's compartments, a state and its
   one**: a vacuum (Home Connect's robot has no vacuum entity, only its keys; LG's robot and stick), a charger, a 3D
   printer (the printer card's: a washer is never a printer, a printer never an appliance), a hair dryer, and — until
   1.10 — a warming drawer, LG's Styler, a kimchi fridge.
-- **Who plays what**: by the integration's own translation key (LG ThinQ, Home Connect, Miele, SmartThings, Matter,
-  Whirlpool, Tuya), then the keys they share, then the end of an id (hOn, Electrolux, LG's SmartThinQ: the
-  community's, read and never written to), then what an entity is (a door by its class, a power reading by its unit).
-  Both LG integrations are known by what they say, never by their names; the older one is read by its device sensor's
-  attributes as well (the time left, the course, the step, an oven's cavities, a cooktop's zones, a fridge's
-  temperatures: most of its own sensors are off by default). An id is read without the device's name, so a Miele
-  coffee machine nobody renamed — the "Coffee system", every id saying "system" — is never taken for a system's. A
-  system entity (firmware, reboot, identify, wifi) is never a role; nothing filed under diagnostics acts. A second drum
-  or cavity on one device (SmartThings' upper washer and second cavity, Whirlpool's lower oven) is read apart, never
-  silently left out.
+- **Who plays what**: by the integration's own translation key (LG ThinQ, Home Connect, Miele, SmartThings and
+  LocalThings, Samsung's on the house's own network, Matter, Whirlpool, Tuya), then the keys they share, then the end of
+  an id (hOn, Electrolux, LG's SmartThinQ: the community's, read and never written to), then what an entity is (a door
+  by its class, a power reading by its unit). Both LG integrations are known by what they say, never by their names; the
+  older one is read by its device sensor's attributes as well (the time left, the course, the step, an oven's cavities,
+  a cooktop's zones, a fridge's temperatures: most of its own sensors are off by default). An id is read without the
+  device's name, so a Miele coffee machine nobody renamed — the "Coffee system", every id saying "system" — is never
+  taken for a system's. A system entity (firmware, reboot, identify, wifi) is never a role; nothing filed under
+  diagnostics acts. A second drum or cavity on one device (SmartThings' upper washer and second cavity, Whirlpool's
+  lower oven) is read apart, never silently left out.
 - **What it is doing** folds every integration's words into the card's few: off, ready, scheduled, running,
   preheating, paused, needs attention, done, error, offline. The words shown stay Home Assistant's (its translation of
   the state: "Spülen", "Rinsing"); where they say nothing (hOn's numbers, the older LG integration's plain English),
-  the card's own, in the house's language. A stopped machine whose job says finished is done; an LG washer that
+  the card's own, in the house's language. A stopped machine whose job says finished is done, and a machine that
+  runs while its phase waits for a delayed start, preheats or says it finished is waiting, preheating or done (a
+  Samsung's runs before its cycle and on after it); an LG washer that
   powers off when done is done for two hours after it said so (LG's sleep is off, a rinse hold is paused, night dry a
   dry). A failure the appliance says outright (Miele's flag, Matter's error, LG's error event for half an hour, Home
   Connect's aborted programme) is the status, said in its own words where it has them.
@@ -1620,10 +1622,14 @@ temperature on its way, a hob's plates, a fridge's compartments, a state and its
 - **Writes are pinned or absent.** Start, pause, resume, stop, power, a programme and a setpoint are offered only for
   an integration whose exact service and data a contract test pins from its source: LG's operation select and power
   switch, Home Connect's active programme (it starts the one chosen) and its buttons, Miele's buttons and power,
-  SmartThings' operating state (its remote control on) and buttons, Matter's buttons and power, Whirlpool's oven stop
-  and light, Tuya's kettle. A select's option is offered only when the select lists it. Start needs the appliance at
-  rest and its remote start on (else the cell is disabled, titled so); stop asks first, and so does switching off one
-  that runs. hOn, Electrolux and LG's older integration are read only.
+  SmartThings' operating state (its remote control on) and buttons, LocalThings' buttons, power switch and lamp (its
+  Smart Control on for what runs its machine, never for its stop), Matter's buttons and power, Whirlpool's oven stop
+  and light, Tuya's kettle. Beyond them, the start, pause, resume and stop a role names — a device's button found by
+  its key or named by hand, a helper's button, a script — are pressed for any integration as Home Assistant's own
+  button would be (#97); a paused appliance resumes by its start where it names no resume. A select's option is
+  offered only when the select lists it. Start needs the appliance at rest and its remote start on (else the cell is
+  disabled, titled so); stop asks first, and so does switching off one that runs. hOn, Electrolux and LG's older
+  integration are otherwise read only.
 - **Discovery's cost**: the house's appliances are read again when the registries change, never on a state's tick.
 - **The whole card is the reporter's (#47)**, in the theme's tokens: what the mockup draws in its lavender and blue,
   every palette draws in its own, light and dark. `full` (the default for a big appliance: washer, dryer,

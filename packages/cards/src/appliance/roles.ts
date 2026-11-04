@@ -6,7 +6,8 @@ import { entityOf, stateOf } from './refs.js';
 /*
  * An appliance's entities, found on its device. Each integration hangs a washer's, an oven's or a fridge's entities on
  * one device, each with its own words: LG ThinQ, Home Connect, Miele, SmartThings, Matter, Whirlpool and Tuya (Home
- * Assistant's own, read from their source: their translation keys, and the writes the commands module pins), hOn,
+ * Assistant's own, read from their source: their translation keys, and the writes the commands module pins),
+ * LocalThings (Samsung's appliances on the house's own network, from HACS, read from its source the same way), hOn,
  * Electrolux and LG's older SmartThinQ integration (from HACS, read by the ends of their ids), and PetKit's and
  * PetLibro's feeders, fountains and litter boxes (from HACS, read by their keys, #112). A role is known by the
  * integration's own translation key, then by the keys they share, then by the end of its id, then by what it is (a
@@ -45,7 +46,10 @@ export type ApplianceRole =
   | 'door'
   /** Whether it may be started from Home Assistant (its own remote-start switch, set on the appliance). */
   | 'remote'
-  /** Its power switch (or, on LG's older integration, the device's own sensor, which says whether it is on). */
+  /**
+   * Its power switch, or what says whether it is on: LocalThings' flag where the appliance cannot be switched from
+   * afar, LG's older integration's device sensor.
+   */
   | 'power'
   /** A flag that its cycle completed, its last change the finish (LG's older integration's `run_completed`). */
   | 'completed'
@@ -173,15 +177,16 @@ export const APPLIANCE_ROLES: readonly ApplianceRole[] = [
 ];
 
 /**
- * The integrations the card reads by their words. Home Assistant's own are read from their source: their keys, and
- * (in `commands.ts`) the writes their source pins. The community's, from HACS, are read by the ends of their ids, and
- * never written to.
+ * The integrations the card reads by their words. Home Assistant's own, and LocalThings (from HACS, Samsung's beside
+ * SmartThings), are read from their source: their keys, and (in `commands.ts`) the writes their source pins. The
+ * community's others, from HACS, are read by the ends of their ids, and never written to.
  */
 export const VERIFIED_PLATFORMS = [
   'lg_thinq',
   'home_connect',
   'miele',
   'smartthings',
+  'localthings',
   'matter',
   'whirlpool',
   'tuya',
@@ -219,7 +224,7 @@ const DOMAINS: Readonly<Record<ApplianceRole, readonly string[]>> = {
   start_in: ['sensor'],
   door: ['binary_sensor', 'sensor'],
   remote: ['binary_sensor', 'sensor'],
-  power: ['switch', 'sensor'],
+  power: ['switch', 'binary_sensor', 'sensor'],
   completed: ['binary_sensor', 'sensor'],
   operation: ['select'],
   launch: ['select'],
@@ -448,6 +453,43 @@ const KEYS_BY_PLATFORM: Readonly<
     energy_difference: null,
     energy_saved: null,
     oven_cavity_status: null,
+  },
+  // localthings (mbillow/localthings@0b268a9) registry/capabilities/operational.py, common.py, washer.py, dryer.py,
+  // oven.py, microwave.py: each entity's key is its descriptor's (entity.py:139-160)
+  localthings: {
+    machine_state: 'state',
+    progress: 'phase',
+    progress_percentage: 'progress',
+    finish_time: 'finish',
+    completion_minutes: 'remaining',
+    // a switch, or a flag where the appliance cannot be switched from afar (common.py:361-382)
+    power_switch: 'power',
+    // its course select, whatever table of courses its key names (`COURSE`); an oven's and a microwave's mode
+    cycle: 'program',
+    oven_mode: 'program',
+    cooking_mode: 'program',
+    wash_temperature: 'wash_temperature',
+    washer_dry_level: 'dryness',
+    dryer_dry_level: 'dryness',
+    // a cavity's state is the step of its cook (preheating, cooking, done), its machine state idle, active or paused
+    oven_state: 'phase',
+    cavity_state: 'phase',
+    current_temp_c: 'temperature',
+    oven_setpoint: 'target',
+    setpoint: 'target',
+    food_probe_temp: 'probe',
+    food_probe_setpoint: 'probe_target',
+    door_open: 'door',
+    lamp: 'light',
+    // an oven's and a microwave's start sends the cook they hold (oven.py:410-415)
+    start_cooking: 'start',
+    cook_time: 'total',
+    cook_time_remaining: 'remaining',
+    cook_finish_time: 'finish',
+    energy_kwh: 'energy',
+    water_liters: 'water',
+    // a microwave's power level, in watts: never what it draws
+    power_level: null,
   },
   // matter/sensor.py, button.py, select.py, number.py, binary_sensor.py
   matter: {
@@ -732,6 +774,9 @@ const TWIN: ReadonlyArray<readonly [RegExp, string]> = [
   [/^(oven_[a-z_]+)_lower$/, '$1'],
 ];
 
+/** LocalThings' course select names its appliance and its table of courses in its key ("washer_cycle_table_02"). */
+const COURSE = /^(washer|dryer|dishwasher)_cycle(_[a-z0-9]+)*$/;
+
 /** The twin's key as the first unit's: `washer_sub_job_state` plays what `washer_job_state` plays, for the twin. */
 function twinOf(key: string | undefined): string | undefined {
   if (!key) return undefined;
@@ -756,7 +801,7 @@ export function partOf(candidate: Candidate, rigour: Rigour = 'lenient'): Part |
     DOMAINS[word].includes(domain) &&
     !(ACTING.has(word) && candidate.category === 'diagnostic');
   const twinKey = twinOf(key);
-  const keyed = twinKey ?? key;
+  const keyed = twinKey ?? (platform === 'localthings' && COURSE.test(key ?? '') ? 'cycle' : key);
   // the lower cavity of LG's older integration's range is the twin, by its attributes' names
   const twin =
     twinKey !== undefined || (candidate.attribute && /^oven_lower_/.test(object))

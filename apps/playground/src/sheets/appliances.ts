@@ -12,6 +12,7 @@ import {
   allFixtures,
   laterFixtures,
   LOCALTHINGS_ROLES,
+  minutesFrom,
   plugFridge,
   reporterAtWork,
 } from '../../../../packages/cards/src/appliance/fixtures/index.js';
@@ -32,15 +33,15 @@ if (!customElements.get('fluvy-alerts-card'))
  * Connect's dishwasher out of salt, its oven preheating, its coffee machine asking to be descaled, its fridge freezer
  * with a door open; Miele's washer rinsing, its fridge super cooling, its hob with two plates on; SmartThings' washer
  * with its upper drum at rest and its oven's two cavities; Matter's dishwasher and paused washer; Whirlpool's dryer and
- * double oven; Tuya's kettle; the community's hOn, AEG and SmartThinQ washers; #91's LocalThings dishwasher, its roles
- * named by hand, off by its switch; a washer and a dryer on smart plugs (their power's history answered here). Then
- * every variant, the list of the house's appliances, an appliance out of reach beside its live twin, a failure that
- * says why, and a house in Fahrenheit. The state words are Home Assistant's in the page's language (`lang`), as its
- * translations say them. Last, the reporter's own LG house as he dumped it (#47): his
- * four appliances on both integrations he runs, at rest and at work, whole, compact and as rows — the words of LG's
- * states left to the card, as the older integration's plain English would be. And the house's status colours (1.9):
- * the four statuses on an alerts card and on a dishwasher due its salt, the palette's own and then a warning of the
- * house's own (#47's orange), light or dark as the page is.
+ * double oven; Tuya's kettle; the community's hOn, AEG and SmartThinQ washers; LocalThings' dishwasher (#91), washer
+ * and oven by its keys, their buttons pressed by the card's (#97); a washer and a dryer on smart plugs (their power's
+ * history answered here). Then every variant, the list of the house's appliances, an appliance out of reach beside its
+ * live twin, a failure that says why, and a house in Fahrenheit. The state words are Home Assistant's in the page's
+ * language (`lang`), as its translations say them. Last, the reporter's own LG house as he dumped it (#47): his four
+ * appliances on both integrations he runs, at rest and at work, whole, compact and as rows — the words of LG's states
+ * left to the card, as the older integration's plain English would be. And the house's status colours (1.9): the four
+ * statuses on an alerts card and on a dishwasher due its salt, the palette's own and then a warning of the house's own
+ * (#47's orange), light or dark as the page is.
  */
 
 const now = NOW.getTime();
@@ -165,6 +166,18 @@ const WORDS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     bake: 'Bake',
     convection_bake: 'Convection bake',
     unbalanced_load_error: 'Unbalanced load',
+    // LocalThings' (its translations/en.json)
+    active: 'Active',
+    idle: 'Idle',
+    wash: 'Washing',
+    rinse: 'Rinsing',
+    finish: 'Finished',
+    delaywash: 'Delayed start',
+    preheat: 'Preheat',
+    '8a': 'Normal',
+    '5b': 'Cotton',
+    warm: 'Warm',
+    high: 'High',
   },
   de: {
     spinning: 'Schleudern',
@@ -201,6 +214,19 @@ const WORDS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     Table_00_Course_5B: 'Baumwolle',
     boiling_quick: 'Schnellkochen',
     unbalanced_load_error: 'Unwucht',
+    // LocalThings' (its translations/de.json)
+    active: 'Aktiv',
+    idle: 'Leerlauf',
+    wash: 'Waschen',
+    rinse: 'Spülen',
+    finish: 'Fertig',
+    delaywash: 'Startverzögerung',
+    preheat: 'Vorheizen',
+    '8a': 'Normal',
+    '5b': 'Baumwolle',
+    convection_bake: 'Heißluft',
+    warm: 'Warm',
+    high: 'Hoch',
   },
   fr: {
     spinning: 'Essorage',
@@ -435,7 +461,7 @@ const card = (device: string, more: Record<string, unknown> = {}): LovelaceCardC
   _now: at,
   ...more,
 });
-/** #91's dishwasher on LocalThings, as its owner's card names it: by its power switch, its roles by hand. */
+/** #91's dishwasher, as its owner's card named it before the card read LocalThings: its roles by hand. */
 const localthings = (more: Record<string, unknown> = {}): LovelaceCardConfig => ({
   type: 'custom:fluvy-appliance-card',
   entity: 'switch.geschirrspuler_kuche_ein_aus',
@@ -444,6 +470,36 @@ const localthings = (more: Record<string, unknown> = {}): LovelaceCardConfig => 
   _now: at,
   ...more,
 });
+/** States by entity, as `changed` takes them. */
+const said = (states: Readonly<Record<string, string>>): Record<string, Partial<HassEntity>> =>
+  Object.fromEntries(Object.entries(states).map(([id, state]) => [id, { state }]));
+
+/**
+ * #91's dishwasher at work, as LocalThings says it: switched on, its machine active these 48 minutes, washing, its
+ * finish, time left and progress.
+ */
+const DISH_WASHING: Readonly<Record<string, Partial<HassEntity>>> = {
+  ...said({
+    'switch.geschirrspuler_kuche_ein_aus': 'on',
+    'sensor.geschirrspuler_kuche_fortschritt': 'wash',
+    'sensor.geschirrspuler_kuche_fortschritt_in_prozent': '38',
+    'sensor.geschirrspuler_kuche_voraussichtliches_ende': minutesFrom(now, 78),
+    'sensor.geschirrspuler_kuche_fertigstellungszeit': '78',
+    'binary_sensor.geschirrspuler_kuche_lauft': 'on',
+  }),
+  'sensor.geschirrspuler_kuche_maschinenzustand': {
+    state: 'active',
+    last_changed: minutesFrom(now, -48),
+  },
+};
+/** Done: its machine at rest, its progress holding the finish (operational.py's grace window). */
+const DISH_DONE = said({
+  'switch.geschirrspuler_kuche_ein_aus': 'on',
+  'sensor.geschirrspuler_kuche_fortschritt': 'finish',
+  'sensor.geschirrspuler_kuche_fortschritt_in_prozent': '100',
+  'sensor.geschirrspuler_kuche_fertigstellungszeit': '0',
+});
+
 const list = (more: Record<string, unknown> = {}): LovelaceCardConfig => ({
   type: 'custom:fluvy-appliances-card',
   _now: at,
@@ -620,23 +676,75 @@ export const sheet: SheetSpec = {
     frame({ title: 'hOn · dishwasher, its start delayed', cards: [card('hon-dish')] }),
     frame({ title: 'AEG · washer by its ids', cards: [card('aeg-washer')] }),
     frame({ title: 'SmartThinQ · washer rinsing', cards: [card('stq-washer')] }),
-    // LocalThings (#91), its roles named as its owner names them (the card reads none of its keys): switched off, its
-    // machine state idle all the same; on and waiting; its own state named over the template's summary on its device
-    frame({ title: 'LocalThings · dishwasher switched off', cards: [localthings()] }),
+    // LocalThings by its keys (#97): #91's dishwasher switched off, washing, paused and done, its Start, Pause and Stop
+    // pressed by the card's buttons; the washer rinsing, paused with its Smart Control off (its stop still allowed),
+    // waiting for its delayed start and done; the oven preheating; all three as rows; #91's card, its roles named as
+    // its owner named them, reading the same
+    frame({ title: 'LocalThings · dishwasher switched off', cards: [card('lt-dish')] }),
+    ...(
+      [
+        ['washing', DISH_WASHING],
+        [
+          'paused',
+          {
+            ...DISH_WASHING,
+            'sensor.geschirrspuler_kuche_maschinenzustand': { state: 'pause' },
+          },
+        ],
+        ['done', DISH_DONE],
+      ] as const
+    ).map(([doing, states]) =>
+      frame({
+        title: `LocalThings · dishwasher ${doing}, its buttons`,
+        cards: [card('lt-dish', { show_controls: true })],
+        hass: changed(states),
+      }),
+    ),
     frame({
-      title: 'LocalThings · dishwasher on, waiting',
-      cards: [localthings()],
-      hass: changed({ 'switch.geschirrspuler_kuche_ein_aus': { state: 'on' } }),
+      title: 'LocalThings · washer rinsing, its buttons',
+      cards: [card('lt-washer', { show_controls: true })],
     }),
     frame({
-      title: 'LocalThings · a helper on its device ignored',
-      cards: [
-        localthings({
-          entity: 'sensor.geschirrspuler_kuche_maschinenzustand',
-          roles: LOCALTHINGS_ROLES.filter(({ role }) => role === 'power'),
+      title: 'LocalThings · washer paused, its Smart Control off',
+      cards: [card('lt-washer', { show_controls: true })],
+      hass: changed(
+        said({
+          'sensor.waschmaschine_flur_maschinenzustand': 'pause',
+          'binary_sensor.waschmaschine_flur_intelligente_steuerung': 'off',
         }),
-      ],
+      ),
     }),
+    frame({
+      title: 'LocalThings · washer waiting for its delayed start',
+      cards: [card('lt-washer', { show_controls: true })],
+      hass: changed(said({ 'sensor.waschmaschine_flur_fortschritt': 'delaywash' })),
+    }),
+    frame({
+      title: 'LocalThings · washer done',
+      cards: [card('lt-washer', { show_controls: true })],
+      hass: changed(
+        said({
+          'sensor.waschmaschine_flur_maschinenzustand': 'idle',
+          'sensor.waschmaschine_flur_fortschritt': 'finish',
+          'sensor.waschmaschine_flur_fortschritt_in_prozent': '100',
+          'binary_sensor.waschmaschine_flur_lauft': 'off',
+        }),
+      ),
+    }),
+    frame({
+      title: 'LocalThings · oven preheating, its buttons',
+      cards: [card('lt-oven', { show_controls: true })],
+    }),
+    frame({
+      title: 'LocalThings · rows',
+      cards: [
+        card('lt-washer', { variant: 'row' }),
+        card('lt-dish', { variant: 'row' }),
+        card('lt-oven', { variant: 'row' }),
+      ],
+      hass: changed(DISH_WASHING),
+    }),
+    frame({ title: 'LocalThings · as #91’s owner named its roles', cards: [localthings()] }),
     // on a plug: running (its power's history), and done, waiting to be unloaded
     frame({ title: 'A washer on a plug · running', cards: [card('plug-washer')] }),
     frame({ title: 'A dryer on a plug · done', cards: [card('plug-dryer')] }),

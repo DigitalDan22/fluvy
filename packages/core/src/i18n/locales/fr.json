@@ -2200,6 +2200,7 @@
     "role_power": "Interrupteur",
     "role_start": "Bouton de démarrage",
     "role_pause": "Bouton de pause",
+    "role_resume": "Bouton de reprise",
     "role_stop": "Bouton d’arrêt",
     "role_light": "Éclairage",
     "role_error": "Erreur",

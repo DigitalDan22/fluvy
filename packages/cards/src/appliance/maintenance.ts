@@ -159,6 +159,12 @@ const BY_KEY: Readonly<Record<string, Readonly<Record<string, MaintenanceSpec>>>
     reset_water_filter: spec('water_filter', 'reset'),
     reset_hood_filter: spec('grease_filter', 'reset'),
   },
+  // localthings washer.py:682-695 (its dispensers' tanks running low), common.py:724-742 (a filter's blockage)
+  localthings: {
+    detergent_low: spec('detergent', 'flag', 'soon'),
+    softener_low: spec('softener', 'flag', 'soon'),
+    filter_blockage: spec('filter', 'flag'),
+  },
   // matter/sensor.py, button.py: a filter's condition left, and its reset
   matter: {
     hepa_filter_condition: spec('air_filter', 'level'),

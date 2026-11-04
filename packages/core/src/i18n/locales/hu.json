@@ -1302,6 +1302,7 @@
     "role_power": "Főkapcsoló",
     "role_start": "Indítógomb",
     "role_pause": "Szünetgomb",
+    "role_resume": "Folytatógomb",
     "role_stop": "Leállítógomb",
     "role_light": "Világítás",
     "role_error": "Hiba",

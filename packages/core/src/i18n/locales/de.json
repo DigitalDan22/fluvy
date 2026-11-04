@@ -2200,6 +2200,7 @@
     "role_power": "Netzschalter",
     "role_start": "Starttaste",
     "role_pause": "Pausetaste",
+    "role_resume": "Fortsetzen-Taste",
     "role_stop": "Stopptaste",
     "role_light": "Licht",
     "role_error": "Fehler",

@@ -24,7 +24,7 @@ import {
   lgWasher,
   lgWashTower,
 } from './lg-thinq.js';
-import { localthingsDishwasher } from './localthings.js';
+import { localthingsDishwasher, localthingsOven, localthingsWasher } from './localthings.js';
 import { matterDishwasher, matterFridge, matterNotAppliances, matterWasher } from './matter.js';
 import { mieleCoffee, mieleFridge, mieleHob, mieleNotAppliances, mieleWasher } from './miele.js';
 import { plainPlugs, plugWasher } from './plug.js';
@@ -92,6 +92,8 @@ export function allFixtures(now: number): readonly ApplianceFixture[] {
     electroluxFridge(now),
     smartthinqWasher(now),
     localthingsDishwasher(now),
+    localthingsWasher(now),
+    localthingsOven(now),
     plugWasher(now),
     ...plainPlugs(now),
   ];

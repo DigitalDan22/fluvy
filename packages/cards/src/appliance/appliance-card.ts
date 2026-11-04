@@ -381,6 +381,7 @@ const NAMED_ROLES = [
   'power',
   'start',
   'pause',
+  'resume',
   'stop',
   'light',
   'error',

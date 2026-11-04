@@ -409,21 +409,23 @@ targets:
 
 The appliance card finds a washer, a dryer, a dishwasher, an oven, a hob, a hood, a fridge, a freezer, a wine cooler, a
 coffee machine, a kettle, an air fryer, a microwave, a toaster, a blender, a sandwich maker, a pet feeder, fountain or
-litter box — or any appliance on a smart plug, read from the plug's switch and power — by what its integration says
-(LG ThinQ and LG's older SmartThinQ, Home Connect, Miele, SmartThings, Matter, Whirlpool, Tuya, hOn, Electrolux, PetKit,
-PETLIBRO) or by its name in any of Fluvy's languages;
-`kind` names it when the card guesses wrong, `roles` names an entity for a role (a helper you attached to its device, a
-template or a utility meter, plays one only where nothing of its integration's own does). The card is the design a
-reader drew for us: a picture of the appliance (`picture`: a drawing a kind, the icon, none, or `image` for your own
-photo), its name and what it is doing (off while its power switch is off, unless it says it runs, waits or is done), a
-power button tinted by what it does, its kind's hero — the time left over a bar, an oven's temperature and target, a
-fridge's compartments, a hob's zones, a coffee machine's drinks — and three `rows` under a hairline (the programme,
-water, energy, a filter to clean, the last coffee: picked, ordered, named, coloured and given actions in the rows
-editor), `maintenance` as rows of their own, and buttons only where the integration's own code says exactly how (start,
-pause, stop, power, the light; the rest is shown and never written). `variant: compact`, `ring` (a dial) and `row` are
-the smaller layouts; every part switches off (`show_power`, `show_hero`, `show_progress`, `show_rows`,
-`show_controls`…). An administrator sees a bell beside the time left: "Tell me when it's done" writes a normal
-automation that notifies their phone when the appliance finishes.
+litter box — or any appliance on a smart plug, read from the plug's switch and power — by what its integration says (LG
+ThinQ and LG's older SmartThinQ, Home Connect, Miele, SmartThings, LocalThings, Matter, Whirlpool, Tuya, hOn,
+Electrolux, PetKit, PETLIBRO) or by its name in any of Fluvy's languages; `kind` names it when the card guesses wrong,
+`roles` names an entity for a role (a helper you attached to its device, a template or a utility meter, plays one only
+where nothing of its integration's own does). The card is the design a reader drew for us: a picture of the appliance
+(`picture`: a drawing a kind, the icon, none, or `image` for your own photo), its name and what it is doing (off while
+its power switch is off, unless it says it runs, waits or is done), a power button tinted by what it does, its kind's
+hero — the time left over a bar, an oven's temperature and target, a fridge's compartments, a hob's zones, a coffee
+machine's drinks — and three `rows` under a hairline (the programme, water, energy, a filter to clean, the last coffee:
+picked, ordered, named, coloured and given actions in the rows editor), `maintenance` as rows of their own, and buttons
+only where the integration's own code says exactly how (start, pause, stop, power, the light; the rest is shown and
+never written) — or, for any integration, the Start, Pause, Resume and Stop its `roles` name (`start`, `pause`,
+`resume`, `stop`: a device's button, a helper's button or a script), found by themselves where the integration names its
+buttons so; stopping asks first. `variant: compact`, `ring` (a dial) and `row` are the smaller layouts; every part
+switches off (`show_power`, `show_hero`, `show_progress`, `show_rows`, `show_controls`…). An administrator sees a bell
+beside the time left: "Tell me when it's done" writes a normal automation that notifies their phone when the appliance
+finishes.
 
 ```yaml
 type: custom:fluvy-appliance-card

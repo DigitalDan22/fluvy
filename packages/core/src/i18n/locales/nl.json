@@ -2200,6 +2200,7 @@
     "role_power": "Aan/uit-schakelaar",
     "role_start": "Startknop",
     "role_pause": "Pauzeknop",
+    "role_resume": "Hervatknop",
     "role_stop": "Stopknop",
     "role_light": "Licht",
     "role_error": "Fout",

@@ -180,8 +180,8 @@ describe('the house by its rooms', () => {
       ['sensor.kettle_power', '1800', { device_class: 'power' }, { device_id: 'plug' }],
       // a plug's settings are filed as such: it stays a plug
       ['select.kettle_power_on', 'previous', {}, { device_id: 'plug', entity_category: 'config' }],
-      // an appliance of an integration the appliance card does not read (LocalThings): its options are switches beside
-      // its programme, its delay and its start
+      // an appliance of an integration the appliance card does not read (an ESPHome build): its options are switches
+      // beside its programme, its delay and its start
       ['switch.dishwasher_power', 'on', {}, { device_id: 'dishwasher' }],
       ['switch.dishwasher_extra_dry', 'on', {}, { device_id: 'dishwasher' }],
       ['switch.dishwasher_sanitize', 'off', {}, { device_id: 'dishwasher' }],

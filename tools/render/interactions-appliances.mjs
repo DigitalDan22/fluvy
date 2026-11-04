@@ -7,7 +7,8 @@
  * choice away) shows each tap at once and sends one call once the taps settle (ten taps, one call — an appliance's
  * cloud counts them), held until Home Assistant answers; a quick mode switches its switch; pause presses the
  * appliance's own button, stop asks first in Home Assistant's dialog; a start the appliance does not allow from afar is
- * disabled and says why; a row, a zone and a compartment open their entity, a reminder's hold resets it after asking
+ * disabled and says why; LocalThings' Pause and Stop are the card's (#97), its resume disabled while its Smart Control
+ * is off; a row, a zone and a compartment open their entity, a reminder's hold resets it after asking
  * where its integration lets a card; the power round switches a small appliance on its plug and asks first before
  * switching off one that runs, and a fridge on a plug — in operation, never done, no bell — whatever its compressor
  * does; a drink starts where the integration lets a card; the pictures land in their own chunk;
@@ -152,6 +153,52 @@ check(
     'a start the appliance does not allow from afar is disabled, and says why',
     remote.disabled === true && /Remote start is off on the appliance/.test(remote.title),
     JSON.stringify(remote),
+  );
+}
+
+/* ---------- LocalThings' own buttons, pressed by the card's (#97) ---------- */
+{
+  await reset(page);
+  const washer = card(page, 'LocalThings · washer rinsing, its buttons');
+  await washer.locator('.ap-actions [data-action="pause"]').click();
+  await settle(page, 200);
+  const paused = await calls(page);
+  check(
+    'LocalThings: the primary pauses a rinsing washer by its own Pause button',
+    paused.length === 1 &&
+      paused[0].s === 'button.press' &&
+      paused[0].d.entity_id === 'button.waschmaschine_flur_pause',
+    JSON.stringify(paused),
+  );
+  await reset(page);
+  await washer.locator('.ap-actions [data-action="stop"]').click();
+  await settle(page, 200);
+  const stopped = await calls(page);
+  const asked = await handed();
+  check(
+    'LocalThings: its Stop asks first, in Home Assistant’s own dialog',
+    stopped.length === 0 &&
+      asked.some(
+        (detail) =>
+          detail.config?.tap_action?.perform_action === 'button.press' &&
+          detail.config?.tap_action?.target?.entity_id === 'button.waschmaschine_flur_stopp',
+      ),
+    JSON.stringify({ stopped, asked: asked.slice(-1) }),
+  );
+  const cells = await card(page, 'LocalThings · washer paused, its Smart Control off').evaluate(
+    (el) => {
+      const cell = (action) => el.shadowRoot.querySelector(`.ap-actions [data-action="${action}"]`);
+      return {
+        resume: cell('start')?.disabled ?? null,
+        title: cell('start')?.getAttribute('title') ?? '',
+        stop: cell('stop')?.disabled ?? null,
+      };
+    },
+  );
+  check(
+    'LocalThings: with its Smart Control off, its resume is disabled and says why, its stop is not',
+    cells.resume === true && /Remote start is off/.test(cells.title) && cells.stop === false,
+    JSON.stringify(cells),
   );
 }
 

@@ -1236,7 +1236,7 @@ describe('custom:fluvy-home strategy — a room counts its devices, never an app
   /** A galley kitchen of two lights, a radio on its plug and a dishwasher of an integration the appliance card does not read. */
   const kitchen = () => {
     const dishwasher = (id: string, state: string, attributes: Record<string, unknown> = {}) =>
-      entity(id, state, attributes, { device_id: 'd-dishwasher', platform: 'localthings' });
+      entity(id, state, attributes, { device_id: 'd-dishwasher', platform: 'esphome' });
     const hass = house([
       entity(
         'light.galley_ceiling',

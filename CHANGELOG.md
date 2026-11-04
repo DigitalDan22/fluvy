@@ -11,6 +11,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   row (a chevron beside it says so), where it opened Home Assistant's dialog: the keys, a letter to find a name, the
   haptics' tick as one is chosen. An option too long to hold beside the name in a narrow column goes under it, as a
   date does, where it ended in an ellipsis. Thanks to @rammium (#96).
+- An appliance whose machine runs while its cycle waits for its delayed start, preheats or has finished says
+  Scheduled, Preheating or Done, where it said Running: a Samsung washer counting down to its start on SmartThings, an
+  oven on SmartThings preheating. Thanks to @rammium (#97).
 
 ### Added
 
@@ -86,6 +89,14 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   Volkswagen's two and BMW's CarData — never taking a horn, a wake button or a charge cable's latch for a control; full,
   compact and as a strip, a picture of the car over the battery or in the head, every part switched off or reordered,
   each control and row named, coloured and given its own actions. Thanks to @DailytheNoob (#84).
+- The appliance card reads LocalThings (Samsung's washers, dryers, dishwashers, ovens and microwaves on the house's own
+  network) by its own words: its machine state and the cycle's step, the time left and the finish, its progress, its
+  programme, its power, an oven's heat, door and lamp, a washer's detergent and softener running low. Its Start, Pause
+  and Stop are the card's own buttons (stopping asks first; Start, Pause and Resume disabled while its Smart Control is
+  off), its programmes can be chosen at rest, and it is listed among the house's appliances. Thanks to @rammium (#97).
+- The appliance card presses the Start, Pause, Resume and Stop its `roles` name, for any integration: a device's
+  button (found by itself where the integration names it so), a helper's button or a script. Stopping asks first.
+  Thanks to @rammium (#97).
 
 ## [1.12.0] — 2026-11-04
 

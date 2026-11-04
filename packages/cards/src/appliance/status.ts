@@ -1,13 +1,13 @@
 import type { ApplianceKind } from './kinds.js';
 
 /*
- * What an appliance is doing, whatever its integration calls it: Home Connect's nine operation states, Miele's
- * nineteen statuses, LG's eighty-odd current states, SmartThings' machine states, Matter's operational states,
+ * What an appliance is doing, whatever its integration calls it: Home Connect's nine operation states, Miele's nineteen
+ * statuses, LG's eighty-odd current states, SmartThings' and LocalThings' machine states, Matter's operational states,
  * Whirlpool's cycle states, hOn's numbers, Electrolux's appliance states, PetKit's litter box's work states, each
- * folded into the few a card draws. The words a card writes stay Home Assistant's (the state as it translates it);
- * the status decides the tone, the bar, the buttons and the line under the head. The phase a cycle is at is folded the
- * same way into the steps a bar can show: a washer washes, rinses and spins; a dishwasher prewashes, washes, rinses
- * and dries; a dryer dries, cools and keeps the load from creasing.
+ * folded into the few a card draws. The words a card writes stay Home Assistant's (the state as it translates it); the
+ * status decides the tone, the bar, the buttons and the line under the head. The phase a cycle is at is folded the same
+ * way into the steps a bar can show: a washer washes, rinses and spins; a dishwasher prewashes, washes, rinses and
+ * dries; a dryer dries, cools and keeps the load from creasing.
  */
 
 export type ApplianceStatus =
@@ -45,6 +45,9 @@ const STATUSES: ReadonlyArray<readonly [ApplianceStatus, readonly string[]]> = [
     [
       'delayedstart',
       'delayed_start',
+      // a Samsung's washer counting down to its delayed start, on SmartThings and on LocalThings
+      'delay_wash',
+      'delaywash',
       'waiting_to_start',
       'delay_countdown',
       'delay_paused',
@@ -223,11 +226,13 @@ export interface StatusInput {
 }
 
 /**
- * The status of an appliance: its state word's, else its phase's; a finished phase over a stopped machine is
- * finished; an appliance that powered off within `doneFor` of saying it completed is finished (LG's washers power off
- * when done); with no state, a running flag says what it can. At rest is all some states say of an appliance switched
- * off too (SmartThings' and Matter's stopped machine, LocalThings' idle): a power switch that reads off makes it off,
- * but never hides a cycle, a finish or a fault the appliance says while the switch lags.
+ * The status of an appliance: its state word's, else its phase's; a finished phase over a stopped machine is finished;
+ * a machine that runs while its phase counts down to a delayed start, preheats or says its cycle finished is waiting,
+ * preheating or finished (a Samsung's machine state runs before its cycle and on after its finish); an appliance that
+ * powered off within `doneFor` of saying it completed is finished (LG's washers power off when done); with no state, a
+ * running flag says what it can. At rest is all some states say of an appliance switched off too (SmartThings' and
+ * Matter's stopped machine, LocalThings' idle): a power switch that reads off makes it off, but never hides a cycle, a
+ * finish or a fault the appliance says while the switch lags.
  */
 export function applianceStatus(input: StatusInput): ApplianceStatus {
   const { platform, kind } = input;
@@ -239,6 +244,11 @@ export function applianceStatus(input: StatusInput): ApplianceStatus {
     if (since >= 0 && since <= input.doneFor) return 'finished';
   }
   if (said === 'idle' && phase === 'finished') return 'finished';
+  if (
+    said === 'running' &&
+    (phase === 'scheduled' || phase === 'preheating' || phase === 'finished')
+  )
+    return phase;
   const status = said ?? (phase && phase !== 'idle' ? phase : input.running ? 'running' : 'idle');
   return status === 'idle' && input.power === false ? 'off' : status;
 }
@@ -261,8 +271,9 @@ export const APPLIANCE_STEPS: readonly ApplianceStep[] = [
 ];
 
 /**
- * The phase words of a cycle, by its step: Miele's programme phases, SmartThings' job states, LG's current states,
- * Whirlpool's cycle states, Electrolux's cycle phases, hOn's older words, LG's older integration's English.
+ * The phase words of a cycle, by its step: Miele's programme phases, SmartThings' job states, LocalThings' progress,
+ * LG's current states, Whirlpool's cycle states, Electrolux's cycle phases, hOn's older words, LG's older integration's
+ * English.
  */
 const STEPS: ReadonlyArray<readonly [ApplianceStep, readonly string[]]> = [
   [
@@ -290,11 +301,13 @@ const STEPS: ReadonlyArray<readonly [ApplianceStep, readonly string[]]> = [
       'cycle_sensing',
       'ai_wash',
       'weight_sensing',
+      'weightsensing',
       'detecting',
       'detergent_amount',
       'running_maincycle',
       'cleaning',
       'steam',
+      'steaming',
     ],
   ],
   [
@@ -320,6 +333,7 @@ const STEPS: ReadonlyArray<readonly [ApplianceStep, readonly string[]]> = [
       'thermo_spin',
       'drain',
       'pre_drain',
+      'predrain',
       'running_postcycle',
     ],
   ],
@@ -342,6 +356,7 @@ const STEPS: ReadonlyArray<readonly [ApplianceStep, readonly string[]]> = [
       'perfect_dry_active',
       'warm_air',
       'night_dry',
+      'dryingwithdooropen',
     ],
   ],
   [
@@ -397,8 +412,10 @@ export function stepOf(kind: ApplianceKind, phase: string | undefined): Applianc
   if (!word) return undefined;
   const step = STEPS.find(([, words]) => words.includes(word))?.[0];
   if (!step) return undefined;
-  // a dishwasher's wash steps hold no spin: its drain is part of its rinse
-  if (kind === 'dishwasher' && step === 'spin') return 'rinse';
+  // a dishwasher's wash steps hold no spin: its drain is part of its rinse, but a Samsung's that comes first is its
+  // prewash's
+  if (kind === 'dishwasher' && step === 'spin')
+    return /^pre_?drain$/.test(word) ? 'prewash' : 'rinse';
   // a dryer's drying levels are words of its own; a washer's "normal" is not a step
   if (step === 'dry' && kind !== 'dryer' && kind !== 'washer_dryer' && kind !== 'dishwasher')
     return undefined;

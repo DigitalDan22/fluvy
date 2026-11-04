@@ -316,7 +316,7 @@ describe('a room counts its devices, never an appliance’s controls (#95)', () 
 
   /**
    * The reporter's kitchen: two lights, and a dishwasher of an integration the appliance card does not read
-   * (LocalThings), whose options are switches beside its programme, its delay and its start.
+   * (an ESPHome build), whose options are switches beside its programme, its delay and its start.
    */
   const KITCHEN: readonly Seed[] = [
     ['light.kitchen_ceiling', 'on'],
@@ -338,7 +338,7 @@ describe('a room counts its devices, never an appliance’s controls (#95)', () 
     const entries = KITCHEN.map(([entity_id]) => [
       entity_id,
       entity_id.includes('dishwasher')
-        ? { entity_id, device_id: 'dishwasher', platform: 'localthings' }
+        ? { entity_id, device_id: 'dishwasher', platform: 'esphome' }
         : { entity_id, area_id: 'kitchen' },
     ]);
     return {

@@ -2200,6 +2200,7 @@
     "role_power": "Güç anahtarı",
     "role_start": "Başlat düğmesi",
     "role_pause": "Duraklat düğmesi",
+    "role_resume": "Devam düğmesi",
     "role_stop": "Durdur düğmesi",
     "role_light": "Işık",
     "role_error": "Hata",

@@ -169,6 +169,22 @@ describe('what an appliance is doing', () => {
       expect(status(state, more), `${String(state)} ${JSON.stringify(more)}`).toBe(expected);
   });
 
+  it('calls a machine that runs waiting, preheating or finished where its phase says so (#97)', () => {
+    // a Samsung's machine state runs through a delayed start, a cavity's preheat and on after its cycle's finish
+    expect(status('active', { platform: 'localthings', phase: 'delaywash' })).toBe('scheduled');
+    expect(status('run', { platform: 'smartthings', phase: 'delay_wash' })).toBe('scheduled');
+    expect(status('running', { platform: 'smartthings', phase: 'scheduled_start' })).toBe(
+      'scheduled',
+    );
+    expect(status('active', { platform: 'localthings', phase: 'preheat' })).toBe('preheating');
+    expect(status('active', { platform: 'localthings', phase: 'finish' })).toBe('finished');
+    expect(status('active', { platform: 'localthings', phase: 'rinse' })).toBe('running');
+    // a phase never says more than a pause, a failure or a machine at rest
+    expect(status('pause', { platform: 'localthings', phase: 'delaywash' })).toBe('paused');
+    expect(status('error', { phase: 'finish' })).toBe('error');
+    expect(status('idle', { platform: 'localthings', phase: 'delaywash' })).toBe('idle');
+  });
+
   it('has a job while it runs, preheats, pauses or asks for attention', () => {
     expect(
       ['running', 'preheating', 'paused', 'attention'].every((s) => busy(s as ApplianceStatus)),
@@ -192,6 +208,14 @@ describe('the steps of a cycle', () => {
     // a dishwasher drains in its rinse; it has no spin
     expect(stepOf('dishwasher', 'drain')).toBe('rinse');
     expect(stepOf('dishwasher', 'drying')).toBe('dry');
+    // LocalThings' progress (operational.py): a Samsung dishwasher drains first, in its prewash, and dries with its
+    // door open; a washer senses its load in its wash
+    expect(stepOf('dishwasher', 'predrain')).toBe('prewash');
+    expect(stepOf('dishwasher', 'pre_drain')).toBe('prewash');
+    expect(stepOf('dishwasher', 'dryingwithdooropen')).toBe('dry');
+    expect(stepOf('washer', 'weightsensing')).toBe('wash');
+    expect(stepOf('washer', 'steaming')).toBe('wash');
+    expect(stepOf('washer', 'predrain')).toBe('spin');
     expect(stepOf('dryer', 'extra_dry')).toBe('dry');
     expect(stepOf('dryer', 'cooling')).toBe('cool');
     expect(stepOf('dryer', 'wrinkle_prevent')).toBe('anti_crease');

@@ -7,16 +7,18 @@ import { setterFor, type Setter } from './zones.js';
 
 /*
  * What a card can make an appliance do: start it, pause and resume it, stop it, switch it on and off, light it. Each
- * is a button's press, a select's option or a switch, as the integration's source says — and only for an integration
- * whose exact service and data are pinned by a contract test from that source (`commands.test.ts`, file and line
- * cited): LG ThinQ's operation select and power switch, Home Connect's active programme and its buttons, Miele's
- * buttons and power, SmartThings' operating state and buttons, Matter's buttons, Whirlpool's oven stop and light,
- * Tuya's kettle, PetKit's and PetLibro's pet devices (a meal now, a litter box's clean, deodorizing and levelling, a
- * fountain's pause and power). Anything else — hOn, Electrolux, LG's older integration — is read and never written to
- * (1.9.1). A select's option is offered only when it is in the select's own options. Starting needs the appliance at
- * rest and, where it has one, its remote start on; stopping asks first, and so does switching off one that is not at
- * rest (at work, waiting to start, failed) and switching off what keeps food cold, whatever its compressor is doing;
- * a meal, a litter box's clean and its levelling ask first too.
+ * is a button's press, a select's option or a switch, as the integration's source says — for an integration whose exact
+ * service and data are pinned by a contract test from that source (`commands.test.ts`, file and line cited): LG ThinQ's
+ * operation select and power switch, Home Connect's active programme and its buttons, Miele's buttons and power,
+ * SmartThings' operating state and buttons, LocalThings' buttons, power and lamp, Matter's buttons, Whirlpool's oven
+ * stop and light, Tuya's kettle, PetKit's and PetLibro's pet devices (a meal now, a litter box's clean, deodorizing and
+ * levelling, a fountain's pause and power). Beyond those, a start, a pause, a resume or a stop is the button its role
+ * names, whatever the integration (found by its key, or named by hand: a device's button, a helper's, a script),
+ * pressed as Home Assistant's own would press it; anything else of hOn, Electrolux, LG's older integration is read and
+ * never written to (1.9.1). A select's option is offered only when it is in the select's own options. Starting needs
+ * the appliance at rest and, where it has one, its remote start on; stopping asks first, and so does switching off one
+ * that is not at rest (at work, waiting to start, failed) and switching off what keeps food cold, whatever its
+ * compressor is doing; a meal, a litter box's clean and its levelling ask first too.
  */
 
 /**
@@ -90,6 +92,7 @@ export const COMMANDS_PINNED: Readonly<Record<string, readonly Action[]>> = {
   home_connect: ['start', 'pause', 'resume', 'stop', 'power_on', 'power_off', 'light'],
   miele: ['start', 'pause', 'resume', 'stop', 'power_on', 'power_off', 'light'],
   smartthings: ['start', 'pause', 'resume', 'stop', 'light'],
+  localthings: ['start', 'pause', 'resume', 'stop', 'power_on', 'power_off', 'light'],
   // and a Matter outlet's on and off (matter/switch.py, the OnOff cluster): a plug's switch
   matter: ['start', 'pause', 'resume', 'stop', 'power_on', 'power_off'],
   whirlpool: ['stop', 'light'],
@@ -113,7 +116,10 @@ export const COMMANDS_PINNED: Readonly<Record<string, readonly Action[]>> = {
   petlibro: ['stop', 'light', 'feed', 'clean', 'level'],
 };
 
-/** Whether an integration's appliance may be written to at all (a plug of any other integration may: it is a switch). */
+/**
+ * Whether an integration's own way of doing an action is pinned (a plug of any other integration's is: it is a switch).
+ * A button a role names is pressed whatever the integration (`callFor`).
+ */
 export function writable(platform: string | undefined, action: Action): boolean {
   if (!knownPlatform(platform))
     return action === 'power_on' || action === 'power_off' || action === 'light';
@@ -177,6 +183,13 @@ const turn = (entity: string, on: boolean): ServiceCall => ({
   data: { entity_id: entity },
 });
 
+/** How a button a role names is pressed: a device's button, a helper's button, a script run. */
+const PRESS: Readonly<Record<string, string>> = {
+  button: 'press',
+  input_button: 'press',
+  script: 'turn_on',
+};
+
 /**
  * The amounts a PetKit meal may be: its text's pattern (text.py:174-181, "^(10|20|30|40|50|0)$"), else its number's
  * range in its steps (the first Fresh Element's, 20 to 400 g); none is nought.
@@ -200,8 +213,10 @@ export function mealAmount(state: HassEntity | undefined, wanted?: number): numb
 }
 
 /**
- * The call that does an action on an appliance of an integration, from the entities it found, as the integration's
- * source pins it; none where it has no way (LG cannot pause from Home Assistant) or the action is not pinned.
+ * The call that does an action on an appliance, from the entities it found: its integration's own way, as its source
+ * pins it; else, whatever the integration, the button its role names for a start, a pause or a stop — a paused one
+ * resumes by its start where it names no resume (Miele's own way, miele/const.py MieleActions.START; LocalThings' start
+ * writes "Run", operational.py:328-337). None where it has no way (LG cannot pause from Home Assistant).
  */
 export function callFor(
   hass: Pick<HomeAssistant, 'states'> | undefined,
@@ -210,7 +225,25 @@ export function callFor(
   action: Action,
   amount?: number,
 ): ServiceCall | undefined {
-  if (!writable(platform, action)) return undefined;
+  if (writable(platform, action)) {
+    const own = pinnedCall(hass, platform, roles, action, amount);
+    if (own) return own;
+  }
+  if (action !== 'start' && action !== 'pause' && action !== 'resume' && action !== 'stop')
+    return undefined;
+  const id = action === 'resume' ? (roles.resume ?? roles.start) : roles[action];
+  const service = id ? PRESS[domainOf(id)] : undefined;
+  return id && service ? { domain: domainOf(id), service, data: { entity_id: id } } : undefined;
+}
+
+/** The call an integration's source pins for an action, from the entities it found (a meal's amount: PetKit's). */
+function pinnedCall(
+  hass: Pick<HomeAssistant, 'states'> | undefined,
+  platform: string | undefined,
+  roles: ApplianceRoles,
+  action: Action,
+  amount?: number,
+): ServiceCall | undefined {
   // what a select lists is its capability: a card can say what it could do while it is out of reach
   const state = (id: string | undefined): HassEntity | undefined => stateOf(hass, id);
   // a select's option, where the select lists it
@@ -263,10 +296,9 @@ export function callFor(
         ? (option(operation, 'pause') ?? button(pause))
         : button(pause);
     case 'resume':
-      if (platform === 'smartthings') return option(operation, 'run') ?? button(resume);
-      // a paused Miele resumes by its start action (miele/const.py MieleActions.START)
-      if (platform === 'miele') return button(start);
-      return button(resume);
+      return platform === 'smartthings'
+        ? (option(operation, 'run') ?? button(resume))
+        : button(resume);
     case 'stop':
       switch (platform) {
         case 'lg_thinq':
@@ -323,10 +355,13 @@ export function commandsOf(input: CommandInput): Command[] {
     const call = callFor(hass, platform, roles, action, amount);
     if (!call) continue;
     const state = hass?.states?.[target(call)];
-    // SmartThings asks its remote control for everything; the others for a start (smartthings/button.py:110-140)
+    // SmartThings asks its remote control for everything (smartthings/button.py:110-140); LocalThings for what runs
+    // its machine, but its stop (coordinator.py:2801-2810, operational.py:215-225); the others for a start
     const remoteOff =
       remote === 'off' &&
-      (action === 'start' || (platform === 'smartthings' && action !== 'light'));
+      (action === 'start' ||
+        (platform === 'smartthings' && action !== 'light') ||
+        (platform === 'localthings' && (action === 'pause' || action === 'resume')));
     const blocked =
       !state || state.state === 'unavailable'
         ? 'unavailable'
@@ -372,12 +407,14 @@ export const BLOCKED: Readonly<Record<NonNullable<Command['blocked']>, MessageKe
 
 /**
  * The integrations whose programme select may be chosen from, each pinned by its source: Home Connect's selected
- * programme (select.py:108-114), SmartThings' dishwasher course (select.py:200-215, at rest), Matter's washer and
- * dishwasher modes (select.py:345-394), Whirlpool's and LG's oven cook modes, Tuya's kettle work mode.
+ * programme (select.py:108-114), SmartThings' dishwasher course (select.py:200-215, at rest), LocalThings' course
+ * (laundry.py:661-668) and an oven's or a microwave's mode, held for its start (coordinator.py:2771-2779), Matter's
+ * washer and dishwasher modes (select.py:345-394), Whirlpool's and LG's oven cook modes, Tuya's kettle work mode.
  */
 export const PROGRAMS_PINNED: readonly string[] = [
   'home_connect',
   'smartthings',
+  'localthings',
   'matter',
   'whirlpool',
   'lg_thinq',

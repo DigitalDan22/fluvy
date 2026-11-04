@@ -1302,6 +1302,7 @@
     "role_power": "電源スイッチ",
     "role_start": "開始ボタン",
     "role_pause": "一時停止ボタン",
+    "role_resume": "再開ボタン",
     "role_stop": "停止ボタン",
     "role_light": "照明",
     "role_error": "エラー",

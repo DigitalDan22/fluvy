@@ -416,6 +416,42 @@ describe('the appliance card', () => {
     expect(start?.title).toMatch(/Remote start is off/);
   });
 
+  it('presses LocalThings’ own buttons (#97): its pause at once, its stop once the dialog has asked, its resume greyed while its Smart Control is off', async () => {
+    const handed: unknown[] = [];
+    const listen = (event: Event): void => void handed.push((event as CustomEvent).detail);
+    document.body.addEventListener('hass-action', listen);
+    try {
+      const hass = house();
+      const card = await mount({ device: 'lt-washer', show_controls: true }, hass);
+      root(card).querySelector<HTMLButtonElement>('[data-action="pause"]')?.click();
+      expect(hass.calls).toEqual([
+        {
+          domain: 'button',
+          service: 'press',
+          data: { entity_id: 'button.waschmaschine_flur_pause' },
+        },
+      ]);
+      root(card).querySelector<HTMLButtonElement>('[data-action="stop"]')?.click();
+      expect(hass.calls).toHaveLength(1);
+      expect(JSON.stringify(handed)).toContain('"perform_action":"button.press"');
+      expect(JSON.stringify(handed)).toContain('button.waschmaschine_flur_stopp');
+      const off = await mount(
+        { device: 'lt-washer', show_controls: true },
+        house({
+          'sensor.waschmaschine_flur_maschinenzustand': { state: 'pause' },
+          'binary_sensor.waschmaschine_flur_intelligente_steuerung': { state: 'off' },
+        }),
+      );
+      const resume = root(off).querySelector<HTMLButtonElement>('[data-action="start"]');
+      expect(resume?.disabled).toBe(true);
+      expect(root(off).querySelector<HTMLButtonElement>('[data-action="stop"]')?.disabled).toBe(
+        false,
+      );
+    } finally {
+      document.body.removeEventListener('hass-action', listen);
+    }
+  });
+
   it('a washer on a plug says what it draws and what this cycle used, from its power’s history; its rows never again', async () => {
     const hass = {
       ...house({

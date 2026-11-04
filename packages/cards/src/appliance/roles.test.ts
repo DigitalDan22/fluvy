@@ -264,14 +264,12 @@ describe('an appliance’s entities', () => {
       power: 'switch.spulmaschine_keller_power',
       program: 'sensor.spulmaschine_keller_program',
     });
-    // LocalThings names its entities by keys the card does not read (#97): its template's summary is the state,
-    // until the card names the integration's own, which a helper's guess never holds against
+    // LocalThings by its keys (#97): its machine state is the state, never its template's summary, named or not
     expect(applianceEntities(HOUSE, 'lt-dish').roles.state).toBe(
-      'sensor.geschirrspuler_kuche_status',
+      'sensor.geschirrspuler_kuche_maschinenzustand',
     );
     expect(
-      applianceEntities(HOUSE, 'lt-dish', [], 'sensor.geschirrspuler_kuche_maschinenzustand').roles
-        .state,
+      applianceEntities(HOUSE, 'lt-dish', [], 'sensor.geschirrspuler_kuche_status').roles.state,
     ).toBe('sensor.geschirrspuler_kuche_maschinenzustand');
     // a helper the card names never takes a role from the integration's own
     expect(

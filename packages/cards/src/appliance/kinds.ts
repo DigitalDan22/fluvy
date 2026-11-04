@@ -318,6 +318,19 @@ function byKeys(signals: KindSignals): KindVerdict | undefined {
       if (hasLike(/^hood_|^reset_hood_filter$/)) return verdict('hood', 'keys');
       return undefined;
     }
+    // LocalThings (registry/by_type/*.py): a microwave's cavity, an oven's, the course select named after its
+    // appliance, a wash's settings (a washer-dryer's dryness too), a dryer's, a dishwasher's racks and boosts
+    case 'localthings': {
+      if (has('cavity_state', 'cook_time_remaining')) return verdict('microwave', 'keys');
+      if (has('oven_state', 'oven_mode', 'oven_setpoint')) return verdict('oven', 'keys');
+      if (hasLike(/^dishwasher_cycle/) || has('wash_zone', 'speed_booster', 'storm_wash'))
+        return verdict('dishwasher', 'keys');
+      if (hasLike(/^washer_cycle/) || has('spin_speed', 'rinse_cycles', 'soil_level'))
+        return verdict(has('washer_dry_level') ? 'washer_dryer' : 'washer', 'keys');
+      if (hasLike(/^dryer_cycle/) || has('dryer_dry_level', 'dry_time', 'dryer_type'))
+        return verdict('dryer', 'keys');
+      return undefined;
+    }
     case 'matter':
       if (hasLike(/^laundry_washer_/)) return verdict('washer', 'keys');
       if (has('dishwasher_alarm_inflow')) return verdict('dishwasher', 'keys');

@@ -261,6 +261,61 @@ describe('an appliance read', () => {
     ).toBe('idle');
   });
 
+  it('reads LocalThings by its keys (#97): at work, paused, waiting to start, done, and what it can be told', () => {
+    const at = (states: Readonly<Record<string, string>>): HomeAssistant =>
+      ({
+        ...HOUSE,
+        states: {
+          ...HOUSE.states,
+          ...Object.fromEntries(
+            Object.entries(states).map(([id, state]) => [id, { ...HOUSE.states[id], state }]),
+          ),
+        },
+      }) as HomeAssistant;
+    const actions = (r: ReturnType<typeof read>) => r.commands.map((command) => command.action);
+    const machine = 'sensor.waschmaschine_flur_maschinenzustand';
+    const progress = 'sensor.waschmaschine_flur_fortschritt';
+    // rinsing: its time left and progress, its pause and its stop (its power is a flag), its softener to refill
+    const rinsing = read('lt-washer');
+    expect(rinsing).toMatchObject({
+      kind: 'washer',
+      status: 'running',
+      step: 'rinse',
+      clock: { left: 34 * 60, progress: 62 },
+      readouts: { program: 'select.waschmaschine_flur_programm' },
+    });
+    expect(actions(rinsing)).toEqual(['pause', 'stop']);
+    expect(rinsing.maintenance.map((item) => [item.key, item.severity])).toEqual([
+      ['softener', 'soon'],
+      ['detergent', 'ok'],
+    ]);
+    expect(actions(read('lt-washer', {}, at({ [machine]: 'pause' })))).toEqual(['resume', 'stop']);
+    // a delayed start counts down with its machine running; its finish held after the cycle, the machine on or not
+    const waiting = read('lt-washer', {}, at({ [progress]: 'delaywash' }));
+    expect(waiting.status).toBe('scheduled');
+    expect(actions(waiting)).toEqual(['stop']);
+    for (const state of ['active', 'idle'])
+      expect(read('lt-washer', {}, at({ [machine]: state, [progress]: 'finish' })).status).toBe(
+        'finished',
+      );
+    expect(actions(read('lt-washer', {}, at({ [machine]: 'idle', [progress]: 'idle' })))).toEqual([
+      'start',
+    ]);
+    // the dishwasher switched off, and on: its power, its start
+    expect(actions(read('lt-dish'))).toEqual(['power_on']);
+    expect(
+      actions(read('lt-dish', {}, at({ 'switch.geschirrspuler_kuche_ein_aus': 'on' }))),
+    ).toEqual(['start', 'power_off']);
+    // the oven preheating: its cavity's heat on its way to its target, its stop, its power, its lamp
+    const oven = read('lt-oven');
+    expect(oven).toMatchObject({
+      status: 'preheating',
+      statusWord: 'appliance.status_preheating',
+      heat: { current: 148, target: 200, ready: false },
+    });
+    expect(actions(oven)).toEqual(['stop', 'power_off', 'light']);
+  });
+
   it('says a fridge’s door has stood open after a minute, with when it opened', () => {
     const fridge = later(hcFridge, 0);
     expect(fridge.door).toEqual({ open: true, since: NOW - 180_000, changed: NOW - 180_000 });

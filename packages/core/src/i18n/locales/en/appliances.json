@@ -181,6 +181,7 @@
     "role_power": "Power switch",
     "role_start": "Start button",
     "role_pause": "Pause button",
+    "role_resume": "Resume button",
     "role_stop": "Stop button",
     "role_light": "Light",
     "role_error": "Error",
