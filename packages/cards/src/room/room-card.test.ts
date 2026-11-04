@@ -803,9 +803,9 @@ describe('a room’s quick actions (#113)', () => {
     expect(sent).toEqual([]);
   });
 
-  it('says what is wrong with quick actions that are not a list, and reads none written as its own', async () => {
+  it('reads one quick action written without its dash as a list of one, says what is wrong with a number', async () => {
     const card = document.createElement('fluvy-room-card') as RoomElement;
-    for (const quick_actions of [{ group: 'lights' }, 'lights', 3])
+    for (const quick_actions of [3, true])
       expect(() =>
         card.setConfig({
           type: 'custom:fluvy-room-card',
@@ -813,6 +813,12 @@ describe('a room’s quick actions (#113)', () => {
           quick_actions: quick_actions as never,
         }),
       ).toThrow('fluvy-room-card: "quick_actions" must be a list');
+    expect(
+      names(await room({ area: 'lounge', quick_actions: 'lights' as never }, lounge())),
+    ).toEqual(['Lights']);
+    expect(
+      names(await room({ area: 'lounge', quick_actions: { group: 'covers' } as never }, lounge())),
+    ).toEqual(['Blinds']);
     // `quick_actions:` with nothing after it: the room's lights and blinds, as with none
     const bare = await room({ area: 'lounge', quick_actions: null as never }, lounge());
     expect(names(bare)).toEqual(['Lights', 'Blinds']);

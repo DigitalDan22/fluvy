@@ -246,7 +246,14 @@ export class FluvyRoomCard extends FluvyTileCard {
 
   protected override prepare(config: RoomCardConfig): RoomCardConfig {
     if (!config.area) throw new Error('fluvy-room-card: "area" is required');
-    // its rounds a list, or none: what it watches and what it draws read them as one
+    // its rounds a list, or none: what it watches and what it draws read them as one; one round written without its
+    // dash (`quick_actions: lights`) is a list of one
+    const rounds: unknown = config.quick_actions;
+    if (
+      typeof rounds === 'string' ||
+      (typeof rounds === 'object' && rounds !== null && !Array.isArray(rounds))
+    )
+      return { ...config, quick_actions: [rounds as string | QuickAction] };
     listOf(config, 'quick_actions');
     return config;
   }

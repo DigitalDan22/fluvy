@@ -54,17 +54,47 @@ const set = (values: readonly string[]): ReadonlySet<string> => new Set(values.m
 const said = (values: readonly unknown[]): ReadonlySet<string> =>
   set(values.flatMap((value) => [String(value), String(onOff(value))]));
 
-/** `*` and `?` over a text, whole; anything else as it is written. */
-function glob(pattern: string, flags = ''): RegExp {
-  const body = pattern
-    .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-    .replace(/\*/g, '.*')
-    .replace(/\?/g, '.');
-  return new RegExp(`^${body}$`, flags);
+/** What a written pattern answers: a regular expression, or a glob. */
+interface Pattern {
+  test(text: string): boolean;
+}
+
+/**
+ * `*` (any run of characters) and `?` (any one) over a text, whole; anything else as it is written. Read with two
+ * marks, the last star's and where the text stood at it: a part that fails returns to that star, one character
+ * further, so a pattern of many stars takes at most its length times the text's steps, where a regular expression of
+ * them backtracked past any wait.
+ */
+function glob(written: string, ignoreCase = false): Pattern {
+  const pattern = ignoreCase ? written.toLowerCase() : written;
+  return {
+    test(value) {
+      const text = ignoreCase ? value.toLowerCase() : value;
+      let p = 0;
+      let t = 0;
+      let star = -1;
+      let from = 0;
+      while (t < text.length) {
+        const char = pattern[p];
+        if (char === '*') {
+          star = p++;
+          from = t;
+        } else if (p < pattern.length && (char === '?' || char === text[t])) {
+          p++;
+          t++;
+        } else if (star >= 0) {
+          p = star + 1;
+          t = ++from;
+        } else return false;
+      }
+      while (pattern[p] === '*') p++;
+      return p === pattern.length;
+    },
+  };
 }
 
 /** An id pattern as written: a regular expression between slashes, else a glob. */
-function pattern(text: string): RegExp {
+function pattern(text: string): Pattern {
   const regex = /^\/(.*)\/([a-z]*)$/.exec(text);
   return regex ? new RegExp(regex[1] ?? '', regex[2]) : glob(text);
 }
@@ -139,10 +169,10 @@ function partTests(part: MatchConfig): { tests: Test[]; domains: ReadonlySet<str
   }
   if (patterns.length) {
     const plain = set(patterns.filter((text) => !wild(text)));
-    const regexes = patterns.filter(wild).map(pattern);
+    const matchers = patterns.filter(wild).map(pattern);
     const owned = patterns.map((text) => (wild(text) ? patternDomain(text) : domainOf(text)));
     if (owned.every((domain): domain is string => domain !== undefined)) allowed.push(set(owned));
-    tests.push((id) => plain.has(id) || regexes.some((regex) => regex.test(id)));
+    tests.push((id) => plain.has(id) || matchers.some((matcher) => matcher.test(id)));
   }
   const classes = many(part.device_class);
   if (classes.length) {
@@ -196,7 +226,7 @@ function partTests(part: MatchConfig): { tests: Test[]; domains: ReadonlySet<str
   }
   const deviceList = many(part.device);
   if (deviceList.length) {
-    const names = deviceList.filter(wild).map((text) => glob(text, 'i'));
+    const names = deviceList.filter(wild).map((text) => glob(text, true));
     const devices = perRegistry<HomeAssistant['devices']>((registry) => {
       const ids = new Set<string>();
       for (const device of Object.values(registry)) {
@@ -204,7 +234,7 @@ function partTests(part: MatchConfig): { tests: Test[]; domains: ReadonlySet<str
         if (
           deviceList.includes(device.id) ||
           deviceList.some((text) => !wild(text) && text.toLowerCase() === name) ||
-          names.some((regex) => regex.test(name))
+          names.some((glob) => glob.test(name))
         )
           ids.add(device.id);
       }
@@ -273,7 +303,7 @@ function within(sets: readonly ReadonlySet<string>[]): ReadonlySet<string> | und
 /** Whether an entity is one of these: ids, patterns, or clauses (any of them). */
 function exclusionOf(list: readonly (string | MatchConfig)[]): Test {
   const ids = set(list.filter((item): item is string => typeof item === 'string' && !wild(item)));
-  const regexes = list
+  const matchers = list
     .filter((item): item is string => typeof item === 'string' && wild(item))
     .map(pattern);
   const clauses = list
@@ -281,7 +311,7 @@ function exclusionOf(list: readonly (string | MatchConfig)[]): Test {
     .map((item) => partTests(item).tests);
   return (id, state, hass) =>
     ids.has(id) ||
-    regexes.some((regex) => regex.test(id)) ||
+    matchers.some((matcher) => matcher.test(id)) ||
     clauses.some((tests) => tests.every((test) => test(id, state, hass)));
 }
 

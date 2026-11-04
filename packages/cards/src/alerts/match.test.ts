@@ -104,6 +104,19 @@ describe('the matcher', () => {
     ]);
   });
 
+  it('reads a glob of many stars in steps, whole, every other character as it is written', () => {
+    const long = `sensor.${'a'.repeat(4000)}`;
+    const hass = house({ [long]: { state: '1' } });
+    const started = performance.now();
+    expect(matched({ entity_id: `sensor.${'*a'.repeat(500)}*b` }, hass)).toEqual([]);
+    expect(matched({ entity_id: `sensor.${'*'.repeat(500)}a` }, hass)).toEqual([long]);
+    expect(performance.now() - started).toBeLessThan(500);
+    expect(matched({ entity_id: 'sensor.*battery*' }, HOUSE)).toContain('sensor.hall_battery');
+    expect(matched({ entity_id: 'sensor.hall_batter' }, HOUSE)).toEqual([]);
+    expect(matched({ entity_id: 'sensor.hall.battery*' }, HOUSE)).toEqual([]);
+    expect(matched({ entity_id: '*' }, HOUSE)).toEqual(matched({ entity_id: '/.*/' }, HOUSE));
+  });
+
   it('matches by domain and device class lists', () => {
     expect(matched({ domain: ['light', 'switch'] }, HOUSE)).toEqual([
       'light.kitchen',

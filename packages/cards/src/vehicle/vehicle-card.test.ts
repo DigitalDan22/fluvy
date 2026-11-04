@@ -354,6 +354,28 @@ describe('the vehicle card', () => {
     expect(plate?.querySelector('svg')).not.toBeNull();
   });
 
+  it('watches the image entity of the car’s own device with image: auto, and draws its new picture', async () => {
+    const base = house();
+    const id = 'image.model_y_picture';
+    const pictured = (picture: string): HomeAssistant =>
+      ({
+        ...base,
+        entities: { ...base.entities, [id]: { entity_id: id, device_id: TESLA.device } },
+        states: {
+          ...base.states,
+          [id]: { entity_id: id, state: '1', attributes: { entity_picture: picture } },
+        },
+      }) as unknown as HomeAssistant;
+    const card = await mount({ device: TESLA.device, image: 'auto' }, pictured('/api/a.png'));
+    expect((card as unknown as { watched(): string[] }).watched()).toContain(id);
+    const src = (): string | null | undefined =>
+      root(card).querySelector('.vh-picture img')?.getAttribute('src');
+    expect(src()).toBe('http://ha.example/api/a.png');
+    card.hass = pictured('/api/b.png');
+    await card.updateComplete;
+    expect(src()).toBe('http://ha.example/api/b.png');
+  });
+
   it('draws its picture in the head, and a car glyph where none can be shown', async () => {
     const card = await mount({
       device: TESLA.device,

@@ -1003,7 +1003,9 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
       ...windows,
       ...Object.values(warnings),
       ...this.rowEntries().flatMap((entry) => (entry.entity ? [entry.entity] : [])),
-      imageEntity(this.config?.image),
+      this.config?.image?.trim() === 'auto'
+        ? this.devicePicture()
+        : imageEntity(this.config?.image),
     ].filter((id): id is string => Boolean(id));
   }
 
@@ -1999,15 +2001,29 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
 
   /* ---------- the picture ---------- */
 
+  private pictured?: { registry: unknown; device: string | undefined; id: string | undefined };
+
+  /** The car's device's own image entity (`image: auto`), looked up once a registry and a device. */
+  private devicePicture(): string | undefined {
+    const registry = this.hass?.entities;
+    const device = vehicleDevice(this.hass, this.config?.device, this.config?.entity);
+    let pictured = this.pictured;
+    if (!pictured || pictured.registry !== registry || pictured.device !== device) {
+      const id = Object.values(registry ?? {}).find(
+        (entry) => entry.device_id === device && entry.entity_id.startsWith('image.'),
+      )?.entity_id;
+      pictured = this.pictured = { registry, device, id };
+    }
+    return pictured.id;
+  }
+
   /** The car's picture: the address the card gives, an entity's own, or (`auto`) the integration's. */
   private pictureSrc(): string {
     const image = this.config?.image?.trim() ?? '';
     if (image !== 'auto') return imageOf(this.hass, image);
-    const device = vehicleDevice(this.hass, this.config?.device, this.config?.entity);
-    const pictured = Object.values(this.hass?.entities ?? {}).find(
-      (entry) => entry.device_id === device && entry.entity_id.startsWith('image.'),
-    )?.entity_id;
-    return imageOf(this.hass, pictured) || imageOf(this.hass, this.car().roles.location);
+    return (
+      imageOf(this.hass, this.devicePicture()) || imageOf(this.hass, this.car().roles.location)
+    );
   }
 
   private picture(lead: boolean): TemplateResult {

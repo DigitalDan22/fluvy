@@ -10,8 +10,6 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The Vehicle card lays its row of rounds out for Home Assistant's word for each state its lock can be in (Locking,
   Unlocking, Jammed), where it measured Fluvy's Locked and Unlocked, which a lock's round never says: in a language
   whose words for them differ in length, the car's own row can hold one round more, or one fewer, at the same width.
-- A room card whose `quick_actions` is not a list (`quick_actions: lights`, without its dash) says so in its error,
-  where it drew the room's lights and blinds instead, or broke on an entry written as one object.
 - A select's row on the entities card, and among the rows of the lock, alarm and camera cards, ends in its value,
   which opens Fluvy's own dropdown as the helpers card's does, where it opened Home Assistant's dialog: the keys, a
   letter to find a name, the option chosen at once. A row with a `tap_action` of its own keeps it.
@@ -24,12 +22,14 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- A room card's quick action written without its dash (`quick_actions: lights`) is a list of one, where the card
+  drew the room's lights and blinds instead, or broke on one written as an object; a number says what is wrong.
 - A picture of your own on the thermostat, appliance or Vehicle card that would not load once (while Home Assistant
   restarted) comes back by itself once it loads again, where the card kept its circle, its drawing or its glyph until
   the picture's address changed.
 - The thermostat, media and appliance cards draw the new picture of the entity their `image` names (an image
-  entity's, a camera's still) as it changes, where they kept the one they had drawn until something else on the card
-  changed.
+  entity's, a camera's still) as it changes, and the Vehicle card the picture of its car's own image entity with
+  `image: auto`, where they kept the one they had drawn until something else on the card changed.
 - The openings card says a row's own words for on and off (`states: {on: Tilted, off: Closed}`) in a dashboard in YAML
   mode, where Home Assistant reads an unquoted `on:` and `off:` as true and false and the row said its class's words.
 - The calendar card's editor shows a month's first day as "As the language does" where the week rolls
@@ -58,7 +58,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - A room card whose tiles are an empty list (as the editor leaves it once the last is removed) declares the height of
   the controls it draws as its tiles, where it declared none and a column laid out by its height left it short.
 - A room's `include` or `exclude` pattern with many stars (`*`) is read at once on any id, where one that did not
-  match a long id could hold the page for seconds or more (#95).
+  match a long id could hold the page for seconds or more (#95). The alerts card reads its id and device patterns
+  (`sensor.*_battery`, `hall ?`) the same way.
 
 ### Development
 
