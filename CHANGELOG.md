@@ -48,6 +48,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   either did nothing.
 - A room card whose tiles are an empty list (as the editor leaves it once the last is removed) declares the height of
   the controls it draws as its tiles, where it declared none and a column laid out by its height left it short.
+- A room's `include` or `exclude` pattern with many stars (`*`) is read at once on any id, where one that did not
+  match a long id could hold the page for seconds or more (#95).
 
 ### Development
 

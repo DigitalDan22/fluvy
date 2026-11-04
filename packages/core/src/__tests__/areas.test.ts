@@ -422,6 +422,33 @@ describe('the house by its rooms', () => {
     );
   });
 
+  it('reads a pattern of many stars on a long id at once: every star any run, every other character itself (#95)', () => {
+    const long = `light.${'a'.repeat(4000)}`;
+    const hass = seeded([
+      [long, 'on'],
+      ['light.kitchen', 'on'],
+      ['light.a.b', 'on'],
+    ]);
+    const left = (pattern: string): string[] =>
+      areaContents(hass, 'kitchen', { exclude: [pattern] })
+        .entities.map((id) => (id === long ? 'long' : id))
+        .sort();
+    const started = performance.now();
+    // a run of stars, and stars between letters the id holds, neither ending as it does
+    expect(left(`light.${'*'.repeat(500)}b`)).toEqual(['light.kitchen', 'long']);
+    expect(left(`light.${'*a'.repeat(500)}*b`)).toEqual(['light.a.b', 'light.kitchen', 'long']);
+    // and those that end as it does
+    expect(left(`light.${'*'.repeat(500)}a`)).toEqual(['light.a.b', 'light.kitchen']);
+    expect(left(`light.${'a*'.repeat(500)}`)).toEqual(['light.a.b', 'light.kitchen']);
+    expect(performance.now() - started).toBeLessThan(500);
+    // whole: the start, the end and every character between as it is written
+    expect(left('*kitchen')).toEqual(['light.a.b', 'long']);
+    expect(left('light.kitch')).toEqual(['light.a.b', 'light.kitchen', 'long']);
+    expect(left('light.a?b')).toEqual(['light.a.b', 'light.kitchen', 'long']);
+    expect(left('light.a.*')).toEqual(['light.kitchen', 'long']);
+    expect(left('*')).toEqual([]);
+  });
+
   it('holds a room with a reading and nothing else, and none with only a config entity', () => {
     const base = house();
     const hass: Registries = {

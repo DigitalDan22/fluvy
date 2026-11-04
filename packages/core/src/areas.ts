@@ -331,24 +331,37 @@ const entriesOf = (list: readonly unknown[] | undefined): string[] =>
     : [];
 
 /**
+ * Whether an id answers a pattern, given as the parts between its stars (`split(/\*+/)`: a run of stars is one star),
+ * a star any run of characters: the first part is its start, the last its end, and each other is found after the one
+ * before as early as it comes, which leaves the most room for the rest — no part is tried twice. A part takes as many
+ * steps as the id is long, where a regular expression of many stars backtracked past any wait (#95).
+ */
+function fits(parts: readonly string[], id: string): boolean {
+  const first = parts[0] ?? '';
+  if (parts.length === 1) return id === first;
+  const last = parts[parts.length - 1] ?? '';
+  const end = id.length - last.length;
+  if (end < first.length || !id.startsWith(first) || !id.endsWith(last)) return false;
+  let at = first.length;
+  for (const part of parts.slice(1, -1)) {
+    const found = id.indexOf(part, at);
+    if (found < 0 || found + part.length > end) return false;
+    at = found + part.length;
+  }
+  return true;
+}
+
+/**
  * Whether an entity answers a room's entries: its id (an entry's `*` any run of characters, every other character
  * itself: nothing from a config is read as an expression), its domain, its device's id.
  */
 function answers(hass: Registries, entries: readonly string[]): (id: string) => boolean {
   const named = new Set(entries);
-  const ids = entries.map(
-    (entry) =>
-      new RegExp(
-        `^${entry
-          .split('*')
-          .map((part) => part.replace(/[\\^$.+?()[\]{}|]/g, '\\$&'))
-          .join('.*')}$`,
-      ),
-  );
+  const patterns = entries.map((entry) => entry.split(/\*+/));
   return (id) =>
     named.has(domainOf(id)) ||
     named.has(hass.entities?.[id]?.device_id ?? '') ||
-    ids.some((pattern) => pattern.test(id));
+    patterns.some((parts) => fits(parts, id));
 }
 
 export function areaContents(
