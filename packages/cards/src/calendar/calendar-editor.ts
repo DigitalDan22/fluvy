@@ -8,6 +8,7 @@ import {
   fieldRow,
   numberField,
   onlyWhen,
+  optionChoices,
   selectField,
   showIconField,
   textField,
@@ -16,7 +17,7 @@ import {
 import { VIEWS, type CalendarCardConfig, type CalendarView } from './config.js';
 import { WEEKDAYS } from '../shared/dates.js';
 import { configKeys } from '../shared/config.js';
-import type { EditorDefaults, RowsListSpec } from '../shared/rows-editor.js';
+import type { EditorChoices, EditorDefaults, RowsListSpec } from '../shared/rows-editor.js';
 
 /** The calendar card's editor: fetched by its `editor()` the first time the card is edited, never by a dashboard. */
 
@@ -68,6 +69,20 @@ const viewIs =
   (...views: readonly CalendarView[]) =>
   ({ variant }: Readonly<Record<string, unknown>>): boolean =>
     views.includes(variant as CalendarView);
+
+/**
+ * Where the week rolls (`first_weekday: today`, #111), a month starts on the house's first day, as with Language: the
+ * month's select says Language for the `today` the config keeps (the week rolls again when it is back), until a
+ * weekday is picked.
+ */
+export const choices: EditorChoices = (config) =>
+  config['first_weekday'] === 'today' && viewIs('month', 'month-day')(config)
+    ? {
+        first_weekday: optionChoices(['language', ...WEEKDAYS]).map((option) =>
+          option.value === 'language' ? { ...option, value: 'today' } : option,
+        ),
+      }
+    : {};
 
 export function getConfigForm(): LovelaceConfigForm {
   return {

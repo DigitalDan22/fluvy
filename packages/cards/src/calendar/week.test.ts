@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
-import type { HassEntity, HomeAssistant, LovelaceCardConfig } from '@fluvy/core';
+import type { HaFormSchemaItem, HassEntity, HomeAssistant, LovelaceCardConfig } from '@fluvy/core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { familiesDefined } from '../index.js';
+import { cardForm, drawEditor, nextConfig } from '../shared/fixtures/editor.js';
 import * as calendarEditor from './calendar-editor.js';
 
 // the index defines the cards' tags before a page needs them
@@ -143,6 +144,8 @@ describe('a rolling week (#111)', () => {
       [...card.shadowRoot!.querySelectorAll('.fv-dow span')].map((d) => d.textContent ?? '');
     expect(heads(today)).toEqual(heads(house_));
     expect(heads(today)[0]).toBe('M'); // the house's Monday, not this Sunday
+    const both = await draw({ variant: 'month-day', first_weekday: 'today' }, hass);
+    expect(heads(both)[0]).toBe('M');
   });
 
   describe('its editor', () => {
@@ -171,6 +174,54 @@ describe('a rolling week (#111)', () => {
       expect(firstDays('week')).toContain('today');
       expect(firstDays('month')).not.toContain('today');
       expect(firstDays('month-day')).not.toContain('today');
+    });
+
+    it('shows a month the house’s first day where the week rolled, and keeps the week rolling', async () => {
+      const Calendar = customElements.get('fluvy-calendar-card') as unknown as {
+        getConfigElement(): Promise<HTMLElement>;
+      };
+      const editor = await drawEditor(await Calendar.getConfigElement(), {
+        type: 'custom:fluvy-calendar-card',
+        calendars: ['calendar.family'],
+        variant: 'week',
+        first_weekday: 'today',
+      });
+      /** The first day the form shows: its value, and the words the select gives it. */
+      const firstDay = (): { value: unknown; words: string | undefined } => {
+        const form = cardForm(editor);
+        const fields = (items: readonly HaFormSchemaItem[]): HaFormSchemaItem[] =>
+          items.flatMap((item) => (item.schema ? fields(item.schema) : [item]));
+        const select = fields(form.schema).find((item) => item.name === 'first_weekday')
+          ?.selector?.['select'] as { options: { value: string; label: string }[] } | undefined;
+        const value = form.data['first_weekday'];
+        return { value, words: select?.options.find((option) => option.value === value)?.label };
+      };
+      expect(firstDay()).toEqual({ value: 'today', words: 'Today' });
+      let written = nextConfig(editor);
+      cardForm(editor).change('variant', 'month');
+      expect(await written).toMatchObject({ variant: 'month', first_weekday: 'today' });
+      await editor.updateComplete;
+      // the month's select says what it does, as the language does, never an empty field
+      expect(firstDay()).toEqual({ value: 'today', words: 'As the language does' });
+      written = nextConfig(editor);
+      cardForm(editor).change('variant', 'week');
+      expect(await written).toMatchObject({ variant: 'week', first_weekday: 'today' });
+      await editor.updateComplete;
+      expect(firstDay()).toEqual({ value: 'today', words: 'Today' });
+      // a weekday picked in a month takes its place
+      cardForm(editor).change('variant', 'month-day');
+      await editor.updateComplete;
+      written = nextConfig(editor);
+      cardForm(editor).change('first_weekday', 'sunday');
+      expect(await written).toMatchObject({ variant: 'month-day', first_weekday: 'sunday' });
+      await editor.updateComplete;
+      expect(firstDay()).toEqual({ value: 'sunday', words: 'Sunday' });
+      // and the week offers its rolling again, where it kept the month's select
+      cardForm(editor).change('variant', 'week');
+      await editor.updateComplete;
+      cardForm(editor).change('first_weekday', 'today');
+      await editor.updateComplete;
+      expect(firstDay()).toEqual({ value: 'today', words: 'Today' });
     });
 
     it('shows what each view reads, with it', () => {

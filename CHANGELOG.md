@@ -15,6 +15,11 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   changed.
 - The openings card says a row's own words for on and off (`states: {on: Tilted, off: Closed}`) in a dashboard in YAML
   mode, where Home Assistant reads an unquoted `on:` and `off:` as true and false and the row said its class's words.
+- The calendar card's editor shows a month's first day as "As the language does" where the week rolls
+  (`first_weekday: today`), what a month does then, where its select kept the week's choices, and a week reached from
+  a month offers Today again.
+- A card editor's select whose choices follow another field (a chart's style, by the sensor picked) offers the choices
+  that apply as that field changes, where it kept the first ones.
 
 ## [1.13.0] — 2026-11-04
 

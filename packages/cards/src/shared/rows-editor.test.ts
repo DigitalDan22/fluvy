@@ -534,6 +534,32 @@ describe('a field or a list that cannot act (`when`)', () => {
     expect(shownNames(cardForm(element).schema)).toContain('show_rows');
   });
 
+  it('draws each of two fields of one name as its turn comes, never the other’s options (a week’s first day)', async () => {
+    const week = ({ variant }: Readonly<Record<string, unknown>>): boolean => variant === 'full';
+    const turns = listsEditor(
+      {
+        schema: [
+          selectField('variant', ['full', 'compact']),
+          onlyWhen(week, selectField('first_weekday', ['language', 'today'])),
+          onlyWhen((data) => !week(data), selectField('first_weekday', ['language'])),
+        ],
+      },
+      [],
+    );
+    const offered = (element: FluvyRowsEditor): unknown[] =>
+      (
+        cardForm(element).schema[1]?.selector?.['select'] as { options: { value: unknown }[] }
+      ).options.map((option) => option.value);
+    const element = await drawEditor(turns, { type: 'custom:x', variant: 'compact' });
+    expect(offered(element)).toEqual(['language']);
+    cardForm(element).change('variant', 'full');
+    await element.updateComplete;
+    expect(offered(element)).toEqual(['language', 'today']);
+    cardForm(element).change('variant', 'compact');
+    await element.updateComplete;
+    expect(offered(element)).toEqual(['language']);
+  });
+
   it('keeps a hidden field’s value through an edit of another, and never writes a default it hid', async () => {
     const element = await drawEditor(editor(), {
       type: 'custom:x',

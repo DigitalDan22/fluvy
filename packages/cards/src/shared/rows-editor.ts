@@ -281,10 +281,6 @@ export const withList = (
   return next;
 };
 
-/** The names of the fields a form shows, through its rows: what tells one of a card's forms from another. */
-const namesOf = (schema: readonly HaFormSchemaItem[]): string[] =>
-  schema.flatMap((item) => (item.schema ? namesOf(item.schema) : [item.name]));
-
 /** The fields of a schema whose selector is a select, through its rows, each with the values it offers: words. */
 const selectsOf = (schema: readonly HaFormSchemaItem[]): Map<string, readonly unknown[]> =>
   new Map(
@@ -528,7 +524,8 @@ export class FluvyRowsEditor extends LitElement {
     choices: Choices,
   ): readonly HaFormSchemaItem[] {
     const shown = visibleFields(spec.schema, asked, this.hass);
-    const key = JSON.stringify([choices, namesOf(shown)]);
+    // the fields whole, not their names: two fields of one name take turns (a week's first day and a month's)
+    const key = JSON.stringify([choices, shown]);
     if (this.chosen?.key !== key) this.chosen = { key, schema: withChoices(shown, choices) };
     return this.chosen.schema;
   }
@@ -542,7 +539,7 @@ export class FluvyRowsEditor extends LitElement {
     asked: Readonly<Record<string, unknown>>,
   ): readonly HaFormSchemaItem[] {
     const shown = visibleFields(this.spec?.heads?.[list.key] ?? [], asked, this.hass);
-    const key = JSON.stringify(namesOf(shown));
+    const key = JSON.stringify(shown);
     const kept = this.drawn.get(list);
     if (kept?.key === key) return kept.schema;
     this.drawn.set(list, { key, schema: shown });
