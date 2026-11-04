@@ -193,6 +193,17 @@ export type Gathered = 'doors' | 'windows' | 'warnings';
 export type Wheel = 'fl' | 'fr' | 'rl' | 'rr';
 
 /**
+ * What a gathering may be: the domains whose state the card reads as open or shut (a cover's, a binary sensor's, a
+ * sensor's word; the cover of every window plays their role), a warning's on or off. Never a button or a switch that
+ * acts on them: a button's state is when it was last pressed, and would read shut for ever.
+ */
+const GATHERED: Readonly<Record<Gathered, readonly string[]>> = {
+  doors: ['binary_sensor', 'sensor', 'cover'],
+  windows: ['binary_sensor', 'sensor', 'cover'],
+  warnings: ['binary_sensor'],
+};
+
+/**
  * An integration's word for an entity: the role it plays (the first whose domains hold it, where one key names an
  * entity of each domain: Tesla's charging state is a sensor, its switch and Tessie's binary sensor), what it is one of,
  * or `null` — none at all, whatever its id ends in.
@@ -717,10 +728,11 @@ export interface Part {
 
 const domainOf = (id: string): string => id.slice(0, id.indexOf('.'));
 
-/** The first role a word names whose domains hold the entity; a gathering where it names one. */
+/** The first role a word names whose domains hold the entity; a gathering where it names one whose domains do. */
 function fitting(word: Word | undefined, candidate: Candidate): VehicleRole | Gathered | undefined {
   if (word === undefined || word === null) return undefined;
-  if (word === 'doors' || word === 'windows' || word === 'warnings') return word;
+  if (word === 'doors' || word === 'windows' || word === 'warnings')
+    return GATHERED[word].includes(candidate.domain) ? word : undefined;
   const roles = typeof word === 'string' ? [word as VehicleRole] : word;
   return roles.find(
     (role) =>

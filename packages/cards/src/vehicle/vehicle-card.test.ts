@@ -3,7 +3,7 @@ import type { HassEntity, HomeAssistant, LovelaceCardConfig } from '@fluvy/core'
 import { afterEach, describe, expect, it } from 'vitest';
 import '../vehicle/english.js';
 import { vehicleHeight } from '../vehicle-family.js';
-import { carHouse, KIA, RENAULT, TESLA } from './fixtures.js';
+import { carHouse, KIA, RENAULT, TESLA, type CarFixture } from './fixtures.js';
 import { carControls, FluvyVehicleCard } from './vehicle-card.js';
 import { vehicleEntities } from './roles.js';
 
@@ -313,6 +313,17 @@ describe('the vehicle card', () => {
       'charging',
       'trunk',
     ]);
+    // a button that vents the windows says nothing of them: no round of windows that would read shut for ever
+    const vents: CarFixture = {
+      device: 'd-vents',
+      name: 'Model 3',
+      platform: 'tesla_custom',
+      seeds: [
+        ['lock.model_3_doors', 'locked'],
+        ['button.model_3_vent_windows', 'unknown'],
+      ],
+    };
+    expect(carControls(vehicleEntities(carHouse([vents]), vents.device))).toEqual(['lock']);
   });
 
   it('draws the strip and the compact card from the same car', async () => {

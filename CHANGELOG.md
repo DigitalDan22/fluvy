@@ -23,6 +23,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The Vehicle card takes a charge port's latch or a charge cable's lock for the car's lock on no integration: a car on
   tesla_custom whose latch came first in its registry had its lock round say and unlock the latch, which opens the
   charge port's door, where the doors' lock was meant.
+- The Vehicle card counts a door, a window or a tyre's warning only of what can say it is open or on: a button or a
+  switch named for the windows (one that vents them) gave the card a Windows round that read shut whatever they did.
 
 ### Development
 

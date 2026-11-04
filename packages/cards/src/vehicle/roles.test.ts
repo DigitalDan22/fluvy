@@ -4,7 +4,17 @@ import { vehicleDevice, vehicleDevices, vehicleEntities, wheelOf } from './roles
 
 const hass = carHouse();
 const found = (device: string) => vehicleEntities(hass, device);
-/** A battery's charge, as a sensor of an integration the card does not know says it. */
+/** A car on an integration the card does not know (tesla_custom): its battery's charge, and these entities. */
+const custom = (seeds: CarFixture['seeds']) => {
+  const battery = ['sensor.model_3_battery', '71', undefined, BATTERY] as const;
+  const car = {
+    device: 'd-custom',
+    name: 'Model 3',
+    platform: 'tesla_custom',
+    seeds: [battery, ...seeds],
+  };
+  return vehicleEntities(carHouse([car]), car.device);
+};
 const BATTERY = { unit_of_measurement: '%', device_class: 'battery' };
 
 describe('a car’s entities', () => {
@@ -49,26 +59,45 @@ describe('a car’s entities', () => {
 
   it('never takes a charge port’s latch for the doors’ lock of an integration it does not know, in either order', () => {
     // tesla_custom's latch is a lock as its doors' is: by its id, by its key, a binary sensor of the lock's class
-    const lockOf = (seeds: CarFixture['seeds']): string | undefined => {
-      const car = { device: 'd-custom', name: 'Model 3', platform: 'tesla_custom', seeds };
-      return vehicleEntities(carHouse([car]), car.device).roles.lock;
-    };
-    const battery = ['sensor.model_3_battery', '71', undefined, BATTERY] as const;
+    const lockOf = (seeds: CarFixture['seeds']): string | undefined => custom(seeds).roles.lock;
     const locks: CarFixture['seeds'] = [
       ['lock.model_3_charge_port_latch', 'locked'],
       ['lock.model_3_charge_port', 'locked', 'charge_port_latch'],
       ['lock.model_3_doors', 'locked'],
     ];
-    expect(lockOf([battery, ...locks])).toBe('lock.model_3_doors');
-    expect(lockOf([battery, ...[...locks].reverse()])).toBe('lock.model_3_doors');
+    expect(lockOf(locks)).toBe('lock.model_3_doors');
+    expect(lockOf([...locks].reverse())).toBe('lock.model_3_doors');
     const sensors: CarFixture['seeds'] = [
       ['binary_sensor.model_3_charge_cable_lock', 'on', undefined, { device_class: 'lock' }],
       ['binary_sensor.model_3_locked', 'on', undefined, { device_class: 'lock' }],
     ];
-    expect(lockOf([battery, ...sensors])).toBe('binary_sensor.model_3_locked');
-    expect(lockOf([battery, ...[...sensors].reverse()])).toBe('binary_sensor.model_3_locked');
+    expect(lockOf(sensors)).toBe('binary_sensor.model_3_locked');
+    expect(lockOf([...sensors].reverse())).toBe('binary_sensor.model_3_locked');
     // a latch is never a lock at all: a car with nothing else has none
-    expect(lockOf([battery, ['lock.model_3_charger_lock', 'locked']])).toBeUndefined();
+    expect(lockOf([['lock.model_3_charger_lock', 'locked']])).toBeUndefined();
+  });
+
+  it('gathers what says a window or a door is open, never a button or a switch that moves them', () => {
+    const { roles, windows } = custom([
+      ['button.model_3_vent_windows', '2026-11-04T09:12:00+00:00'],
+      ['switch.model_3_windows', 'off'],
+      ['binary_sensor.model_3_windows', 'off', undefined, { device_class: 'window' }],
+    ]);
+    expect(windows).toEqual(['binary_sensor.model_3_windows']);
+    expect(roles.windows).toBeUndefined();
+    // a key that names a door or a tyre's warning gathers only what can say it: Volvo's door sensor, never a button
+    const volvo = {
+      ...VOLVO,
+      seeds: [
+        ...VOLVO.seeds,
+        ['button.ex30_door_front_left', 'unknown', 'door_front_left'],
+        ['sensor.ex30_tire_front_left', 'normal', 'tire_front_left'],
+        ['binary_sensor.ex30_door_rear_left', 'off', 'door_rear_left', { device_class: 'door' }],
+      ] as CarFixture['seeds'],
+    };
+    const ex30 = vehicleEntities(carHouse([volvo]), VOLVO.device);
+    expect(ex30.doors).toEqual(['binary_sensor.ex30_door_rear_left']);
+    expect(ex30.warnings).toEqual({ fr: 'binary_sensor.ex30_tire_front_right' });
   });
 
   it('never makes a control of what sounds, wakes or opens a garage', () => {
