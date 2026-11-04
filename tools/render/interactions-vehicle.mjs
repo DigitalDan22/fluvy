@@ -4,9 +4,9 @@
  * own words; the rounds act on the car — unlocking, opening the boot and stopping a charge ask first in Home Assistant's
  * dialog, locking and the climate act at once, a hold opens what a round reads — and the charge cannot start unplugged;
  * the head, the battery and a row answer their taps; every frame at a card's width holds its declared height; the
- * strip's round gives way in half a section before a word would be cut; and in every language no round's word runs past
- * its cell, nor the line or the head's line past their column. Real cards on the playground's simulated hass. Exit code
- * 1 on any failure.
+ * strip's round gives way in half a section before a word would be cut; a car out of reach keeps its rounds where they
+ * stand when they read; and in every language no round's word runs past its cell, nor the line or the head's line past
+ * their column. Real cards on the playground's simulated hass. Exit code 1 on any failure.
  *   PLAYGROUND=http://127.0.0.1:5196/ node interactions-vehicle.mjs
  */
 import { everyLanguage } from './lib.mjs';
@@ -285,6 +285,19 @@ await page.close();
     JSON.stringify(seen),
   );
   await half.close();
+}
+
+/* ---------- the rounds lie by every word they can say, out of reach as when they read ---------- */
+{
+  const narrow = await suite.sheet('vehicle', { width: 266 });
+  const gone = await read(card(narrow, 'Out of reach'));
+  const parked = await read(card(narrow, 'Tesla Fleet · parked at work, sentry on'));
+  check(
+    'out of reach, a 266 card’s rounds give way where a parked car’s do: their dashes laid out as their words',
+    gone.rounds.length === 3 && parked.rounds.length === 3,
+    JSON.stringify({ gone: gone.rounds.length, parked: parked.rounds.length }),
+  );
+  await narrow.close();
 }
 
 /* ---------- no word runs past its box, in any language ---------- */

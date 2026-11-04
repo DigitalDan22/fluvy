@@ -2,6 +2,7 @@
 import type { HassEntity, HomeAssistant, LovelaceCardConfig } from '@fluvy/core';
 import { afterEach, describe, expect, it } from 'vitest';
 import '../vehicle/english.js';
+import type { TextRuler } from '../shared/fit.js';
 import { vehicleHeight } from '../vehicle-family.js';
 import { carHouse, KIA, RENAULT, TESLA, type CarFixture } from './fixtures.js';
 import { carControls, FluvyVehicleCard } from './vehicle-card.js';
@@ -37,8 +38,15 @@ async function mount(
   config: Record<string, unknown>,
   hass: HomeAssistant = house(),
   width = 360,
+  letter = 0,
 ): Promise<Mounted> {
   const card = document.createElement('fluvy-vehicle-card') as Mounted;
+  // happy-dom lays out no text: where a test needs words measured, each letter is `letter` wide
+  if (letter)
+    (card as unknown as { head: { ruler: TextRuler } }).head.ruler.width = (
+      _: string,
+      text: string,
+    ) => text.length * letter;
   card.setConfig({ type: 'custom:fluvy-vehicle-card', _now: NOW, ...config } as LovelaceCardConfig);
   card.hass = hass;
   (card as unknown as { width: number }).width = width;
@@ -110,6 +118,21 @@ describe('the vehicle card', () => {
         '--vh-cols',
       ),
     ).toBe('4');
+  });
+
+  it('lays its rounds out by every word each can say, so no state moves them, out of reach either', async () => {
+    // at 7 a letter a 280 card's 240 holds four cells of 60 for a lock that says "Unlocked", three for its "Unlocking"
+    const controls = ['lock', 'climate', 'trunk', 'sentry'];
+    const columns = async (hass: HomeAssistant): Promise<string> => {
+      const card = await mount({ device: TESLA.device, controls }, hass, 280, 7);
+      const row = root(card).querySelector<HTMLElement>('.vh-controls');
+      document.body.replaceChildren();
+      return row?.style.getPropertyValue('--vh-cols') ?? '';
+    };
+    const locked = await columns(house());
+    expect(locked).toBe('2');
+    expect(await columns(house({ 'lock.model_y_lock': { state: 'unlocking' } }))).toBe(locked);
+    expect(await columns(house(away(TESLA)))).toBe(locked);
   });
 
   it('says an opening’s name while it is shut, “Open” in the warning’s ink while it is not', async () => {

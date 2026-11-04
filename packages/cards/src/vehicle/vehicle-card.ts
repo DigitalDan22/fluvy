@@ -230,7 +230,7 @@ interface ControlView {
   readonly name: string;
   readonly glyph: string;
   readonly word: string;
-  /** Every word it may say (its widest decides the row): the row never moves when a state changes. */
+  /** Every word it can say in any state, whether it reads or not (its widest decides the row, which never moves). */
   readonly words: readonly string[];
   readonly tone: Tone;
   /** The word in a tone's ink: an open boot's warning, a cold cabin's cool. */
@@ -293,6 +293,16 @@ const WORD_CLEAR = 2;
 const CAR_WIDTH = 40;
 /** Minutes without a word from the car after which the card says when it last spoke (`stale_after`). */
 const STALE_AFTER = 30;
+/** A lock's states, each a word its round may say. */
+const LOCK_STATES: readonly string[] = [
+  'locked',
+  'unlocked',
+  'locking',
+  'unlocking',
+  'jammed',
+  'open',
+  'opening',
+];
 
 /** A unit a figure reads in: automatic (the sensor's own), or one of `units`. */
 const unitField = (name: string, units: readonly string[]): HaFormSchemaItem => ({
@@ -1145,15 +1155,21 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
     });
   }
 
+  /** The cabin's temperature unit: its sensor's, else its climate's, else the house's. */
+  private cabinUnit(): string {
+    return (
+      this.view('inside')?.unit ||
+      this.view('climate')?.attr<string>('temperature_unit') ||
+      this.hass?.config.unit_system.temperature ||
+      '°C'
+    );
+  }
+
   /** The inside temperature: its sensor's, else its climate's own reading. */
   private inside(): { readonly n: number; readonly text: string; readonly unit: string } | null {
     const sensor = this.view('inside');
     const climate = this.view('climate');
-    const unit =
-      sensor?.unit ||
-      climate?.attr<string>('temperature_unit') ||
-      this.hass?.config.unit_system.temperature ||
-      '°C';
+    const unit = this.cabinUnit();
     const n =
       sensor && sensor.status === 'ok' && sensor.number !== null
         ? sensor.number
@@ -1375,14 +1391,66 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
     return carControls(this.car()).map((control) => ({ control }));
   }
 
+  /** A lock's state in Home Assistant's words, as its round says it. */
+  private lockWord(v: EntityView, state: string): string {
+    return stateText(this.hass, {
+      ...v,
+      status: 'ok',
+      state,
+      ...(v.stateObj ? { stateObj: { ...v.stateObj, state } } : {}),
+    });
+  }
+
+  /**
+   * Every word a control can say, whatever its state now: an opening's name and "Open", each of a lock's states, the
+   * climate's off and on and a temperature at its widest, each of the charge's words, the sentry's name.
+   */
+  private controlWords(entry: ControlEntry, name: string, shut: string): readonly string[] {
+    const open = this.t('common.open');
+    switch (entry.control) {
+      case 'lock': {
+        const v = this.view('lock');
+        return v?.domain === 'lock'
+          ? LOCK_STATES.map((state) => this.lockWord(v, state))
+          : [this.t('lock.locked'), this.t('lock.unlocked')];
+      }
+      case 'climate': {
+        // a setpoint with its decimal; a cabin's reading below zero, or of three figures (a hot car in °F)
+        const unit = this.cabinUnit();
+        return [
+          this.t('common.off'),
+          this.t('common.on'),
+          s(this.hass, 'climate'),
+          ...[this.figure(88.8, 1), this.figure(-88, 0), this.figure(188, 0)].map(
+            (figure) => `${figure} ${unit}`,
+          ),
+        ];
+      }
+      case 'charging':
+        return (['charging', 'charged', 'plugged', 'stopped', 'unplugged', 'idle'] as const).map(
+          (key) => s(this.hass, key),
+        );
+      case 'windows':
+        return [open, shut, s(this.hass, 'vented')];
+      case 'sentry':
+        return [name];
+      default:
+        return [open, shut];
+    }
+  }
+
   /** A control as it stands: its round, its word, what a tap does. */
   private control(entry: ControlEntry, r: Reading): ControlView {
     const { roles, doors, windows } = this.car();
     const name = entry.name ?? this.t(controlWord(entry.control));
+    /** What an opening says: its name while shut (the port's short one), "Open" while open (in the warning's ink). */
+    const shut = entry.name ?? (entry.control === 'charge_port' ? s(this.hass, 'port') : name);
+    const opening = (isOpen: boolean): string => (isOpen ? this.t('common.open') : shut);
     const accent = this.accents.item(entry.color);
     const base = {
       key: entry.control,
       name,
+      words: this.controlWords(entry, name, shut),
       accent,
       entry,
       ink: '' as ControlView['ink'],
@@ -1402,12 +1470,11 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
       ...(confirm ? { confirmation: confirm } : {}),
     });
     const toned = (tone: Tone): Tone => (accent && tone === 'accent' ? 'accent' : tone);
-    /** A control whose entity cannot be read: its place kept, still, its word a dash. */
+    /** A control whose entity cannot be read: its place and its words' room kept, still, its word a dash. */
     const out = (glyphName: string, id: string | undefined): ControlView => ({
       ...base,
       glyph: entry.icon ?? glyphName,
       word: '—',
-      words: ['—'],
       tone: 'off',
       entity: id,
       act: undefined,
@@ -1419,9 +1486,6 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
         : v.domain === 'binary_sensor' || v.domain === 'switch'
           ? v.state === 'on'
           : /open|ajar/.test(v.state.toLowerCase());
-    /** What an opening says: its name while shut (the port's short one), "Open" while open (in the warning's ink). */
-    const shut = entry.name ?? (entry.control === 'charge_port' ? s(this.hass, 'port') : name);
-    const opening = (isOpen: boolean): string => (isOpen ? this.t('common.open') : shut);
     switch (entry.control) {
       case 'lock': {
         const v = this.view('lock');
@@ -1433,19 +1497,13 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
             : v.domain === 'binary_sensor'
               ? state === 'off'
               : /lock|secur/i.test(state) && !/unlock/i.test(state);
-        const word =
-          v.domain === 'lock'
-            ? stateText(this.hass, {
-                ...v,
-                state,
-                ...(v.stateObj ? { stateObj: { ...v.stateObj, state } } : {}),
-              })
-            : this.t(locked ? 'lock.locked' : 'lock.unlocked');
         return {
           ...base,
           glyph: entry.icon ?? (locked ? 'lock' : 'unlock'),
-          word,
-          words: [word, this.t('lock.locked'), this.t('lock.unlocked')],
+          word:
+            v.domain === 'lock'
+              ? this.lockWord(v, state)
+              : this.t(locked ? 'lock.locked' : 'lock.unlocked'),
           tone: locked ? toned('accent') : 'warning',
           ink: locked ? '' : 'warning',
           entity: v.id,
@@ -1474,7 +1532,7 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
         const warm =
           action === 'heating' || (target !== undefined && inside !== null && target > inside.n);
         const tone: Tone = on ? (action === 'cooling' || !warm ? 'cool' : 'heat') : 'neutral';
-        const unit = inside?.unit ?? this.hass?.config.unit_system.temperature ?? '°C';
+        const unit = this.cabinUnit();
         const cabin = r.cabin;
         const word = on
           ? typeof target === 'number'
@@ -1502,7 +1560,6 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
             entry.icon ??
             (on ? (tone === 'heat' ? 'flame' : tone === 'cool' ? 'snow' : 'fan') : 'fan'),
           word,
-          words: [word, this.t('common.off'), `${this.figure(88, 0)} ${unit}`],
           tone: toned(tone),
           ink: !on && cabin ? (cabin === 'cold' ? 'cool' : 'heat') : '',
           entity: id,
@@ -1547,15 +1604,6 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
           ...base,
           glyph: entry.icon ?? (charging ? 'bolt' : 'plug'),
           word,
-          words: [
-            word,
-            s(this.hass, 'charging'),
-            s(this.hass, 'charged'),
-            s(this.hass, 'stopped'),
-            s(this.hass, 'unplugged'),
-            s(this.hass, 'plugged'),
-            s(this.hass, 'idle'),
-          ],
           tone: charging
             ? toned('accent')
             : r.charge === 'complete'
@@ -1602,7 +1650,6 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
             entry.icon ??
             (isOpen ? (role === 'charge_port' ? 'chargePort' : `${role}Open`) : closedGlyph),
           word,
-          words: [opening(true), opening(false)],
           tone: isOpen ? (role === 'charge_port' ? toned('accent') : 'warning') : 'neutral',
           ink: isOpen && role !== 'charge_port' ? 'warning' : '',
           entity: v.id,
@@ -1623,7 +1670,6 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
           ...base,
           glyph: entry.icon ?? (isOpen ? 'carWindowOpen' : 'carWindow'),
           word,
-          words: [opening(true), opening(false), s(this.hass, 'vented')],
           tone: isOpen ? 'warning' : 'neutral',
           ink: isOpen ? 'warning' : '',
           entity: (opened[0] ?? readable[0])?.id,
@@ -1647,7 +1693,6 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
           ...base,
           glyph: entry.icon ?? (opened.length ? 'carDoorOpen' : 'carDoor'),
           word: opening(opened.length > 0),
-          words: [opening(true), opening(false)],
           tone: opened.length ? 'warning' : 'neutral',
           ink: opened.length ? 'warning' : '',
           entity: (opened[0] ?? readable[0])?.id,
@@ -1658,12 +1703,10 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
         const v = this.view('sentry');
         if (!v || v.status !== 'ok' || r.unavailable) return out('shield', v?.id);
         const on = this.stateOf(v) === 'on';
-        const word = name;
         return {
           ...base,
           glyph: entry.icon ?? 'shield',
-          word,
-          words: [name],
+          word: name,
           tone: on ? toned(accent ? 'accent' : 'armed') : 'neutral',
           entity: v.id,
           act: on

@@ -5,6 +5,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Visible on upgrade
+
+- The Vehicle card lays its row of rounds out for Home Assistant's word for each state its lock can be in (Locking,
+  Unlocking, Jammed), where it measured Fluvy's Locked and Unlocked, which a lock's round never says: in a language
+  whose words for them differ in length, the car's own row can hold one round more, or one fewer, at the same width.
+
 ### Fixed
 
 - A picture of your own on the thermostat, appliance or Vehicle card that would not load once (while Home Assistant
@@ -28,6 +34,10 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The Vehicle card's charging round turns a charge switch by the switch's own state: a switch still on while the charge
   read complete was turned on again by a tap, where it should have turned off (asking first, as stopping a charge
   does), and one off while the car still charged asked to stop it.
+- The Vehicle card lays its row of rounds out for every word each round can say, whatever the car does now: a lock
+  saying Unlocking, a cabin's temperature or a setpoint of half a degree could take a round from the row (or push the
+  card's own list onto another row), and a car out of reach, its rounds all dashes, showed one round more than while it
+  read.
 
 ### Development
 
