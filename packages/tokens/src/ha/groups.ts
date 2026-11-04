@@ -375,10 +375,9 @@ export const HA_GROUPS: readonly HaGroup[] = [
       ['--primary-color', c.accent.ink],
       ['--dark-primary-color', c.accent.hover],
       ['--light-primary-color', c.accent.fill],
-      // the user badge's initials on that fill (an electric palette's own ink; a soft one keeps Home Assistant's)
-      ...(c.character === 'vivid'
-        ? ([['--text-light-primary-color', c.accent.onFill]] as const)
-        : []),
+      // a person's initials on that fill (the user's and the person's badge), its own ink in either mode: Home
+      // Assistant's near black would sit on a dark mode's dark fill
+      ['--text-light-primary-color', c.accent.onFill],
       ['--accent-color', c.accent.ink],
       ['--primary-text-color', c.text.primary],
       ['--secondary-text-color', c.text.secondary],

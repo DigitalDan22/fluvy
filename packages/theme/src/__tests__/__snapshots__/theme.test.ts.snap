@@ -5,7 +5,7 @@ exports[`theme yaml > is the reviewed file (a change to any value shows up here 
 # Every value is a quoted string; colours are plain #rrggbb because Home Assistant reads them from JavaScript.
 # The default look (Linen). fluvy's settings apply any other palette and shape live, over this file.
 Fluvy:
-  fluvy-theme-build: "0e4edc4a"
+  fluvy-theme-build: "39d64794"
   fluvy-space-0: "0px"
   fluvy-space-1: "4px"
   fluvy-space-2: "8px"
@@ -425,6 +425,7 @@ Fluvy:
       primary-color: "#856529"
       dark-primary-color: "#765718"
       light-primary-color: "#f1e7d2"
+      text-light-primary-color: "#4a3a14"
       accent-color: "#856529"
       primary-text-color: "#33270b"
       secondary-text-color: "#716345"
@@ -828,6 +829,7 @@ Fluvy:
       primary-color: "#cebb9c"
       dark-primary-color: "#decbac"
       light-primary-color: "#362e20"
+      text-light-primary-color: "#efe5d4"
       accent-color: "#cebb9c"
       primary-text-color: "#ede7dc"
       secondary-text-color: "#b9ae99"

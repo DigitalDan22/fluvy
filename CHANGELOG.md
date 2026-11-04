@@ -74,6 +74,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - A Home Connect programme or setting Home Assistant has no words for reads by its own name ("Espresso", "Eco 50"),
   where the card said the whole raw key, and a programme's name longer than its room (a drink's tile, a row's value)
   ends in its ellipsis inside the appliance card, where it reached past the card and a phone's page scrolled sideways.
+- The initials of a person without a picture (the sidebar's account, a person's badge) read on their circle in dark
+  mode, in every palette, where Home Assistant's near black sat on the theme's dark fill; in light mode they take the
+  same fill's own ink.
 
 ## [1.11.3] — 2026-10-28
 

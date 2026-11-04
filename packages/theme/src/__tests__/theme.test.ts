@@ -1,7 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
-import { derivePalettes } from '@fluvy/tokens';
+import { contrastRatio, derivePalette, derivePalettes, GATES, type Hex } from '@fluvy/tokens';
+import { COMMUNITY_PALETTES } from '@fluvy/tokens/community';
+import { seedOf } from '@fluvy/tokens/runtime';
 import { emitThemeYaml, THEME_NAME } from '../emit.js';
 import { validateThemeYaml } from '../validate.js';
 
@@ -68,6 +70,28 @@ describe('theme yaml', () => {
         !known.has(name) && !deliberate.has(name) && !dynamic.some((pattern) => pattern.test(name)),
     );
     expect(unknown).toEqual([]);
+  });
+});
+
+describe('a person’s badge', () => {
+  it('writes their initials in an ink that reads on its fill, in every palette and both modes', () => {
+    const palettes = [
+      ...derivePalettes(),
+      ...COMMUNITY_PALETTES.map((entry) => derivePalette(seedOf(entry.palette))),
+    ];
+    for (const palette of palettes) {
+      const modes = (parse(emitThemeYaml(palette)) as Record<string, Record<string, unknown>>)[
+        THEME_NAME
+      ]!['modes'] as Record<string, Record<string, Hex>>;
+      for (const [mode, vars] of Object.entries(modes)) {
+        const ink = vars['text-light-primary-color'];
+        const fill = vars['light-primary-color'];
+        expect(
+          ink && fill && contrastRatio(ink, fill),
+          `${palette.name} ${mode}`,
+        ).toBeGreaterThanOrEqual(GATES.onFill);
+      }
+    }
   });
 });
 
