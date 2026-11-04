@@ -11,6 +11,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   row (a chevron beside it says so), where it opened Home Assistant's dialog: the keys, a letter to find a name, the
   haptics' tick as one is chosen. An option too long to hold beside the name in a narrow column goes under it, as a
   date does, where it ended in an ellipsis. Thanks to @rammium (#96).
+- An appliance's picture steps down to 32 before it gives way to a letter of its name, in the appliance card's head
+  and row and in the appliances card's tiles (whose pictures gave way at once under 64): two appliance rows side by
+  side on a phone keep their pictures, a long name cut to its 96 beside them. Thanks to @rammium (#103).
 - An appliance whose machine runs while its cycle waits for its delayed start, preheats or has finished says
   Scheduled, Preheating or Done, where it said Running: a Samsung washer counting down to its start on SmartThings, an
   oven on SmartThings preheating. Thanks to @rammium (#97).
@@ -101,6 +104,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   device, which still names the appliance; a switch in the editor's roles section says so. `device: none`, the way
   until now, reads the same, the card named after its entity's device. The appliances card's rows and tiles read an
   item's `roles` and `scan` as its whole card does. Thanks to @rammium (#98).
+- `picture_min: 32`, `44` or `64` keeps an appliance's picture at least that large, in the appliance card's head
+  and row and in the appliances card's tiles and whole cards, a long name ending in its ellipsis beside it. Thanks to
+  @rammium (#103).
 
 ## [1.12.0] — 2026-11-04
 

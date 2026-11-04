@@ -107,7 +107,14 @@ import {
   type CommandName,
   type ServiceCall,
 } from './commands.js';
-import { choiceField, deviceField, kindField, option, sectionField } from './form.js';
+import {
+  choiceField,
+  deviceField,
+  kindField,
+  option,
+  pictureMinField,
+  sectionField,
+} from './form.js';
 import {
   DUE_WORD,
   heroSays,
@@ -143,7 +150,16 @@ import { rememberUnloaded, unloadedAt, UNLOADED_EVENT } from './memory.js';
 import { noticeTriggers, phoneOf } from './notice.js';
 import { Nudges } from './nudge.js';
 import { isPet, type Meal } from './pets.js';
-import { artOf, headFit, pictureBox, pictureStyles, type PictureStyle } from './picture.js';
+import {
+  artOf,
+  headFit,
+  pictureBox,
+  pictureLadder,
+  pictureStep,
+  pictureStyles,
+  type PictureSize,
+  type PictureStyle,
+} from './picture.js';
 import { entityOf, refView, stateOf } from './refs.js';
 import {
   cycleOf,
@@ -237,6 +253,11 @@ export interface ApplianceCardConfig extends FluvyCardConfig, HeadConfig {
   variant?: ApplianceVariant;
   /** Its picture (the whole card's and the row's): the kind's drawing (default), its circle, or none. */
   picture?: PictureStyle;
+  /**
+   * The least its picture steps down to (32, 44 or 64), a long name ending in its ellipsis beside it; default: the
+   * picture steps down (64, 44, 32), then gives way, before a letter of the name.
+   */
+  picture_min?: number | 'auto';
   /** A picture of the person's own instead of the drawing: an address, or an entity whose picture it is. */
   image?: string;
   /** The round that switches it on and off (or says whether it is on), beside its name. */
@@ -1291,6 +1312,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     'variant',
     'unit',
     'picture',
+    'picture_min',
     'image',
     'show_power',
     'power_action',
@@ -1400,6 +1422,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       variant,
       unit: 'both',
       picture: 'art',
+      picture_min: 'auto',
       show_power: true,
       show_notify: true,
       show_hero: true,
@@ -1469,6 +1492,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
           ]),
           textField('image'),
         ),
+        onlyWhen(({ picture }) => picture !== 'none', pictureMinField()),
         fieldRow(boolField('show_power'), actionField('power_action')),
         boolField('show_notify'),
         sectionField('appliance.section_show', [
@@ -1544,6 +1568,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         progress_style: 'editor_progress_style',
         time: 'editor_time',
         picture: 'editor_picture',
+        picture_min: 'editor_picture_min',
         show_power: 'editor_show_power',
         power_action: 'editor_power_action',
         show_notify: 'editor_show_notify',
@@ -2060,11 +2085,11 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
   }
 
   /**
-   * The head: the picture (64; 44, then the name at 16, where the whole name would not hold beside it; none before a
-   * letter of the name would go: `headFit`), the name over what it does — what asks for attention in the warning's ink,
-   * else its phase or its state — and the round, raised beside the head's own button: "Unloaded" while a load waits,
-   * else the power. What it does keeps its words: where the column leaves them no room beside the round, they take the
-   * card's width under the head.
+   * The head: the picture (64; 44 and 32, then the name at 16, where the whole name would not hold beside it; none
+   * before a letter of the name would go, or its least kept, the name cut: `headFit`), the name over what it does —
+   * what asks for attention in the warning's ink, else its phase or its state — and the round, raised beside the head's
+   * own button: "Unloaded" while a load waits, else the power. What it does keeps its words: where the column leaves
+   * them no room beside the round, they take the card's width under the head.
    */
   private renderPictureHead(view: View, alarm: boolean): TemplateResult {
     const c = this.config;
@@ -2080,7 +2105,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     const { size, small, under, room } = headFit(
       w,
       trailing,
-      c?.picture !== 'none',
+      pictureLadder(c?.picture, c?.picture_min),
       name(false),
       name(true),
     );
@@ -4641,15 +4666,20 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
   /**
    * One row: the appliance's picture (or its circle ringed by its progress), its name over what it does, and the round
    * that matters now. The row is the card's button (the head's rule), the round raised beside it. What gives way in a
-   * narrow row, in order: the line's trailing parts, the round, then the picture (the circle and its ring); the state
-   * is never cut.
+   * narrow row, in order: the line's trailing parts, the round, then the picture (64, 44, 32, then none, or its least
+   * kept; the circle and its ring), the state never cut.
    */
   private renderRow(view: View): TemplateResult {
     const { r, shown } = view;
     const word = busy(shown.status) && shown.phase ? shown.phase : shown.word;
-    const art = (this.config?.picture ?? 'art') === 'art';
-    // the picture's box: 64, 44 before a letter of the name would go, none before the state would
-    let picture = 64;
+    const style = this.config?.picture ?? 'art';
+    const art = style === 'art';
+    // the picture's steps (64, 44, 32; the circle and its ring are one size, never given up for the name), and the
+    // least the card keeps (`picture_min`)
+    const ladder = pictureLadder(style, this.config?.picture_min);
+    const sizes: readonly PictureSize[] = art ? ladder.sizes : ladder.sizes.length ? [44] : [];
+    const least = sizes.at(-1) ?? 0;
+    const keep = ladder.keep || !art;
     let control = this.rowRound(view);
     const summary = this.rowSummary(view);
     const attention = view.unavailable ? undefined : r.attention[0];
@@ -4664,10 +4694,11 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       shown.status === 'idle' &&
       summary !== '' &&
       (view.hero === 'cold' || width(summary) <= this.contentWidth);
-    // what asks for attention says it in its own words where the bare row holds them, else in its state's (the warning
-    // ink, the ring's tone and the row's name say the rest)
+    // what asks for attention says it in its own words where the bare row holds them (beside the least picture the card
+    // keeps), else in its state's (the warning ink, the ring's tone and the row's name say the rest)
     const need = attention ? attention.text || this.t(attention.key) : '';
-    const first = need && width(need) <= this.contentWidth ? need : quiet ? summary : word;
+    const bare = this.contentWidth - (ladder.keep && least ? least + 12 : 0);
+    const first = need && width(need) <= bare ? need : quiet ? summary : word;
     const said =
       attention && first === need ? attentionText(this.hass, attention, view.now) : first;
     const age = said.startsWith(`${first} · `) ? said.slice(first.length + 3) : '';
@@ -4675,17 +4706,26 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     // the name whole; for what else may go (the round, the ring) a long one counts 96: it is cut before they are lost
     const whole = this.head.ruler.width(`${words}fv-row__title`, view.title);
     const name = Math.min(96, whole);
-    let ring = this.config?.picture !== 'none';
-    const roomWith = (): number =>
-      this.contentWidth - (ring ? (art ? picture + 12 : 56) : 0) - (control !== nothing ? 56 : 0);
-    if (control !== nothing && (state > roomWith() || name > roomWith())) control = nothing;
-    // the picture gives way for the name whole, against the row's own room (16 in, where the card counts 20)
-    if (art && whole > roomWith() + 8) picture = 44;
-    if (state > roomWith() || (art && name > roomWith())) ring = false;
+    // the room the line has beside a picture of a size (12 from it) and the round
+    const roomWith = (size: number): number =>
+      this.contentWidth - (size ? size + 12 : 0) - (control !== nothing ? 56 : 0);
+    const largest = sizes[0] ?? 0;
+    if (control !== nothing && (state > roomWith(largest) || name > roomWith(largest)))
+      control = nothing;
+    // the picture steps down for the name whole, against the row's own room (16 in, where the card counts 20), and the
+    // state whole beside it (`pictureStep`)
+    const picture = pictureStep(sizes, keep, (size, room) => {
+      const left = roomWith(size);
+      return (
+        state <= left &&
+        (room === 'whole' ? whole <= left + 8 : room === 'least' ? name <= left : true)
+      );
+    });
+    const ring = picture > 0;
     const progress = busy(shown.status) ? shown.clock.progress : null;
     // the ring says how far it is; without it (a picture has none) the line says so, where it holds it after the state
     const percent = progress !== null ? `${this.figure(progress)} %` : '';
-    const percentOptional = (ring && !art) || width(`${first} · ${percent}`) > roomWith();
+    const percentOptional = (ring && !art) || width(`${first} · ${percent}`) > roomWith(picture);
     const line = fitLine(
       [
         { text: first },
@@ -4700,7 +4740,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
           ? { text: whenText(this.hass, 'done', shown.finishedAt, view.now), optional: true }
           : null,
       ].filter((segment): segment is { text: string; optional?: boolean } => segment !== null),
-      roomWith(),
+      roomWith(picture),
       width,
     );
     const length = 2 * Math.PI * ROW_RADIUS;

@@ -1651,9 +1651,11 @@ temperature on its way, a hob's plates, a fridge's compartments, a state and its
   say it). The cycle's step said alone sits on its own 16 line under its segment, never over the line below it. The
   anatomy is the kind's and the config's, never the state's: an appliance out of reach keeps every section, its values a
   dash, its buttons disabled (a fridge with no state of its own is out of reach when nothing of it can be read).
-- **The head**: the picture (64 where the whole name holds beside it at 20; 44 where it holds at 20, then at 16; else
-  none, the name at 20, then 16 — the picture gives way before a letter of the name does, and only a name that holds
-  nowhere ends in its ellipsis, beside no picture), the name 20/700 over what it does 16/400, and the
+- **The head**: the picture (64 where the whole name holds beside it at 20; 44, then 32, where it holds at 20, then at
+  16; else none, the name at 20, then 16 — the picture gives way before a letter of the name does, and only a name
+  that holds nowhere ends in its ellipsis, beside no picture; `picture_min` keeps the least it asks, 32, 44 or 64,
+  the name at 16 ending in its ellipsis beside it while a slot of 72 holds, #103), the name 20/700 over what it does
+  16/400, and the
   power round (48). What it does is what asks for attention first (why it failed, a door left open, a load waiting,
   with how long; never a reminder, and not where an alarm row says it), in the warning's ink; a hob's zones on ("Zone
   1 on", "2 of 4 on"); a fridge at work "In operation"; else its phase while it works, else its state. What it does is
@@ -1665,7 +1667,7 @@ temperature on its way, a hob's plates, a fridge's compartments, a state and its
   raised beside it.
 - **The picture** is the kind's product drawing (`picture: art`, the default; the `appliance-art` chunk): brushed
   stainless, white enamel, black glass and chrome, lit from the top left on a soft contact shadow, on a 64 grid —
-  crisp at 44 to 64 and at twice that, no brand. One drawing serves both modes: on a dark card the shadow deepens, a
+  crisp at 32 to 64 and at twice that, no brand. One drawing serves both modes: on a dark card the shadow deepens, a
   rim light runs along its top and left edges and a soft glow sits behind it, so black glass never sinks into the
   card. `picture: icon` is the kind's 64 circle, `none` leaves the head to its words, centred in its 64, so the card
   stays level with its row; `image` is the person's own picture (an address, or an entity whose picture it is). Out of
@@ -1753,18 +1755,21 @@ temperature on its way, a hob's plates, a fridge's compartments, a state and its
 - **The row** (`row`): 88 with its picture (12 · 64 · 12), the name 15/700 over what it does 15/400 4 under it, the
   round that matters now — "Unloaded", else start, resume or pause for a cycle a card can start, else the power
   round (44): the reporter's bottom line. What gives way, in order: the line's trailing parts, the round, the picture
-  to 44 before a letter of the name would go (measured against the row's own 16 in, not the card's 20: in Home
-  Assistant's desktop band a one-word name like "Sandwichmaker" was cut by 3 px with the picture kept at 64), then
-  the picture; the state is never cut, and the 96 still counts for what else may go (the round, the ring): a long
-  name is cut before they are lost. `picture: icon` keeps the circle ringed by its progress (76). What asks for
-  attention is said in its own words where the bare row holds them, else in its state's (the warning's ink says the
-  rest). The whole row is the card's button (a cover over it), the round raised beside it.
+  to 44, then 32, before a letter of the name would go (measured against the row's own 16 in, not the card's 20: in
+  Home Assistant's desktop band a one-word name like "Sandwichmaker" was cut by 3 px with the picture kept at 64),
+  then the picture; the state is never cut, and the 96 still counts for what else may go (the round, the ring): a
+  long name is cut before they are lost, so two rows side by side on a phone (182 each) keep their pictures (#103).
+  `picture_min` keeps the least it asks beside a name cut however short, giving way only for the state.
+  `picture: icon` keeps the circle ringed by its progress (76). What asks for attention is said in its own words
+  where the bare row holds them (beside the least picture the card keeps), else in its state's (the warning's ink
+  says the rest). The whole row is the card's button (a cover over it), the round raised beside it.
 - **The house's appliances** (`fluvy-appliances-card`): every appliance of the house (or those it names, each with
   its name, glyph, colour and tap and hold), what needs a hand first (waiting to be unloaded, a door, a failure, a
   reminder), then what runs, ending soonest, then what waits to start, what is done, what rests; the head counts them
   ("2 running · 1 done · 3 at rest"). Bar rows (76; 48 compact) — the circle in the status's tone, what it does and
   when, the time left or its state at the end, its progress as the bar — or tiles two a row with the pictures (88;
-  `picture: icon` the ringed circles, 84) whose circles give way together before a word would be cut. Over
+  `picture: icon` the ringed circles, 84) whose pictures step down (64, 44, 32) and give way together before a word
+  would be cut, or keep the least `picture_min` asks, every tile's need then saying its short state. Over
   `max_rows` (6) a "{n} more" row; `show: active` lists only the busy ones; its own empty words ("No appliance found",
   "Nothing running", `empty_text`) and `hide_empty`. A row's line keeps its first words whole: the circles give way
   together where one would not hold beside them, then its shorter forms ("Rinse aid", then "Refill", for "Add rinse
@@ -1772,8 +1777,8 @@ temperature on its way, a hob's plates, a fridge's compartments, a state and its
   row where two would not hold a tile's state whole. The head counts each in its number ("1 läuft · 2 fertig", "1
   terminado").
 - **The house's appliances as whole cards** (`variant: cards`): each listed appliance its whole card — its item is
-  the appliance card's config, so it takes any of its keys, the list's `picture` where it names none (its `roles` and
-  `scan` the rows and tiles read too) — side by side
+  the appliance card's config, so it takes any of its keys, the list's `picture` and `picture_min` where it names none
+  (its `roles` and `scan` the rows and tiles read too) — side by side
   as many as hold: a whole card 300 at least (four across a desktop's band, 360 each), a row 240 (five), 16 apart as
   Home Assistant's section spaces its cards; no head, no surface of its own. The cards keep their places (`sort:
   none`, the order given, their default; by name where asked); its height at a 360 column is its cards' one under

@@ -35,13 +35,14 @@ if (!customElements.get('fluvy-alerts-card'))
  * with its upper drum at rest and its oven's two cavities; Matter's dishwasher and paused washer; Whirlpool's dryer and
  * double oven; Tuya's kettle; the community's hOn, AEG and SmartThinQ washers; LocalThings' dishwasher (#91), washer
  * and oven by its keys, their buttons pressed by the card's (#97), and a card that scans nothing (#98); a washer and a
- * dryer on smart plugs (their power's history answered here). Then every variant, the list of the house's appliances,
- * an appliance out of reach beside its live twin, a failure that says why, and a house in Fahrenheit. The state words
- * are Home Assistant's in the page's language (`lang`), as its translations say them. Last, the reporter's own LG house
- * as he dumped it (#47): his four appliances on both integrations he runs, at rest and at work, whole, compact and as
- * rows — the words of LG's states left to the card, as the older integration's plain English would be. And the house's
- * status colours (1.9): the four statuses on an alerts card and on a dishwasher due its salt, the palette's own and
- * then a warning of the house's own (#47's orange), light or dark as the page is.
+ * dryer on smart plugs (their power's history answered here). Then every variant (rows side by side on a phone, their
+ * pictures stepping down or kept, #103), the list of the house's appliances, an appliance out of reach beside its live
+ * twin, a failure that says why, and a house in Fahrenheit. The state words are Home Assistant's in the page's language
+ * (`lang`), as its translations say them. Last, the reporter's own LG house as he dumped it (#47): his four appliances
+ * on both integrations he runs, at rest and at work, whole, compact and as rows — the words of LG's states left to the
+ * card, as the older integration's plain English would be. And the house's status colours (1.9): the four statuses on
+ * an alerts card and on a dishwasher due its salt, the palette's own and then a warning of the house's own (#47's
+ * orange), light or dark as the page is.
  */
 
 const now = NOW.getTime();
@@ -510,6 +511,21 @@ const WASHER_ROLES = [
   { role: 'stop', entity: 'button.waschmaschine_flur_stopp' },
 ];
 
+/** The reporter's four as rows (#103), in his words: a dishwasher, a fridge, a microwave and an oven. */
+const PHONE_ROWS: readonly LovelaceCardConfig[] = [
+  card('hc-dish', { variant: 'row', name: 'Dishwasher' }),
+  card('lg-fridge', { variant: 'row', name: 'Fridge' }),
+  card('lt-oven', { variant: 'row', name: 'Microwave', kind: 'microwave' }),
+  card('hc-oven', { variant: 'row', name: 'Oven' }),
+];
+/** And the house's own names, longer than half a phone holds beside a picture. */
+const LONG_ROWS: readonly LovelaceCardConfig[] = [
+  card('lt-dish', { variant: 'row' }),
+  card('hc-fridge', { variant: 'row' }),
+  card('lt-oven', { variant: 'row' }),
+  card('hc-coffee', { variant: 'row' }),
+];
+
 const list = (more: Record<string, unknown> = {}): LovelaceCardConfig => ({
   type: 'custom:fluvy-appliances-card',
   _now: at,
@@ -824,6 +840,19 @@ export const sheet: SheetSpec = {
         card('lg-dryer', { variant: 'row', cols: 6 }),
       ],
     }),
+    // two rows side by side on a phone, 182 each (#103): the reporter's four and the house's longer names, their
+    // pictures stepping down to 32, a long name cut to its 96 before a picture goes; kept at 44 (`picture_min`), the
+    // names ending in their ellipsis beside them
+    frame({
+      title: 'Rows · two side by side at 182',
+      width: 380,
+      cards: [...PHONE_ROWS, ...LONG_ROWS].map((row) => ({ ...row, cols: 6 })),
+    }),
+    frame({
+      title: 'Rows · two side by side at 182, pictures kept',
+      width: 380,
+      cards: [...PHONE_ROWS, ...LONG_ROWS].map((row) => ({ ...row, picture_min: 44, cols: 6 })),
+    }),
     // what to look after, as rows of their own: what to do at the end, or as one phrase (a hold resets where the
     // integration lets a card)
     frame({
@@ -904,6 +933,11 @@ export const sheet: SheetSpec = {
         }),
       ],
     }),
+    // the tiles' pictures step down together (#103); kept, every tile's name ends in its ellipsis beside its own
+    frame({
+      title: 'Appliances · tiles, pictures kept',
+      cards: [list({ variant: 'tiles', max_rows: 6, picture_min: 32 })],
+    }),
     frame({
       title: 'Appliances · none',
       cards: [list({ appliances: [] }), list({ show: 'active', appliances: ['miele-coffee'] })],
@@ -962,6 +996,13 @@ export const sheet: SheetSpec = {
     }),
     // the whole card made one's own: its circle for its picture, its rows named, coloured, ordered, their values at
     // the end; a coffee machine's drinks chosen; no picture and no round
+    // at half a desktop's column (#103): a name that holds at 16 beside the 32 keeps it, a longer one gives the picture
+    // up, unless the card keeps it (at 44 here), the name cut beside it
+    frame({
+      title: 'Whole card · at 266, its picture stepping down and kept',
+      width: 266,
+      cards: [card('lg-dish'), card('lt-washer'), card('lt-washer', { picture_min: 44 })],
+    }),
     frame({
       title: 'Whole card · its own rows, picture and drinks',
       cards: [

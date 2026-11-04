@@ -13,6 +13,35 @@ import type { ApplianceKind } from './kinds.js';
 /** What a card shows in a picture's place: the drawing (default), the kind's circle, or nothing. */
 export type PictureStyle = 'art' | 'icon' | 'none';
 
+/** A picture's box: 64, 44, 32, or none. */
+export type PictureSize = 0 | 32 | 44 | 64;
+
+/** The sizes a picture steps down through, largest first: a drawing's (or one's own) 64, 44 and 32; a circle's. */
+const STEPS: Readonly<Record<'art' | 'icon', readonly PictureSize[]>> = {
+  art: [64, 44, 32],
+  icon: [64, 44],
+};
+
+/** The sizes a card's picture may take, largest first, and whether it is kept where a name would hold without it. */
+export interface PictureLadder {
+  readonly sizes: readonly PictureSize[];
+  readonly keep: boolean;
+}
+
+/**
+ * A card's picture ladder (#103): every step of its style, then none (default); or, where the card asks for a least
+ * (`picture_min`: 32, 44 or 64, a number or its word), the steps from that least up, kept beside a name that ends in
+ * its ellipsis. None at all without a picture.
+ */
+export function pictureLadder(style: PictureStyle | undefined, least: unknown): PictureLadder {
+  if (style === 'none') return { sizes: [], keep: false };
+  const steps = STEPS[style === 'icon' ? 'icon' : 'art'];
+  const min = Number(least);
+  return min > 0
+    ? { sizes: steps.filter((size) => size >= Math.min(min, 64)), keep: true }
+    : { sizes: steps, keep: false };
+}
+
 /** The drawing each kind is shown with: a washer-dryer the washer's, an air fryer the fryer's, a plug's the plug. */
 export const KIND_ART: Readonly<Record<ApplianceKind, ArtName>> = {
   washer: 'washer',
@@ -119,6 +148,26 @@ export const pictureStyles = css`
   }
 `;
 
+/** How much of a name a picture's step leaves room for: the whole of it, its least (a long one's 96), or none. */
+export type NameRoom = 'whole' | 'least' | 'none';
+
+/**
+ * The picture of a row, and of the list's tiles together (#103): the largest step beside which the name holds whole
+ * (and what the row says); else its least, while what it says holds beside it and a long name keeps its least — or,
+ * kept, however short the name must be; else none. `fits` says whether a step leaves the room asked.
+ */
+export function pictureStep(
+  sizes: readonly PictureSize[],
+  keep: boolean,
+  fits: (size: PictureSize, name: NameRoom) => boolean,
+): PictureSize {
+  const least = sizes.at(-1) ?? 0;
+  return (
+    sizes.find((size) => fits(size, 'whole')) ??
+    (least && fits(least, keep ? 'none' : 'least') ? least : 0)
+  );
+}
+
 /** The picture's box (`size` square), its drawing or the person's picture inside; empty until the drawings land. */
 export function pictureBox(
   size: number,
@@ -139,8 +188,8 @@ export const SUB_BESIDE = 120;
 
 /** How the whole card's head lays out, by its column and its name's width at 20 and at 16. */
 export interface HeadFit {
-  /** The picture's box: 64, 44, or none. */
-  readonly size: 0 | 44 | 64;
+  /** The picture's box: 64, 44, 32, or none. */
+  readonly size: PictureSize;
   /** The name steps from 20 to 16. */
   readonly small: boolean;
   /** What it does goes under the head, the card's width. */
@@ -150,35 +199,35 @@ export interface HeadFit {
 }
 
 /**
- * The whole card's head (#47): the picture gives way before a letter of the name does — 64 where the whole name holds
- * beside it at 20, 44 where it holds at 20 and then at 16, else none (the name at 20, then 16) — and only a name that
- * holds nowhere ends in its ellipsis, beside no picture. The picture keeps a slot of 72 at least beside it. What it
- * does sits beside the name or under the head by the column alone (`SUB_BESIDE` beside the 64), so the head of every
- * card of a row is as tall as the next whatever its name. `width` is the card's content, `trailing` the round and its
- * gap (0 without one), `big` and `small` the name's widths at 20 and at 16.
+ * The whole card's head (#47, #103): the picture gives way before a letter of the name does — 64 where the whole name
+ * holds beside it at 20, each smaller step of its ladder where it holds at 20 and then at 16 (44, 32), else none (the
+ * name at 20, then 16) — and only a name that holds nowhere ends in its ellipsis, beside no picture; a picture the card
+ * keeps (`picture_min`) stays at its least instead, the name at 16 ending in its ellipsis, while a slot of 72 holds
+ * beside it. The picture keeps a slot of 72 at least beside it. What it does sits beside the name or under the head by
+ * the column alone (`SUB_BESIDE` beside the 64), so the head of every card of a row is as tall as the next whatever its
+ * name. `width` is the card's content, `trailing` the round and its gap (0 without one), `big` and `small` the
+ * name's widths at 20 and at 16.
  */
 export function headFit(
   width: number,
   trailing: number,
-  picture: boolean,
+  ladder: PictureLadder,
   big: number,
   small: number,
 ): HeadFit {
   const room = (size: number): number => width - trailing - (size ? size + 16 : 0);
-  const steps: ReadonlyArray<readonly [0 | 44 | 64, boolean]> = picture
-    ? [
-        [64, false],
-        [44, false],
-        [44, true],
-        [0, false],
-        [0, true],
-      ]
-    : [
-        [0, false],
-        [0, true],
-      ];
-  const [size, step] = steps.find(
-    ([n, s]) => room(n) >= (n ? Math.max(72, s ? small : big) : s ? small : big),
-  ) ?? [0, true];
-  return { size, small: step, under: room(picture ? 64 : 0) < SUB_BESIDE, room: room(size) };
+  const least = ladder.sizes.at(-1) ?? 0;
+  // each step with the room it needs: the whole name at 20 (and at 16 beside all but the 64), a slot of 72 at least
+  const steps: ReadonlyArray<readonly [PictureSize, boolean, number]> = [
+    ...ladder.sizes.flatMap((size) =>
+      (size === 64 ? [false] : [false, true]).map(
+        (s) => [size, s, Math.max(72, s ? small : big)] as const,
+      ),
+    ),
+    ...(ladder.keep && least ? [[least, true, 72] as const] : []),
+    [0, false, big],
+    [0, true, small],
+  ];
+  const [size, step] = steps.find(([n, , need]) => room(n) >= need) ?? [0, true];
+  return { size, small: step, under: room(ladder.sizes[0] ?? 0) < SUB_BESIDE, room: room(size) };
 }

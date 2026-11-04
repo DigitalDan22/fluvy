@@ -46,12 +46,20 @@ import {
 import type { EditorDefaults, RowsListSpec } from '../shared/rows-editor.js';
 import { Ticker, MINUTE } from '../shared/ticker.js';
 import { applianceHouseHeight, type ApplianceCardConfig } from './appliance-card.js';
-import { choiceField, deviceField, kindField, option } from './form.js';
+import { choiceField, deviceField, kindField, option, pictureMinField } from './form.js';
 import { DUE_WORD, KIND_TILES } from './full.js';
 import { applianceDevices, KIND_DEFAULTS, type ApplianceKind } from './kinds.js';
 import type { MaintenanceKey } from './maintenance.js';
 import { unloadedAt, UNLOADED_EVENT } from './memory.js';
-import { artOf, pictureBox, pictureStyles, type PictureStyle } from './picture.js';
+import {
+  artOf,
+  pictureBox,
+  pictureLadder,
+  pictureStep,
+  pictureStyles,
+  type PictureSize,
+  type PictureStyle,
+} from './picture.js';
 import {
   cycleOf,
   cycleOfFlag,
@@ -116,6 +124,8 @@ export interface AppliancesCardConfig extends FluvyCardConfig, HeadConfig {
   variant?: AppliancesVariant;
   /** A tile's picture: the kind's drawing (default), its circle ringed by its progress, or none. */
   picture?: PictureStyle;
+  /** The least a tile's (and a whole card's) picture steps down to (32, 44 or 64), a long name cut beside it. */
+  picture_min?: number | 'auto';
   /** The appliances, in order: devices, or items naming one (default: every appliance of the house, busiest first). */
   appliances?: ReadonlyArray<string | ApplianceItem>;
   /** Rows before a "{count} more" row takes the others (6). */
@@ -355,6 +365,7 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
     'subtitle',
     'variant',
     'picture',
+    'picture_min',
     'appliances',
     'max_rows',
     'show',
@@ -390,6 +401,7 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
   static override defaults: EditorDefaults = (config) => ({
     variant: 'rows',
     picture: 'art',
+    picture_min: 'auto',
     max_rows: APPLIANCES_MAX_ROWS,
     show: 'all',
     sort: config['variant'] === 'cards' ? 'none' : 'state',
@@ -420,6 +432,11 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
             option('none'),
           ]),
         ),
+        onlyWhen(
+          ({ variant, picture }) =>
+            (variant === 'tiles' || variant === 'cards') && picture !== 'none',
+          pictureMinField(),
+        ),
         fieldRow(
           choiceField('show', [option('all'), ['active', 'appliance.o_busy']]),
           choiceField('sort', [
@@ -440,6 +457,7 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
         empty_text: 'editor_empty_text',
         hide_empty: 'editor_hide_empty',
         picture: 'editor_picture',
+        picture_min: 'editor_picture_min',
       }),
     };
   }
@@ -830,8 +848,9 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
 
   /**
    * Two tiles a row: each appliance's picture (its kind's drawing; or its circle ringed by its progress), its name over
-   * what matters most — what needs a hand, else the time left or its state — whole: the pictures give way (every
-   * tile's together) before a word would be cut, and a need too long for a tile says its short state instead, in the
+   * what matters most — what needs a hand, else the time left or its state — whole: the pictures step down (64, 44, 32)
+   * and give way, every tile's together, before a word would be cut (a long name keeping its 96, or what the least
+   * the card keeps leaves it: `picture_min`), and a need too long for a tile says its short state instead, in the
    * warning's ink.
    */
   private renderTiles(lines: readonly Line[], now: number): TemplateResult {
@@ -839,24 +858,31 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
     const length = 2 * Math.PI * radius;
     const style = this.config?.picture ?? 'art';
     const art = style === 'art';
-    const lead = style === 'none' ? 0 : art ? 64 + 12 : 56;
+    // the drawing's steps, the circle's one size, and the least the card keeps
+    const ladder = pictureLadder(style, this.config?.picture_min);
+    const sizes: readonly PictureSize[] = art ? ladder.sizes : ladder.sizes.length ? [44] : [];
+    const lead = (size: number): number => (size ? size + 12 : 0);
     // a tile with its picture says its words larger: they are measured as they are drawn
     const drawn = art ? 'al-tile--picture > ' : '';
     const width = (text: string): number => this.head.ruler.width(`${drawn}fv-row__sub`, text);
+    const whole = (title: string): number => this.head.ruler.width(`${drawn}fv-row__title`, title);
     const name = (title: string): number =>
-      art
-        ? Math.min(96, this.head.ruler.width(`${drawn}fv-row__title`, title))
-        : this.head.rowNameRoom(title);
+      art ? Math.min(96, whole(title)) : this.head.rowNameRoom(title);
     // two a row where each tile holds its state whole without its picture, else one a row
     const one = lines.some((line) => width(this.value(line)) > (this.contentWidth - 8) / 2 - 24);
     const words = one ? this.contentWidth - 24 : (this.contentWidth - 8) / 2 - 24;
-    const keep =
-      lead > 0 &&
-      lines.every(
-        (line) =>
-          width(line.need || this.value(line)) <= words - lead && name(line.title) <= words - lead,
-      );
-    const room = words - (keep ? lead : 0);
+    // every tile together (`pictureStep`): what it says whole beside the picture, its need (kept, its short state will
+    // do), and as much of its name as the step asks
+    const picture = pictureStep(sizes, ladder.keep, (size, room) =>
+      lines.every((line) => {
+        const left = words - lead(size);
+        const says = room === 'none' ? this.value(line) : line.need || this.value(line);
+        const title =
+          room === 'whole' ? whole(line.title) : room === 'least' ? name(line.title) : 0;
+        return width(says) <= left && title <= left;
+      }),
+    );
+    const room = words - lead(picture);
     return html`<div class="al-tiles ${one ? 'al-tiles--one' : ''}">
       ${lines.map((line) => {
         const { tap, hold } = this.actions(line);
@@ -885,12 +911,12 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
           @keydown=${activateKey(tap)}
         >
           ${
-            keep && art
+            picture && art
               ? pictureBox(
-                  64,
+                  picture,
                   artOf(line.r.kind, () => this.requestUpdate()),
                 )
-              : keep
+              : picture
                 ? html`<span class="al-ring fv-tone--${line.tone}">
                     ${
                       fraction > 0 && fraction < 1
@@ -915,9 +941,9 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
   }
 
   /**
-   * Each appliance its whole card (its item as the appliance card's config, the list's picture where it names none),
-   * side by side as many as hold: no head and no surface of the list's own, so the cards stand in the band as the
-   * section's own would. A row (a small appliance) holds in less than a whole card.
+   * Each appliance its whole card (its item as the appliance card's config, the list's picture and its least where it
+   * names none), side by side as many as hold: no head and no surface of the list's own, so the cards stand in the
+   * band as the section's own would. A row (a small appliance) holds in less than a whole card.
    */
   private renderWholes(lines: readonly Line[]): TemplateResult {
     const keep = new Set(lines.map((line) => line.key));
@@ -938,6 +964,7 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
   private whole(line: Line): LovelaceCard {
     const config: LovelaceCardConfig = {
       ...(this.config?.picture ? { picture: this.config.picture } : {}),
+      ...(this.config?.picture_min ? { picture_min: this.config.picture_min } : {}),
       ...(this.config?._now ? { _now: this.config._now } : {}),
       ...line.item,
       type: 'custom:fluvy-appliance-card',
