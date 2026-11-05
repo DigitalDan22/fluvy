@@ -27,7 +27,16 @@ import {
   type WallSettings,
   wearsLook,
 } from '@fluvy/core';
-import { chipColumns, chips, head, icon, listRow, options } from '@fluvy/ui';
+import {
+  chipColumns,
+  chips,
+  head,
+  icon,
+  listRow,
+  options,
+  rulerLabels,
+  type RulerChangeDetail,
+} from '@fluvy/ui';
 import '@fluvy/ui/select';
 import '@fluvy/ui/time-field';
 import type { TimeFieldDetail } from '@fluvy/ui/time-field';
@@ -729,6 +738,67 @@ function cornerCard(ctx: PanelContext): TemplateResult {
   </section>`;
 }
 
+/** The opacity ruler's figures under it, as a light's brightness has them. */
+const OPACITY_MARKS = [0, 25, 50, 75, 100] as const;
+
+/**
+ * Every card's surface where a card says nothing of its own (1.15, #121): how opaque it is, on the ruler a light's
+ * brightness is set on (5 % steps, its figure at the row's end), and whether what shows through a see-through card is
+ * blurred — said always, as a card may be see-through of its own on a solid house. The house's, an administrator's to
+ * set; shown on the preview and the page while it is chosen.
+ */
+function cardsCard(ctx: PanelContext): TemplateResult {
+  const { shown, admin } = ctx;
+  const { opacity } = shown.cards;
+  const width = ctx.fit?.width ?? 0;
+  const set = (event: CustomEvent<RulerChangeDetail>): void =>
+    ctx.editHouse({ cards: { ...shown.cards, opacity: event.detail.value } });
+  return html`<section class="fv-card pn-card">
+    ${head({ icon: 'grid', title: ctx.t('cards.title'), sub: ctx.t(admin ? 'cards.sub' : 'scope.admin_only') })}
+    <div class="pn-rows">
+      ${listRow({
+        icon: 'drop',
+        title: ctx.t('cards.opacity'),
+        sub: ctx.t('cards.opacity_sub'),
+        trailing: 'value',
+        value: ctx.t('wall.percent', { count: opacity }),
+      })}
+    </div>
+    ${
+      width
+        ? html`<fluvy-ruler
+              class="pn-ruler"
+              .value=${opacity}
+              .min=${0}
+              .max=${100}
+              .step=${5}
+              .length=${width}
+              tone="accent"
+              .minor=${0.05}
+              .major=${0.25}
+              unit="%"
+              .label=${ctx.t('cards.opacity')}
+              ?readonly=${!admin}
+              @fluvy-input=${set}
+              @fluvy-change=${set}
+            ></fluvy-ruler>
+            ${rulerLabels(OPACITY_MARKS.map((mark) => [mark / 100, String(mark)]))}`
+        : nothing
+    }
+    <div class="pn-rows">
+      ${listRow({
+        icon: 'eye',
+        title: ctx.t('cards.blur'),
+        sub: ctx.t('cards.blur_sub'),
+        trailing: 'switch',
+        on: shown.cards.blur,
+        readonly: !admin,
+        onToggle: (on) => ctx.editHouse({ cards: { ...shown.cards, blur: on } }),
+      })}
+    </div>
+  </section>`;
+}
+
 /**
  * What a card of lights shows where it says nothing of its own (1.9): its light's colour on a light card (never, while
  * on, always) and a lit light in its bulb's colour on tiles, rows and rooms — the house's, an administrator's to set.
@@ -974,7 +1044,7 @@ export function appearance(ctx: PanelContext, share: ShareActions): TemplateResu
         gap(ctx),
       )}
     </section>
-    ${tabsCard(ctx)} ${cornerCard(ctx)} ${separatorsCard(ctx)} ${lightsCard(ctx)}
+    ${tabsCard(ctx)} ${cornerCard(ctx)} ${separatorsCard(ctx)} ${cardsCard(ctx)} ${lightsCard(ctx)}
     ${statusesCard(ctx)}
     ${
       settings.personalLook

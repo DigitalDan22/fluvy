@@ -63,6 +63,7 @@ export const base: readonly BaseKey[] = [
   'tone',
   'color',
   'card_color',
+  'card_opacity',
   'show_icon',
 ];
 

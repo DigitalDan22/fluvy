@@ -71,6 +71,20 @@ describe('a colour field', () => {
     expect(surface.name).toBe('card_color');
     expect(picker(surface)).toMatchObject({ default_color: 'none', include_none: true });
   });
+  it('offers the card’s opacity beside its surface colour, a percentage on the slider in 5 % steps (1.15)', () => {
+    const [, surface, opacity] = colourFields();
+    expect(surface!.name).toBe('card_color');
+    expect(opacity).toMatchObject({
+      name: 'card_opacity',
+      helper: 'editor.card_opacity_helper',
+      selector: {
+        number: { min: 0, max: 100, step: 5, mode: 'slider', unit_of_measurement: '%' },
+      },
+    });
+    document.documentElement.lang = 'en';
+    expect(label(formLabels(), 'card_opacity')).toBe('Card opacity');
+  });
+
   it('shows none chosen for an item’s colour, and says under it what the item wears then', () => {
     // the picker would call the card's colour "Primary": no default of its own, the word under the field instead
     const bulb = accentField('color', { item: 'bulb' });

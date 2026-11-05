@@ -21,7 +21,7 @@ import { layoutHeightOf } from './layout-heights.js';
 import { idsOf, type EntityEntry } from './lists.js';
 import { AccentSheet } from './look/accent.js';
 import { CHART_DEFAULTS, type ChartSettings, type SavedSeries } from './settings/charts.js';
-import type { LightTint } from './settings/schema.js';
+import type { CardSurface, LightTint } from './settings/schema.js';
 
 /**
  * What every card's config may carry. `tone` is the role a card's parts are drawn in (a palette tone); `color` is
@@ -38,6 +38,8 @@ export interface FluvyCardConfig extends LovelaceCardConfig {
   color?: string;
   /** The card's own surface: a quiet wash of this colour as its fill, its edge and dividers in the colour (1.7). */
   card_color?: string;
+  /** How opaque its surface is, in percent (1.15); unset, the house's (`cardOpacity`). */
+  card_opacity?: number;
   tap_action?: ActionConfig;
   hold_action?: ActionConfig;
 }
@@ -121,6 +123,47 @@ export function setChartDefaults(next: HouseCharts): void {
   if (JSON.stringify(next) === JSON.stringify(houseCharts)) return;
   houseCharts = { settings: { ...next.settings }, sets: [...next.sets] };
   for (const card of live) card.requestUpdate();
+}
+
+/** What the house says of every card's surface where a card says nothing (fluvy's settings → Appearance, 1.15). */
+let houseCards: CardSurface = { opacity: 100, blur: true };
+
+/** The house's cards' surface, as the settings last said (a card's own `card_opacity` wins). */
+export const cardDefaults = (): CardSurface => houseCards;
+
+/** The house's cards' surface changed (saved, or previewed in the panel): every card wears it at once. */
+export function setCardDefaults(next: CardSurface): void {
+  if (next.opacity === houseCards.opacity && next.blur === houseCards.blur) return;
+  houseCards = { opacity: next.opacity, blur: next.blur };
+  // a house of see-through cards fetches what they wear before they draw
+  if (next.opacity < 100) fetchGlass();
+  wearSurfaces();
+}
+
+/** Every card on the page wears its surface again; a card not drawn yet wears it with its first frame. */
+const wearSurfaces = (): void => {
+  for (const card of live) if (card.hasUpdated) card.wearGlass();
+};
+
+/** What a see-through card wears (`look/glass.ts`), once the first one (or the house) has fetched it. */
+let glass: typeof import('./look/glass.js') | undefined;
+let fetchingGlass: Promise<void> | undefined;
+function fetchGlass(): void {
+  fetchingGlass ??= import('./look/glass.js').then((module) => {
+    glass = module;
+    wearSurfaces();
+  });
+}
+
+/**
+ * How opaque a card's surface is, in percent: its own `card_opacity` where it is a number (held to 0 to 100, whole),
+ * else the house's.
+ */
+export function cardOpacity(config: FluvyCardConfig | undefined): number {
+  const own = config?.card_opacity;
+  return typeof own === 'number' && Number.isFinite(own)
+    ? Math.min(100, Math.max(0, Math.round(own)))
+    : houseCards.opacity;
 }
 
 /** Every card on the page looks again for the theme: the look arrived, moved or left. */
@@ -453,11 +496,38 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
     this.toggleAttribute('dark', dark);
   }
 
-  /** The card's colour and its items' are written once the render has asked for them. */
+  /** The card's colour and its items' are written once the render has asked for them, and its surface worn. */
   protected override updated(changed: PropertyValues): void {
     super.updated(changed);
     this.accents.host(this.config?.color);
     this.accents.surface(this.config?.card_color);
+    this.wearGlass();
+  }
+
+  /** Whether the card draws a surface of its own (a greeting, a heading draw none): what may be see-through. */
+  protected get surface(): boolean {
+    return true;
+  }
+
+  /**
+   * Its surface as its config and the house say (1.15): under 100 the host is marked `glass` (`blur` while what shows
+   * through is blurred) with its opacity in `--fv-glass`, and its sheet is written see-through (`look/glass.ts`, fetched
+   * by the first card that is one); solid, or without a surface, the host carries neither. Its sheet is written in
+   * either case.
+   */
+  wearGlass(): void {
+    const level = this.surface ? cardOpacity(this.config) : 100;
+    const see = level < 100;
+    if (see) {
+      const blur = houseCards.blur ? 'blur' : '';
+      if (this.getAttribute('glass') !== blur) this.setAttribute('glass', blur);
+      this.style.setProperty('--fv-glass', `${level}%`);
+      if (!glass) fetchGlass();
+    } else if (this.hasAttribute('glass')) {
+      this.removeAttribute('glass');
+      this.style.removeProperty('--fv-glass');
+    }
+    this.accents.glass(see ? glass?.seeThrough : undefined);
     this.accents.commit();
   }
 

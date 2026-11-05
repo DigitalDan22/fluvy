@@ -4,6 +4,7 @@ import {
   accentField,
   actionField,
   boolField,
+  cardOpacityField,
   entityField,
   formLabels,
   selectField,
@@ -33,7 +34,7 @@ const OWN_LABELS = {
 const isOwnLabel = (name: string): name is keyof typeof OWN_LABELS => name in OWN_LABELS;
 
 /** A clock has no entity: it honours a tap and the card's colour (the face's accent). */
-export const base: readonly BaseKey[] = ['tap_action', 'color', 'card_color'];
+export const base: readonly BaseKey[] = ['tap_action', 'color', 'card_color', 'card_opacity'];
 
 export const keys = configKeys<ClockCardConfig>()([
   'face',
@@ -88,6 +89,7 @@ export function getConfigForm(): LovelaceConfigForm {
       textField('time_zone'),
       accentField(),
       accentField('card_color', { none: true }),
+      cardOpacityField(),
       actionField(),
     ],
     computeLabel: (schema, localize) =>

@@ -30,6 +30,7 @@ import {
   actionField,
   actionFields,
   boolField,
+  cardOpacityField,
   editorLabels,
   editorWord,
   entityField,
@@ -377,6 +378,7 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
     'tone',
     'color',
     'card_color',
+    'card_opacity',
     'tap_action',
     'hold_action',
     'show_icon',
@@ -474,6 +476,7 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
         textField('empty_text'),
         onlyWhen(headed, fieldRow(toneField(), accentField())),
         onlyWhen(headed, accentField('card_color', { none: true })),
+        cardOpacityField(),
         onlyWhen(headed, actionFields()),
       ],
       ...editorLabels(s, {
@@ -984,6 +987,10 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
       ...(this.config?.picture ? { picture: this.config.picture } : {}),
       ...(this.config?.picture_min ? { picture_min: this.config.picture_min } : {}),
       ...(this.config?.confirm ? { confirm: this.config.confirm } : {}),
+      // the list's own opacity is its cards' (they are its surfaces)
+      ...(this.config?.card_opacity !== undefined
+        ? { card_opacity: this.config.card_opacity }
+        : {}),
       ...(this.config?._now ? { _now: this.config._now } : {}),
       ...line.item,
       type: 'custom:fluvy-appliance-card',

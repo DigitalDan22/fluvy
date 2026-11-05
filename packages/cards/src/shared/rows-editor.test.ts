@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import type { HaFormSchemaItem, HomeAssistant } from '@fluvy/core';
+import { setCardDefaults, type HaFormSchemaItem, type HomeAssistant } from '@fluvy/core';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   cardForm,
@@ -11,6 +11,7 @@ import {
 } from './fixtures/editor.js';
 import {
   boolField,
+  colourFields,
   fieldRow,
   holdsLight,
   NUMBER_DEFAULTS,
@@ -22,6 +23,7 @@ import {
 import {
   FluvyRowsEditor,
   compact,
+  editorDefaults,
   entryOf,
   itemOf,
   itemsOf,
@@ -255,6 +257,26 @@ describe('editor defaults', () => {
       ),
     ).toEqual({ variant: 'dial', fan_style: 'chips', show_fan: false, modes: ['off'] });
     expect(withoutUntouchedDefaults({ title: 'x' }, config, defaults)).toEqual({ title: 'x' });
+  });
+
+  it('shows the house’s opacity on a card with a surface, as the house says it when asked, and never writes it (1.15)', () => {
+    const form = { schema: colourFields() };
+    const shown = editorDefaults(form)!;
+    expect(shown({ type: 't' }, undefined)).toMatchObject({ card_opacity: 100 });
+    setCardDefaults({ opacity: 80, blur: true });
+    expect(shown({ type: 't' }, undefined)).toMatchObject({ card_opacity: 80 });
+    setCardDefaults({ opacity: 100, blur: true });
+    // untouched, nothing written; moved, its own
+    expect(
+      withoutUntouchedDefaults({ card_opacity: 100 }, { type: 't' }, { card_opacity: 100 }),
+    ).toEqual({});
+    expect(
+      withoutUntouchedDefaults({ card_opacity: 60 }, { type: 't' }, { card_opacity: 100 }),
+    ).toEqual({
+      card_opacity: 60,
+    });
+    // a card without a surface shows none
+    expect(editorDefaults({ schema: [textField('title')] })).toBeUndefined();
   });
 
   it('never writes a number’s Automatic, even chosen after a value the config held', () => {

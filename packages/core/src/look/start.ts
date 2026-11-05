@@ -4,6 +4,7 @@ import {
   PREFERENCES_EVENT,
   refreshCards,
   resyncCardThemes,
+  setCardDefaults,
   setChartDefaults,
   setLightDefaults,
 } from '../card.js';
@@ -46,8 +47,8 @@ import { safeStorage } from '../storage.js';
 
 /**
  * What the panel can show on its page before it is saved: the look and the house's status colours, where it applies
- * (scope, dashboards, the frame, the menus' icons, our Activity page), the lights' defaults and a person's preferences
- * (language, motion, haptics).
+ * (scope, dashboards, the frame, the menus' icons, our Activity page), the lights', the charts' and the cards' defaults
+ * and a person's preferences (language, motion, haptics).
  */
 export type LookPreview = Partial<
   Pick<
@@ -67,6 +68,7 @@ export type LookPreview = Partial<
     | 'statuses'
     | 'charts'
     | 'chartSets'
+    | 'cards'
   >
 >;
 
@@ -188,9 +190,10 @@ export function startLook(): LookHandle | undefined {
     env.document.documentElement.toggleAttribute(ORIGINAL_ACTIVITY, !now.activity);
     env.document.documentElement.toggleAttribute(ORIGINAL_HISTORY, !now.history);
     env.document.documentElement.toggleAttribute(ACTIVITY_CARD, now.activityCard);
-    // the lights' and the charts' defaults: every card that leaves them to the house draws again
+    // the lights', the charts' and the cards' defaults: every card that leaves them to the house draws again
     setLightDefaults({ tint: now.lightTint, colors: now.lightColors });
     setChartDefaults({ settings: now.charts, sets: now.chartSets });
+    setCardDefaults(now.cards);
     // the corner of every page: the sidebar's head (the shell's sheets fill on these), the dashboards' headers marked
     const chrome = chromeOf(now.look);
     env.document.documentElement.toggleAttribute(SIDEBAR_LOGO_ATTRIBUTE, chrome.logo);

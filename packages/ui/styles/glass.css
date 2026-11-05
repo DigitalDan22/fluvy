@@ -1,0 +1,91 @@
+/*
+ * fluvy · see-through cards (1.15, #121): what a card under 100 % adopts — fetched with the first card that is one, a
+ * dashboard of solid cards never pays for it. The card is marked `glass` (`blur` while what shows through is blurred)
+ * with its opacity in `--fv-glass`, and its own sheet writes every fill in the card's and the page's colours at that
+ * opacity, the solid colour kept beside it (`--fv-solid-…`, core's look/glass.ts): the card, its wells, its washes and
+ * what is painted to look like it are one material. These rules are the rest.
+ */
+
+/* what the host computes of the card's colour (the knob's halo, the dark dial's disc) is computed again over it */
+:host([glass]) > * {
+  --knob-halo: var(--fluvy-card);
+}
+
+:host([glass][dark]) > * {
+  --fv-disc: var(--fluvy-card-elevated);
+}
+
+/* what lies over the card (a sheet, a keypad, a menu, a dialog) is solid: the card's colours as they were */
+:host([glass])
+  :is(
+    dialog,
+    fluvy-select,
+    fluvy-keypad,
+    fluvy-alerts-sheet,
+    fluvy-cameras-sheet,
+    fluvy-items-sheet,
+    fluvy-schedule-sheet
+  ) {
+  --fluvy-inset: var(--fv-solid-inset);
+  --fluvy-accent-rest: var(--fv-solid-accent-rest);
+  --fluvy-accent-rest-inner: var(--fv-solid-accent-rest-inner);
+}
+
+/* …and so are a lit tile (its light's colour is what it says), a switch's thumb (what the finger holds), what sits on
+   a room's photo (its name's pill, its quick actions) and words in the card's colour on an ink (a chart's time, a
+   chosen chip's, a reading in the water); a lit tile's own wells stay its own (tiles.css) */
+:host([glass])
+  :is(
+    dialog,
+    fluvy-select,
+    fluvy-keypad,
+    fluvy-alerts-sheet,
+    fluvy-cameras-sheet,
+    fluvy-items-sheet,
+    fluvy-schedule-sheet,
+    .fv-tile.is-on,
+    .fv-card.is-lit,
+    .fv-switch__thumb,
+    .rm-hero,
+    .fv-chip--ink.is-active,
+    .ch-when,
+    .am-when,
+    .eu-bubble,
+    .fc-reading.is-wet
+  ) {
+  --fluvy-card: var(--fv-solid-card);
+  --fluvy-card-elevated: var(--fv-solid-card-elevated);
+  --fluvy-page: var(--fv-solid-page);
+  --fluvy-page-alt: var(--fv-solid-page-alt);
+  --fluvy-wash-base: var(--fv-solid-wash-base);
+  --fv-card-plain: var(--fv-solid-card-plain);
+}
+
+/* blurred, what shows through goes soft under the words: on a layer of its own beneath each outermost surface that lets
+   it through (a lit one does not), which holds nothing — a menu fixed in place and a dialog without the top layer keep
+   the page as theirs */
+:host([glass='blur'])
+  :is(.fv-card, .fv-tile, .fv-scene, .fv-chip__pill, .fv-empty-state):not(
+    :is(.fv-card, .fv-tile) *,
+    .fv-tile.is-on,
+    .fv-card.is-lit
+  ) {
+  position: relative;
+  isolation: isolate;
+}
+
+:host([glass='blur'])
+  :is(.fv-card, .fv-tile, .fv-scene, .fv-chip__pill, .fv-empty-state):not(
+    :is(.fv-card, .fv-tile) *,
+    .fv-tile.is-on,
+    .fv-card.is-lit
+  )::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  pointer-events: none;
+}

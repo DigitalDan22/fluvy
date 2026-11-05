@@ -18,6 +18,11 @@ export interface FrameSpec {
    * (five small appliances a row). A card's `cols` are then of these, and only its own maximum holds it.
    */
   readonly columns?: number;
+  /**
+   * What the frame's cards stand on where it is not the page's colour: a view's background, as a see-through card shows
+   * it (a CSS background: a gradient, a picture).
+   */
+  readonly backdrop?: string;
   /** false = a stress frame (deliberate overflow, scrolling rows): rendered for the eye, not audited by the measurer. */
   readonly measure?: boolean;
   /**

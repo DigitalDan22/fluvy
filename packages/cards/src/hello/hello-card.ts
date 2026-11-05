@@ -106,6 +106,11 @@ export class FluvyHelloCard extends Card<HelloCardConfig> {
 
   static override still = true;
 
+  /** A greeting draws no surface: it is never see-through. */
+  protected override get surface(): boolean {
+    return false;
+  }
+
   static override styles: CSSResultGroup = [
     ...(Card.styles as CSSResultGroup[]),
     sheetStyles.home,

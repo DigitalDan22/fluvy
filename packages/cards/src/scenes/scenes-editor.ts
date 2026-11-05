@@ -3,6 +3,7 @@ import type { BaseKey } from '../shared/base.js';
 import {
   accentField,
   actionField,
+  cardOpacityField,
   emptyFields,
   entitiesField,
   entityField,
@@ -23,7 +24,13 @@ import type { ScenesCardConfig } from './scenes-card.js';
 const DOMAINS: readonly string[] = ['scene', 'script', 'button', 'input_button', 'automation'];
 
 /** A grid of scenes has no entity of its own: its colour is the lit tile's, a hold on a tile is the base's. */
-export const base: readonly BaseKey[] = ['entities', 'color', 'card_color', 'hold_action'];
+export const base: readonly BaseKey[] = [
+  'entities',
+  'color',
+  'card_color',
+  'card_opacity',
+  'hold_action',
+];
 
 export const keys = configKeys<ScenesCardConfig>()([
   'title',
@@ -63,6 +70,7 @@ export function getConfigForm(): LovelaceConfigForm {
         accentField('card_color', { none: true }),
         actionField('hold_action'),
       ),
+      cardOpacityField(),
       tintField(),
       emptyFields(),
     ],

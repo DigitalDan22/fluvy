@@ -2,6 +2,7 @@ import { strings, type LovelaceConfigForm } from '@fluvy/core';
 import type { BaseKey } from '../shared/base.js';
 import {
   accentField,
+  cardOpacityField,
   editorLabels,
   entitiesField,
   entityField,
@@ -33,7 +34,13 @@ const EDITOR_LABELS = {
 /* ---------- Lovelace ---------- */
 
 /** A calendar card has no entity of its own: its calendars are its list, its colour the accent (today, the selection). */
-export const base: readonly BaseKey[] = ['entities', 'color', 'card_color', 'show_icon'];
+export const base: readonly BaseKey[] = [
+  'entities',
+  'color',
+  'card_color',
+  'card_opacity',
+  'show_icon',
+];
 
 export const keys = configKeys<CalendarCardConfig>()([
   'calendars',
@@ -108,6 +115,7 @@ export function getConfigForm(): LovelaceConfigForm {
         fieldRow(numberField('start_hour', 0, 23), numberField('end_hour', 1, 24)),
       ),
       fieldRow(accentField(), accentField('card_color', { none: true })),
+      cardOpacityField(),
     ],
     ...editorLabels(s, EDITOR_LABELS, { days: 'editor.days' }),
   };

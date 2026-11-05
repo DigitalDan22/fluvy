@@ -3,6 +3,7 @@ import type { BaseKey } from '../shared/base.js';
 import {
   accentField,
   actionField,
+  cardOpacityField,
   emptyFields,
   entitiesField,
   entityField,
@@ -24,7 +25,7 @@ import type { ReadoutsCardConfig } from './readouts-card.js';
 const DOMAINS: readonly string[] = ['sensor', 'number', 'input_number', 'counter'];
 
 /** A strip of readouts has no entity of its own; its colour is its figures' accent. */
-export const base: readonly BaseKey[] = ['entities', 'color', 'card_color'];
+export const base: readonly BaseKey[] = ['entities', 'color', 'card_color', 'card_opacity'];
 
 export const keys = configKeys<ReadoutsCardConfig>()([
   'rows',
@@ -59,6 +60,7 @@ export function getConfigForm(): LovelaceConfigForm {
       fieldRow(numberField('hours', 1, 48), selectField('variant', ['grid', 'row'])),
       accentField(),
       accentField('card_color', { none: true }),
+      cardOpacityField(),
       emptyFields(),
       numberFields(),
     ],

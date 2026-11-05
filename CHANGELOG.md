@@ -7,11 +7,7 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- The Appliance card asks first before the commands a home names (`confirm: [start, stop]`): a start, a resume, a
-  pause, a stop, switching off, a meal, a clean or a levelling, in Home Assistant's dialog and in words that name the
-  appliance ("Start Oven?"), wherever they are tapped (its buttons, its power button, the row's round), and the
-  Appliances card's whole cards ask as its own `confirm` says; unset, the card asks as before, and `confirm: []` asks
-  for nothing. Its editor offers the commands the appliance can send (#120).
+
 
 ### Fixed
 

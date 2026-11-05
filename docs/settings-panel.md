@@ -5,7 +5,7 @@ everyone else reads it, and changes their own (a palette of their own, their pre
 
 | Tab | What it holds | Whose |
 | --- | --- | --- |
-| **Appearance** | palette (fifteen presets, the house's saved palettes, the community's, or a custom accent — shared as a file), shape (soft, round, crisp), button style, the dashboards' tabs (Fluvy, pills, original or hidden; names, icons or both; the dashboard's name), the sidebar and header (Home Assistant's logo, dividers, the header on the page), lines in the sidebar after the items chosen; the lights, where a card says nothing, and the status colours (see below); a live preview on real cards (its little house answers a tap itself: nothing at home changes) | the house; a person may keep their own palette and shape |
+| **Appearance** | palette (fifteen presets, the house's saved palettes, the community's, or a custom accent — shared as a file), shape (soft, round, crisp), button style, the dashboards' tabs (Fluvy, pills, original or hidden; names, icons or both; the dashboard's name), the sidebar and header (Home Assistant's logo, dividers, the header on the page), lines in the sidebar after the items chosen; the cards (how opaque, and the blur behind a see-through one), the lights, where a card says nothing, and the status colours (see below); a live preview on real cards (its little house answers a tap itself: nothing at home changes) | the house; a person may keep their own palette and shape |
 | **Charts** | the style every chart is drawn in and the gauge every gauge reads in, each a tile the chart engine draws; what the style lets the house tune; motion; the series colours (the palette's six, or a set of the house's own, made and checked here); a preview of a chart, its bars and a gauge in both modes side by side — see [Charts](#charts) | the house |
 | **Scope** | dashboards only or everywhere; which dashboards when "only"; the frame, the icons, the Activity page, the History page | the house |
 | **Dashboards** | the five automatic dashboards: create any with one tap, open it, its options, its sidebar entry, recreate it | the house |
@@ -18,6 +18,31 @@ The **house settings** are what an administrator sets: everyone sees them. The *
 on every device they sign in on: a palette, a shape and tabs of their own, or the house's; language; motion; haptics.
 The look a person sees is the house's, with their own choices on top. A **device setting** belongs to one browser
 alone — whether it is a wall panel, and the size it reads at — and never follows a person.
+
+## Cards
+
+How solid every card is, where a card says nothing of its own (1.15). Solid until chosen, so a dashboard looks as it
+did:
+
+| Setting | Values | What a card takes from it |
+| --- | --- | --- |
+| **Opacity** | 0 to 100 %, in 5 % steps, on a ruler with its figure beside it (100: solid) | `card_opacity`: under 100 the view's background shows through the card |
+| **Blur what shows through** | on · off (on by default) | what shows through a see-through card is blurred, so its words read over a busy picture; it covers every see-through card, the house's and one that sets its own `card_opacity` |
+
+A change shows on every card of the page at once, before it is saved, and the preview stands its cards on a picture
+while they are see-through; a card that sets `card_opacity` keeps its own (its editor shows the house's until a value is
+chosen, and never writes it). It applies to every Fluvy card on a dashboard, a wall included, and to its preview in
+the card editor and the card picker; not to Fluvy's own pages (Activity, History, this panel), nor to what opens from a
+card (a sheet, a menu, a dialog), which stay solid. Home Assistant's own cards follow the theme's `ha-card-background`,
+not this setting. A card that draws no surface (a heading, the greeting, the web page card `bare`) is unchanged.
+Inside a see-through card its wells and washes go see-through with it, one material; a lit tile, a light card lit
+whole, a switch's thumb and a knob keep their colour solid (a light's colour is what it says).
+
+What shows through is the view's background: Home Assistant's *Background* in a view's settings (a picture, its size,
+alignment and opacity), else the theme's `lovelace-background`, else the page's colour. Fluvy never paints over it; on a
+wall the view's own background shows, and the wall's (the mesh, or the plain page) where the view has none.
+
+Blur costs a tablet's graphics: on an older wall panel that scrolls slowly, turn it off (the cards stay see-through).
 
 ## Lights
 
@@ -152,7 +177,7 @@ the browser (`localStorage`, `fluvy:look`) only so that the page paints in the r
 answers.
 
 **Backups.** Because both live in Home Assistant's frontend data, a Home Assistant backup keeps every setting of
-Fluvy's and a restore brings them back: the look and the saved palettes, the statuses' colours, the lights' defaults,
+Fluvy's and a restore brings them back: the look and the saved palettes, the cards' opacity and blur, the statuses' colours, the lights' defaults,
 the wall, the Charts tab (the style, the gauge, every detail, motion) and the house's own series colours. The panel's
 *Preferences › Fluvy › Export* writes the same to a file — the house, the person and the options of every automatic
 dashboard — and *Import* (an administrator's) reads it back on another house; a file from an earlier version brings

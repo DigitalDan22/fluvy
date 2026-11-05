@@ -409,6 +409,8 @@
     "show_count": "Show how many are on",
     "color": "Colour",
     "card_color": "Card colour",
+    "card_opacity": "Card opacity",
+    "card_opacity_helper": "Untouched: every card’s, from Fluvy’s settings",
     "show_color": "Show colour",
     "colors": "Quick colours",
     "color_help": "Pick one, or choose Custom colour and pick any colour in its well",

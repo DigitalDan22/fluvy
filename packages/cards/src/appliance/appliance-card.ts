@@ -71,6 +71,7 @@ import {
   actionField,
   actionFields,
   boolField,
+  cardOpacityField,
   editorLabels,
   editorWord,
   entityField,
@@ -1666,6 +1667,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         ]),
         fieldRow(toneField(), accentField()),
         accentField('card_color', { none: true }),
+        cardOpacityField(),
         actionFields(),
         // drawn in the roles' section; `device: none` has no device to search
         onlyWhen(({ device }) => device !== NO_DEVICE, {

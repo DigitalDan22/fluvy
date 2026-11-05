@@ -30,7 +30,7 @@ import { SIZES, type TilesCardConfig } from './tiles-card.js';
 const COLUMNS = ['1', '2', '3', '4', 'auto'] as const;
 
 /** The group has no entity of its own: its tone and colour are its tiles' default. */
-export const base: readonly BaseKey[] = ['entities', 'tone', 'color', 'card_color'];
+export const base: readonly BaseKey[] = ['entities', 'tone', 'color', 'card_color', 'card_opacity'];
 
 export const keys = configKeys<TilesCardConfig>()([
   'size',

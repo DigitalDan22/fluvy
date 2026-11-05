@@ -20,7 +20,9 @@
  * and leaves a set of hexes as it was; at a 320 phone, in every language, the sets and the editor's dots stay in their
  * cards and the page does not scroll sideways; the moving gauges' tiles say their words in the panel's language; the
  * tab logs no console error (a drawing never comes out at a size below 0), light and dark, at 320, 360, 412 and 1400,
- * with motion and under reduced motion, nor when the panel is hidden and shown again.
+ * with motion and under reduced motion, nor when the panel is hidden and shown again. The Cards group (1.15, #121), at
+ * 360 and 1400: solid until chosen; its ruler holds in its card's column; four steps down on the keys make 80 %, said in
+ * the bar, the preview's cards see-through and blurred on a picture; the blur off leaves them see-through, unblurred.
  */
 import { everyLanguage } from './lib.mjs';
 import { BASE, settle, startSuite } from './lib/suite.mjs';
@@ -872,6 +874,62 @@ const chartsTab = (page) => ({
     wrong.length === 0,
     wrong.join(' | ').slice(0, 600),
   );
+}
+
+/* ---------- the cards' surface (1.15, #121) ---------- */
+{
+  for (const width of [360, 1400]) {
+    const page = await suite.page('panel=appearance', { viewport: { width, height: 900 } });
+    const group = page
+      .locator('fluvy-panel .pn-card')
+      .filter({ has: page.locator('.fv-card__title', { hasText: /^Cards$/ }) });
+    const figure = group.locator('.fv-row__value').first();
+    const band = group.locator('fluvy-ruler [role="slider"]');
+    const preview = page.locator('fluvy-panel .pn-preview').first();
+    const glassy = () => page.locator('fluvy-panel .pn-preview [glass]').count();
+    await group.scrollIntoViewIfNeeded();
+    check(
+      `${width}: the Cards group is solid until chosen: its figure 100 %, the preview's cards on the page`,
+      (await figure.textContent()).trim() === '100 %' &&
+        !(await preview.evaluate((el) => el.classList.contains('pn-preview--glass'))) &&
+        (await glassy()) === 0,
+    );
+    // its ruler holds in the card's column
+    const inside = await group.evaluate((card) => {
+      const ruler = card.querySelector('fluvy-ruler').getBoundingClientRect();
+      const box = card.getBoundingClientRect();
+      return ruler.left >= box.left && ruler.right <= box.right;
+    });
+    check(`${width}: the opacity's ruler holds in the card's column`, inside);
+    await band.focus();
+    for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowLeft');
+    await settle(page, 300);
+    const worn = await page.evaluate(() => {
+      const panel = document.querySelector('fluvy-panel');
+      const card = panel.shadowRoot.querySelector('.pn-preview [glass]');
+      return card ? [card.getAttribute('glass'), card.style.getPropertyValue('--fv-glass')] : null;
+    });
+    check(
+      `${width}: four steps down: 80 %, said in the bar, the preview's cards see-through and blurred on a picture`,
+      (await figure.textContent()).trim() === '80 %' &&
+        (await barText(page)) === 'Cards · Opacity · 80 %' &&
+        (await preview.evaluate((el) => el.classList.contains('pn-preview--glass'))) &&
+        JSON.stringify(worn) === JSON.stringify(['blur', '80%']),
+      JSON.stringify(worn),
+    );
+    await group
+      .locator('.fv-row')
+      .filter({ hasText: 'Blur what shows through' })
+      .locator('.fv-hit')
+      .click();
+    await settle(page, 200);
+    check(
+      `${width}: the blur off, the cards stay see-through, unblurred`,
+      (await page.locator('fluvy-panel .pn-preview [glass="blur"]').count()) === 0 &&
+        (await glassy()) > 0,
+    );
+    await page.close();
+  }
 }
 
 /* ---------- reduced motion ---------- */

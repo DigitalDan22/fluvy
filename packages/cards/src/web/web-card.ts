@@ -309,6 +309,7 @@ export class FluvyWebCard extends Card<WebCardConfig> {
     'tone',
     'color',
     'card_color',
+    'card_opacity',
     'tap_action',
     'hold_action',
   ];
@@ -556,6 +557,11 @@ export class FluvyWebCard extends Card<WebCardConfig> {
   private variant(): WebVariant {
     const variant = this.config?.variant;
     return variant && VARIANTS.includes(variant) ? variant : 'plate';
+  }
+
+  /** Bare, the page has no surface around it: never see-through. */
+  protected override get surface(): boolean {
+    return this.variant() !== 'bare';
   }
 
   private level(config: WebCardConfig | undefined = this.config): SandboxLevel {

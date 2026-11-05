@@ -121,6 +121,34 @@ The score keeps its low-carbon ring while the CO₂ signal is out of reach.
   it too (`:host([hidden])`). In the editor's preview it is never hidden: a card nobody can see cannot be edited.
   `selfHide`.
 
+## See-through cards (1.15, #121)
+
+A card's surface may be less than solid: its own `card_opacity`, else the house's (*Appearance › Cards*), else 100.
+At 100 nothing of it is on the card; under it the card is one material at that opacity, the view's background showing
+through, blurred by default.
+
+- **See-through** — the card's own colours, each at the card's opacity: the card, its off and unavailable fill (the
+  page's), a `card_color` wash, a lit light card's wash, a resting `tint: always` wash; a tile that is a card of its
+  own, the chips on the page; the wells inside (the page's fill, the sunken page, the wash's deeper step) and what is
+  painted to look like the card (an icon circle washed into it, the dial's disc, a knob's halo). Wells on a
+  see-through card are a second layer of the same material: they read a step denser, as they read a step deeper on a
+  solid one.
+- **Solid** — what says a state in its colour (a lit tile, a light card lit whole: the light's colour is the
+  information, and over a blue picture it would turn another), what a finger holds (a switch's thumb, a knob: see-through,
+  a thumb takes its lit track's colour and vanishes at 0), what sits on a picture (a room's name pill and quick actions
+  on its photo) and what lies over the card (sheets, the keypad, menus, dialogs, a chart's bubble). Their colours are
+  the card's own as they were (`--fv-solid-…`, written beside the see-through ones).
+- **A knob's halo** stays the card's material: at 50 % it reads as a soft frosted ring that still cuts the tick or the
+  line under it; transparent, the arc's ticks would touch the knob.
+- **The blur** (16 px) is a layer of its own under each outermost surface (`::before`, the surface isolated), which
+  holds nothing: a card that blurred itself would hold a menu fixed in place and a dialog without the top layer to its
+  own box. A wall tablet that scrolls slowly is better without it; the cards stay see-through.
+- **Never see-through**: Fluvy's own pages (Activity, History, the panel), and the screensaver's clock (it has no
+  surface of its own). Home Assistant's cards follow the theme's `ha-card-background`.
+
+What a see-through card wears (its sheet's writer and its rules) is fetched by the first card under 100 %: a house of
+solid cards never pays for it.
+
 ## Header pattern (every card except the weather hero)
 
 44 icon circle (20 glyph) · title 16/600 · sub 13/500 secondary · trailing = **one** of: 28 badge (state, content-sized: 14 px sides, text + 28 → 4-grid, tabular numerals), 48×28 switch, 44 round ("…", map, add).

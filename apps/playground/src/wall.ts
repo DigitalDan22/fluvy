@@ -1,7 +1,9 @@
 import {
+  parseCards,
   startWall,
   WALL_DEFAULTS,
   writeDevice,
+  type CardSurface,
   type HomeAssistant,
   type WallFacade,
   type WallSettings,
@@ -39,6 +41,10 @@ const until = (test: () => boolean, ms = 4000): Promise<void> =>
     };
     look();
   });
+
+/** The house's cards' surface a page asks for: `opacity=` (in 5 % steps), and `blur=0` what shows through unblurred. */
+export const cardsFor = (params: URLSearchParams): CardSurface =>
+  parseCards({ opacity: Number(params.get('opacity') ?? 100), blur: params.get('blur') !== '0' });
 
 /** The wall's settings a page asks for: `after=` minutes, `bg=wall`, and what the moment needs. */
 export function wallSettingsFor(
@@ -78,11 +84,13 @@ export async function mountWall(
   // background does (a dashboard's mock draws that one itself: `hui-view-background`)
   if (!params.has('dashboard'))
     doc.body.style.background = 'var(--fluvy-wall-bg, var(--fluvy-page))';
-  // `?palette=` as the rest of the playground reads it: the wall wears the house's look, so the house wears it
+  // `?palette=` and `?opacity=` as the rest of the playground reads them: the wall wears the house's look and cards,
+  // so the house wears them
   const palette = params.get('palette');
   await look.handle.store.saveHouse({
     scope: 'everywhere',
     wall: { ...WALL_DEFAULTS, ...wall },
+    cards: cardsFor(params),
     ...(isPaletteName(palette) ? { palette } : {}),
   });
   const facade = startWall({

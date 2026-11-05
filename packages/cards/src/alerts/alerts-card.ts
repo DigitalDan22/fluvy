@@ -295,6 +295,7 @@ export class FluvyAlertsCard extends Card<AlertsCardConfig> {
     'tone',
     'color',
     'card_color',
+    'card_opacity',
     'tap_action',
     'hold_action',
     'show_icon',

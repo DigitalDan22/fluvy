@@ -62,10 +62,11 @@ export const TABS: readonly Tab[] = [
 
 export type StringKey = KeyOf<'panel'>;
 
-/** The house's settings the tabs edit (an administrator's to save); `wall` and `charts` always whole. */
+/** The house's settings the tabs edit (an administrator's to save); `wall`, `charts` and `cards` always whole. */
 export type HouseEdit = Partial<
   Pick<
     EffectiveSettings,
+    | 'cards'
     | 'charts'
     | 'scope'
     | 'dashboards'
@@ -424,6 +425,15 @@ export function changeLines(ctx: PanelContext): string[] {
   const lines: string[] = [];
   if (ctx.dirty) lines.push(changeTitle(ctx.settings.look, ctx.draft, t, knownPalettes(ctx.saved)));
   const house = ctx.houseEdit;
+  if (house.cards) {
+    const { opacity, blur } = house.cards;
+    if (opacity !== ctx.settings.cards.opacity)
+      lines.push(
+        `${t('cards.title')} · ${t('cards.opacity')} · ${t('wall.percent', { count: opacity })}`,
+      );
+    if (blur !== ctx.settings.cards.blur)
+      lines.push(`${t('cards.title')} · ${t('cards.blur')} · ${onOff(blur)}`);
+  }
   if (house.lightTint)
     lines.push(
       `${t('lights.title')} · ${t('lights.tint')} · ${localize(ctx.hass, `option.${house.lightTint === 'off' ? 'never' : house.lightTint}`)}`,

@@ -946,9 +946,11 @@ export class FluvyPanel extends LitElement {
     if (this.tab === 'charts')
       return chartsPreview(ctx, this.side ? SIDE_COLUMN - CARD_SIDES : this.content || undefined);
     if (this.tab !== 'appearance' && !this.side) return undefined;
+    // see-through cards are judged on what shows through them: a picture stands in for a view's background
+    const glass = ctx.shown.cards.opacity < 100;
     return appearancePreview(
       ctx,
-      html`<div class="pn-preview">
+      html`<div class="pn-preview ${glass ? 'pn-preview--glass' : ''}">
         <div class="pn-preview__hello">${house.hello()}</div>
         <div class="pn-preview__tiles">
           ${house.tile('living')}${house.tile('kitchen')}

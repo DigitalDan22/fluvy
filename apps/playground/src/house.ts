@@ -128,6 +128,7 @@ export function mountFrame(
     el.style.width =
       options.fit && frame.width !== undefined ? `min(${width}px, 100% - 32px)` : `${width}px`;
   if (frame.gap !== undefined) el.style.gap = `${frame.gap}px`;
+  if (frame.backdrop) el.style.setProperty('--pg-backdrop', frame.backdrop);
   if (frame.heights) el.dataset['heights'] = frame.heights.join(',');
   if (frame.statuses) options.wearStatuses?.(el, frame.statuses);
   const total = frame.columns ?? 12;

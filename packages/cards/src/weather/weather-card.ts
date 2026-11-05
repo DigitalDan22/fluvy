@@ -41,6 +41,7 @@ import {
   accentField,
   actionFields,
   boolField,
+  cardOpacityField,
   editorLabels,
   entityField,
   fieldRow,
@@ -270,6 +271,7 @@ export class FluvyWeatherCard extends Card<WeatherCardConfig> {
     'icon',
     'color',
     'card_color',
+    'card_opacity',
     'tap_action',
     'hold_action',
     'show_icon',
@@ -309,6 +311,7 @@ export class FluvyWeatherCard extends Card<WeatherCardConfig> {
         fieldRow(numberField('days', 1, 10), boolField('show_forecast')),
         accentField(),
         accentField('card_color', { none: true }),
+        cardOpacityField(),
         actionFields(),
       ],
       ...editorLabels(

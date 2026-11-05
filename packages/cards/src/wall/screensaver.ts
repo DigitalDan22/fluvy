@@ -107,11 +107,13 @@ export class FluvyWallScreensaver extends LitElement {
     if (!this.clock) return nothing;
     if (!this.card) {
       const card = document.createElement('fluvy-clock-card') as LovelaceCard;
+      // its surface is the screensaver's (none, `.column`): never the house's see-through cards' (1.15)
       card.setConfig({
         type: 'custom:fluvy-clock-card',
         face: 'digital',
         variant: 'hero',
         show_date: true,
+        card_opacity: 100,
         ...(this.weather ? { weather: this.weather, show_forecast: false } : {}),
       } as never);
       card.setAttribute('still', '');

@@ -25,7 +25,8 @@ import { createMemoryLook, type MemoryLook } from './look-memory.js';
  * and a danger in its very colour waiting (`statuses`), the house's charts in the soft style with a gauge that moves
  * (`styled`: every fine row, its waves too), three sets of series colours kept by the house, the second worn
  * (`sets`), a new set being made with two colours too close, one too pale for a light card, which it wears deepened,
- * and two of the palette's, the first being picked (`editor`). Several join with commas.
+ * and two of the palette's, the first being picked (`editor`), the house's cards see-through at 80 % (`glass`). Several
+ * join with commas.
  */
 export type PanelState =
   | 'pending'
@@ -48,7 +49,8 @@ export type PanelState =
   | 'statuses'
   | 'styled'
   | 'sets'
-  | 'editor';
+  | 'editor'
+  | 'glass';
 
 /**
  * Three sets of series colours a house might keep: the earth's, which follows the palette (its colours named), the
@@ -162,6 +164,8 @@ export function mountPanel(
       },
       ...(has('sets') ? { chartSets: SETS } : {}),
     });
+  // every card see-through at 80 %, what shows through blurred (the appearance preview on its picture)
+  if (has('glass')) void store.saveHouse({ cards: { opacity: 80, blur: true } });
   // the wall at night: always dark, veiled at 40 %, on the mesh (the tab's preview shows it so)
   if (has('night'))
     void store.saveHouse({

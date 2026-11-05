@@ -195,6 +195,12 @@ const QUICK_ACTIONS = /\/packages\/cards\/src\/room\/quick-actions\.ts/;
 /** The icons a view's name says, for a tab row asked for icons whose views have none: fetched the first time it is. */
 const VIEW_ICONS = /\/packages\/core\/src\/look\/view-icons\.ts/;
 
+/**
+ * What a see-through card wears (1.15, #121): its sheet and what writes its own fills at its opacity — fetched by the
+ * first card under 100 %, or as the house asks for them; a dashboard of solid cards never pays for it.
+ */
+const GLASS = /\/packages\/(core\/src\/look\/glass|ui\/src\/styles\/(generated\/)?glass)\.ts/;
+
 /** The icon set's other part (`fluvy:washer`, `fluvy:gate-open` …): fetched the first time Home Assistant asks for one. */
 const ICONS = /\/packages\/core\/src\/icons\/generated-on-demand\.ts/;
 
@@ -223,7 +229,7 @@ const FORMS =
  * (the history bars' readings on their own), devices (the cameras' sheet on its own), appliances (their pictures on
  * their own), automations and alerts families (each sheet on its own), the template card, the web page card, the Slider
  * card, the Vehicle card, the items card (its sheet on its own), the light card's colours, a room's quick actions, the cards' editor, the
- * view icons, the icon set's other part, and everything else (Fluvy's packages and Lit) in `core`. The bundle's own
+ * view icons, what a see-through card wears, the icon set's other part, and everything else (Fluvy's packages and Lit) in `core`. The bundle's own
  * entry stays in `fluvy.js`. Rolldown processes the groups in this order; the priorities only say so out loud.
  * @type {readonly Group[]}
  */
@@ -262,6 +268,7 @@ export const GROUPS = [
   { name: 'quick-actions', test: QUICK_ACTIONS },
   { name: 'editor', test: EDITOR },
   { name: 'view-icons', test: VIEW_ICONS },
+  { name: 'glass', test: GLASS },
   { name: 'icons', test: ICONS },
   { name: 'core', test: (id) => !id.includes('/packages/bundle/src/') },
 ];

@@ -5,6 +5,7 @@ import {
   isPaletteRef,
   MAX_SAVED_SERIES,
   MAX_SAVED_PALETTES,
+  parseCards,
   parseHouse,
   parsePalette,
   parsePersonal,
@@ -71,6 +72,7 @@ describe('parsing stored settings', () => {
         lightTint: 'always',
         lightColors: true,
         statuses: { warning: '#DC630B', danger: 'red' },
+        cards: { opacity: 60, blur: false },
         extra: true,
       }),
     ).toEqual({
@@ -99,6 +101,7 @@ describe('parsing stored settings', () => {
       statuses: { warning: '#dc630b' },
       charts: CHART_DEFAULTS,
       chartSets: [],
+      cards: { opacity: 60, blur: false },
     });
   });
 
@@ -129,6 +132,22 @@ describe('parsing stored settings', () => {
     expect(resolveSettings(parseHouse({ lightTint: 'on' }), PERSONAL_DEFAULTS).lightTint).toBe(
       'on',
     );
+  });
+
+  it('reads the cards’ surface, each broken field as solid and blurred (1.15: nothing changes on upgrade)', () => {
+    // a 1.14 house stored none: every card solid, as before, and the same version (a field with its default)
+    const upgraded = parseHouse({ version: 3, palette: 'volt' });
+    expect(upgraded.cards).toEqual({ opacity: 100, blur: true });
+    expect(HOUSE_DEFAULTS.cards).toEqual({ opacity: 100, blur: true });
+    expect(upgraded.version).toBe(3);
+    expect(parseCards({ opacity: 80, blur: false })).toEqual({ opacity: 80, blur: false });
+    expect(parseCards({ opacity: 0 }).opacity).toBe(0);
+    // off its 5 % steps, out of 0 to 100, or not a number: solid; a blur that is not a switch: on
+    for (const opacity of [82, -5, 105, '80', null, Number.NaN])
+      expect(parseCards({ opacity, blur: 'no' })).toEqual({ opacity: 100, blur: true });
+    expect(
+      resolveSettings(parseHouse({ cards: { opacity: 50 } }), PERSONAL_DEFAULTS).cards,
+    ).toEqual({ opacity: 50, blur: true });
   });
 
   it('reads the house’s chart settings: a 1.10 house (version 2, none stored) draws every chart classic, as before', () => {

@@ -552,6 +552,7 @@ export class FluvyChartCard extends Card<ChartCardConfig> {
     'tone',
     'color',
     'card_color',
+    'card_opacity',
     'tap_action',
     'hold_action',
     'show_icon',

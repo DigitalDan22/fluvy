@@ -9,6 +9,7 @@ import {
   parseChartSettings,
   parseSavedSeries,
   resolveLanguage,
+  setCardDefaults,
   setChartDefaults,
   setLightDefaults,
   type HomeAssistant,
@@ -39,7 +40,7 @@ import { mountActivity, type ActivityMoment } from './activity.js';
 import { MOCK_PERIODS } from './collection.js';
 import { mountHistory, type HistoryMoment } from './history.js';
 import { mountPanel, PANEL_WS, type PanelState } from './panel.js';
-import { mountWall, wallSettingsFor, type WallMoment } from './wall.js';
+import { cardsFor, mountWall, wallSettingsFor, type WallMoment } from './wall.js';
 import { mountViewTheme } from './themes.js';
 import { outOfReachView } from './out-of-reach.js';
 import { loadFixture, SHEETS, type FrameSpec, type SheetSpec } from './scenes.js';
@@ -64,6 +65,8 @@ import { loadFixture, SHEETS, type FrameSpec, type SheetSpec } from './scenes.js
  * ?charts={"style":"soft"} the house's chart settings (fluvy's settings → Charts), as JSON: any of their fields, each
  *                        read as the settings read it (an unknown word is its default), and `sets` the saved series
  *                        colours (`[{"id":"warm","name":"Warm","colours":[six hexes]}]`, chosen by `series`)
+ * ?opacity=80           the house's cards' surface (fluvy's settings → Appearance → Cards): how opaque every card is
+ *                        that says none of its own, in 5 % steps; &blur=0 what shows through it unblurred
  * ?warning=%23dc630b     the house's status colours (fluvy's settings → Appearance), over the page's look (Linen where
  *                        it asks none): &danger= &success= &notice= the same; a frame may name its own (`statuses`)
  * ?panel=appearance      fluvy's settings panel (appearance | charts | scope | dashboard | wall | preferences);
@@ -184,6 +187,9 @@ if (params.has('charts')) {
     sets: parseSavedSeries((charts as { sets?: unknown } | null)?.sets),
   });
 }
+
+// the house's cards' surface, as fluvy's settings would hand it to every card
+if (params.has('opacity') || params.has('blur')) setCardDefaults(cardsFor(params));
 
 const activity = params.get('activity') === '1';
 const history = params.get('history') === '1';
@@ -359,6 +365,8 @@ Object.assign(window, {
   fluvyTextWidth: textWidth,
   // the house's defaults for lights changed in fluvy's settings: every card on the page draws again
   fluvyLightDefaults: setLightDefaults,
+  // the house's cards' surface changed: every card wears it at once
+  fluvyCardDefaults: setCardDefaults,
   fluvyCatalogue: catalogue,
   fluvySheets: SHEETS,
   fluvyOutOfReach: outOfReachView,

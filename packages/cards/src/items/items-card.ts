@@ -314,6 +314,7 @@ export class FluvyItemsCard extends Card<ItemsCardConfig> {
     'tone',
     'color',
     'card_color',
+    'card_opacity',
     'tap_action',
     'hold_action',
     'show_icon',

@@ -51,7 +51,8 @@ export const SETTINGS_KEY = 'fluvy';
  * field, each missing field its factory default — `classic` everywhere, so nothing on a dashboard changes). 2 since
  * 1.3: the house keeps its shared palettes and its wall settings. A 1.2 bundle reads a 2 as its own (it parses field
  * by field and ignores the rest) but a save from it drops what it does not know; from 2 on a save keeps every field
- * it does not know (`SettingsStore.saveHouse`).
+ * it does not know (`SettingsStore.saveHouse`). A field added since with a default that draws as before (1.15's
+ * `cards`) moves no version: a bundle without it draws its default and keeps it on save.
  */
 export const SETTINGS_VERSION = 3;
 
@@ -71,6 +72,15 @@ export const WALL_NIGHT_DIM = [0, 20, 40, 60] as const;
 /** When a light card shows its light's colour on its surface: never, while the light is on, or at rest too. */
 export const LIGHT_TINTS = ['off', 'on', 'always'] as const;
 export type LightTint = (typeof LIGHT_TINTS)[number];
+
+/**
+ * The cards' surface, the house's for every card that says none of its own (1.15, #121): how opaque it is, in percent
+ * (0 to 100 in steps of 5; 100 solid, as before), and whether what shows through a see-through card is blurred.
+ */
+export interface CardSurface {
+  readonly opacity: number;
+  readonly blur: boolean;
+}
 
 /** How the house's wall panels behave (a device says it is one: `DeviceSettings`). */
 export interface WallSettings {
@@ -132,6 +142,8 @@ export interface HouseSettings {
   readonly charts: ChartSettings;
   /** The house's own sets of six series colours, chosen in `charts.series` like a palette (1.11). */
   readonly chartSets: readonly SavedSeries[];
+  /** Every card's surface where a card says none of its own (1.15). */
+  readonly cards: CardSurface;
 }
 
 /** What each person may choose for themselves. */
@@ -173,6 +185,7 @@ export interface EffectiveSettings {
   readonly statuses: StatusColours;
   readonly charts: ChartSettings;
   readonly chartSets: readonly SavedSeries[];
+  readonly cards: CardSurface;
 }
 
 export const HOUSE_DEFAULTS: HouseSettings = {
@@ -211,6 +224,8 @@ export const HOUSE_DEFAULTS: HouseSettings = {
   // every chart as 1.10 drew it (`classic`), until the house chooses a style
   charts: CHART_DEFAULTS,
   chartSets: [],
+  // every card solid, as before 1.15; a see-through one blurs what shows through
+  cards: { opacity: 100, blur: true },
 };
 export const WALL_DEFAULTS: WallSettings = HOUSE_DEFAULTS.wall;
 
@@ -275,6 +290,20 @@ export function parseWall(raw: unknown): WallSettings {
   };
 }
 
+/** The cards' surface, field by field: an opacity out of 0 to 100 or off its 5 % steps, or anything broken, is the default. */
+export function parseCards(raw: unknown): CardSurface {
+  const value = isRecord(raw) ? raw : {};
+  const d = HOUSE_DEFAULTS.cards;
+  const opacity = value['opacity'];
+  return {
+    opacity:
+      typeof opacity === 'number' && opacity >= 0 && opacity <= 100 && opacity % 5 === 0
+        ? opacity
+        : d.opacity,
+    blur: typeof value['blur'] === 'boolean' ? value['blur'] : d.blur,
+  };
+}
+
 export function parseHouse(raw: unknown): HouseSettings {
   const value = isRecord(raw) ? raw : {};
   const d = HOUSE_DEFAULTS;
@@ -300,6 +329,7 @@ export function parseHouse(raw: unknown): HouseSettings {
     statuses: parseStatuses(value['statuses']),
     charts: parseChartSettings(value['charts']),
     chartSets: parseSavedSeries(value['chartSets']),
+    cards: parseCards(value['cards']),
   };
 }
 
@@ -355,6 +385,7 @@ export function resolveSettings(
     statuses: house.statuses,
     charts: house.charts,
     chartSets: house.chartSets,
+    cards: house.cards,
   };
 }
 

@@ -397,10 +397,22 @@ export const accentField = (
   };
 };
 
-/** A tone and a colour on one row, then the card's own surface colour (`card_color`, none by default). */
+/**
+ * How opaque the card's surface is (`card_opacity`, 1.15), beside its colour: a percentage on Home Assistant's slider in
+ * 5 % steps, its figure in the box beside it — the house's, shown and never written, until one is chosen
+ * (`editorDefaults`), the word under it saying so.
+ */
+export const cardOpacityField = (): HaFormSchemaItem => ({
+  name: 'card_opacity',
+  selector: { number: { min: 0, max: 100, step: 5, mode: 'slider', unit_of_measurement: '%' } },
+  helper: 'editor.card_opacity_helper',
+});
+
+/** A tone and a colour on one row, then the card's own surface: its colour (`card_color`, none by default), its opacity. */
 export const colourFields = ({ state = false } = {}): HaFormSchemaItem[] => [
   fieldRow(toneField(), accentField('color', { state })),
   accentField('card_color', { none: true }),
+  cardOpacityField(),
 ];
 
 /**

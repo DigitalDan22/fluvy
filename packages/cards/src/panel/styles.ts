@@ -1102,6 +1102,31 @@ export const panelStyles = css`
     background: var(--fluvy-page);
     color: var(--fluvy-text);
   }
+  /* the house's cards see-through: they stand on a picture, as a view's background shows through them — its colours
+     taken towards the page's, so the greeting's words, which stand on it, read in either mode */
+  .pn-preview--glass {
+    background:
+      radial-gradient(
+        60% 40% at 12% 8%,
+        color-mix(in srgb, #ff8a5c 70%, var(--fluvy-page)),
+        transparent 70%
+      ),
+      radial-gradient(
+        55% 40% at 92% 30%,
+        color-mix(in srgb, #ffd166 70%, var(--fluvy-page)),
+        transparent 70%
+      ),
+      radial-gradient(
+        60% 45% at 20% 92%,
+        color-mix(in srgb, #2ec4b6 70%, var(--fluvy-page)),
+        transparent 70%
+      ),
+      linear-gradient(
+        160deg,
+        color-mix(in srgb, #2f5fb3 60%, var(--fluvy-page)),
+        color-mix(in srgb, #6c8ed4 60%, var(--fluvy-page))
+      );
+  }
   /* two whole-pixel cells, the odd pixel to the gap */
   .pn-preview__tiles {
     display: grid;

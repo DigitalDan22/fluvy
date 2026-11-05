@@ -28,6 +28,7 @@
     "./time-field": "./src/controls/time-field.ts",
     "./select": "./src/controls/select.ts",
     "./styles/energy": "./src/styles/energy.ts",
+    "./styles/glass": "./src/styles/glass.ts",
     "./styles/media": "./src/styles/media.ts",
     "./styles/page": "./src/styles/page.ts"
   },

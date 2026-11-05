@@ -44,7 +44,7 @@ const choiceOf = (paletteKey: string): PaletteChoice =>
   parsePaletteKey(splitStatuses(paletteKey).palette) ?? DEFAULT_PALETTE;
 
 /** One mode of the palette a key names, in the house's status colours its key carries (`statusesKey`). */
-const colorsOf = (paletteKey: string, mode: PaletteMode): PaletteModeColors =>
+export const colorsOf = (paletteKey: string, mode: PaletteMode): PaletteModeColors =>
   paletteOf(choiceOf(paletteKey), splitStatuses(paletteKey).statuses)[mode];
 
 /** A 2D context, once: how the browser itself reads a colour (none where there is no canvas, as under test). */
@@ -132,6 +132,9 @@ export function surfaceCss(paletteKey: string, mode: PaletteMode, pick: Hex): st
   );
 }
 
+/** A see-through card's sheet from a solid one's, on a palette × mode (`look/glass.ts`). */
+export type GlassWriter = (paletteKey: string, mode: PaletteMode, css: string) => string;
+
 /** The state a tone is drawn in (`ui`'s tones table, whose `state-*` tones these are); any other: the accent. */
 export const TONE_STATES: Readonly<Record<string, keyof PaletteModeColors['state']>> = {
   light: 'light-active',
@@ -203,6 +206,8 @@ export class AccentSheet {
   private items = new Set<string>();
   /** Each lit surface by its `data-surface`: what it is lit in and how far (`<source>-<level %>`). */
   private surfaces = new Set<string>();
+  /** What writes a see-through card's sheet (1.15, `look/glass.ts`): none while it is solid. */
+  private see: GlassWriter | undefined;
   private written = '';
 
   /** Adopted once into the card's shadow root, beside its stylesheets. */
@@ -228,6 +233,11 @@ export class AccentSheet {
   /** The card's own surface colour (`card_color`), as configured: a wash of it as the card's fill, its hairline as the edge. */
   surface(choice: unknown): void {
     this.surfacePick = accentHex(this.paletteKey, this.mode, choice);
+  }
+
+  /** The card is see-through (its writer) or solid (none): its surfaces, its washes and its wells at its opacity. */
+  glass(writer: GlassWriter | undefined): void {
+    this.see = writer;
   }
 
   /** Forgets the items' colours and the lit surfaces before a render asks for them again. */
@@ -297,7 +307,8 @@ export class AccentSheet {
 
   /**
    * Writes the sheet: the host's colour and surface on the card's children, each item's on its `data-accent`, then
-   * each lit surface on its `data-surface` (after the host's: a lit card's surface is over its `card_color`).
+   * each lit surface on its `data-surface` (after the host's: a lit card's surface is over its `card_color`); a
+   * see-through card's through its writer.
    */
   commit(): void {
     const rules: string[] = [];
@@ -319,7 +330,8 @@ export class AccentSheet {
         `[data-surface="${key}"]{${litCss(this.paletteKey, this.mode, key.slice(0, dash), Number(key.slice(dash + 1)) / 100)}}`,
       );
     }
-    const css = rules.join('');
+    const own = rules.join('');
+    const css = this.see ? this.see(this.paletteKey, this.mode, own) : own;
     if (css === this.written) return;
     this.written = css;
     this.sheet.replaceSync(css);

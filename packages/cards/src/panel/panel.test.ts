@@ -838,6 +838,48 @@ describe('the settings panel', () => {
     guest.panel.remove();
   });
 
+  it('lets the house make every card see-through, and blur what shows through (#121)', async () => {
+    const { panel, root, row, button, handle, previews, settle } = await mount();
+    // the column laid out: the opacity's ruler is drawn to its width
+    (panel as unknown as { content: number }).content = 400;
+    await settle();
+    const card = [...root.querySelectorAll<HTMLElement>('.pn-card')].find(
+      (c) => c.querySelector('.fv-card__title')?.textContent?.trim() === 'Cards',
+    )!;
+    // solid, by default: nothing changes on upgrade; the blur is on, said for every see-through card
+    expect(row('Opacity')?.querySelector('.fv-row__value')?.textContent?.trim()).toBe('100 %');
+    const ruler = card.querySelector('fluvy-ruler') as HTMLElement & { value: number };
+    expect(ruler.value).toBe(100);
+    const blur = row('Blur what shows through');
+    expect(blur?.querySelector('.fv-switch')?.getAttribute('aria-checked')).toBe('true');
+    ruler.dispatchEvent(new CustomEvent('fluvy-change', { detail: { value: 80 } }));
+    await settle();
+    expect(row('Opacity')?.querySelector('.fv-row__value')?.textContent?.trim()).toBe('80 %');
+    expect(root.querySelector('.pn-bar__text')?.textContent?.trim()).toBe('Cards · Opacity · 80 %');
+    // the preview's cards stand on a picture while they are see-through
+    expect(root.querySelector('.pn-preview--glass')).not.toBeNull();
+    blur?.querySelector<HTMLElement>('.fv-hit')?.click();
+    await settle();
+    // shown on every card at once, saved only from the bar
+    expect(previews.at(-1)).toEqual({ cards: { opacity: 80, blur: false } });
+    button('Save')!.click();
+    await settle();
+    expect(handle.settings().cards).toEqual({ opacity: 80, blur: false });
+    panel.remove();
+    // someone who is not an administrator reads them, and changes nothing
+    const guest = await mount(false);
+    (guest.panel as unknown as { content: number }).content = 400;
+    await guest.settle();
+    const read = guest.root.querySelector('fluvy-ruler')!;
+    expect(read.hasAttribute('readonly')).toBe(true);
+    guest.row('Blur what shows through')?.querySelector<HTMLElement>('.fv-hit')?.click();
+    await guest.settle();
+    expect(guest.previews.at(-1)).not.toEqual(
+      expect.objectContaining({ cards: expect.anything() }),
+    );
+    guest.panel.remove();
+  });
+
   it('lets the house give each status a colour of its own, the palette’s until then (1.9)', async () => {
     const { panel, root, button, handle, previews, settle } = await mount();
     const card = () =>
@@ -1415,7 +1457,7 @@ describe('the settings panel', () => {
     panel.remove();
   });
 
-  it('exports every setting and the automatic dashboard’s options, and imports them back — the charts and their sets too (1.11)', async () => {
+  it('exports every setting and the automatic dashboard’s options, and imports them back — the charts and their sets too (1.11), the cards’ surface (1.15)', async () => {
     const saved: { type: string; url_path?: string; config?: unknown }[] = [];
     // the long lists' caps travel too, list by list (#78)
     const caps = { lights: 12, humidity: 'none' };
@@ -1475,6 +1517,8 @@ describe('the settings panel', () => {
       frame: false,
       charts,
       chartSets: [sea, garden],
+      // the cards' surface travels too (1.15)
+      cards: { opacity: 75, blur: false },
     });
     await handle.store.savePersonal({ language: 'es', haptics: false });
     await settle();
@@ -1497,6 +1541,7 @@ describe('the settings panel', () => {
       frame: false,
       charts,
       chartSets: [sea, garden],
+      cards: { opacity: 75, blur: false },
     });
     expect(exported['personal']).toMatchObject({ language: 'es', haptics: false });
     expect(exported['dashboards']).toEqual({
@@ -1510,6 +1555,7 @@ describe('the settings panel', () => {
       frame: true,
       charts: CHART_DEFAULTS,
       chartSets: [],
+      cards: { opacity: 100, blur: true },
     });
     await handle.store.savePersonal({ language: 'auto', haptics: true });
     importSettings(
@@ -1528,6 +1574,7 @@ describe('the settings panel', () => {
     expect(handle.settings().language).toBe('es');
     expect(handle.settings().charts).toEqual(charts);
     expect(handle.store.house.chartSets).toEqual([sea, garden]);
+    expect(handle.settings().cards).toEqual({ opacity: 75, blur: false });
     expect(saved.at(-1)?.config).toEqual({
       strategy: { type: 'custom:fluvy-home', thermostat_variant: 'ruler', hide: ['media'], caps },
     });

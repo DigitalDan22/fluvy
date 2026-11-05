@@ -1,6 +1,7 @@
 import {
   LookEngine,
   refreshCards,
+  setCardDefaults,
   setChartDefaults,
   setLanguageOverride,
   SettingsStore,
@@ -55,13 +56,14 @@ export function createMemoryLook(doc: Document, dark: boolean): MemoryLook {
   let previewed: Parameters<LookHandle['preview']>[0] = null;
   let mode = dark;
   let wallDark: boolean | undefined;
-  // as at home: the look on the page, and the language, motion and charts the cards use
+  // as at home: the look on the page, and the language, motion, charts and surface the cards use
   const apply = (): void => {
     const now = previewed ? { ...store.effective, ...previewed } : store.effective;
     engine.apply(now, wallDark ?? mode);
     setLanguageOverride(now.language === 'auto' ? undefined : now.language);
     setMotionPreference(now.motion);
     setChartDefaults({ settings: now.charts, sets: now.chartSets });
+    setCardDefaults(now.cards);
     refreshCards();
   };
   const handle: LookHandle = {

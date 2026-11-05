@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { CATALOGUE, catalogue } from '../index.js';
 import type { Card, CardEditor } from './base.js';
 import { COMMON_ALIASES } from './config.js';
+import { visibleFields } from './form.js';
 import { editorDefaults, itemHelpers, itemLabels, type FluvyRowsEditor } from './rows-editor.js';
 
 /**
@@ -236,6 +237,21 @@ describe('the editors’ contract', () => {
         }
     },
   );
+
+  it.each(cards)(
+    '$tag: offers its surface’s opacity wherever it offers its colour, and honours both (1.15)',
+    ({ editor }) => {
+      const shown = names(editor.getConfigForm().schema);
+      expect(shown.includes('card_opacity')).toBe(shown.includes('card_color'));
+      expect(editor.base.includes('card_opacity')).toBe(editor.base.includes('card_color'));
+    },
+  );
+
+  it('hides the opacity where a card draws no surface: the web page card bare', () => {
+    const web = cards.find((c) => c.tag === 'fluvy-web-card')!.editor.getConfigForm();
+    expect(names(visibleFields(web.schema, { variant: 'bare' }))).not.toContain('card_opacity');
+    expect(names(visibleFields(web.schema, { variant: 'plate' }))).toContain('card_opacity');
+  });
 
   it.each(cards)(
     '$tag: what the form and the lists show is base ∪ keys',

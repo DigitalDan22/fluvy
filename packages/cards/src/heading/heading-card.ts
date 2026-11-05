@@ -53,6 +53,11 @@ export class FluvyHeadingCard extends Card<HeadingCardConfig> {
 
   private readonly head = new HeadFit(this);
 
+  /** A heading draws no surface: it is never see-through. */
+  protected override get surface(): boolean {
+    return false;
+  }
+
   static override styles: CSSResultGroup = [
     ...(Card.styles as CSSResultGroup[]),
     sheetStyles.home,

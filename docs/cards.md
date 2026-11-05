@@ -7,8 +7,10 @@ options as they are — and an option it hides keeps its value for when it acts 
 `type: custom:<tag>` plus the entity or entities it draws and any option the editor offers; the *Options* column below
 names them (a select's values in brackets, a list with its item keys), and *Reads* the older names a card still
 accepts (read, never written back). Every entity card also takes
-`entity`, `name`, `icon`, `tap_action`, `hold_action`, `tone`, `color` and `card_color` (a quiet wash of a colour as
-the card's own surface, its edge and dividers in it — see [the theme guide](theme.md#a-colour-per-card-and-per-item));
+`entity`, `name`, `icon`, `tap_action`, `hold_action`, `tone`, `color`, `card_color` (a quiet wash of a colour as
+the card's own surface, its edge and dividers in it — see [the theme guide](theme.md#a-colour-per-card-and-per-item))
+and `card_opacity` (how solid its surface is, 0 to 100: under 100 the view's background shows through; left out, the
+house's — see [the settings panel](settings-panel.md#cards));
 a list card takes `title`. A card with a head also takes `show_icon`: `auto` (the default: the circle gives way where
 a long name in a narrow column needs its room, and only then), `always` (the circle stays while the name keeps a
 few letters beside it: a smaller circle first, then none) or `never`. An `icon` left out — a card's, a row's or a

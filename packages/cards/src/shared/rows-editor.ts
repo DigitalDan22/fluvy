@@ -1,4 +1,5 @@
 import {
+  cardDefaults,
   fireEvent,
   localize,
   type HaFormSchemaItem,
@@ -960,7 +961,8 @@ function withoutLists(
 /**
  * What an editor shows where a card's config says nothing: the card's own defaults, and what every card that offers
  * them does — on a card with a head (`show_icon`), the circle that shows by itself (`auto`); on a card of a list
- * (`hide_empty`), a list that stays in sight while it is empty.
+ * (`hide_empty`), a list that stays in sight while it is empty; on a card with a surface (`card_opacity`), the house's
+ * opacity for every card.
  */
 export function editorDefaults(
   form: LovelaceConfigForm,
@@ -972,8 +974,14 @@ export function editorDefaults(
     ...(shows('show_icon') ? { show_icon: 'auto' } : {}),
     ...(shows('hide_empty') ? { hide_empty: false } : {}),
   };
-  return Object.keys(shared).length
-    ? (config, hass) => ({ ...shared, ...defaults?.(config, hass) })
+  // the house's opacity as it is when the editor asks (the panel may change it meanwhile)
+  const surface = shows('card_opacity');
+  return Object.keys(shared).length || surface
+    ? (config, hass) => ({
+        ...shared,
+        ...(surface ? { card_opacity: cardDefaults().opacity } : {}),
+        ...defaults?.(config, hass),
+      })
     : defaults;
 }
 
