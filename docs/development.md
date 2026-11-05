@@ -234,6 +234,7 @@ pnpm measure:narrow                                      # the card widths in ev
 node tools/render/measure-fixtures.mjs                   # the measurer's self-test: every rule breaks on its fixture
 node tools/render/heights.mjs                            # every card's declared height is what it draws at 360 (the known drifts below)
 pnpm visual                                              # every interaction suite
+node tools/render/engines.mjs                            # where a label sits in its control, in Chromium and WebKit at 1×, 2× and 3× (below)
 pnpm docs:cards                                          # the card tables of docs/cards.md, from the code (pnpm check fails when they drift)
 pnpm --filter @fluvy/docs check                          # the tables, and the facts guard: every spelled count and budget in the prose is the code's
 node tools/render/render.mjs --page apps/design-lab/sheets/home.html --palette linen --mode all --width 900
@@ -321,6 +322,30 @@ reasons (a new entry's is `triage`, to be written by hand); `--only climate,home
 out.json` keeps every sample with its config. A frame whose spec says its heights hold under the full-card floor too
 (`heights: [152, 172]`, the Energy period strip's half a section) is drawn again at those card widths in every
 language, and there no drift is known.
+
+### Two engines
+
+`node tools/render/engines.mjs` shows where a one-line label sits in its control in Chromium and in WebKit (Safari's
+engine, and the one Home Assistant's iPhone app draws with) at 1×, 2× and 3×: the middle of its capitals (half a cap
+height over its baseline) less the middle of its box, in CSS px, + low. Each control is shot with its words and again
+with them transparent, so the ink it reads is the words' alone. `--only tabs-pills,chips` reads some of its controls
+(a playground page and the selector of a box each), `--page 'sheet=climate' --box '.fv-chip__pill'` any box, and
+`--lang ja --metric ink` a script without capitals by its ink. A label `fluvy/labels.css` trims (the rule a label in a
+control follows, #122) has its baseline on a whole pixel and reads the same in both engines; a new control's words
+are checked here. It is not a gate: CI has no WebKit.
+
+WebKit runs without root: install it (`pnpm --dir tools/render exec playwright install webkit`), list the libraries
+it misses, download the packages that hold them (`playwright install-deps --dry-run webkit` names most; a library of
+an older release, from that release's package archive) and unpack them into the bundle's `sys/lib`, which its
+launcher puts on the library path:
+
+```sh
+cd ~/.cache/ms-playwright/webkit-*/minibrowser-wpe
+LD_LIBRARY_PATH=lib:sys/lib ldd bin/* lib/*.so* | grep 'not found' | sort -u   # what is missing
+cd "$(mktemp -d)" && apt-get download libavif16 libsoup-3.0-0 …                 # the packages that hold it
+for deb in *.deb; do dpkg -x "$deb" .; done
+cp -a usr/lib/x86_64-linux-gnu/. ~/.cache/ms-playwright/webkit-*/minibrowser-wpe/sys/lib/
+```
 
 ### The facts guard
 

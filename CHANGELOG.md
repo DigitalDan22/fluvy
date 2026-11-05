@@ -7,7 +7,14 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-
+- The Appliance card asks first before the commands a home names (`confirm: [start, stop]`): a start, a resume, a
+  pause, a stop, switching off, a meal, a clean or a levelling, in Home Assistant's dialog and in words that name the
+  appliance ("Start Oven?"), wherever they are tapped (its buttons, its power button, the row's round), and the
+  Appliances card's whole cards ask as its own `confirm` says; unset, the card asks as before, and `confirm: []` asks
+  for nothing. Its editor offers the commands the appliance can send (#120).
+- Cards can be see-through, so a view's background shows through them: an opacity for every card in Fluvy's settings
+  (Appearance › Cards, solid until you choose), what shows through blurred unless you turn it off, and each card's own
+  `card_opacity` beside its card colour in the editor (#121).
 
 ### Fixed
 
@@ -48,6 +55,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The editors' English is a part of its own (`en/editor.json`, in the fields' chunk, which registers it); the light
   card's colour ruler says its word in the `light` namespace (`light.color`, in every catalogue, each word as the
   editor's): 1.6 KB less on every page.
+- `tools/render/engines.mjs` shows where a label sits in its control in Chromium and in WebKit at 1×, 2× and 3×, and
+  docs/development.md says how to run WebKit without root.
 
 ## [1.14.2] — 2026-11-04
 
