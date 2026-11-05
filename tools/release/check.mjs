@@ -103,8 +103,9 @@ const BUDGETS = {
   // the weather card
   weather: 12_288,
   editor: 8192,
-  // the fields every card's editor is built of: the schema's helpers, a list's row form (1.15: they left core, 2.7 KB)
-  fields: 4096,
+  // the fields every card's editor is built of: the schema's helpers, a list's row form, and the editors' English
+  // (1.15: they left core, 4.3 KB)
+  fields: 8192,
   // the editors of the cards every page carries: their forms, lists and defaults, fetched with the visual editor
   // (1.11: they left core, 6.3 KB)
   forms: 12_288,

@@ -47,6 +47,7 @@
   },
   "light": {
     "brightness": "Parlaklık",
+    "color": "Renk",
     "temperature": "Renk sıcaklığı",
     "temperature_short": "Sıcaklık",
     "warm": "Sıcak",

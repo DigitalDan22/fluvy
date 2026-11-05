@@ -211,11 +211,12 @@ const ICONS = /\/packages\/core\/src\/icons\/generated-on-demand\.ts/;
 const EDITOR = /\/packages\/cards\/src\/shared\/rows-editor\.ts/;
 
 /**
- * The fields every card's editor is built of (`shared/form.ts`: the schema's helpers, a list's row form): fetched with
- * the first editor, and with the families as the bundle starts (their cards keep their editors beside them). Core
- * must not reach for them.
+ * The fields every card's editor is built of (`shared/form.ts`: the schema's helpers, a list's row form) and the
+ * editors' English, which they register: fetched with the first editor, and with the families as the bundle starts
+ * (their cards keep their editors beside them). Core must not reach for them.
  */
-const FIELDS = /\/packages\/cards\/src\/shared\/form\.ts/;
+const FIELDS =
+  /\/packages\/(cards\/src\/shared\/form\.ts|core\/src\/i18n\/locales\/en\/editor\.json)/;
 
 /**
  * The editors the cards every page carries keep in a module of their own (`tile/tile-editor.ts`: a card's form, its

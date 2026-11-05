@@ -47,6 +47,7 @@
   },
   "light": {
     "brightness": "Fényerő",
+    "color": "Szín",
     "temperature": "Színhőmérséklet",
     "temperature_short": "Hőmérséklet",
     "warm": "Meleg",

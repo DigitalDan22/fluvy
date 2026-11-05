@@ -6,6 +6,7 @@ import type automations from './locales/en/automations.json';
 import type chart from './locales/en/chart.json';
 import type chartCard from './locales/en/chart-card.json';
 import type devices from './locales/en/devices.json';
+import type editor from './locales/en/editor.json';
 import type energy from './locales/en/energy.json';
 import type energyPeriod from './locales/en/energy-period.json';
 import type energyUsage from './locales/en/energy-usage.json';
@@ -24,9 +25,10 @@ import type web from './locales/en/web.json';
 /**
  * The shape of a catalogue, taken from English (the source every other language mirrors key for key): one table
  * per namespace — the shared words (`common`, `climate`, `editor`, …), one per card or page (`cover`, `panel`,
- * `history`, …). English comes in parts, and the shape is all of them at once: `core.json` ships inline, and each
- * lazy family's part (`panel.json`, `energy.json`, …) travels with that family's chunk, which registers it
- * (`addEnglish`) as it lands. Every other language is one catalogue with every namespace.
+ * `history`, …). English comes in parts, and the shape is all of them at once: `core.json` ships inline, each lazy
+ * family's part (`panel.json`, `energy.json`, …) travels with that family's chunk and the editors' (`editor.json`) with
+ * the fields every editor is built of, each registered (`addEnglish`) as its chunk lands. Every other language is one
+ * catalogue with every namespace.
  */
 export type Catalogue = typeof core &
   typeof activity &
@@ -36,6 +38,7 @@ export type Catalogue = typeof core &
   typeof chart &
   typeof chartCard &
   typeof devices &
+  typeof editor &
   typeof energy &
   typeof energyPeriod &
   typeof energyUsage &

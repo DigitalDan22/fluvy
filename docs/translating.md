@@ -31,7 +31,8 @@ catalogue per language, and a person may choose theirs in the panel's *Preferenc
   every number one way, in the bare key. A card says every count through `plural()`, which picks the form.
 - **English is in parts**, `packages/core/src/i18n/locales/en/`: `core.json` ships inline and is behind every
   lookup; each lazy family's words (`panel.json`, `history.json`, `energy.json`, `media.json`, …) travel with that
-  family's chunk, so a page that never opens the settings panel never carries the panel's words. A new key goes in
+  family's chunk, so a page that never opens the settings panel never carries the panel's words, and the editors'
+  (`editor.json`) with the fields every editor is built of. A new key goes in
   the part that already holds its namespace; a new namespace goes in `core.json` unless only one family says it.
   Every other language is fetched whole the first time it is needed (a chunk of its own), so a dashboard pays for
   the language it speaks and no other.

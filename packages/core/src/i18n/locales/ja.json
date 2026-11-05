@@ -47,6 +47,7 @@
   },
   "light": {
     "brightness": "明るさ",
+    "color": "色",
     "temperature": "色温度",
     "temperature_short": "色温度",
     "warm": "暖色",

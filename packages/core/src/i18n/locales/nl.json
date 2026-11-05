@@ -47,6 +47,7 @@
   },
   "light": {
     "brightness": "Helderheid",
+    "color": "Kleur",
     "temperature": "Kleurtemperatuur",
     "temperature_short": "Temperatuur",
     "warm": "Warm",

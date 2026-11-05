@@ -355,7 +355,7 @@ export function colourControls(o: ColourOptions): TemplateResult {
   };
   const slot =
     shown.rgb || !o.temperature
-      ? html`${label(o.t('editor.color'))}
+      ? html`${label(o.t('light.color'))}
           <fluvy-ruler
             .value=${hue}
             .min=${0}
@@ -369,7 +369,7 @@ export function colourControls(o: ColourOptions): TemplateResult {
             ?disabled=${o.disabled}
             ?on-fill=${o.onFill}
             tint="hue"
-            .label=${`${o.name} · ${o.t('editor.color')}`}
+            .label=${`${o.name} · ${o.t('light.color')}`}
             .format=${(v: number) => `${o.format(v)}°`}
             @fluvy-change=${(e: CustomEvent<RulerChangeDetail>) => {
               const h = e.detail.value;

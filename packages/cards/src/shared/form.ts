@@ -1,5 +1,5 @@
 import {
-  english,
+  addEnglish,
   idsOf,
   localize,
   resolveEntity,
@@ -13,6 +13,10 @@ import {
 import { TONES } from '@fluvy/ui';
 import type { EditorChoices, RowsListSpec, SelectOption } from './rows-editor.js';
 import { LADDERS, ladderOf, unitClass } from './units.js';
+import words from '@fluvy/core/locales/en/editor.json';
+
+// the editors' English, in this chunk: every editor is built of these fields, so its words are here before it speaks
+addEnglish(words);
 
 /** The words every card's editor shares, by field name: a card maps only its own fields (or another word). */
 export const SHARED_LABELS: Readonly<Record<string, MessageKey>> = {
@@ -56,7 +60,7 @@ export type FormLabeler = (
 /** Editor labels in the dashboard's language. `getConfigForm()` is static, so the language comes from the document. */
 /** A field's own editor word, when the catalogue has one (`show_rows` → `editor.show_rows`). */
 const editorKey = (name: string): MessageKey | undefined =>
-  Object.hasOwn(english.editor, name) ? (`editor.${name}` as MessageKey) : undefined;
+  Object.hasOwn(words.editor, name) ? (`editor.${name}` as MessageKey) : undefined;
 
 export function formLabels(map: Readonly<Record<string, MessageKey>> = {}): {
   readonly computeLabel: FormLabeler;

@@ -748,6 +748,7 @@
   },
   "light": {
     "brightness": "Jas",
+    "color": "Farba",
     "temperature": "Teplota farby",
     "temperature_short": "Teplota",
     "warm": "Teplá",

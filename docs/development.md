@@ -97,7 +97,7 @@ budget (`BUDGETS`; the facts guard in `tools/docs` holds this table to it):
 | `quick-actions` | 4 KB | a room's quick actions: their sets, levels, taps and holds |
 | `weather` | 12 KB | the weather card |
 | `editor` | 8 KB | the cards' visual editor |
-| `fields` | 4 KB | the fields every card's editor is built of: the schema's helpers, a list's row form |
+| `fields` | 8 KB | the fields every card's editor is built of: the schema's helpers, a list's row form, the editors' English |
 | `forms` | 12 KB | the editors of the cards every page carries and of the template and Slider cards: their forms, lists and defaults |
 | `view-icons` | 4 KB | a view's icon from its name |
 | `glass` | 4 KB | what a see-through card wears: its sheet's writer (every fill at its opacity) and its rules (its solid overlays, its blur) |
