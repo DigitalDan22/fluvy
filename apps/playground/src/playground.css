@@ -32,11 +32,14 @@ html[data-mode='dark'] body {
   justify-content: center;
   padding: 32px;
 }
-/* ?dashboard: Home Assistant's page, edge to edge (its header, then the view) */
+/* ?dashboard: Home Assistant's page, edge to edge (its header, then the view on its background: `hui-view-background`,
+   under the view, which nothing above the page may paint over — Home Assistant's body paints nothing either) */
 .pg-stage.pg-dashboard {
   display: block;
   padding: 0;
-  background: var(--fluvy-page);
+}
+body:has(> .pg-dashboard) {
+  background: none;
 }
 .pg-dashboard hui-root {
   min-height: 100vh;

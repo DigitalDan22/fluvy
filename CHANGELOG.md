@@ -37,6 +37,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   `automations`) as it names any other.
 - The Openings card shows as many rows as its `max_rows` asks past twenty, and the Automations card past thirty, where
   they folded there and the Openings card stood taller than it drew.
+- A wall drew its own background over a view's: the background set in a view's settings showed on a dashboard but
+  never on a wall, which now shows it, and the wall's mesh or plain page only where the view has none.
 
 ## [1.14.2] — 2026-11-04
 

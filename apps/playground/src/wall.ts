@@ -73,10 +73,13 @@ export async function mountWall(
   if (!location.pathname.startsWith('/fluvy-wall'))
     history.replaceState(null, '', `/fluvy-wall/wall${location.search}`);
   const look = createMemoryLook(doc, dark);
-  // the playground's canvas stands for Home Assistant's view: on a wall it wears the wall's background, as `#view` does
-  doc.body.style.background = 'var(--fluvy-wall-bg, var(--fluvy-page))';
+  const params = new URLSearchParams(location.search);
+  // the playground's canvas stands for Home Assistant's view: on a wall it wears the wall's background, as the view's
+  // background does (a dashboard's mock draws that one itself: `hui-view-background`)
+  if (!params.has('dashboard'))
+    doc.body.style.background = 'var(--fluvy-wall-bg, var(--fluvy-page))';
   // `?palette=` as the rest of the playground reads it: the wall wears the house's look, so the house wears it
-  const palette = new URLSearchParams(location.search).get('palette');
+  const palette = params.get('palette');
   await look.handle.store.saveHouse({
     scope: 'everywhere',
     wall: { ...WALL_DEFAULTS, ...wall },

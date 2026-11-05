@@ -58,6 +58,8 @@ import {
  *   &wall=1       the page a wall (main.ts mounts the real controller): the shell's wall sheets for `hui-root` fill as
  *                 the shell fills them on `<html>`'s marks · &wallsub=header Home Assistant's header in a subview
  *                 (the floating way back is the default); the root's `_goBack` closes the subview (`__wentBack`)
+ *   &background=  the view's own background, as a view's `background:` names it (a CSS background: a colour, a
+ *                 gradient, a picture), drawn by `hui-view-background` under the view as Home Assistant draws it
  */
 
 interface View {
@@ -102,6 +104,8 @@ export interface DashboardOptions {
   readonly edit: boolean;
   readonly subview: boolean;
   readonly title: string;
+  /** The view's own background (`background:` as a string), none unsaid: the theme's, else the page's. */
+  readonly background: string | undefined;
 }
 
 /** The dashboard a page asks for. */
@@ -154,6 +158,7 @@ export function dashboardOptions(params: URLSearchParams): DashboardOptions {
     edit: params.get('edit') === '1',
     subview: params.get('subview') === '1',
     title: params.get('title') ?? 'Home',
+    background: params.get('background') ?? undefined,
   };
 }
 
@@ -362,6 +367,30 @@ class MockTab extends LitElement {
 
 /** The view's frames (`#view > hui-view`). */
 class MockView extends HTMLElement {}
+
+/**
+ * `hui-view-background`: what lies under the view, as Home Assistant 2026.9 draws it — the view's own background
+ * (`--view-background`, which Home Assistant writes on it), else the theme's `lovelace-background`, else the page's
+ * colour; positioned under the view (`z-index: -1`), so nothing painted between it and the page may cover it.
+ */
+class MockViewBackground extends LitElement {
+  static override styles = css`
+    :host {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: -1;
+      width: 100%;
+      height: 100%;
+      background: var(
+        --view-background,
+        var(--lovelace-background, var(--primary-background-color))
+      );
+    }
+  `;
+}
 
 /**
  * `hui-root`: the header and the view. The rules are Home Assistant's (as far as the header goes); the shell's
@@ -617,6 +646,9 @@ class MockRoot extends LitElement {
     return html`<div class=${`${this.narrow ? 'narrow' : ''} ${edit ? 'edit-mode' : ''}`}>
       <div class="header">${head}</div>
       <hui-view-container id="view"
+        ><hui-view-background
+          style=${this.options.background ? `--view-background: ${this.options.background}` : nothing}
+        ></hui-view-background
         ><hui-view><slot></slot></hui-view
       ></hui-view-container>
     </div>`;
@@ -993,6 +1025,7 @@ export function mountDashboard(
     ['ha-tab-group', MockTabGroup],
     ['ha-tab-group-tab', MockTab],
     ['hui-view', MockView],
+    ['hui-view-background', MockViewBackground],
     ['hui-root', MockRoot],
   ] as const)
     if (!customElements.get(tag)) customElements.define(tag, element);

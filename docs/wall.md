@@ -33,7 +33,8 @@ Settings are never walls, so a tablet can always be administered from itself.
 - **Day and night**: the wall is always dark, follows Home Assistant's own mode, follows the sun (`sun.sun`), or a
   pair of hours; at night it may darken further (20, 40 or 60 % of black over the page) for a dim room.
 - **Background**: the page colour alone, or the wall mesh (the palette's own hues, one step deeper than the dashboards'
-  Paper and Charcoal).
+  Paper and Charcoal). A view with a background of its own (its *Background* in Home Assistant's view settings) keeps
+  it on the wall; the wall's shows where a view has none.
 - The screen is kept awake with a screen wake lock while the wall is awake; the API exists only on a secure page
   (HTTPS), so over plain HTTP the tablet's own screen timeout rules.
 
