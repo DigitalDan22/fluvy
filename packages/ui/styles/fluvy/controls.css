@@ -577,7 +577,7 @@
 }
 
 .fv-chips--fill .fv-chip__pill {
-  padding: 0 8px;
+  padding-inline: 8px;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;

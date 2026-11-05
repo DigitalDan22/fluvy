@@ -8,13 +8,16 @@ import { mask } from './shared.js';
  * the theme: a dashboard that does not wear the look, the edit mode and the `ha` style carry no mark and keep Home
  * Assistant's own tabs. Home Assistant gives an icon tab its view's name only as `aria-label` (and a tooltip): the
  * name is written after the icon from there; a view without an icon, in a row asked for icons, gets the one its name says
- * (`fluvy-icon`, drawn as a mask in the tab's ink). A tab hidden from this person (`.hide-tab`) stays hidden. On the phone the
- * row scrolls under the finger and fades where it goes on — at its start once scrolled, at its end while there is
- * more (`look/tabs.ts` follows the scroll; without it the end fades) — and Home Assistant's chevrons give way; on a
- * wide screen they stay, for the mouse. The dashboard's name never shrinks for the tabs (the row scrolls; a long name
- * ends in an ellipsis at 40 %), and stands on the view's column: 12 + 12 from the bar's edge, the view's 24 grown with
- * this device's size. On a wide screen Home Assistant's chevrons sit on the header's colour, the words fading under
- * them.
+ * (`fluvy-icon`, drawn as a mask in the tab's ink). A name is centred on its capitals, as the labels of Fluvy's own
+ * controls are (`fluvy/labels.css`, #122): the words Home Assistant puts in the tab's `base` where they are alone there
+ * (the base made a block: a flex row's words cannot be trimmed), and the name written after an icon; words beside Home
+ * Assistant's own icon in the base (a view showing both) keep their line. A tab hidden from this person (`.hide-tab`)
+ * stays hidden. On the phone the row scrolls under the finger and fades where it goes on — at its start once scrolled,
+ * at its end while there is more (`look/tabs.ts` follows the scroll; without it the end fades) — and Home Assistant's
+ * chevrons give way; on a wide screen they stay, for the mouse. The dashboard's name never shrinks for the tabs (the
+ * row scrolls; a long name ends in an ellipsis at 40 %), and stands on the view's column: 12 + 12 from the bar's edge,
+ * the view's 24 grown with this device's size. On a wide screen Home Assistant's chevrons sit on the header's colour,
+ * the words fading under them.
  */
 
 const ROOT = ':host([fluvy-tabs])';
@@ -33,6 +36,7 @@ export const viewTabsCss = `${ROOT} ha-tab-group { --ha-tab-indicator-color: tra
 ${ROOT} ha-tab-group::part(tabs) { border-block-end: 0; }
 ${ROOT} ${TAB} { display: inline-flex; align-items: center; gap: 8px; box-sizing: border-box; padding-inline: 12px; border-block-end: 0; margin-block-end: 0; opacity: 1; font-size: 14px; font-weight: 600; letter-spacing: 0; line-height: 20px; white-space: nowrap; color: var(--fluvy-text-secondary, var(--secondary-text-color)); transition: color 160ms ease, background-color 160ms ease; }
 ${ROOT} ${TAB}::part(base) { padding: 0; color: inherit; }
+@supports (text-box: trim-both cap alphabetic) { ${ROOT} ${TAB}:not(.icon-only, .icon-and-title)::part(base), ${NAMES} ${TAB}.icon-and-title::part(base), ${ROOT} ${TAB}::after { display: block; padding-block: calc(0.5lh - 1cap + round(0.5cap, 1px)) calc(0.5lh - round(0.5cap, 1px)); text-box: trim-both cap alphabetic; } }
 ${ROOT} ${TAB}[active], ${ROOT} ${TAB}:hover { color: var(--fluvy-text, var(--primary-text-color)); }
 ${ROOT} ${TAB}:focus-visible { outline: 2px solid var(--fluvy-accent, var(--primary-color)); outline-offset: -2px; border-radius: var(--fluvy-radius-control, 12px); }
 ${ROOT} ${TAB} > ha-icon { --mdc-icon-size: 20px; }

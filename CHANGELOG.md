@@ -35,6 +35,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   they folded there and the Openings card stood taller than it drew.
 - A wall drew its own background over a view's: the background set in a view's settings showed on a dashboard but
   never on a wall, which now shows it, and the wall's mesh or plain page only where the view has none.
+- Labels in buttons, chips, badges, pills, dropdowns and view tabs sit in the middle of their control in Safari and
+  Home Assistant's iPhone app as they do in Chrome, where they sat half a pixel to a pixel low (#122).
 
 ### Development
 

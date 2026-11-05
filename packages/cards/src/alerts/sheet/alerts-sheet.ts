@@ -302,7 +302,7 @@ export class FluvyAlertsSheet extends LitElement {
       .as-actions .fv-btn {
         width: 100%;
         min-width: 0;
-        padding: 0 8px;
+        padding-inline: 8px;
         white-space: nowrap;
       }
       .as-actions > .as-wide {

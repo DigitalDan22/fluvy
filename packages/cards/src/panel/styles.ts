@@ -203,7 +203,7 @@ export const panelStyles = css`
     mask-image: none;
   }
   .pn-tabs.is-wide .fv-chip__pill {
-    padding: 0 8px;
+    padding-inline: 8px;
   }
 
   /* a tab's cards; after the first entrance a new tab only fades in */
@@ -270,7 +270,7 @@ export const panelStyles = css`
   }
   /* its words are an action's, never cut: a button wider than its panel (a long language) takes the panel's width
      and its words two lines, with the 14 above and below that one line has (the child combinator outranks the
-     content-sized button's own padding) */
+     content-sized button's own padding), their line boxes whole: only a label of one line is trimmed to its capitals */
   .pn-status > .pn-status__btn {
     max-width: 100%;
     height: auto;
@@ -280,6 +280,7 @@ export const panelStyles = css`
     white-space: normal;
     text-align: center;
     text-wrap: balance;
+    text-box: normal;
   }
   /* the rows that lead a card (a switch under the head, before what it changes): the preview's own margin follows */
   .pn-rows--lead {

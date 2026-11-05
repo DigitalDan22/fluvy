@@ -136,11 +136,12 @@ export const detailStyles = css`
   .av-actions .fv-btn,
   .fv-drawer__foot .fv-btn {
     min-width: 0;
-    padding: 0 12px;
+    padding-inline: 12px;
   }
-  /* a label that cannot keep its 12 px sides even alone (a 320 phone): 8, then two balanced lines */
+  /* a label that cannot keep its 12 px sides even alone (a 320 phone): 8, then two balanced lines (their line boxes
+     whole: only a label of one line is trimmed to its capitals) */
   .av-actions .fv-btn.is-tight {
-    padding: 0 8px;
+    padding-inline: 8px;
   }
   .av-actions .fv-btn.is-wrap {
     height: auto;
@@ -150,6 +151,7 @@ export const detailStyles = css`
     line-height: 18px;
     text-align: center;
     text-wrap: balance;
+    text-box: normal;
   }
   .av-stack {
     display: flex;

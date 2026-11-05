@@ -192,7 +192,7 @@ export class FluvyKeypad extends LitElement {
       .dv-actions .fv-btn {
         width: 100%;
         min-width: 0;
-        padding: 0 8px;
+        padding-inline: 8px;
         white-space: nowrap;
       }
       .is-busy .dv-keys,

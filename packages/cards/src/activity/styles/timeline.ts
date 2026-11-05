@@ -364,7 +364,7 @@ export const timelineStyles = css`
   }
   /* a value never ends in an ellipsis: its pill is sized to it (measured in layout) */
   .av-state__text {
-    padding: 0 8px;
+    padding-inline: 8px;
     white-space: nowrap;
   }
   .av-state.is-on {
@@ -381,7 +381,7 @@ export const timelineStyles = css`
   }
   /* the dashed edge is drawn inside the pill's width: its sides give up that pixel, the text keeps its room */
   .av-state.is-off .av-state__text {
-    padding: 0 7px;
+    padding-inline: 7px;
   }
   .av-msg {
     min-width: 0;

@@ -431,7 +431,7 @@ export class FluvyScheduleSheet extends LitElement {
         row-gap: 8px;
       }
       .ss-chosen .fv-chip__pill {
-        padding: 0 10px 0 14px;
+        padding-inline: 14px 10px;
       }
       .ss-chosen .fv-chip__pill svg {
         width: 16px;
@@ -499,7 +499,7 @@ export class FluvyScheduleSheet extends LitElement {
       .dv-actions .fv-btn {
         width: 100%;
         min-width: 0;
-        padding: 0 8px;
+        padding-inline: 8px;
         white-space: nowrap;
       }
       .ss-error {

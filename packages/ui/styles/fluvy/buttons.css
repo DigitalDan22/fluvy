@@ -61,7 +61,7 @@
   justify-content: center;
   height: 48px;
   white-space: nowrap;
-  padding: 0 16px;
+  padding-inline: 16px;
   border-radius: var(--fluvy-radius-control);
   font-size: 15px;
   font-weight: 600;
@@ -69,7 +69,7 @@
 
 /* content-sized buttons: fitPills() adds the 16 px sides to the laid-out text, so the shape carries none */
 .fv-btn[data-fit] {
-  padding: 0;
+  padding-inline: 0;
 }
 
 .fv-btn--quiet {

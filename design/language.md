@@ -2776,6 +2776,13 @@ last entry taken out in the editor — is a card, never a configuration error (#
 - Trend arrows in secondary ink (green is reserved for confirmations and the presence dot).
 - Paired readouts of different sizes are baseline-aligned (`data-baseline` group); side readouts get the padding that puts them on the big value's baseline.
 - A 16/600 value beside a 15/600 title or 14/500 legend name (list rows, bar rows, legend rows) carries `top: −1px`: Blink floors the half-leading, so in the same 20 px box the 16 px baseline lands 1 px low. One-line rows pair title and value in a `data-baseline` group; two-line rows (title + sub) centre the value on the pair instead.
+- **A label in a control is centred on its capitals (1.15, #122)**: one line of words in a box of fixed height (a
+  button, a chip, a badge, a pill, a dropdown's value, a row's value pill, a month's day, a view tab) is trimmed to its
+  capitals and its baseline (`text-box`) and padded back to its line's height, its baseline on a whole pixel half its
+  capitals under the box's middle (`fluvy/labels.css`): where Chromium drew it already and WebKit (Safari, Home
+  Assistant's iPhone app) drew it up to a pixel lower. Words that wrap keep their line boxes; a readout's value, a
+  head's title, a row's text and a week strip's stacked day are laid out by their line boxes and are not trimmed.
+  `tools/render/engines.mjs` reads both engines.
 - Percent always with a thin space: `70 %`. Temperatures in compact surfaces: `21.5°`; on dials `21.5 °C`.
 - **One rule for units and decimals (1.11, #69)** (`shared/units.ts`): a set read together is written in the unit the
   card asks for (`unit`, of the figures' class) else the one its largest figure asks for; its decimals are the card's

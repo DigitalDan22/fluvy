@@ -637,7 +637,7 @@ export class FluvyRoomCard extends FluvyTileCard {
     // the pill's own 28 (`data-fit`), and with the glyph its 20 and the 8 after it
     if (holds(28))
       return html`<span class="am-area__badge" data-fit="28"
-        >${holds(28 + 28) ? icon(glyph) : nothing}${name}</span
+        >${holds(28 + 28) ? icon(glyph) : nothing}<span class="fv-chip__name">${name}</span></span
       >`;
     return html`<span class="am-area__badge is-cut" style="width:${Math.floor(room / 4) * 4}px"
       ><span class="fv-chip__name">${name}</span></span

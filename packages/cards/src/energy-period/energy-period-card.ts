@@ -848,7 +848,7 @@ export class FluvyEnergyPeriodCard extends Card<EnergyPeriodCardConfig> {
             ?disabled=${!ready}
             @click=${() => this.openSheet()}
           >
-            ${form.date === 'long' ? long : short}
+            ${note ?? html`<span class="ep-date__words">${form.date === 'long' ? long : short}</span>`}
           </button>
           ${
             form.arrows

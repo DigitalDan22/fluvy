@@ -236,9 +236,12 @@ describe('shell lifecycle', () => {
     expect(filled()).toBe(true);
     theme(false);
     expect(filled()).toBe(true);
-    // every rule is scoped to a mark (the tabs, the corner): a root without one is Home Assistant's
+    // every rule is scoped to a mark (the tabs, the corner), one a browser takes only where it can (`@supports`) too:
+    // a root without one is Home Assistant's
     for (const rule of spec.css.split('\n'))
-      expect(rule).toMatch(/^:host\(\[fluvy-(tab|flat|header-page|actions-menu)/);
+      expect(rule.replace(/^@supports \([^)]+\) \{ /, '')).toMatch(
+        /^:host\(\[fluvy-(tab|flat|header-page|actions-menu)/,
+      );
   });
 
   it('fills the device size’s sheet whatever the theme: without our variable it zooms nothing', () => {

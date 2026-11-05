@@ -1,0 +1,36 @@
+/* fluvy · labels: A one-line label in a control of fixed height, centred on its capitals. Part of fluvy.css (its
+ * @imports keep this order: it refines the controls' own boxes, so it comes after every family).
+ * A line's box holds its font's ascent and descent and half its leading on each side, and every engine rounds those
+ * its own way: WebKit (Safari, and Home Assistant's iPhone app) drew 14 and 15 px words up to a pixel lower than
+ * Chromium in the same box (#122). Trimmed to its capitals and its baseline (`text-box`) and padded back to its line's
+ * height, the line keeps its box and puts its baseline on a whole pixel, half its capitals (to the pixel) under the
+ * middle: the capitals centred as the pixel allows, where Chromium draws them and where WebKit now does too, at every
+ * density. A browser without `text-box` keeps the line as it was; a label of two lines keeps its line boxes.
+ * words alone       a button, a badge or a chip's pill that holds nothing but its words (and at most the file chooser
+ *                   laid over it) is a block centring its one line (in a flex row the words are an anonymous box,
+ *                   which no rule can trim)
+ * words of their own   a chip's label or name (a row that fills may give a label less than its sides, and the row
+ *                   centres it all the same), a room's name, a dropdown's value, a row's value pill, a month's day,
+ *                   the period's dates, a state on the Activity page, a sheet's Run that turns to Done: their own
+ *                   box, the ellipsis a name may end in clipping no more of a letter than it did */
+
+@supports (text-box: trim-both cap alphabetic) {
+  :is(.fv-btn, .fv-badge, .fv-chip__pill):not(:has(> :not(input))) {
+    display: inline-block;
+    align-content: center;
+    text-align: center;
+  }
+
+  :is(.fv-btn, .fv-badge, .fv-chip__pill):not(:has(> :not(input))),
+  .fv-chip__label,
+  .fv-chip__name,
+  .fv-select__value,
+  .in-value__text,
+  .fv-day > span:only-of-type,
+  .ep-date__words,
+  .av-state__text,
+  .ss-swap {
+    padding-block: calc(0.5lh - 1cap + round(0.5cap, 1px)) calc(0.5lh - round(0.5cap, 1px));
+    text-box: trim-both cap alphabetic;
+  }
+}

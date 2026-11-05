@@ -428,7 +428,9 @@ export class FluvyChipsCard extends Card<ChipsCardConfig> {
                   this.config?.tint === 'always' && accent && index !== active ? 'is-tinted' : ''
                 }"
                 data-control
-                >${glyph ? icon(glyph) : nothing}${name}</span
+                >${glyph ? icon(glyph) : nothing}<span class="fv-chip__name" data-name
+                  >${name}</span
+                ></span
               >
             </button>`,
           );
