@@ -206,10 +206,11 @@ describe('the house’s appliances', () => {
     const card = await mount({
       variant: 'cards',
       picture: 'icon',
+      confirm: ['start', 'stop'],
       appliances: [
         { device: 'lg-fridge', kind: 'fridge' },
         'hc-oven',
-        { device: 'lg-washer', rows: ['program', 'energy'] },
+        { device: 'lg-washer', rows: ['program', 'energy'], confirm: [] },
       ],
     });
     type Whole = HTMLElement & { config: Record<string, unknown>; hass: HomeAssistant };
@@ -227,9 +228,12 @@ describe('the house’s appliances', () => {
       type: 'custom:fluvy-appliance-card',
       kind: 'fridge',
       picture: 'icon',
+      confirm: ['start', 'stop'],
       _now: AT,
     });
     expect(wholes()[2]!.config['rows']).toEqual(['program', 'energy']);
+    // what its whole cards ask before (#120): the list's, where an appliance names nothing of its own
+    expect(wholes()[2]!.config['confirm']).toEqual([]);
     // a whole card holds in 300 at least (four across a desktop's band), rows alone in 240
     const grid = root(card).querySelector<HTMLElement>('.al-cards');
     expect(grid?.style.getPropertyValue('--al-least')).toBe('300px');

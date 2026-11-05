@@ -108,6 +108,9 @@ import {
   callFor,
   COMMAND_NAMES,
   CONFIRM,
+  CONFIRM_ACTION,
+  CONFIRM_DEFAULT,
+  CONFIRM_NAMES,
   mealAmount,
   programCall,
   resetCall,
@@ -115,10 +118,13 @@ import {
   type Action,
   type Command,
   type CommandName,
+  type ConfirmName,
   type ServiceCall,
 } from './commands.js';
 import {
   choiceField,
+  confirmChoices,
+  confirmField,
   deviceField,
   kindField,
   option,
@@ -334,6 +340,12 @@ export interface ApplianceCardConfig extends FluvyCardConfig, HeadConfig {
   show_controls?: boolean;
   /** The buttons, in order (default: the kind's, those it has); start and pause share one. */
   controls?: readonly CommandName[];
+  /**
+   * The commands it asks before, in Home Assistant's dialog (#120): a start, a resume, a pause, a stop, switching off,
+   * a meal, a clean, a levelling (default: a stop, switching off where it cuts something short, a meal, a clean, a
+   * levelling; an empty list asks nothing).
+   */
+  confirm?: readonly ConfirmName[];
   /** The programmes as chips to choose from at rest, where the integration lets a card choose. */
   show_programs?: boolean;
   unload_reminder?: boolean;
@@ -1405,6 +1417,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     'door_alert',
     'show_controls',
     'controls',
+    'confirm',
     'show_programs',
     'unload_reminder',
     'unload_after',
@@ -1503,6 +1516,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       modes_style: 'chips',
       show_controls: variant === 'ring',
       controls: [...defaults.controls],
+      confirm: CONFIRM_DEFAULT.filter((name) => confirmable(c, hass).includes(name)),
       show_programs: false,
       unload_reminder: defaults.unload,
       unload_after: 30,
@@ -1516,8 +1530,8 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
   };
 
   /**
-   * The drinks a coffee machine offers, as its programme select lists them, in its words; the roles a person may name
-   * for what the appliance is (`rolesOffered`).
+   * The drinks a coffee machine offers, as its programme select lists them, in its words; the commands it may ask
+   * before, those it can send; the roles a person may name for what the appliance is (`rolesOffered`).
    */
   static override choices: EditorChoices = (config, hass) => {
     const c = config as ApplianceCardConfig;
@@ -1526,6 +1540,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     const state = program ? hass?.states[program] : undefined;
     return {
       drinks: optionsOf(state).map((value) => ({ value, label: optionWord(hass, state, value) })),
+      confirm: confirmChoices(confirmable(c, hass)),
       role: rolesOffered(
         found?.verdict && 'kind' in found.verdict ? found.verdict.kind : 'appliance',
         c.roles,
@@ -1607,6 +1622,11 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
             'controls',
             COMMAND_NAMES.map((key) => ({ value: key, label: editorWord(`appliance.${key}`) })),
           ),
+          // what asks first (#120), of what the appliance can send
+          onlyWhen(
+            (data, hass) => confirmable(data as ApplianceCardConfig, hass).length > 0,
+            confirmField(),
+          ),
           // a meal's amount, where the feeder takes one from the card
           onlyWhen((data) => data['feed_amount'] !== undefined, numberField('feed_amount', 1, 400)),
         ]),
@@ -1658,6 +1678,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         door_alert: 'editor_door_alert',
         show_controls: 'editor_show_controls',
         controls: 'editor_controls',
+        confirm: 'editor_confirm',
         show_programs: 'editor_show_programs',
         unload_reminder: 'editor_unload_reminder',
         unload_after: 'editor_unload_after',
@@ -2003,13 +2024,14 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
 
   private command(command: Command): void {
     if (command.blocked) return;
-    // a meal says its amount where the card writes it, else asks as it is (PETLIBRO's gives its own)
+    // a meal says its amount where the card writes it, else asks as it is (PETLIBRO's gives its own); a start, a pause
+    // and a resume name the appliance as its head does
     const text =
-      command.amount !== undefined
-        ? this.t(CONFIRM.feed, { amount: this.mealWords(command.amount) })
-        : command.confirm === 'feed'
-          ? s(this.hass, 'confirm_feed_now')
-          : command.confirm && this.t(CONFIRM[command.confirm]);
+      command.confirm === 'feed'
+        ? command.amount !== undefined
+          ? this.t(CONFIRM.feed, { amount: this.mealWords(command.amount) })
+          : s(this.hass, 'confirm_feed_now')
+        : command.confirm && this.t(CONFIRM[command.confirm], { name: this.last?.title ?? '' });
     if (text) this.ask(command.call, text);
     else this.run(command.call);
   }
@@ -5016,9 +5038,23 @@ const PET_GLYPH: Readonly<Record<'feed' | 'clean' | 'deodorize' | 'level', Glyph
 /** Whether the appliance takes any of `actions`, as its integration lets a card. */
 const canDo = (
   hass: HomeAssistant | undefined,
-  r: ApplianceReading,
+  r: Pick<ApplianceReading, 'platform' | 'roles'>,
   actions: readonly Action[],
 ): boolean => actions.some((action) => callFor(hass, r.platform, r.roles, action) !== undefined);
+
+/**
+ * What a card may ask before (#120): the commands its appliance can send, as its integration and its roles let a card;
+ * every one where nothing of an appliance is found (none picked yet, or one the house no longer has).
+ */
+function confirmable(
+  config: ApplianceCardConfig,
+  hass: HomeAssistant | undefined,
+): readonly ConfirmName[] {
+  const found = hass ? findAppliance(hass, config) : undefined;
+  if (!found || !Object.keys(found.entities.roles).length) return CONFIRM_NAMES;
+  const r = { platform: found.platform, roles: found.entities.roles };
+  return CONFIRM_NAMES.filter((name) => canDo(hass, r, [CONFIRM_ACTION[name]]));
+}
 
 /** A full chip row's columns, and whether its chips say their glyphs alone. */
 interface ChipFit {

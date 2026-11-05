@@ -467,6 +467,124 @@ describe('the appliance card', () => {
     expect(start?.title).toMatch(/Remote start is off/);
   });
 
+  it('asks before the commands a card names (#120): the row’s round asks before a start, naming the appliance; unset or empty, a start is one tap', async () => {
+    const handed: Array<{ config?: { tap_action?: Record<string, unknown> } }> = [];
+    const listen = (event: Event): void => void handed.push((event as CustomEvent).detail);
+    document.body.addEventListener('hass-action', listen);
+    try {
+      // the dishwasher at rest: the row's round is Start (its active programme, Home Connect's)
+      const start = async (config: Record<string, unknown>) => {
+        handed.length = 0;
+        const hass = house({ 'sensor.geschirrspuler_betriebszustand': { state: 'ready' } });
+        const card = await mount({ device: 'hc-dish', variant: 'row', ...config }, hass);
+        const round = root(card).querySelector<HTMLButtonElement>('.fv-round[aria-label="Start"]');
+        expect(round, JSON.stringify(config)).not.toBeNull();
+        round?.click();
+        card.remove();
+        return { calls: hass.calls, asked: handed.at(-1)?.config?.tap_action };
+      };
+      const started = [
+        {
+          domain: 'select',
+          service: 'select_option',
+          data: {
+            entity_id: 'select.geschirrspuler_aktives_programm',
+            option: 'dishcare_dishwasher_program_eco_50',
+          },
+        },
+      ];
+      // by default, and where the card names nothing to ask before, as before
+      expect(await start({})).toEqual({ calls: started, asked: undefined });
+      expect(await start({ confirm: [] })).toEqual({ calls: started, asked: undefined });
+      expect(await start({ confirm: ['stop'] })).toEqual({ calls: started, asked: undefined });
+      // asked before, Home Assistant's dialog asks first, in words that name the appliance as its head does
+      expect(await start({ confirm: ['start', 'stop'] })).toEqual({
+        calls: [],
+        asked: {
+          action: 'perform-action',
+          perform_action: 'select.select_option',
+          target: { entity_id: 'select.geschirrspuler_aktives_programm' },
+          data: { option: 'dishcare_dishwasher_program_eco_50' },
+          confirmation: { text: 'Start Geschirrspüler?' },
+        },
+      });
+      expect((await start({ confirm: 'start', name: 'Dishwasher' })).asked).toMatchObject({
+        confirmation: { text: 'Start Dishwasher?' },
+      });
+      // a pause names it too; a stop the card does not name is one tap
+      const hass = house();
+      const running = await mount(
+        { device: 'hc-dish', show_controls: true, confirm: ['pause'] },
+        hass,
+      );
+      root(running).querySelector<HTMLButtonElement>('[data-action="pause"]')?.click();
+      expect(hass.calls).toEqual([]);
+      expect(handed.at(-1)?.config?.tap_action).toMatchObject({
+        confirmation: { text: 'Pause Geschirrspüler?' },
+      });
+      root(running).querySelector<HTMLButtonElement>('[data-action="stop"]')?.click();
+      expect(hass.calls).toEqual([
+        {
+          domain: 'button',
+          service: 'press',
+          data: { entity_id: 'button.geschirrspuler_programm_stoppen' },
+        },
+      ]);
+    } finally {
+      document.body.removeEventListener('hass-action', listen);
+    }
+  });
+
+  it('offers in its editor what an appliance can be asked before, those it can send; every one where it names none (#120)', () => {
+    const form = FluvyApplianceCard.getConfigForm();
+    const field = form.schema
+      .flatMap((item) => item.schema ?? [item])
+      .flatMap((item) => item.schema ?? [item])
+      .find((item) => item.name === 'confirm');
+    const offered = (config: Record<string, unknown>, hass?: HomeAssistant) =>
+      (FluvyApplianceCard.choices?.({ type: 'x', ...config }, hass)['confirm'] ?? []).map(
+        (option) => option.value,
+      );
+    const hass = house();
+    // Home Connect's dishwasher: its programme starts, pauses, resumes and stops, its power switches off
+    expect(offered({ device: 'hc-dish' }, hass)).toEqual([
+      'start',
+      'resume',
+      'pause',
+      'stop',
+      'off',
+    ]);
+    // LG cannot pause from Home Assistant; a washer on a plug only switches off
+    expect(offered({ device: 'lg-washer' }, hass)).toEqual(['start', 'stop', 'off']);
+    expect(offered({ device: 'plug-washer' }, hass)).toEqual(['off']);
+    // its words are its buttons'
+    expect(
+      FluvyApplianceCard.choices?.({ type: 'x', device: 'lg-washer' }, hass)['confirm'],
+    ).toEqual([
+      { value: 'start', label: 'Start' },
+      { value: 'stop', label: 'Stop' },
+      { value: 'off', label: 'Switch off' },
+    ]);
+    // nothing to send, nothing to ask: the field steps out; no appliance yet, every one
+    expect(field?.when?.({ device: 'hon-washer' }, hass)).toBe(false);
+    expect(field?.when?.({ device: 'hc-dish' }, hass)).toBe(true);
+    expect(field?.when?.({}, hass)).toBe(true);
+    expect(offered({}, hass)).toEqual([
+      'start',
+      'resume',
+      'pause',
+      'stop',
+      'off',
+      'feed',
+      'clean',
+      'level',
+    ]);
+    // what the editor shows where the card names nothing: today's, of what it can send
+    expect(FluvyApplianceCard.defaults?.({ type: 'x', device: 'lg-washer' }, hass)).toMatchObject({
+      confirm: ['stop', 'off'],
+    });
+  });
+
   it('leaves out a control it does not know, a typo by hand, and draws the others', async () => {
     const config = { device: 'hc-dish', show_controls: true, controls: ['stopp', 'stop', 'power'] };
     const card = await mount(config);

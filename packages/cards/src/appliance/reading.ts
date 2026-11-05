@@ -15,7 +15,14 @@ import {
   jobClock,
   type JobClock,
 } from '../shared/job-time.js';
-import { commandsOf, programChoice, type Command, type ProgramChoice } from './commands.js';
+import {
+  commandsOf,
+  confirmOf,
+  programChoice,
+  type Command,
+  type ConfirmName,
+  type ProgramChoice,
+} from './commands.js';
 import {
   byWords,
   KIND_DEFAULTS,
@@ -94,6 +101,8 @@ export interface ApplianceConfig {
   readonly low_days?: number | undefined;
   /** A meal's amount, where the feeder takes one from the card (PetKit's: its smallest otherwise). */
   readonly feed_amount?: number | undefined;
+  /** The commands the card asks before (`confirmOf`: its default where it names none; an empty list, none). */
+  readonly confirm?: readonly ConfirmName[] | undefined;
   /** Seconds a door may stand open before the card says so (the kind's say by default: a fridge's 60). */
   readonly door_alert?: number | undefined;
 }
@@ -480,6 +489,7 @@ export function readAppliance(
       status,
       kind,
       amount: config.feed_amount,
+      confirm: confirmOf(config.confirm),
     }),
     programs: programChoice({ hass, platform: found.platform, roles, status }),
     twin: twin ? twinOf(hass, found, twin, now, doneFor, view) : undefined,

@@ -1,11 +1,12 @@
 import type { HaFormSchemaItem, MessageKey } from '@fluvy/core';
-import { editorWord, type OptionWord } from '../shared/form.js';
+import { editorWord, orderedField, type OptionWord } from '../shared/form.js';
+import { CONFIRM_ACTION, CONFIRM_NAMES, type ConfirmName } from './commands.js';
 import { APPLIANCE_KINDS, type ApplianceKind } from './kinds.js';
 
 /*
  * The appliance cards' editor parts: a choice whose words are the family's own (they travel with its chunk, never in
  * core's `option` table), the folding group every long editor shares (`sectionField`, the shared form's), the kinds,
- * the least a picture steps down to, and the device picker.
+ * the least a picture steps down to, the commands asked before, and the device picker.
  */
 
 /** A choice among values, each named by a word of the catalogue (the family's, or core's `option` words). */
@@ -53,6 +54,16 @@ export const pictureMinField = (): HaFormSchemaItem => ({
   ]),
   helper: 'appliance.editor_picture_min_helper',
 });
+
+/** The commands a card asks before (#120), each in its button's words: those `names`, every one by default. */
+export const confirmField = (names: readonly ConfirmName[] = CONFIRM_NAMES): HaFormSchemaItem =>
+  orderedField('confirm', confirmChoices(names));
+
+/** The commands a card may ask before, as its editor offers them. */
+export const confirmChoices = (
+  names: readonly ConfirmName[],
+): ReadonlyArray<{ readonly value: string; readonly label: string }> =>
+  names.map((name) => ({ value: name, label: editorWord(`appliance.${CONFIRM_ACTION[name]}`) }));
 
 /**
  * The device picker: any device of the house, of an integration the cards read or not (#115: an espresso machine over

@@ -46,7 +46,15 @@ import {
 import type { EditorDefaults, RowsListSpec } from '../shared/rows-editor.js';
 import { Ticker, MINUTE } from '../shared/ticker.js';
 import { applianceHouseHeight, type ApplianceCardConfig } from './appliance-card.js';
-import { choiceField, deviceField, kindField, option, pictureMinField } from './form.js';
+import { CONFIRM_DEFAULT, type ConfirmName } from './commands.js';
+import {
+  choiceField,
+  confirmField,
+  deviceField,
+  kindField,
+  option,
+  pictureMinField,
+} from './form.js';
 import { DUE_WORD, KIND_TILES } from './full.js';
 import { applianceDevices, KIND_DEFAULTS, type ApplianceKind } from './kinds.js';
 import type { MaintenanceKey } from './maintenance.js';
@@ -136,6 +144,8 @@ export interface AppliancesCardConfig extends FluvyCardConfig, HeadConfig {
   picture?: PictureStyle;
   /** The least a tile's (and a whole card's) picture steps down to (32, 44 or 64), a long name cut beside it. */
   picture_min?: number | 'auto';
+  /** What the whole cards ask before (#120), where an appliance names nothing of its own: the appliance card's. */
+  confirm?: readonly ConfirmName[];
   /** The appliances, in order: devices, or items naming one (default: every appliance of the house, busiest first). */
   appliances?: ReadonlyArray<string | ApplianceItem>;
   /** Rows before a "{count} more" row takes the others (6). */
@@ -376,6 +386,7 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
     'variant',
     'picture',
     'picture_min',
+    'confirm',
     'appliances',
     'max_rows',
     'show',
@@ -412,6 +423,7 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
     variant: 'rows',
     picture: 'art',
     picture_min: 'auto',
+    confirm: [...CONFIRM_DEFAULT],
     max_rows: APPLIANCES_MAX_ROWS,
     show: 'all',
     sort: config['variant'] === 'cards' ? 'none' : 'state',
@@ -447,6 +459,8 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
             (variant === 'tiles' || variant === 'cards') && picture !== 'none',
           pictureMinField(),
         ),
+        // a whole card's buttons are the list's only commands: what they ask before
+        onlyWhen(({ variant }) => variant === 'cards', confirmField()),
         fieldRow(
           choiceField('show', [option('all'), ['active', 'appliance.o_busy']]),
           choiceField('sort', [
@@ -468,6 +482,7 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
         hide_empty: 'editor_hide_empty',
         picture: 'editor_picture',
         picture_min: 'editor_picture_min',
+        confirm: 'editor_confirm',
       }),
     };
   }
@@ -966,6 +981,7 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
     const config: LovelaceCardConfig = {
       ...(this.config?.picture ? { picture: this.config.picture } : {}),
       ...(this.config?.picture_min ? { picture_min: this.config.picture_min } : {}),
+      ...(this.config?.confirm ? { confirm: this.config.confirm } : {}),
       ...(this.config?._now ? { _now: this.config._now } : {}),
       ...line.item,
       type: 'custom:fluvy-appliance-card',

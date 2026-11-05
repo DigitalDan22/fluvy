@@ -16,9 +16,10 @@ import { setterFor, type Setter } from './zones.js';
  * names, whatever the integration (found by its key, or named by hand: a device's button, a helper's, a script),
  * pressed as Home Assistant's own would press it; anything else of hOn, Electrolux, LG's older integration is read and
  * never written to (1.9.1). A select's option is offered only when it is in the select's own options. Starting needs
- * the appliance at rest and, where it has one, its remote start on; stopping asks first, and so does switching off one
- * that is not at rest (at work, waiting to start, failed) and switching off what keeps food cold, whatever its
- * compressor is doing; a meal, a litter box's clean and its levelling ask first too.
+ * the appliance at rest and, where it has one, its remote start on. What asks first is the card's to say (`confirm`,
+ * #120); by default stopping asks, and so does switching off one that is not at rest (at work, waiting to start,
+ * failed) and switching off what keeps food cold, whatever its compressor is doing; a meal, a litter box's clean and
+ * its levelling ask first too.
  */
 
 /**
@@ -53,6 +54,49 @@ export type Action =
   | 'deodorize'
   | 'level';
 
+/**
+ * A command a card may ask before, as a person names it (`confirm`): a start, a resume, a pause, a stop, switching off
+ * (never switching on), a meal, a litter box's clean and its levelling.
+ */
+export type ConfirmName =
+  'start' | 'resume' | 'pause' | 'stop' | 'off' | 'feed' | 'clean' | 'level';
+export const CONFIRM_NAMES: readonly ConfirmName[] = [
+  'start',
+  'resume',
+  'pause',
+  'stop',
+  'off',
+  'feed',
+  'clean',
+  'level',
+];
+/** What a card asks before where it names nothing: a stop, switching off, a meal, a clean, a levelling. */
+export const CONFIRM_DEFAULT: readonly ConfirmName[] = ['stop', 'off', 'feed', 'clean', 'level'];
+
+/** The action each name asks before. */
+export const CONFIRM_ACTION: Readonly<Record<ConfirmName, Action>> = {
+  start: 'start',
+  resume: 'resume',
+  pause: 'pause',
+  stop: 'stop',
+  off: 'power_off',
+  feed: 'feed',
+  clean: 'clean',
+  level: 'level',
+};
+
+/**
+ * What a card asks before, as its config names it (one written without its dash a list of one), those the card knows:
+ * its default where it names nothing, nothing for an empty list.
+ */
+export function confirmOf(named: unknown): readonly ConfirmName[] {
+  const list: readonly unknown[] | undefined =
+    typeof named === 'string' ? [named] : Array.isArray(named) ? named : undefined;
+  return list
+    ? list.filter((name): name is ConfirmName => CONFIRM_NAMES.includes(name as ConfirmName))
+    : CONFIRM_DEFAULT;
+}
+
 /** A service call, as `hass.callService` takes it (the entity in its data). */
 export interface ServiceCall {
   readonly domain: string;
@@ -68,12 +112,21 @@ export interface Command {
   /** Its words: the button's label (and its title). */
   readonly label: MessageKey;
   /**
-   * Asked first, in Home Assistant's confirmation: stopping; switching off while it runs, while it waits to start or
-   * has failed (`power_off_now`), and a fridge, a freezer or a wine cooler at any time (`power_off_cold`); a meal now,
-   * a litter box's clean and its levelling.
+   * Asked first, in Home Assistant's confirmation, where the card asks before it (`confirm`): a start, a pause, a
+   * resume, a stop; switching off while it runs, while it waits to start or has failed (`power_off_now`), and a fridge,
+   * a freezer or a wine cooler at any time (`power_off_cold`); a meal now, a litter box's clean and its levelling.
    */
   readonly confirm?:
-    'stop' | 'power_off' | 'power_off_now' | 'power_off_cold' | 'feed' | 'clean' | 'level';
+    | 'start'
+    | 'pause'
+    | 'resume'
+    | 'stop'
+    | 'power_off'
+    | 'power_off_now'
+    | 'power_off_cold'
+    | 'feed'
+    | 'clean'
+    | 'level';
   /** A meal's amount, where the card writes it (PetKit's), as the confirmation says it. */
   readonly amount?: number;
   /**
@@ -137,6 +190,8 @@ export interface CommandInput {
   readonly kind?: ApplianceKind | undefined;
   /** A meal's amount, as the card names it (`feed_amount`): the integration's smallest otherwise. */
   readonly amount?: number | undefined;
+  /** What the card asks before (`confirmOf`): `CONFIRM_DEFAULT` where it names nothing. */
+  readonly confirm?: readonly ConfirmName[] | undefined;
 }
 
 /** What keeps food cold: off, it stops cooling, so a card asks first whatever its compressor is doing. */
@@ -334,12 +389,13 @@ const PET_ACTIONS = ['feed', 'clean', 'deodorize', 'level'] as const;
  * The commands an appliance can take now, a cell each, in the order a card lays them out (start or resume, pause,
  * stop, power, light, then a pet device's meal, clean, deodorizing and levelling): start at rest or done, resume
  * while paused, pause while it runs a job that pauses (`pausable`), stop while it has a job (or waits to start), switch
- * off unless off, on when off, the light always, a pet device's own while it is reached. Each with what it asks first
- * (stopping; switching off one not at rest, or what keeps food cold; a meal, a clean, a levelling) and why it cannot
- * be done now.
+ * off unless off, on when off, the light always, a pet device's own while it is reached. Each with what it asks first,
+ * of what the card asks before (by default stopping; switching off one not at rest, or what keeps food cold; a meal, a
+ * clean, a levelling), and why it cannot be done now.
  */
 export function commandsOf(input: CommandInput): Command[] {
   const { hass, platform, roles, status, kind, amount } = input;
+  const asked: ReadonlySet<ConfirmName> = new Set(input.confirm ?? CONFIRM_DEFAULT);
   const running = status === 'running' || status === 'preheating';
   const remote = roles.remote ? hass?.states?.[roles.remote]?.state : undefined;
   const wanted: Array<readonly [CommandName, Action]> = [];
@@ -370,15 +426,19 @@ export function commandsOf(input: CommandInput): Command[] {
         : remoteOff
           ? 'remote_off'
           : undefined;
-    // a litter box's resume restarts a clean a pet paused (a cat stepped in): it asks as the clean does
+    // the name a person asks before it by; a litter box's resume restarts a clean a pet paused (a cat stepped in):
+    // it asks as the clean does, where either is asked before
+    const name = CONFIRM_NAMES.find((item) => CONFIRM_ACTION[item] === action);
     const confirm =
-      action === 'stop' || action === 'feed' || action === 'clean' || action === 'level'
-        ? action
-        : action === 'resume' && kind === 'litter_box'
+      action === 'resume' && kind === 'litter_box'
+        ? asked.has('resume') || asked.has('clean')
           ? 'clean'
-          : action === 'power_off'
+          : undefined
+        : !name || !asked.has(name)
+          ? undefined
+          : name === 'off'
             ? offConfirm(status, kind)
-            : undefined;
+            : name;
     const value = call.data['value'];
     commands.push({
       control,
@@ -393,8 +453,14 @@ export function commandsOf(input: CommandInput): Command[] {
   return commands;
 }
 
-/** The words of a command's confirmation and of a blocked cell's title. */
+/**
+ * The words of a command's confirmation (a start, a pause and a resume name the appliance: `{name}`) and of a blocked
+ * cell's title.
+ */
 export const CONFIRM: Readonly<Record<NonNullable<Command['confirm']>, MessageKey>> = {
+  start: 'appliance.confirm_start',
+  pause: 'appliance.confirm_pause',
+  resume: 'appliance.confirm_resume',
   stop: 'appliance.confirm_stop',
   power_off: 'appliance.confirm_power_off',
   power_off_now: 'appliance.confirm_power_off_now',

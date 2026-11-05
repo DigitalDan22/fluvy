@@ -4,7 +4,14 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { applianceHeight } from '../appliances-family.js';
 import { FluvyApplianceCard } from './appliance-card.js';
 import { FluvyAppliancesCard } from './appliances-card.js';
-import { callFor, commandsOf, mealAmount, resetCall, writable } from './commands.js';
+import {
+  callFor,
+  commandsOf,
+  mealAmount,
+  resetCall,
+  writable,
+  type ConfirmName,
+} from './commands.js';
 import { houseOf, PETKIT_PLAN, petFixtures, type ApplianceFixture } from './fixtures/index.js';
 import { applianceDevices, byWords, kindOf, signalsOf } from './kinds.js';
 import { forKind, maintenanceItem, maintenanceList } from './maintenance.js';
@@ -472,16 +479,34 @@ describe('the writes their source pins', () => {
     expect(litter.find((c) => c.action === 'clean')?.confirm).toBe('clean');
     expect(litter.find((c) => c.action === 'level')?.confirm).toBe('level');
     expect(litter.find((c) => c.action === 'deodorize')?.confirm).toBeUndefined();
-    // a clean a cat paused restarts the drum: its resume asks as the clean does
+    // a clean a cat paused restarts the drum: its resume asks as the clean does, where either is asked before (#120)
     const paused = findAppliance(HOUSE, { device: 'pk-litter' });
-    const resume = commandsOf({
+    const resume = (confirm?: readonly ConfirmName[]) =>
+      commandsOf({
+        hass: HOUSE,
+        platform: paused.platform,
+        roles: paused.entities.roles,
+        status: 'paused',
+        kind: 'litter_box',
+        confirm,
+      }).find((c) => c.action === 'resume')?.confirm;
+    expect(resume()).toBe('clean');
+    expect(resume(['resume'])).toBe('clean');
+    expect(resume(['clean'])).toBe('clean');
+    expect(resume(['stop'])).toBeUndefined();
+    expect(resume([])).toBeUndefined();
+    // a meal asks nothing where the card names nothing to ask before, its amount still written
+    const feeder = findAppliance(HOUSE, { device: 'pk-feeder' });
+    const meal = commandsOf({
       hass: HOUSE,
-      platform: paused.platform,
-      roles: paused.entities.roles,
-      status: 'paused',
-      kind: 'litter_box',
-    }).find((c) => c.action === 'resume');
-    expect(resume?.confirm).toBe('clean');
+      platform: feeder.platform,
+      roles: feeder.entities.roles,
+      status: 'idle',
+      amount: 20,
+      confirm: [],
+    }).find((c) => c.action === 'feed');
+    expect(meal).toMatchObject({ amount: 20 });
+    expect(meal?.confirm).toBeUndefined();
     // the PETLIBRO meal is its own amount: none said
     expect(commands('pl-feeder').find((c) => c.action === 'feed')?.amount).toBeUndefined();
   });
@@ -548,9 +573,29 @@ describe('the card', () => {
       granary.shadowRoot.querySelector<HTMLButtonElement>('.ap-power')?.click();
       expect(JSON.stringify(handed)).toContain('"text":"Feed now?"');
       expect(hass.calls).toEqual([]);
+      // a home that asks nothing first (#120): a meal at once, its amount written
+      const now = await mount({ device: 'pk-feeder', feed_amount: 20, confirm: [] }, hass);
+      now.shadowRoot.querySelector<HTMLButtonElement>('.ap-power')?.click();
+      expect(hass.calls).toEqual([
+        {
+          domain: 'text',
+          service: 'set_value',
+          data: { entity_id: 'text.futterautomat_manual_feed', value: '20' },
+        },
+      ]);
     } finally {
       document.body.removeEventListener('hass-action', listen);
     }
+  });
+
+  it('offers in its editor what a pet device can be asked before: a meal, a clean, a levelling (#120)', () => {
+    const offered = (device: string) =>
+      (FluvyApplianceCard.choices?.({ type: 'x', device }, HOUSE)['confirm'] ?? []).map(
+        (option) => option.value,
+      );
+    expect(offered('pk-feeder')).toEqual(['feed']);
+    expect(offered('pk-litter')).toEqual(['resume', 'pause', 'off', 'clean', 'level']);
+    expect(offered('pl-litter')).toEqual(['stop', 'clean', 'level']);
   });
 
   it('says what is due in its head, its tiles in the danger’s ink, never twice in its rows', async () => {

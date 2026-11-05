@@ -4,6 +4,8 @@ import {
   boostCall,
   callFor,
   commandsOf,
+  CONFIRM_DEFAULT,
+  confirmOf,
   programCall,
   programChoice,
   resetCall,
@@ -420,6 +422,40 @@ describe('the commands an appliance takes now', () => {
       'stop stop stop',
     ]);
     expect(cells('lt-washer', 'running')).toEqual(['pause pause', 'stop stop stop']);
+  });
+
+  it('asks before the commands a card names (#120): a start with `[start]`, nothing with `[]`, today’s by default', () => {
+    const asked = (
+      device: string,
+      status: ApplianceStatus,
+      confirm?: unknown,
+      kind?: CommandInput['kind'],
+    ) =>
+      commandsOf({
+        ...input(device, status),
+        ...(kind ? { kind } : {}),
+        ...(confirm === undefined ? {} : { confirm: confirmOf(confirm) }),
+      }).map((command) => `${command.action} ${command.confirm ?? ''}`.trim());
+    // a stray tap on Start costs the most: a home asks before it, and before a resume and a pause
+    expect(asked('hc-dish', 'idle', ['start', 'stop'])).toEqual(['start start', 'power_off']);
+    expect(asked('hc-dish', 'paused', ['resume'])).toEqual(['resume resume', 'stop', 'power_off']);
+    expect(asked('hc-dish', 'running', ['pause'])).toEqual(['pause pause', 'stop', 'power_off']);
+    // one written without its dash is a list of one; a name the card does not know drops out
+    expect(asked('hc-dish', 'idle', 'start')).toEqual(['start start', 'power_off']);
+    expect(asked('hc-dish', 'running', ['start', 'stopp'])).toEqual(['pause', 'stop', 'power_off']);
+    // unset is today's set exactly: a stop, switching off where it cuts something short, never a start
+    expect(confirmOf(undefined)).toBe(CONFIRM_DEFAULT);
+    for (const status of ['idle', 'running', 'paused', 'scheduled', 'error'] as const)
+      expect(asked('hc-dish', status), status).toEqual(asked('hc-dish', status, CONFIRM_DEFAULT));
+    expect(asked('hc-dish', 'idle')).toEqual(['start', 'power_off']);
+    expect(asked('hc-dish', 'running')).toEqual(['pause', 'stop stop', 'power_off power_off']);
+    // switching off asks as it does by default, where it is named: never at rest, what keeps food cold always
+    expect(asked('plug-washer', 'idle', ['off'])).toEqual(['power_off']);
+    expect(asked('plug-washer', 'running', ['off'])).toEqual(['power_off power_off']);
+    expect(asked('plug-washer', 'idle', ['off'], 'fridge')).toEqual(['power_off power_off_cold']);
+    // an empty list asks nothing: the home's choice
+    expect(asked('hc-dish', 'running', [])).toEqual(['pause', 'stop', 'power_off']);
+    expect(asked('plug-washer', 'idle', [], 'fridge')).toEqual(['power_off']);
   });
 
   it('offers only an option the select lists', () => {
