@@ -32,6 +32,11 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   letter, where a Slovak "Spálňa" read "Spálň", a Portuguese "Salão" "Salã" and a German "Großes" "Groß".
 - A Room card's quick action asked about first (`confirmation`) moves its set at Home Assistant's yes even where the
   dashboard drew the card anew while the dialog was open, where that yes did nothing.
+- The automatic dashboards in full (`caps: none`) show every sensor of their Openings cards and every automation of a
+  room's Automations card, where those still folded after four and six, and `caps` names their lists (`openings`,
+  `automations`) as it names any other.
+- The Openings card shows as many rows as its `max_rows` asks past twenty, and the Automations card past thirty, where
+  they folded there and the Openings card stood taller than it drew.
 
 ## [1.14.2] — 2026-11-04
 

@@ -22,7 +22,16 @@ import type { Card, Section, StrategyContext, ViewSpec } from '../types.js';
 import { LIGHT_WORDS, type HomeRegistry } from '../home-registry.js';
 import { roomsOf, roomsView } from '../rooms.js';
 import { APPLIANCES_PATH, applianceSections } from '../appliances.js';
-import { byArea, capped, each, looseAfter, moreAfter, moreCard, moreKeys } from '../caps.js';
+import {
+  byArea,
+  capped,
+  each,
+  foldAt,
+  looseAfter,
+  moreAfter,
+  moreCard,
+  moreKeys,
+} from '../caps.js';
 import { COLUMNS } from '../context.js';
 import { consumptionRows, liveCards, metersCards, todayCards, todayTiles } from './energy.js';
 
@@ -330,7 +339,11 @@ export function securityCards(
     ...looseAfter(locks.shown.map(lock), locks),
     ...looseAfter(gates.shown.map(gate), gates),
     ...when(home.openings.length, () => [
-      full('openings', { title: t('strategy.sensors'), entities: [...home.openings] }),
+      full('openings', {
+        title: t('strategy.sensors'),
+        entities: [...home.openings],
+        ...foldAt(ctx, 'openings', home.openings),
+      }),
     ]),
     ...when(cameras.shown.length, () => looseAfter([camerasCard(cameras.shown)], cameras)),
   ];
@@ -446,7 +459,11 @@ export function sensorsView(ctx: StrategyContext): Section[] {
     ]),
     // with a security view the openings live there
     when(!secured(home) && openings.length, () => [
-      full('openings', { title: t('strategy.sensors'), entities: [...openings] }),
+      full('openings', {
+        title: t('strategy.sensors'),
+        entities: [...openings],
+        ...foldAt(ctx, 'openings', openings),
+      }),
     ]),
     list('plants', 'fluvy:leaf', home.plants, (title, ids) => bars(title, [...ids])),
     list('helpers', 'fluvy:sliders', home.helpers, helpersCard),

@@ -22,7 +22,11 @@ import {
   type PropertyValues,
   type TemplateResult,
 } from 'lit';
-import { AUTOMATIONS_MAX_ROWS, automationsHeight } from '../automations-family.js';
+import {
+  AUTOMATIONS_MAX_ROWS,
+  automationsHeight,
+  automationsMaxRows,
+} from '../automations-family.js';
 import { HeadFit, SWITCH_SLOT } from '../energy/head.js';
 import { Card, type BaseKey } from '../shared/base.js';
 import { chipRow } from '../shared/chips.js';
@@ -528,8 +532,7 @@ export class FluvyAutomationsCard extends Card<AutomationsCardConfig> {
   }
 
   private maxRows(): number {
-    const asked = Math.round(Number(this.config?.max_rows));
-    return Number.isFinite(asked) ? Math.min(30, Math.max(1, asked)) : AUTOMATIONS_MAX_ROWS;
+    return automationsMaxRows(this.config?.max_rows);
   }
 
   private timeStep(): number {

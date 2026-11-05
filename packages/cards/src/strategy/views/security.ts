@@ -1,4 +1,4 @@
-import { byArea, capped, moreCard } from '../caps.js';
+import { byArea, capped, foldAt, moreCard } from '../caps.js';
 import { COLUMNS } from '../context.js';
 import { balanced, flowed, full, runsOf } from '../layout.js';
 import type { Card, Section, StrategyContext, ViewSpec } from '../types.js';
@@ -41,12 +41,15 @@ function camerasView(ctx: StrategyContext): Section[] {
   ];
 }
 
-/** The openings by room (a card a room when the house has areas, else one), every one of them: each card folds its own. */
+/**
+ * The openings by room (a card a room when the house has areas, else one), every one of them: each card folds its own
+ * at their cap.
+ */
 function openingsView(ctx: StrategyContext): Section[] {
   return flowed(
     ctx,
     byArea(ctx, ctx.home.openings, ctx.t('strategy.sensors'), (title, ids) => [
-      full('openings', { title, entities: [...ids] }),
+      full('openings', { title, entities: [...ids], ...foldAt(ctx, 'openings', ids) }),
     ]),
   );
 }

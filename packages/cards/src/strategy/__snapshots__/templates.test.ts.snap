@@ -57,6 +57,7 @@ exports[`the dashboard templates > draw the reporter’s garage whole on its pag
           "grid_options": {
             "columns": 12,
           },
+          "max_rows": 4,
           "title": "Sensors",
           "type": "custom:fluvy-openings-card",
         },
@@ -817,6 +818,7 @@ exports[`the dashboard templates > generate the same dashboard for the demo home
               "grid_options": {
                 "columns": 12,
               },
+              "max_rows": 4,
               "title": "Sensors",
               "type": "custom:fluvy-openings-card",
             },
@@ -853,6 +855,7 @@ exports[`the dashboard templates > generate the same dashboard for the demo home
               "grid_options": {
                 "columns": 12,
               },
+              "max_rows": 4,
               "title": "Sensors",
               "type": "custom:fluvy-openings-card",
             },

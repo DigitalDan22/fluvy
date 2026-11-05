@@ -43,10 +43,10 @@ A room's page reaches every entity of its area that a dashboard shows (not hidde
 entity): in reading order, its thermostats, its lights, its blinds, its garage doors and gates (each a cover card), its
 fans, its media players, its plugs (with their power and energy beside them), its temperatures and humidities (each
 named by what it measures where it alone measures it, as the room card names them), its doors, windows, motion, leak,
-smoke and gas sensors on one Openings card for the room (which folds them after its rows), its cameras, everything else
-it holds as rows under *Devices*, and its automations on one Automations card for the room (each with its switch and
-when it last ran; the card folds them after its rows); its appliances across the page as on Home. Each list keeps the
-house's cap (below), with its "N more" row; the Openings and Automations cards fold by their own.
+smoke and gas sensors on one Openings card for the room, its cameras, everything else it holds as rows under
+*Devices*, and its automations on one Automations card for the room (each with its switch and when it last ran); its
+appliances across the page as on Home. Each list keeps the house's cap (below), with its "N more" row; the Openings and
+Automations cards fold theirs at it on the card itself.
 
 A room's card counts its devices among them, and fills while one is on: its lights, its fans and covers, its media
 players, its thermostats, water heaters and humidifiers, its vacuums and mowers, and its switches that power something.
@@ -86,9 +86,12 @@ list of rows or tiles is shown instead: it takes the room a "1 more" row would.
 | `today` | the day's energy readings as stat tiles | 4 |
 | `meters` | the Energy dashboard's power meters | 9 |
 | `devices` | the rest of a room, as rows | 8 |
+| `openings` | the Openings cards of Home, Security and a room | 4 |
+| `automations` | a room's Automations card | 6 |
 
-The openings are never capped: their card folds them itself. Home's appliance bands keep their own two rows (eight
-large, five small) and lead to every appliance.
+The Openings and Automations cards fold their own lists at their cap, the rest one tap away on the card itself rather
+than on a page of their own; in full, they fold none. Home's appliance bands keep their own two rows (eight large, five
+small) and lead to every appliance.
 
 ## How it reads a home
 

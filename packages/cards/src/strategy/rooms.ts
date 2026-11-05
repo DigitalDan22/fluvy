@@ -1,6 +1,6 @@
 import { climateAttribute, holdsSomething, type AreaRegistryEntry } from '@fluvy/core';
 import { applianceSections } from './appliances.js';
-import { byArea, capped, each, moreAfter, moreKeys } from './caps.js';
+import { byArea, capped, each, foldAt, moreAfter, moreKeys } from './caps.js';
 import type { HomeRegistry } from './home-registry.js';
 import {
   applianceTile,
@@ -297,23 +297,30 @@ export function roomSections(
         readoutsCards(home, readings.shown, {}, measureName).map((card) => [card]),
         readings,
       ),
-      // the openings and the safety sensors on one card scoped to the room, which folds them itself
+      // the openings and the safety sensors on one card scoped to the room, which folds them itself at their cap
       ...when(parts.openings.length, () => [
-        [full('openings', { title: t('strategy.sensors'), entities: [...parts.openings] })],
+        [
+          full('openings', {
+            title: t('strategy.sensors'),
+            entities: [...parts.openings],
+            ...foldAt(ctx, 'openings', parts.openings),
+          }),
+        ],
       ]),
       ...moreAfter(
         cameras.shown.map((id) => [camera(id)]),
         cameras,
       ),
       ...when(rest.shown.length, () => [[rows(t('strategy.devices'), rest.shown, moreKeys(rest))]]),
-      // its automations on their own card, each with its switch, its last and next run (the card folds the rest); no
-      // `+`: a schedule added there would be of no room, and never on this card
+      // its automations on their own card, each with its switch, its last and next run (the card folds them at their
+      // cap); no `+`: a schedule added there would be of no room, and never on this card
       ...when(parts.automations.length, () => [
         [
           full('automations', {
             title: t('strategy.automations'),
             entities: [...parts.automations],
             show_add: false,
+            ...foldAt(ctx, 'automations', parts.automations),
           }),
         ],
       ]),

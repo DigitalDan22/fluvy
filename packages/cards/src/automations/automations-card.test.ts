@@ -264,6 +264,17 @@ describe('the automations card', () => {
     expect(titles(folded).at(-1)).toBe('Show less');
   });
 
+  it('folds after as many rows as it is asked for, past thirty too, as tall as it draws (an automatic dashboard in full)', () => {
+    const entities = Array.from({ length: 40 }, (_, i) => `automation.a${i}`);
+    const config = { type: 'custom:fluvy-automations-card', entities, max_rows: 40 };
+    expect(FluvyAutomationsCard.layoutHeight(config)).toBe(
+      FluvyAutomationsCard.layoutHeight({ ...config, max_rows: 41 }),
+    );
+    expect(FluvyAutomationsCard.layoutHeight({ ...config, max_rows: 30 })).toBeLessThan(
+      FluvyAutomationsCard.layoutHeight(config),
+    );
+  });
+
   it('flips the switch under the finger and asks Home Assistant once', async () => {
     const fixture = house();
     const card = await mount({}, fixture);

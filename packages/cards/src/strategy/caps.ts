@@ -38,6 +38,9 @@ export const CAPS: Readonly<Record<CapKey, number>> = {
   today: 4,
   meters: 9,
   devices: 8,
+  // the lists a card folds itself (`foldAt`), at the card's own fold
+  openings: 4,
+  automations: 6,
 };
 
 /**
@@ -84,6 +87,19 @@ export function capsOf(raw: unknown): Caps {
 export function capOf(caps: Caps, key: CapKey, own = CAPS[key]): number {
   const asked = caps === 'none' ? 'none' : caps[key];
   return asked === 'none' ? Number.POSITIVE_INFINITY : (asked ?? own);
+}
+
+/**
+ * A list a card folds itself (the openings, a room's automations), its fold the list's cap: every one where the
+ * dashboard lifts it, the card then folding none.
+ */
+export function foldAt(
+  ctx: StrategyContext,
+  key: CapKey,
+  items: readonly string[],
+): { readonly max_rows: number } {
+  const cap = capOf(ctx.caps, key);
+  return { max_rows: Number.isFinite(cap) ? cap : Math.max(1, items.length) };
 }
 
 /** A capped list, as a view lays it out. */

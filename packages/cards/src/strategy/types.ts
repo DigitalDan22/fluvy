@@ -54,7 +54,9 @@ export type CapKey =
   | 'consumption'
   | 'today'
   | 'meters'
-  | 'devices';
+  | 'devices'
+  | 'openings'
+  | 'automations';
 /**
  * How many of each list a view shows before its "N more" row: `none`, every list whole; else a list's own number (or
  * `none`, that list whole), the others at the house's caps.

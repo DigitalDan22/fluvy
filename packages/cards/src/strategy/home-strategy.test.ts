@@ -1591,6 +1591,42 @@ describe('custom:fluvy-home strategy — capped lists (#78)', () => {
     ).toHaveLength(CAPS.humidity);
   });
 
+  it('folds the cards that fold their own lists, a room’s openings and automations, at the house’s cap, raised or lifted (`caps`)', async () => {
+    const hass = house([
+      ...Array.from({ length: 7 }, (_, i) =>
+        entity(
+          `automation.study_${i}`,
+          'on',
+          { friendly_name: `Study ${i}`, last_triggered: null },
+          { area_id: 'study' },
+        ),
+      ),
+      ...Array.from({ length: 6 }, (_, i) =>
+        entity(
+          `binary_sensor.study_window_${i}`,
+          'off',
+          { device_class: 'window' },
+          { area_id: 'study' },
+        ),
+      ),
+    ]) as unknown as HomeAssistant;
+    hass.areas['study'] = { area_id: 'study', name: 'Study' } as never;
+    const folds = async (caps?: unknown) => {
+      const { views } = await generate(
+        { type: 'custom:fluvy-home', ...(caps ? { caps } : {}) } as never,
+        hass as never,
+      );
+      const cards = cardsIn(views.filter((view) => view.path === 'room-study'));
+      return ['openings', 'automations'].map(
+        (type) => cards.find((card) => card.type === `custom:fluvy-${type}-card`)?.['max_rows'],
+      );
+    };
+    expect(await folds()).toEqual([CAPS.openings, CAPS.automations]);
+    // in full: every one of them, the card folding none
+    expect(await folds('none')).toEqual([6, 7]);
+    expect(await folds({ openings: 2, automations: 'none' })).toEqual([2, 7]);
+  });
+
   it('shows one past the cap of a list of rows or tiles, never a "1 more" row', async () => {
     // seven lights in all: Home's six and the one past them
     const lights = (count: number) =>

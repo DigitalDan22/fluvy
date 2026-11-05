@@ -221,6 +221,17 @@ describe('the openings card’s real last change (#67)', () => {
   });
 });
 
+describe('the openings card’s fold', () => {
+  it('folds after as many rows as it is asked for, past twenty too, as an automatic dashboard in full asks', async () => {
+    const rows = Array.from({ length: 22 }, () => 'binary_sensor.front_door');
+    const whole = await draw({ rows, max_rows: 22 });
+    expect(whole.shadowRoot!.querySelectorAll('.am-rows .fv-row')).toHaveLength(22);
+    // the "All sensors" row after the rows asked for
+    const folded = await draw({ rows, max_rows: 20 });
+    expect(folded.shadowRoot!.querySelectorAll('.am-rows .fv-row')).toHaveLength(21);
+  });
+});
+
 describe('the openings card’s covers (#105)', () => {
   /** The head's badge, and each row's circle tone and value. */
   const read = (card: CardElement) => ({

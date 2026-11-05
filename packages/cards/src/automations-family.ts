@@ -10,6 +10,13 @@ import { HEAD, ROW, ROW_COMPACT, rowsOf } from './shared/heights.js';
 
 /** Rows before the "{count} more" row takes over, when the config says nothing. */
 export const AUTOMATIONS_MAX_ROWS = 6;
+
+/** Rows before the "{count} more" row takes over: the config's `max_rows` as a whole number from 1, as many as it asks. */
+export const automationsMaxRows = (max_rows: unknown): number => {
+  const asked = Math.round(Number(max_rows));
+  return Number.isFinite(asked) ? Math.max(1, asked) : AUTOMATIONS_MAX_ROWS;
+};
+
 /** The filter chips (44) and the 16 under them. */
 const FILTERS = 60;
 /** The empty panel under the head's 16: its ring, its line and the administrator's hint (132; a guest's is the 120 minimum). */
@@ -22,8 +29,7 @@ const EMPTY = 132;
  */
 export const automationsHeight = (config: LovelaceCardConfig): number => {
   const entities = config['entities'];
-  const asked = Math.round(Number(config['max_rows']));
-  const max = Number.isFinite(asked) ? Math.min(30, Math.max(1, asked)) : AUTOMATIONS_MAX_ROWS;
+  const max = automationsMaxRows(config['max_rows']);
   const n = Array.isArray(entities) ? entities.length : max;
   const filters = config['show_filters'] === true ? FILTERS : 0;
   if (n === 0) return HEAD + filters + EMPTY;

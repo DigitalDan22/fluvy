@@ -136,6 +136,10 @@ const ALERT = new Set([
 const MOTION = new Set(['motion', 'occupancy', 'presence', 'moving', 'vibration', 'sound']);
 const HAZARD = new Set(['smoke', 'gas', 'carbon_monoxide']);
 
+/** Rows before the "All sensors" row takes over: four, else the config's whole number from 1, as many as it asks. */
+const maxRowsOf = (config: Pick<OpeningsCardConfig, 'max_rows'>): number =>
+  Math.max(1, Math.round(config.max_rows ?? 4));
+
 /**
  * The house's binary sensors on one card: how many are open in the head, then a row each — the
  * state once at the right, the time in the sub ("14 min" while it is open, "2 h ago" once it is
@@ -150,7 +154,7 @@ export class FluvyOpeningsCard extends Card<OpeningsCardConfig> {
   static override layoutHeight(config: OpeningsCardConfig): number {
     const n = entryCount(config, ['rows', 'entities']);
     if (!n) return HEAD + EMPTY;
-    const max = Math.max(1, Math.round(config.max_rows ?? 4));
+    const max = maxRowsOf(config);
     // one extra sensor is a row, not a "1 more" row (as the card lays them out)
     const more = n > max + 1 ? 1 : 0;
     const shown = more ? max : n;
@@ -219,7 +223,7 @@ export class FluvyOpeningsCard extends Card<OpeningsCardConfig> {
   }
 
   private maxRows(): number {
-    return Math.min(20, Math.max(1, Math.round(this.config?.max_rows ?? 4)));
+    return maxRowsOf(this.config ?? {});
   }
 
   override getCardSize(): number {
