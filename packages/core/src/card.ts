@@ -234,8 +234,8 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
   declare connectedWhileHidden?: boolean;
 
   private resizeObserver: ResizeObserver | undefined;
-  /** In the card picker, the card's first frame waits until it comes near the list's view (`waitForSight`). */
-  private sight: IntersectionObserver | undefined;
+  /** In the card picker, a card's first frame waits until it comes near the list's view: one observer for them all. */
+  private static sightline: IntersectionObserver | undefined;
   private sighted: { readonly promise: Promise<void>; readonly resolve: () => void } | undefined;
   /** The card's own colour and its items', derived on the palette the card wears. */
   protected readonly accents = new AccentSheet();
@@ -302,24 +302,28 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
       this.sighted = { promise, resolve };
     }
     this.style.minHeight = `${layoutHeightOf(this.config, 0)}px`;
-    this.sight = new IntersectionObserver(
+    FluvyCard.sightline ??= new IntersectionObserver(
       (entries) => {
-        if (!entries.some((entry) => entry.isIntersecting)) return;
-        this.stopWaiting();
-        this.style.minHeight = '';
-        const sighted = this.sighted;
-        this.sighted = undefined;
-        sighted?.resolve();
+        for (const { target, isIntersecting } of entries)
+          if (isIntersecting) (target as FluvyCard).cameIntoSight();
       },
       // the picker scrolls its own list, which clips its cards: the margin reaches into that list too (`scrollMargin`)
       { rootMargin: '600px 0px', scrollMargin: '600px 0px' },
     );
-    this.sight.observe(this);
+    FluvyCard.sightline.observe(this);
+  }
+
+  /** Come near the picker's view: the card draws, the one update it waited for taking every ask since. */
+  private cameIntoSight(): void {
+    this.stopWaiting();
+    this.style.minHeight = '';
+    const sighted = this.sighted;
+    this.sighted = undefined;
+    sighted?.resolve();
   }
 
   private stopWaiting(): void {
-    this.sight?.disconnect();
-    this.sight = undefined;
+    FluvyCard.sightline?.unobserve(this);
   }
 
   /**

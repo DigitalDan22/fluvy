@@ -22,29 +22,35 @@ declareHeight('fluvy-picker-test-card', () => 268);
 // the picker, as Home Assistant's is: its previews in its shadow root
 customElements.define('hui-card-picker', class extends HTMLElement {});
 
-/** The observers made, and a way to bring their cards into view. */
-const observers: { callback: IntersectionObserverCallback; target?: Element; off: boolean }[] = [];
+/** The observers made (the cards share one, made once), and a way to bring their cards into view. */
+const observers: { callback: IntersectionObserverCallback; targets: Set<Element> }[] = [];
 class FakeObserver {
   private readonly entry: (typeof observers)[number];
   constructor(callback: IntersectionObserverCallback) {
-    this.entry = { callback, off: false };
+    this.entry = { callback, targets: new Set() };
     observers.push(this.entry);
   }
   observe(target: Element): void {
-    this.entry.target = target;
+    this.entry.targets.add(target);
+  }
+  unobserve(target: Element): void {
+    this.entry.targets.delete(target);
   }
   disconnect(): void {
-    this.entry.off = true;
+    this.entry.targets.clear();
   }
 }
 const seen = (card: Element, isIntersecting: boolean): void => {
   for (const observer of observers)
-    if (observer.target === card && !observer.off)
+    if (observer.targets.has(card))
       observer.callback(
         [{ target: card, isIntersecting } as IntersectionObserverEntry],
         observer as unknown as IntersectionObserver,
       );
 };
+/** Whether an observer still watches the card. */
+const watched = (card: Element): boolean =>
+  observers.some((observer) => observer.targets.has(card));
 
 const HASS = {
   language: 'en',
@@ -69,7 +75,6 @@ const tick = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0
 
 beforeEach(() => {
   drawn = 0;
-  observers.length = 0;
   vi.stubGlobal('IntersectionObserver', FakeObserver);
 });
 
@@ -81,10 +86,14 @@ afterEach(() => {
 describe('a card in Home Assistant’s card picker (#117)', () => {
   it('keeps its declared height and draws nothing until it comes near the list’s view, then draws once', async () => {
     const preview = card();
-    picker().append(preview);
+    const other = card();
+    picker().append(preview, other);
     await tick();
     expect(drawn).toBe(0);
     expect(preview.style.minHeight).toBe('268px');
+    // every preview waits on one observer
+    expect(observers).toHaveLength(1);
+    expect(watched(preview) && watched(other)).toBe(true);
     // a new house while it waits joins the one update it will make
     preview.hass = { ...HASS };
     await tick();
@@ -95,7 +104,10 @@ describe('a card in Home Assistant’s card picker (#117)', () => {
     await preview.updateComplete;
     expect(drawn).toBe(1);
     expect(preview.style.minHeight).toBe('');
-    expect(observers.every((observer) => observer.off)).toBe(true);
+    // the one seen leaves the observer, the other waits on
+    expect(watched(preview)).toBe(false);
+    expect(watched(other)).toBe(true);
+    expect(other.style.minHeight).toBe('268px');
   });
 
   it('waits on when the picker takes it away and puts it back (its search), and draws once seen', async () => {
@@ -104,6 +116,7 @@ describe('a card in Home Assistant’s card picker (#117)', () => {
     root.append(preview);
     await tick();
     preview.remove();
+    expect(watched(preview)).toBe(false);
     root.append(preview);
     await tick();
     expect(drawn).toBe(0);
@@ -117,6 +130,6 @@ describe('a card in Home Assistant’s card picker (#117)', () => {
     document.body.append(shown);
     await shown.updateComplete;
     expect(drawn).toBe(1);
-    expect(observers).toHaveLength(0);
+    expect(watched(shown)).toBe(false);
   });
 });
