@@ -102,7 +102,9 @@ large, five small) and lead to every appliance.
   energy views read the plugs' power as before.
 - **Twins**: a device with a switch and an outlet of the same name shows once, with the device's power and energy
   readings beside it.
-- **Places**: an entity whose name only says what it measures (*Temperature*) is named after its device or area.
+- **Places**: an entity whose name only says what it measures (*Temperature*) is named after its device or area. A
+  reading in no area is placed by its device's name without the words that say a sensor (*Sensor*, *Snímač*,
+  *érzékelő*, *Temperatur*), read with or without their accents.
 - **Rooms**: an entity belongs to its own area, else to its device's; hidden, configuration and diagnostic entities
   stay out. A room's climate comes from the temperature and humidity sensors set in the area's settings (honoured even
   when they are hidden or diagnostic), else from a sensor of each kind in the room — the first that reads, a dead one

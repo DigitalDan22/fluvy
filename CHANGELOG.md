@@ -27,6 +27,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   dash, where the DE1 out of reach drew three where it draws two and "…".
 - The 3D printer card shows a Bambu Lab printer's AMS trays again, AMS by AMS and slot by slot whatever their ids, the
   spools outside last, where since the integration's 2.2 it showed only the external spool (#119).
+- The automatic dashboards place a reading in no area by its device's name without the sensor words written with
+  accents (Snímač, Čidlo, érzékelő, sensörü, humidité), where they kept them, and never cut a word beside an accented
+  letter, where a Slovak "Spálňa" read "Spálň", a Portuguese "Salão" "Salã" and a German "Großes" "Groß".
 
 ## [1.14.2] — 2026-11-04
 

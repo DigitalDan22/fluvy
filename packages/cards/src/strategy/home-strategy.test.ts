@@ -1,4 +1,7 @@
 // @vitest-environment happy-dom
+import { readdir, readFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 // the cards register their heights with core: the strategy lays columns out with them
 import '../index.js';
@@ -252,6 +255,63 @@ describe('custom:fluvy-home strategy — a place named by its device, no separat
     );
     expect(registry.ownName('sensor.a')).toBe('Temperature');
     expect(registry.ownName('sensor.b')).toBe('温度');
+  });
+
+  it('reads the sensor words on a name without its accents, each a whole word beside any letter, and keeps the place as written', () => {
+    const registry = readings({
+      'sensor.sk': 'Snímač Obývačka',
+      'sensor.sk_humidity': 'Čidlo vlhkosť Spálňa',
+      'sensor.de': 'Thermostat Großes Bad',
+      'sensor.fr': 'Capteur humidité Chambre à coucher',
+      'sensor.hu': 'Hőmérséklet és páratartalom érzékelő Nappali',
+      'sensor.pt': 'Termóstato Salão',
+      'sensor.tr': 'Sıcaklık sensörü Oturma odası',
+    });
+    expect(registry.placeName('sensor.sk')).toBe('Obývačka');
+    // "a" is a word of its own only where it stands alone: never Spálňa's end, nor Großes's "es", nor Salão's "o"
+    expect(registry.placeName('sensor.sk_humidity')).toBe('Spálňa');
+    expect(registry.placeName('sensor.de')).toBe('Großes Bad');
+    // a word of one letter keeps its mark: French "à" is no article "a"
+    expect(registry.placeName('sensor.fr')).toBe('Chambre à coucher');
+    expect(registry.placeName('sensor.hu')).toBe('Nappali');
+    expect(registry.placeName('sensor.pt')).toBe('Salão');
+    expect(registry.placeName('sensor.tr')).toBe('Oturma odası');
+  });
+
+  it('takes every language’s sensor words out of a name, as the words write them and capitalised', async () => {
+    const folder = join(
+      dirname(fileURLToPath(import.meta.url)),
+      '..',
+      '..',
+      '..',
+      'core',
+      'src',
+      'i18n',
+      'words',
+    );
+    const stems = (
+      await Promise.all(
+        (await readdir(folder)).map(async (file) => {
+          const words = JSON.parse(await readFile(join(folder, file), 'utf8')) as {
+            place_noise?: string[];
+          };
+          return words.place_noise ?? [];
+        }),
+      )
+    )
+      .flat()
+      // a stem of its own regex (Japanese の before a reading's word) is the generator's to test
+      .filter((stem) => !/[\\[\]()$^]/.test(stem));
+    expect(stems.length).toBeGreaterThan(100);
+    const names = Object.fromEntries(
+      stems.flatMap((stem, at) => [
+        [`sensor.${at}`, `Werkstatt ${stem}`],
+        [`sensor.${at}_capital`, `${stem.charAt(0).toUpperCase()}${stem.slice(1)} Werkstatt`],
+      ]),
+    );
+    const registry = readings(names);
+    for (const [id, name] of Object.entries(names))
+      expect(registry.placeName(id), name).toBe('Werkstatt');
   });
 });
 

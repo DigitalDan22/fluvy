@@ -100,6 +100,31 @@ const PLACE_WORDS: Rules<'outdoor' | 'home'> = [
  */
 const LOOSE_ENDS = /^[\s・：:·\-–—/／|]+|[\s・：:·\-–—/／|]+$/g;
 
+/**
+ * A name without the words that say a reading rather than a place (`PLACE_NOISE`, written plain): read plain letter
+ * by letter where each stands ("Snímač" as "snimac", "Hőmérséklet" as "homerseklet"), cut from the name as written.
+ * A letter that would not stay one (ß) is read as written, and so is a word of one letter, its mark its meaning
+ * (French "à" is no article "a").
+ */
+function withoutPlaceNoise(name: string): string {
+  const written = name.normalize('NFC');
+  const read = written.replace(/\p{L}{2,}/gu, (word) =>
+    [...word]
+      .map((letter) => {
+        const bare = plain(letter);
+        return bare.length === letter.length ? bare : letter;
+      })
+      .join(''),
+  );
+  let kept = '';
+  let from = 0;
+  for (const { index, 0: noise } of read.matchAll(PLACE_NOISE)) {
+    kept += `${written.slice(from, index)} `;
+    from = index + noise.length;
+  }
+  return kept + written.slice(from);
+}
+
 export type Registry = Pick<
   HomeAssistant,
   'states' | 'entities' | 'devices' | 'areas' | 'language' | 'user'
@@ -227,8 +252,7 @@ export class HomeRegistry {
   placeName(id: string): string {
     const area = this.areaName(this.areaOf(id));
     if (area) return area;
-    const device = (this.deviceName(id) ?? '')
-      .replace(PLACE_NOISE, ' ')
+    const device = withoutPlaceNoise(this.deviceName(id) ?? '')
       .replace(/\s{2,}/g, ' ')
       .replace(LOOSE_ENDS, '');
     return device || this.displayName(id);

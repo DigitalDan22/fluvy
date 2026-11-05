@@ -252,8 +252,8 @@ describe('the generated patterns', () => {
     expect(generic.test('リビング温度')).toBe(false);
     // a place's noise is taken out in either script; a stem may carry a lookaround of its own
     const noise = new RegExp(
-      pattern(['sensor', 'センサー', '温度', 'の(?=[温セ])'], 'words'),
-      'gi',
+      pattern(['sensor', 'センサー', '温度', 'の(?=[温セ])', 'es', 'a'], 'words'),
+      'giu',
     );
     expect('リビングの温度センサー'.replace(noise, ' ').trim()).toBe('リビング');
     expect(
@@ -262,16 +262,22 @@ describe('the generated patterns', () => {
         .replace(/\s{2,}/g, ' ')
         .trim(),
     ).toBe('Living room');
+    // a whole word beside no Latin letter whatever its marks, a digit or an underscore; kana bound one
+    for (const name of ['Großes', 'Spálňa', 'sensor2', 'sensor_1'])
+      expect(name.replace(noise, ' '), name).toBe(name);
+    expect('リビングsensor'.replace(noise, ' ')).toBe('リビング ');
     // a substring shape holds both in one alternation, a stem after the longer ones that begin with it
     expect(pattern(['washer', '洗濯', '洗濯機'], 'substring')).toBe('(washer|洗濯機|洗濯)');
   });
 
   it('try a stem after every longer stem that begins with it: a prefix never hides the longer stem', () => {
     // as the words list them, the shorter first: in kana and kanji (every shape a substring) and in a substring shape
-    expect(stem(pattern(['温度', '湿度', '温度計'], 'words'), 'gi', 'リビングの温度計')).toBe(
+    expect(stem(pattern(['温度', '湿度', '温度計'], 'words'), 'giu', 'リビングの温度計')).toBe(
       '温度計',
     );
-    expect(stem(pattern(['温度', '湿度', '温度計'], 'words'), 'gi', 'リビングの温度')).toBe('温度');
+    expect(stem(pattern(['温度', '湿度', '温度計'], 'words'), 'giu', 'リビングの温度')).toBe(
+      '温度',
+    );
     const fridge = pattern(['frigo', 'refrigerateur', 'frigorifero'], 'substring');
     expect(stem(fridge, 'i', 'frigorifero')).toBe('frigorifero');
     expect(stem(fridge, 'i', 'frigo cuisine')).toBe('frigo');
@@ -304,10 +310,10 @@ describe('the generated patterns', () => {
     expect(stem(hob, 'i', 'the hob')).toBe(' hob');
     expect(stem(hob, 'i', 'ガスコンロ')).toBe('コンロ');
     expect(stem(pattern(['temperature', '温度'], 'whole'), 'i', '温度')).toBe('温度');
-    expect(stem(pattern(['sensor', 'センサー'], 'words'), 'i', 'リビングのセンサー')).toBe(
+    expect(stem(pattern(['sensor', 'センサー'], 'words'), 'iu', 'リビングのセンサー')).toBe(
       'センサー',
     );
-    expect(stem(pattern(['sensor', 'センサー'], 'words'), 'i', 'Living room sensor')).toBe(
+    expect(stem(pattern(['sensor', 'センサー'], 'words'), 'iu', 'Living room sensor')).toBe(
       'sensor',
     );
   });
