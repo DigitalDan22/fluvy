@@ -183,8 +183,11 @@ const ITEMS_SHEET = /\/packages\/cards\/src\/items\/sheet\//;
 const ITEMS =
   /\/packages\/(cards\/src\/(items-cards\.ts|items\/)|core\/src\/i18n\/locales\/en\/items\.json)/;
 
-/** The light card's colour controls (the quick colours' table and row, the hue maths): fetched by the first colour bulb drawn. */
-const LIGHT_COLOUR = /\/packages\/cards\/src\/light\/colour\.ts/;
+/**
+ * The light card's colour controls (the quick colours' table and row, the hue maths) and the quick colours' grammar
+ * they share with the light's editor (`swatches.ts`): fetched by the first colour bulb drawn, or with the forms.
+ */
+const LIGHT_COLOUR = /\/packages\/cards\/src\/light\/(colour|swatches)\.ts/;
 
 /**
  * A room's quick actions (their sets, levels, taps and holds, #113): fetched as the bundle starts, with the families,

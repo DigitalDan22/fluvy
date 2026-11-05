@@ -14,9 +14,9 @@ import {
 /*
  * A colour bulb's controls, fetched the first time the light card draws one (`import('./colour.js')`): the hue ruler
  * that takes the temperature ruler's slot while the bulb is in a colour, the row of quick colours under it, and the
- * matching that says which of them the bulb is on. The card keeps the wiring (what to send, the hold) and the
- * grammar's core part (`swatches.ts`: what an entry may be, the editor's rows); this keeps the tables, the maths and
- * the row's sheet.
+ * matching that says which of them the bulb is on. The card keeps the wiring (what to send, the hold); this keeps the
+ * tables, the maths and the row's sheet, and lands with the grammar it shares with the editor (`swatches.ts`: what an
+ * entry may be, the editor's rows).
  */
 
 export type { Rgb, SwatchEntry, SwatchObject } from './swatches.js';

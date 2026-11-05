@@ -93,7 +93,7 @@ budget (`BUDGETS`; the facts guard in `tools/docs` holds this table to it):
 | `vehicle` | 24 KB | the Vehicle card: what finds a car's entities and folds its integration's words, its glyphs, its English |
 | `items` | 12 KB | the Items card, its fields and presets, its English |
 | `items-sheet` | 8 KB | an item's sheet |
-| `light-colour` | 4 KB | the light card's quick colours and hue ruler |
+| `light-colour` | 8 KB | the light card's quick colours and hue ruler, and the quick colours' grammar its editor shares |
 | `quick-actions` | 4 KB | a room's quick actions: their sets, levels, taps and holds |
 | `weather` | 12 KB | the weather card |
 | `editor` | 8 KB | the cards' visual editor |

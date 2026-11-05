@@ -36,6 +36,11 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - A wall drew its own background over a view's: the background set in a view's settings showed on a dashboard but
   never on a wall, which now shows it, and the wall's mesh or plain page only where the view has none.
 
+### Development
+
+- The quick colours' grammar (`light/swatches.ts`), which the light card names only the types of, travels in its
+  colour controls' chunk, which the light's editor fetches with its forms: 0.5 KB less on every page.
+
 ## [1.14.2] — 2026-11-04
 
 ### Visible on upgrade

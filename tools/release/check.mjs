@@ -95,8 +95,9 @@ const BUDGETS = {
   items: 12_288,
   // the items' sheet: fetched when an item is tapped
   'items-sheet': 8192,
-  // the light card's colour controls: the quick colours' table and row, fetched by the first colour bulb
-  'light-colour': 4096,
+  // the light card's colour controls: the quick colours' table and row, fetched by the first colour bulb, and their
+  // grammar, which the light's editor shares. 8 KB since 1.15 (the grammar left core, 0.4 KB): 4 before
+  'light-colour': 8192,
   // a room's quick actions (1.13, #113): their sets, levels, taps and holds, fetched as the bundle starts
   'quick-actions': 4096,
   // the weather card

@@ -1,9 +1,10 @@
 import { hexOf } from '../shared/light.js';
 
 /*
- * The quick colours' grammar, the part of it the card and its editor need before a colour bulb fetches the controls
- * (`colour.ts`): what an entry may be, the six a bulb gets by default, and the two transforms the rows editor edits
- * the list with — a config entry as a row, a row back as the smallest entry that says the same.
+ * The quick colours' grammar, what the controls (`colour.ts`) and the editor share: what an entry may be, the six a
+ * bulb gets by default, and the two transforms the rows editor edits the list with — a config entry as a row, a row
+ * back as the smallest entry that says the same. It lands in the controls' chunk (the card names only its types): the
+ * first colour bulb fetches it with them, the visual editor with its forms.
  */
 
 export type Rgb = readonly [number, number, number];
