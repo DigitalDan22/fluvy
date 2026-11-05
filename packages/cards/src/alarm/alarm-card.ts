@@ -25,13 +25,7 @@ import {
 
 import { css, html, type CSSResultGroup, type PropertyValues, type TemplateResult } from 'lit';
 
-import {
-  changedLine,
-  changedShort,
-  RowsCard,
-  rowItems,
-  type RowsCardConfig,
-} from '../lock/rows.js';
+import { changedLine, changedShort, RowsCard, type RowsCardConfig } from '../lock/rows.js';
 
 import { Card, HEAD_BASE } from '../shared/base.js';
 
@@ -48,6 +42,7 @@ import {
   formLabels,
   nameIconFields,
   orderedField,
+  rowItems,
   selectField,
   showIconField,
   textField,

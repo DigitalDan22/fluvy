@@ -47,12 +47,13 @@ import {
   formLabels,
   nameIconFields,
   onlyWhen,
+  rowItems,
   selectField,
   showIconField,
   textField,
 } from '../shared/form.js';
 
-import { changedLine, changedShort, RowsCard, rowItems, type RowsCardConfig } from './rows.js';
+import { changedLine, changedShort, RowsCard, type RowsCardConfig } from './rows.js';
 import type { EditorDefaults, RowsListSpec } from '../shared/rows-editor.js';
 import { configKeys, ITEM_ALIASES, type AliasSpec } from '../shared/config.js';
 import { rowEndStyles } from '../shared/row-end.js';

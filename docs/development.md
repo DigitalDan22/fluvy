@@ -42,7 +42,7 @@ pnpm build
 ```
 
 The bundle is one ES module, `fluvy.js`, that imports `chunks/core-<hash>.js` (everything a page needs) and fetches
-`chunks/{activity,history,panel,pages,strategy,house-heights,wall,weather,media,chart,chart-card,energy-period,energy,history-bars-readings,devices,cameras-sheet,appliances,appliance-art,automations,automations-sheet,alerts,alerts-sheet,template,web,slider,vehicle,items,items-sheet,light-colour,quick-actions,editor,forms,view-icons,glass,icons,lang-*}-<hash>.js`
+`chunks/{activity,history,panel,pages,strategy,house-heights,wall,weather,media,chart,chart-card,energy-period,energy,history-bars-readings,devices,cameras-sheet,appliances,appliance-art,automations,automations-sheet,alerts,alerts-sheet,template,web,slider,vehicle,items,items-sheet,light-colour,quick-actions,editor,fields,forms,view-icons,glass,icons,lang-*}-<hash>.js`
 on demand — the Activity page, the History page, the settings panel, what they share (the date picker; the pages'
 period, sources, layers, CSV and sheet), the automatic dashboards' strategy (when a dashboard asks for it) and the heights it
 counts with the house (what an entity's capabilities draw, what a room holds; every page carries the cards' heights
@@ -55,8 +55,8 @@ their cards are announced in core — `src/energy-family.ts` and its siblings, t
 `src/energy-cards.ts` and its siblings land; Home Assistant builds a card again the moment its tag is defined), the
 history bars' readings (the first card that reads a counter by them), the appliances' pictures (the first card that
 draws one), the schedule sheet, the alerts' sheet, the cameras' sheet and an item's sheet (when one is opened), the
-light card's colour controls (the first colour bulb), the cards' visual editor and the forms of the cards every page
-carries (when a card is edited), what a see-through card wears (the first card under 100 %, or a house whose cards
+light card's colour controls (the first colour bulb), the cards' visual editor, the fields every editor is built of
+(with the families too) and the forms of the cards every page carries (when a card is edited), what a see-through card wears (the first card under 100 %, or a house whose cards
 are see-through), the icon set's other part (the first time Home Assistant asks for one of its icons)
 and a language's catalogue (English's core part ships in core; a lazy family's English part travels with the family's
 chunk, registered as it lands). `packages/bundle/groups.mjs` says which chunk each module goes to; a family's group
@@ -97,6 +97,7 @@ budget (`BUDGETS`; the facts guard in `tools/docs` holds this table to it):
 | `quick-actions` | 4 KB | a room's quick actions: their sets, levels, taps and holds |
 | `weather` | 12 KB | the weather card |
 | `editor` | 8 KB | the cards' visual editor |
+| `fields` | 4 KB | the fields every card's editor is built of: the schema's helpers, a list's row form |
 | `forms` | 12 KB | the editors of the cards every page carries and of the template and Slider cards: their forms, lists and defaults |
 | `view-icons` | 4 KB | a view's icon from its name |
 | `glass` | 4 KB | what a see-through card wears: its sheet's writer (every fill at its opacity) and its rules (its solid overlays, its blur) |

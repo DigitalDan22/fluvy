@@ -11,7 +11,7 @@ import {
   type MessageKey,
 } from '@fluvy/core';
 import { TONES } from '@fluvy/ui';
-import type { EditorChoices, SelectOption } from './rows-editor.js';
+import type { EditorChoices, RowsListSpec, SelectOption } from './rows-editor.js';
 import { LADDERS, ladderOf, unitClass } from './units.js';
 
 /** The words every card's editor shares, by field name: a card maps only its own fields (or another word). */
@@ -469,6 +469,55 @@ export const entitiesField = (
   ...(required ? { required } : {}),
   selector: { entity: { multiple: true, ...(domains ? { domain: [...domains] } : {}) } },
 });
+
+/** The fields a row of any list may carry (`RowConfig`, `lock/rows.ts`), as its editor shows them. */
+const ROW_KEYS = [
+  'entity',
+  'name',
+  'icon',
+  'secondary',
+  'since',
+  'options',
+  'labels',
+  'tap_action',
+  'tone',
+  'color',
+] as const;
+
+/**
+ * A row's form: the entity, its name and icon, what it says, a select's (`select`: what its dropdown offers, its
+ * words), its colours, its tap. Its colour has none chosen by default: a light wears its bulb's on a card that shows
+ * them (`bulb`), the row the card's otherwise.
+ */
+const rowSchema = (bulb: boolean, select: readonly HaFormSchemaItem[] = []): HaFormSchemaItem[] => [
+  entityField(),
+  nameIconFields(),
+  selectField('secondary', ['area', 'last-changed', 'state', 'none'], { custom: true }),
+  sinceField(),
+  ...select,
+  fieldRow(toneField(), accentField('color', { item: bulb ? 'bulb' : 'card' })),
+  actionField(),
+];
+
+/**
+ * A list of rows as its editor shows each: the keys a row may carry and its form, a select's with the options its
+ * dropdown offers (of those it lists, in Home Assistant's words) and its words for them (#96) — its words alone where
+ * the row names a tap of its own, which opens no dropdown.
+ */
+export function rowItems(
+  bulb = false,
+): Pick<RowsListSpec, 'keys' | 'schema' | 'schemaOf' | 'choices'> {
+  const [options, labels] = selectRowFields();
+  const plain = rowSchema(bulb);
+  const select = rowSchema(bulb, [options, labels]);
+  const worded = rowSchema(bulb, [labels]);
+  return {
+    keys: ROW_KEYS,
+    schema: select,
+    schemaOf: (item) => (!isSelectRow(item) ? plain : item['tap_action'] ? worded : select),
+    choices: selectRowChoices,
+  };
+}
 
 /** The choices of a unit select: the automatic one, then each unit by its symbol. */
 export const unitChoices = (units: readonly string[]): SelectOption[] => [

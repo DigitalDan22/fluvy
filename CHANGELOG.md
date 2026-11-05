@@ -40,6 +40,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 - The quick colours' grammar (`light/swatches.ts`), which the light card names only the types of, travels in its
   colour controls' chunk, which the light's editor fetches with its forms: 0.5 KB less on every page.
+- The fields every card's editor is built of (`shared/form.ts`, with a list's row form, `rowItems`, which lived
+  beside the rows' drawing in `lock/rows.ts`) are a chunk of their own, fetched with the first editor and with the
+  families as the bundle starts: 2.7 KB less on every page.
 
 ## [1.14.2] — 2026-11-04
 

@@ -211,6 +211,13 @@ const ICONS = /\/packages\/core\/src\/icons\/generated-on-demand\.ts/;
 const EDITOR = /\/packages\/cards\/src\/shared\/rows-editor\.ts/;
 
 /**
+ * The fields every card's editor is built of (`shared/form.ts`: the schema's helpers, a list's row form): fetched with
+ * the first editor, and with the families as the bundle starts (their cards keep their editors beside them). Core
+ * must not reach for them.
+ */
+const FIELDS = /\/packages\/cards\/src\/shared\/form\.ts/;
+
+/**
  * The editors the cards every page carries keep in a module of their own (`tile/tile-editor.ts`: a card's form, its
  * lists, what it does by default — `Card.editor()`), and the template card's, which is built on the tile's, with the
  * English an editor registers of its own (the room's): fetched with the visual editor, the first time one of them is
@@ -232,7 +239,7 @@ const FORMS =
  * (the history bars' readings on their own), devices (the cameras' sheet on its own), appliances (their pictures on
  * their own), automations and alerts families (each sheet on its own), the template card, the web page card, the Slider
  * card, the Vehicle card, the items card (its sheet on its own), the light card's colours, a room's quick actions, the cards' editor, the
- * view icons, what a see-through card wears, the icon set's other part, and everything else (Fluvy's packages and Lit) in `core`. The bundle's own
+ * fields every editor is built of, the view icons, what a see-through card wears, the icon set's other part, and everything else (Fluvy's packages and Lit) in `core`. The bundle's own
  * entry stays in `fluvy.js`. Rolldown processes the groups in this order; the priorities only say so out loud.
  * @type {readonly Group[]}
  */
@@ -270,6 +277,7 @@ export const GROUPS = [
   { name: 'light-colour', test: LIGHT_COLOUR },
   { name: 'quick-actions', test: QUICK_ACTIONS },
   { name: 'editor', test: EDITOR },
+  { name: 'fields', test: FIELDS },
   { name: 'view-icons', test: VIEW_ICONS },
   { name: 'glass', test: GLASS },
   { name: 'icons', test: ICONS },

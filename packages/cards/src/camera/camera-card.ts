@@ -12,7 +12,7 @@ import { head, round, sheetStyles } from '@fluvy/ui';
 
 import { css, html, type CSSResultGroup, type TemplateResult } from 'lit';
 
-import { rowItems, RowsCard, type RowsCardConfig } from '../lock/rows.js';
+import { RowsCard, type RowsCardConfig } from '../lock/rows.js';
 
 import { Card, HEAD_BASE } from '../shared/base.js';
 
@@ -28,6 +28,7 @@ import {
   fieldRow,
   nameIconFields,
   numberField,
+  rowItems,
   selectField,
   showIconField,
   textField,

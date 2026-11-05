@@ -12,13 +12,13 @@ import {
   lightColourFields,
   numberField,
   onlyWhen,
+  rowItems,
   selectField,
   showIconField,
   textField,
   titleFields,
 } from '../shared/form.js';
 import type { EditorDefaults, RowsListSpec } from '../shared/rows-editor.js';
-import { rowItems } from '../lock/rows.js';
 import { configKeys } from '../shared/config.js';
 import { EMPTY_KEYS } from '../shared/lists.js';
 import type { EntitiesCardConfig } from './entities-card.js';

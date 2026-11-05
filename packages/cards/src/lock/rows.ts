@@ -11,7 +11,6 @@ import {
   type ActionConfig,
   type EntityView,
   type FluvyCardConfig,
-  type HaFormSchemaItem,
   type HomeAssistant,
 } from '@fluvy/core';
 import { listRow, type Tone } from '@fluvy/ui';
@@ -30,23 +29,9 @@ import {
 } from '../shared/dropdown.js';
 import { withUnit } from '../shared/duration.js';
 import { buttonWidth, rowsKeepIcon, rowStacks } from '../shared/row-end.js';
-import type { RowsListSpec } from '../shared/rows-editor.js';
 import { secondaryText } from '../shared/secondary.js';
 import { changedAt, sinceIds } from '../shared/since.js';
 import { TemplateTexts } from '../shared/templates.js';
-import {
-  accentField,
-  actionField,
-  entityField,
-  fieldRow,
-  isSelectRow,
-  nameIconFields,
-  selectField,
-  selectRowChoices,
-  selectRowFields,
-  sinceField,
-  toneField,
-} from '../shared/form.js';
 
 /** A row of a list of entities; a select's offers its options in its order and words (#96). */
 export interface RowConfig extends SelectRowConfig {
@@ -60,55 +45,6 @@ export interface RowConfig extends SelectRowConfig {
   tap_action?: ActionConfig;
   tone?: Tone;
   color?: string;
-}
-
-/** The fields a row of any list may carry, as its editor shows them. */
-export const ROW_KEYS = [
-  'entity',
-  'name',
-  'icon',
-  'secondary',
-  'since',
-  'options',
-  'labels',
-  'tap_action',
-  'tone',
-  'color',
-] as const;
-
-/**
- * A row's form: the entity, its name and icon, what it says, a select's (`select`: what its dropdown offers, its
- * words), its colours, its tap. Its colour has none chosen by default: a light wears its bulb's on a card that shows
- * them (`bulb`), the row the card's otherwise.
- */
-const rowSchema = (bulb: boolean, select: readonly HaFormSchemaItem[] = []): HaFormSchemaItem[] => [
-  entityField(),
-  nameIconFields(),
-  selectField('secondary', ['area', 'last-changed', 'state', 'none'], { custom: true }),
-  sinceField(),
-  ...select,
-  fieldRow(toneField(), accentField('color', { item: bulb ? 'bulb' : 'card' })),
-  actionField(),
-];
-
-/**
- * A list of rows as its editor shows each: the keys a row may carry and its form, a select's with the options its
- * dropdown offers (of those it lists, in Home Assistant's words) and its words for them (#96) — its words alone where
- * the row names a tap of its own, which opens no dropdown.
- */
-export function rowItems(
-  bulb = false,
-): Pick<RowsListSpec, 'keys' | 'schema' | 'schemaOf' | 'choices'> {
-  const [options, labels] = selectRowFields();
-  const plain = rowSchema(bulb);
-  const select = rowSchema(bulb, [options, labels]);
-  const worded = rowSchema(bulb, [labels]);
-  return {
-    keys: ROW_KEYS,
-    schema: select,
-    schemaOf: (item) => (!isSelectRow(item) ? plain : item['tap_action'] ? worded : select),
-    choices: selectRowChoices,
-  };
 }
 
 export interface RowsCardConfig extends FluvyCardConfig {
