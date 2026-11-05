@@ -258,19 +258,22 @@ function perform(host: QuickHost, flip: Flip): void {
   }
 }
 
-/** What a round's several calls carry through Home Assistant's dialog, and back once it is answered yes. */
-const ASKED = 'fluvy_quick_action';
-/** The round Home Assistant's dialog asks about, by its mark: one at a time, as its dialog is. */
-let asking: { readonly mark: number; readonly yes: () => void } | undefined;
-let marks = 0;
+/**
+ * The rounds Home Assistant's dialog asks about, each by the very action handed to it: its yes hands that action back.
+ * An action answered no is Home Assistant's to drop, and the question goes with it.
+ */
+const asked = new WeakMap<object, () => void>();
 
-/** Home Assistant's yes: its `fire-dom-event` comes back as `ll-custom`, and the round it asked about moves. */
-function answered(event: Event): void {
-  const action = (event as CustomEvent<Record<string, unknown> | undefined>).detail;
-  if (!asking || action?.[ASKED] !== asking.mark) return;
-  const { yes } = asking;
-  asking = undefined;
-  window.removeEventListener('ll-custom', answered);
+/**
+ * Home Assistant's yes: its `fire-dom-event` comes back as `ll-custom` from the card that asked, which hears it on
+ * itself, in the page or drawn anew since; only the action it asked about moves its round, and only once.
+ */
+export function answered(event: Event): void {
+  // any other `ll-custom` (a frontend integration's, a page's) is no question of the rounds'
+  const action = (event as CustomEvent<object>).detail;
+  const yes = asked.get(action);
+  if (!yes) return;
+  asked.delete(action);
   yes();
 }
 
@@ -300,20 +303,15 @@ function runFlip(
       },
       undefined,
     );
-  const mark = ++marks;
-  asking = { mark, yes: () => perform(host, flip) };
-  window.addEventListener('ll-custom', answered);
   const own = typeof confirmation === 'object' ? confirmation : {};
   const key = 'ui.panel.lovelace.cards.actions.action_confirmation';
   const said = host.hass?.localize?.(key, { action: name });
-  host.run(
-    {
-      action: 'fire-dom-event',
-      [ASKED]: mark,
-      confirmation: { ...own, text: own.text ?? (said && said !== key ? said : name) },
-    },
-    undefined,
-  );
+  const action: ActionConfig = {
+    action: 'fire-dom-event',
+    confirmation: { ...own, text: own.text ?? (said && said !== key ? said : name) },
+  };
+  asked.set(action, () => perform(host, flip));
+  host.run(action, undefined);
 }
 
 /** The domains a round turns on and off itself (`flipOf`), all of a set at once; the rest by the house's toggle. */

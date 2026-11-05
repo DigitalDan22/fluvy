@@ -315,12 +315,23 @@ const navigations = (page) => page.evaluate(() => window.__navigations.splice(0)
     shut.join(' | '),
   );
   // asked first: one action handed to Home Assistant's dialog for all of the set; its yes (the action handed back as
-  // `ll-custom`, as Home Assistant does) moves the blinds and the roof alike
+  // `ll-custom` from the element that asked, as Home Assistant does) moves the blinds and the roof alike, once
   await page.evaluate(() => {
     window.__asked = [];
     document.addEventListener('hass-action', (event) =>
-      window.__asked.push(event.detail.config.tap_action),
+      window.__asked.push({
+        node: event.composedPath()[0],
+        action: event.detail.config.tap_action,
+      }),
     );
+    window.__yes = () =>
+      window.__asked[0].node.dispatchEvent(
+        new CustomEvent('ll-custom', {
+          detail: window.__asked[0].action,
+          bubbles: true,
+          composed: true,
+        }),
+      );
   });
   await reset(page);
   await press(
@@ -328,17 +339,15 @@ const navigations = (page) => page.evaluate(() => window.__navigations.splice(0)
       .locator('.rm-quick .lt-bulb')
       .first(),
   );
-  const asked = await page.evaluate(() => window.__asked.slice());
+  const asked = await page.evaluate(() => window.__asked.map(({ action }) => action));
   const before = (await calls(page)).length;
-  await page.evaluate(() =>
-    document.body.dispatchEvent(
-      new CustomEvent('ll-custom', { detail: window.__asked[0], bubbles: true, composed: true }),
-    ),
-  );
+  await page.evaluate(() => window.__yes());
+  await settle(page, 200);
+  await page.evaluate(() => window.__yes());
   await settle(page, 200);
   const answered = (await calls(page)).map((call) => `${call.s} ${ids(call).join()}`);
   check(
-    'asked first, a set of blinds and a roof that only tilts is one question, and both move at its yes',
+    'asked first, a set of blinds and a roof that only tilts is one question, and both move at its yes, once',
     asked.length === 1 &&
       asked[0]?.action === 'fire-dom-event' &&
       typeof asked[0]?.confirmation?.text === 'string' &&

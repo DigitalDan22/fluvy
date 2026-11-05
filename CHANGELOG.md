@@ -30,6 +30,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The automatic dashboards place a reading in no area by its device's name without the sensor words written with
   accents (Snímač, Čidlo, érzékelő, sensörü, humidité), where they kept them, and never cut a word beside an accented
   letter, where a Slovak "Spálňa" read "Spálň", a Portuguese "Salão" "Salã" and a German "Großes" "Groß".
+- A Room card's quick action asked about first (`confirmation`) moves its set at Home Assistant's yes even where the
+  dashboard drew the card anew while the dialog was open, where that yes did nothing.
 
 ## [1.14.2] — 2026-11-04
 

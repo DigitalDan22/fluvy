@@ -225,6 +225,12 @@ export class FluvyRoomCard extends FluvyTileCard {
   /** The line, the readouts, the rows and the hint are fitted in the card's own classes (its ruler, again when a font lands). */
   private readonly headFit = new HeadFit(this);
 
+  constructor() {
+    super();
+    // Home Assistant's yes to a quick action asked about comes back to the card that asked, in the page or not
+    this.addEventListener('ll-custom', (event) => quick?.answered(event));
+  }
+
   static override editor(): Promise<CardEditor> {
     return import('./room-editor.js');
   }

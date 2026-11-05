@@ -879,14 +879,30 @@ describe('a room’s quick actions (#113)', () => {
     }
   });
 
-  it('asks first where its tap says so, in Home Assistant’s own dialog, then turns the set off: nothing moves before', async () => {
-    const asked: Record<string, unknown>[] = [];
+  /**
+   * Home Assistant's root as it answers a tap asked about first: the action from the element that asked
+   * (`composedPath()[0]`), its yes handed back from that element as `ll-custom`.
+   */
+  const homeAssistant = () => {
+    const asked: { node: EventTarget; action: Record<string, unknown> }[] = [];
     const ask = (event: Event): void =>
-      void asked.push(
-        (event as CustomEvent<{ config: { tap_action: Record<string, unknown> } }>).detail.config
-          .tap_action,
-      );
+      void asked.push({
+        node: event.composedPath()[0]!,
+        action: (event as CustomEvent<{ config: { tap_action: Record<string, unknown> } }>).detail
+          .config.tap_action,
+      });
     document.addEventListener('hass-action', ask);
+    const yes = (question: (typeof asked)[number] | undefined): void =>
+      void question?.node.dispatchEvent(
+        new CustomEvent('ll-custom', { detail: question.action, bubbles: true, composed: true }),
+      );
+    return { asked, yes, done: () => document.removeEventListener('hass-action', ask) };
+  };
+  const moved = (): string[] =>
+    sent.map(({ service, data }) => `${service} ${String(data['entity_id'])}`);
+
+  it('asks first where its tap says so, in Home Assistant’s own dialog, then turns the set off: nothing moves before', async () => {
+    const { asked, yes, done } = homeAssistant();
     try {
       sent.length = 0;
       const confirmation = { text: 'Every light off?' };
@@ -911,8 +927,7 @@ describe('a room’s quick actions (#113)', () => {
       media!.click();
       await card.updateComplete;
       expect(sent).toEqual([]);
-      const [mark, played] = [asked[1]?.['fluvy_quick_action'], asked[2]?.['fluvy_quick_action']];
-      expect(asked).toEqual([
+      expect(asked.map(({ action }) => action)).toEqual([
         // one call: handed to Home Assistant whole, which names its service where the tap says no words
         {
           action: 'perform-action',
@@ -926,27 +941,18 @@ describe('a room’s quick actions (#113)', () => {
         // hands back once answered yes
         {
           action: 'fire-dom-event',
-          fluvy_quick_action: mark,
           confirmation: { text: 'Are you sure you want to run action "Blinds"?' },
         },
         {
           action: 'fire-dom-event',
-          fluvy_quick_action: played,
           confirmation: { title: 'Music', text: 'Are you sure you want to run action "Media"?' },
         },
       ]);
-      expect(typeof mark).toBe('number');
       // still on until Home Assistant has asked
       expect(lights?.getAttribute('aria-checked')).toBe('true');
-      // a yes to the blinds, asked before the players, moves nothing: the dialog open is the players'
-      const yes = (action: Record<string, unknown> | undefined): void =>
-        void document.body.dispatchEvent(
-          new CustomEvent('ll-custom', { detail: action, bubbles: true, composed: true }),
-        );
-      yes(asked[1]);
-      expect(sent).toEqual([]);
+      // a yes moves the set it answers, and only it
       yes(asked[2]);
-      expect(sent.map(({ service, data }) => `${service} ${String(data['entity_id'])}`)).toEqual([
+      expect(moved()).toEqual([
         'media_pause media_player.lounge',
         'media_stop media_player.lounge_radio',
       ]);
@@ -955,7 +961,7 @@ describe('a room’s quick actions (#113)', () => {
       blinds!.click();
       yes(asked[3]);
       await card.updateComplete;
-      expect(sent.map(({ service, data }) => `${service} ${String(data['entity_id'])}`)).toEqual([
+      expect(moved()).toEqual([
         'close_cover cover.lounge_blinds',
         'close_cover_tilt cover.lounge_louvre',
       ]);
@@ -964,7 +970,51 @@ describe('a room’s quick actions (#113)', () => {
       yes(asked[3]);
       expect(sent).toHaveLength(2);
     } finally {
-      document.removeEventListener('hass-action', ask);
+      done();
+    }
+  });
+
+  it('moves a set at its yes where the card was drawn anew while Home Assistant asked, and keeps nothing of a question answered no', async () => {
+    const { asked, yes, done } = homeAssistant();
+    const listening: string[] = [];
+    const add = window.addEventListener;
+    window.addEventListener = function (
+      this: Window,
+      ...args: Parameters<Window['addEventListener']>
+    ) {
+      listening.push(args[0]);
+      return add.apply(this, args);
+    } as Window['addEventListener'];
+    try {
+      sent.length = 0;
+      const config = {
+        area: 'lounge',
+        quick_actions: [{ group: 'covers', tap_action: { action: 'toggle', confirmation: true } }],
+      } as const;
+      const house = lounge([['cover.lounge_louvre', 'open', { supported_features: 16 | 32 }]]);
+      const first = await room(config, house);
+      rounds(first)[0]!.click();
+      // the dashboard draws the card anew while the dialog is open: the yes comes from the card that asked, out of the page
+      first.remove();
+      const again = await room(config, house);
+      expect(asked[0]?.node).toBe(first);
+      yes(asked[0]);
+      expect(moved()).toEqual([
+        'close_cover cover.lounge_blinds',
+        'close_cover_tilt cover.lounge_louvre',
+      ]);
+      // only its own question moves it, and once: a replayed yes, or one like it, does nothing
+      yes(asked[0]);
+      yes({ node: again, action: { ...asked[0]!.action } });
+      expect(sent).toHaveLength(2);
+      // a question answered no (Home Assistant says nothing) leaves no listener behind, nor one asked before it
+      rounds(again)[0]!.click();
+      expect(asked).toHaveLength(2);
+      expect(listening).not.toContain('ll-custom');
+      expect(sent).toHaveLength(2);
+    } finally {
+      window.addEventListener = add;
+      done();
     }
   });
 
