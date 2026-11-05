@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   applianceStatus,
+  asksWater,
   busy,
   statusOfWord,
   stepOf,
@@ -138,6 +139,22 @@ describe('what an appliance is doing', () => {
     // an integration the card reads keeps its own words: a word within one of them is not its say
     expect(statusOfWord('GoingToSleep', 'lg_thinq')).toBe('running');
     expect(statusOfWord('sched_idle', 'home_connect')).toBe('running');
+  });
+
+  it('hears an integration it does not know ask for water: a refill alone, or of its water or its tank', () => {
+    for (const word of ['Refill', 'WaterRefill', 'WaterTankRefill', 'refill_water', 'Tank refill'])
+      expect(asksWater(word, 'mqtt'), word).toBe(true);
+    for (const word of [
+      'SaltRefill',
+      'RinseAidRefill',
+      'NoRefill',
+      'RefillTimer',
+      'Idle',
+      undefined,
+    ])
+      expect(asksWater(word, 'mqtt'), String(word)).toBe(false);
+    // an integration the card reads says its tanks by their own entities
+    expect(asksWater('Refill', 'home_connect')).toBe(false);
   });
 
   it('calls an LG washer that powered off within the done time of completing finished, and off after', () => {

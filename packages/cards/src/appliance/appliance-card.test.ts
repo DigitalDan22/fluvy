@@ -765,16 +765,170 @@ describe('the appliance card', () => {
     expect(drinks).toEqual(['Default', 'Blooming espresso', 'Londinium', '']);
     // its values at the rows' ends, as a coffee machine's are
     expect(rows).toEqual(['Last brew11:35', 'Water1,240 mL', 'No alarm']);
-    // its own words, said apart; a failure its state alone says is its alarm's
+    // its own words, said apart; a failure or a call for a hand its state alone says is said in the house's words, its
+    // own the alarm's detail; wanting water, its tank's row says so whatever is left in it
     expect((await said('espresso'))[0]).toMatch(/Espresso/);
     expect((await said('sleep'))[0]).toMatch(/Off/);
-    expect((await said('refill'))[2]).toEqual(['Last brew11:35', 'Water60 mL', 'Refill']);
-    expect((await said('fatal'))[2]).toEqual(['Last brew11:35', 'Water1,240 mL', 'Fatal error']);
+    const [refill, , refillRows] = await said('refill');
+    expect(refill).toMatch(/Needs attention/);
+    expect(refill).not.toMatch(/Refill/);
+    expect(refillRows).toEqual(['Last brew11:35', 'WaterRefill', 'Needs attentionRefill']);
+    const wanting = await mount({ device: 'de1' }, at('refill'));
+    expect([...root(wanting).querySelectorAll('.ap-item.is-warning')].map(text)).toEqual([
+      'WaterRefill',
+      'Needs attentionRefill',
+    ]);
+    wanting.remove();
+    const [fatal, , fatalRows] = await said('fatal');
+    expect(fatal).toMatch(/Error/);
+    expect(fatal).not.toMatch(/Fatal/);
+    expect(fatalRows).toEqual([
+      'Last brew11:35',
+      'Water1,240 mL',
+      'Something went wrongFatal error',
+    ]);
     expect((await said('lost'))[2]).toEqual(['Last brew—', 'Water—', '—']);
     // its tank as a pet device's tile says it the same way
     const tile = await mount({ device: 'de1', kind: 'fountain' }, at('idle'));
     expect(text(root(tile).querySelector('.ap-tile'))).toBe('Water1,240 mL');
     tile.remove();
+  });
+
+  it('names a readout of its device’s entity without the words they all begin with: its device’s name and its integration’s (the DE1’s plugin’s "DE1+")', async () => {
+    const labels = (card: Mounted): string[] =>
+      [...root(card).querySelectorAll('.ap-stat .fv-readout__label')].map(text);
+    const de1House = houseOf([de1('idle')(NOW)], NOW, house());
+    const counted = await mount({ device: 'de1', variant: 'compact' }, de1House);
+    expect(labels(counted)).toEqual(['Espresso Count', 'Steaming Count']);
+    // a sensor named by hand the same, its own name where it gives one
+    const named = await mount(
+      {
+        device: 'de1',
+        variant: 'compact',
+        readouts: [],
+        sensors: [
+          'sensor.decent_espresso_de1pro_de1_steam_temperature',
+          { entity: 'sensor.decent_espresso_de1pro_de1_mix_temperature', name: 'Mix' },
+        ],
+      },
+      de1House,
+    );
+    expect(labels(named)).toEqual(['Espresso Count', 'Steaming Count', 'Steam Temperature', 'Mix']);
+    // a device whose entities share nothing after its name keeps the rest of each whole, and one's own words are never
+    // all taken: "Zyklen" beside "Zyklen heute"
+    const named2 = (zyklen: string, other: string): HomeAssistant =>
+      house({
+        'sensor.waschmaschine_zyklen': { attributes: { friendly_name: zyklen } },
+        'sensor.waschmaschine_gesamtzeit': {
+          attributes: { friendly_name: other, unit_of_measurement: 'min' },
+        },
+      });
+    const lg = async (hass: HomeAssistant): Promise<string[]> =>
+      labels(
+        await mount(
+          {
+            device: 'lg-washer',
+            variant: 'compact',
+            readouts: [],
+            sensors: ['sensor.waschmaschine_zyklen', 'sensor.waschmaschine_gesamtzeit'],
+          },
+          hass,
+        ),
+      );
+    expect(await lg(named2('Waschmaschine Zyklen', 'Waschmaschine Gesamtzeit'))).toEqual([
+      'Zyklen',
+      'Gesamtzeit',
+    ]);
+    expect(await lg(named2('Waschmaschine Zyklen', 'Waschmaschine Zyklen heute'))).toEqual([
+      'Zyklen',
+      'Zyklen heute',
+    ]);
+  });
+
+  it('draws the DE1’s drinks out of reach as it draws them live, each a dash: as many, as wide', async () => {
+    // its names measured as a glyph of 7 px each: "Blooming espresso" takes a tile of its own
+    const ruler = {
+      width: (_cls: string, text: string) => text.length * 7,
+      pill: (_cls: string, text: string, sides: number) => text.length * 7 + sides,
+      clear() {},
+    };
+    const drinks = async (moment: De1Moment, width: number): Promise<[string, string[]]> => {
+      const hass = houseOf([de1(moment)(NOW)], NOW, house());
+      const card = await mount({ device: 'de1' }, hass, width);
+      Object.assign((card as unknown as { head: object }).head, { ruler });
+      card.requestUpdate();
+      await card.updateComplete;
+      const cells = root(card).querySelector<HTMLElement>('.ap-drinks__cells');
+      const said: [string, string[]] = [
+        cells?.style.gridTemplateColumns ?? '',
+        [...root(card).querySelectorAll('.ap-drinks__cells .ap-drink')].map(text),
+      ];
+      card.remove();
+      return said;
+    };
+    for (const width of [211, 266, 300, 360, 412]) {
+      const [live, names] = await drinks('idle', width);
+      const [lost, dashes] = await drinks('lost', width);
+      expect(lost, `${width}`).toBe(live);
+      expect(dashes, `${width}`).toEqual(names.map(() => '—'));
+    }
+    // fewer than three where its names take the room: the live card's anatomy, out of reach too
+    expect((await drinks('lost', 300))[1].length).toBeLessThan(3);
+  });
+
+  it('says what asks for attention in its alarm row on one line: its shorter words where the line does not hold them', async () => {
+    await ensureLanguage('de');
+    // a glyph of 8 px: "Etwas ist schiefgelaufen" is 192, over a 211 card's line
+    const ruler = {
+      width: (_cls: string, text: string) => text.length * 8,
+      pill: (_cls: string, text: string, sides: number) => text.length * 8 + sides,
+      clear() {},
+    };
+    const alarm = async (width: number): Promise<[string, string]> => {
+      const hass = {
+        ...houseOf([de1('fatal')(NOW)], NOW, house()),
+        language: 'de',
+      } as HomeAssistant;
+      const card = await mount({ device: 'de1' }, hass, width);
+      Object.assign((card as unknown as { head: object }).head, { ruler });
+      card.requestUpdate();
+      await card.updateComplete;
+      const row = [...root(card).querySelectorAll('.ap-item')].at(-1);
+      const said: [string, string] = [
+        text(row?.querySelector('.ap-item__text')),
+        text(row?.querySelector('.ap-item__value')),
+      ];
+      card.remove();
+      return said;
+    };
+    expect(await alarm(412)).toEqual(['Etwas ist schiefgelaufen', 'Fatal error']);
+    expect(await alarm(211)).toEqual(['Fehler', 'Fatal error']);
+  });
+
+  it('says the DE1’s call for a hand and its failure in the house’s language, never its own English but as the alarm’s detail', async () => {
+    for (const language of ['de', 'sk'] as const) {
+      await ensureLanguage(language);
+      for (const [moment, own] of [
+        ['refill', /Refill/],
+        ['fatal', /Fatal/],
+      ] as const) {
+        const hass = { ...houseOf([de1(moment)(NOW)], NOW, house()), language } as HomeAssistant;
+        const card = await mount({ device: 'de1' }, hass);
+        const compact = await mount({ device: 'de1', variant: 'compact' }, hass);
+        const row = await mount({ device: 'de1', variant: 'row' }, hass);
+        const said = `${language} ${moment}`;
+        expect(text(root(card).querySelector('.fv-card__head')), said).not.toMatch(own);
+        expect(text(root(compact).querySelector('article')), said).not.toMatch(own);
+        expect(text(root(row).querySelector('.fv-row__text')), said).not.toMatch(own);
+        // the alarm says it in the house's words, the device's own its value
+        const alarm = [...root(card).querySelectorAll('.ap-item')].at(-1);
+        expect(text(alarm?.querySelector('.ap-item__value')), said).toMatch(own);
+        expect(text(alarm), said).toMatch(
+          language === 'de' ? /Aktion|schiefgelaufen/ : /Vyžaduje|pokazilo/,
+        );
+        for (const each of [card, compact, row]) each.remove();
+      }
+    }
   });
 
   it('draws a Bosch washer on hcpy by its own keys (#115): running, its time left of its whole, its programme', async () => {

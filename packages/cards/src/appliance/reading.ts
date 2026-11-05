@@ -59,6 +59,7 @@ import { refState, refView } from './refs.js';
 import {
   apart,
   applianceStatus,
+  asksWater,
   busy,
   statusOfWord,
   stepOf,
@@ -169,6 +170,11 @@ export interface Attention {
   readonly key: MessageKey;
   /** The integration's own words for it, where it has them (why it failed); the key's are said otherwise. */
   readonly text?: string;
+  /**
+   * The device's own words for it, in no language of the house's (an integration the card does not know): said after
+   * the key's where the card says details (its alarm row's value).
+   */
+  readonly detail?: string;
   /** Since when (ms): said as its age ("Door open · 2 min"). */
   readonly since?: number;
 }
@@ -346,19 +352,30 @@ const plainOf = (text: string): string =>
     .replace(/[\s_]+/g, ' ')
     .trim();
 
+/** What an entity says, and whether those are its device's own words, in no language of the house's. */
+interface Said {
+  readonly text: string;
+  readonly own: boolean;
+}
+
 /**
  * What an entity says, in Home Assistant's words; where it has none for the word (the state came back as it is), the
  * card's own in the house's language, for the words the appliances share, else the word's own; an integration the card
- * does not know has its words run together in camel case said apart ("FatalError" is "Fatal error", an MQTT device's),
- * one it reads keeps its own ("TurboWash").
+ * does not know has its words run together in camel case said apart ("FatalError" is "Fatal error", an MQTT device's:
+ * its own, in no language of the house's), one it reads keeps its own ("TurboWash").
  */
-function spoken(hass: HomeAssistant | undefined, v: EntityView): string {
+function wordsOf(hass: HomeAssistant | undefined, v: EntityView): Said {
   const text = stateText(hass, v);
-  if (plainOf(text) !== plainOf(v.state)) return text;
+  if (plainOf(text) !== plainOf(v.state)) return { text, own: false };
   const key = WORD_KEYS.get(wordOf(v.state));
-  if (key) return s(hass, key);
-  return knownPlatform(hass?.entities?.[v.id]?.platform) ? text : apart(text);
+  if (key) return { text: s(hass, key), own: false };
+  return knownPlatform(hass?.entities?.[v.id]?.platform)
+    ? { text, own: false }
+    : { text: apart(text), own: true };
 }
+
+/** What an entity says (`wordsOf`), its words alone. */
+const spoken = (hass: HomeAssistant | undefined, v: EntityView): string => wordsOf(hass, v).text;
 
 /**
  * The state in Home Assistant's words, unless the status is not what they say — LG's "Power off" when it is done, a
@@ -369,10 +386,12 @@ function stateWords(
   found: ApplianceFound,
   state: EntityView | undefined,
   status: ApplianceStatus,
-): string {
-  if (!state || state.status !== 'ok') return '';
+): Said | undefined {
+  if (!state || state.status !== 'ok') return undefined;
   const kind = found.verdict && 'kind' in found.verdict ? found.verdict.kind : undefined;
-  return statusOfWord(state.state, found.platform, kind) === status ? spoken(hass, state) : '';
+  return statusOfWord(state.state, found.platform, kind) === status
+    ? wordsOf(hass, state)
+    : undefined;
 }
 
 /**
@@ -408,7 +427,12 @@ export function readAppliance(
   const failure = failureOf(hass, roles, view, now);
   // a failure the appliance says outright is its status, unless it is off or out of reach
   const status: ApplianceStatus = failure && said !== 'offline' && said !== 'off' ? 'error' : said;
-  const word = stateWords(hass, found, state, status);
+  // a failure or a call for a hand in the device's own words (a DE1's "Fatal error", "Refill": English in every
+  // language) is said in the card's, the device's its detail
+  const stated = stateWords(hass, found, state, status);
+  const asks = status === 'error' || status === 'attention';
+  const own = asks && stated?.own ? stated.text : '';
+  const word = own ? '' : (stated?.text ?? '');
   const phaseView = roles.phase !== roles.state ? ok(roles.phase) : undefined;
   const phase = phaseView ? spoken(hass, phaseView) : '';
   const step = stepOf(kind, (phaseView ?? state)?.state);
@@ -430,12 +454,12 @@ export function readAppliance(
   const heat = defaults.hero === 'heat' ? heatOf(hass, roles, view, !busy(status)) : null;
   const doorAlert = config.door_alert ?? defaults.doorAlert;
   const attention: Attention[] = [];
-  // what failed; else a failure or a call for a hand its state alone says (a DE1's "Fatal error"), in its words
+  // what failed; else a failure or a call for a hand its state alone says, in its words where they are the house's
   if (failure) attention.push(failure);
-  else if (status === 'error' || status === 'attention')
+  else if (asks)
     attention.push({
       key: status === 'error' ? 'appliance.failure' : 'appliance.status_attention',
-      ...(word ? { text: word } : {}),
+      ...(own ? { detail: own } : word ? { text: word } : {}),
     });
   if (door?.open && doorAlert > 0 && door.since !== null && now - door.since >= doorAlert * 1000)
     attention.push({ key: 'appliance.door_open', since: door.since });
@@ -740,7 +764,10 @@ function failureOf(
   }
 }
 
-/** What it asks to be looked after: its maintenance entities, and LG's notification for a day. */
+/**
+ * What it asks to be looked after: its maintenance entities, its tank where the machine says it wants water whatever
+ * is left in it (a DE1's "Refill"), and LG's notification for a day.
+ */
 function maintenanceOfAppliance(
   hass: HomeAssistant | undefined,
   found: ApplianceFound,
@@ -748,11 +775,15 @@ function maintenanceOfAppliance(
   now: number,
 ): MaintenanceItem[] {
   const kind = found.verdict && 'kind' in found.verdict ? found.verdict.kind : undefined;
+  const role = found.entities.roles.state;
+  const state = role ? refState(hass, role) : undefined;
+  const thirsty = asksWater(state?.state, found.platform);
+  const since = Date.parse(state?.last_changed ?? '');
   const items = found.candidates
     .filter((candidate) => found.entities.maintenance.includes(candidate.id))
     .map((candidate) => {
       const spec = maintenanceOf(candidate);
-      return spec
+      const item = spec
         ? maintenanceItem(
             { ...spec, key: forKind(spec.key, kind) },
             refState(hass, candidate.id),
@@ -760,6 +791,9 @@ function maintenanceOfAppliance(
             config.low_days,
           )
         : undefined;
+      return thirsty && item?.key === 'water_tank' && item.severity !== 'due'
+        ? { ...item, severity: 'due' as const, ...(Number.isFinite(since) ? { since } : {}) }
+        : item;
     });
   const notification = found.entities.roles.notification;
   return maintenanceList([
@@ -834,7 +868,7 @@ function twinOf(
   const status = statusOf(found, twin.roles, now, doneFor, null, view);
   const state = view(twin.roles.state);
   const phase = twin.roles.phase ? view(twin.roles.phase) : undefined;
-  const word = stateWords(hass, found, state, status);
+  const word = stateWords(hass, found, state, status)?.text ?? '';
   const phaseWord = phase && phase.status === 'ok' ? spoken(hass, phase) : '';
   return {
     unit: twin.unit,

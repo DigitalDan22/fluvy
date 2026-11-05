@@ -13,6 +13,19 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   Appliances card's whole cards ask as its own `confirm` says; unset, the card asks as before, and `confirm: []` asks
   for nothing. Its editor offers the commands the appliance can send (#120).
 
+### Fixed
+
+- The Appliance card says an espresso machine's call for a hand and its failure in the house's language, "Needs
+  attention" and "Error" with its own word as its alarm row's value, where the DE1 over MQTT said "Refill" and "Fatal
+  error" in English in every language; where a row or a line cannot hold those words, the Appliance and Appliances
+  cards say "Check" and "Error", and an alarm row no longer takes a second line.
+- The Appliance card's compact readouts of a device whose plugin puts its own word before each of its entities' names
+  read "Espresso Count", where the DE1's read "DE1+ Espresso Count" and ended in an ellipsis on half a section.
+- The Appliance card's water row says "Refill" while an espresso machine says it wants water, where the DE1's read
+  "60 mL" in a fine tone under a head that said Refill.
+- The Appliance card out of reach draws a coffee machine's drinks as it draws them live, as many and as wide, each a
+  dash, where the DE1 out of reach drew three where it draws two and "…".
+
 ## [1.14.2] — 2026-11-04
 
 ### Visible on upgrade

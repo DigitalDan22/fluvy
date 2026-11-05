@@ -6,7 +6,7 @@ import { appliancesHeight } from '../appliances-family.js';
 import { cardForm, drawEditor, shownNames } from '../shared/fixtures/editor.js';
 import { FluvyApplianceCard } from './appliance-card.js';
 import { FluvyAppliancesCard } from './appliances-card.js';
-import { allFixtures, houseOf } from './fixtures/index.js';
+import { allFixtures, de1, houseOf, type De1Moment } from './fixtures/index.js';
 import { applianceDevices } from './kinds.js';
 
 if (!customElements.get('fluvy-appliances-card'))
@@ -50,6 +50,29 @@ const titles = (card: Mounted): string[] =>
   [...root(card).querySelectorAll('.al-rows .fv-row--bar .fv-row__title')].map(text);
 
 afterEach(() => document.body.replaceChildren());
+
+describe('what needs a hand, shorter', () => {
+  it('lists a call for a hand and a failure by a word of the house’s where a row cannot hold them: "Check", "Error"', async () => {
+    // a glyph of 24 px: "Needs attention" and "Something went wrong" are over a row's line, "Check" and "Error" not
+    const ruler = {
+      width: (_cls: string, text: string) => text.length * 24,
+      pill: (_cls: string, text: string, sides: number) => text.length * 24 + sides,
+      clear() {},
+    };
+    const said = async (moment: De1Moment): Promise<string> => {
+      const hass = { ...HOUSE, ...houseOf([de1(moment)(NOW)], NOW, HOUSE) } as HomeAssistant;
+      const card = await mount({ appliances: ['de1'] }, hass);
+      Object.assign((card as unknown as { head: object }).head, { ruler });
+      card.requestUpdate();
+      await card.updateComplete;
+      const sub = text(root(card).querySelector('.al-rows .fv-row__sub'));
+      card.remove();
+      return sub;
+    };
+    expect(await said('refill')).toBe('Check');
+    expect(await said('fatal')).toBe('Error');
+  });
+});
 
 describe('the house’s appliances', () => {
   // the owner's rule (1.9): the house's appliances are found in its registries, so their entities unavailable, unknown

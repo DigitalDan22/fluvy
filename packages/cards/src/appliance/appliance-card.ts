@@ -212,6 +212,7 @@ import {
   kindGlyph,
   leftText,
   momentText,
+  needWord,
   petWords,
   shownOf,
   spanText,
@@ -646,6 +647,30 @@ function ownWords(name: string, device: string): string {
   if (!device || !name.toLowerCase().startsWith(`${device.toLowerCase()} `)) return name;
   const rest = name.slice(device.length + 1).trim();
   return rest ? rest.charAt(0).toUpperCase() + rest.slice(1) : name;
+}
+
+/**
+ * The words a device's entities' names begin with: its name, as Home Assistant puts it at their head, and the words
+ * after it that every one named after it shares, as an integration may put its own there (the DE1's plugin's "DE1+":
+ * "Decent Espresso DE1PRO DE1+ Espresso Count"), never the whole of one's own words.
+ */
+function namesHead(names: readonly string[], device: string): string {
+  const own = names
+    .filter((name) => device && name.toLowerCase().startsWith(`${device.toLowerCase()} `))
+    .map((name) =>
+      name
+        .slice(device.length + 1)
+        .trim()
+        .split(/\s+/),
+    );
+  if (own.length < 2) return device;
+  let shared = own[0] ?? [];
+  for (const words of own) {
+    let n = 0;
+    while (n < shared.length && n < words.length - 1 && shared[n] === words[n]) n += 1;
+    shared = shared.slice(0, n);
+  }
+  return [device, ...shared].join(' ');
 }
 
 /**
@@ -2322,9 +2347,8 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
   }
 
   /**
-   * What asks for attention, most pressing first, each with how long (which may go): the first's shorter forms its
-   * thing and what to do for a reminder ("Rinse aid", "Refill"), "Empty" for a load, "Error" for a failure (the
-   * integration's own words for it are the line's title then).
+   * What asks for attention, most pressing first, each with how long (which may go): the first's shorter forms
+   * (`needBriefs`; the integration's own words for it are the line's title then).
    */
   private needWords(view: View, items: readonly Attention[]): Words {
     const parts = items.flatMap((item, index) => {
@@ -2333,17 +2357,24 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       const age = full.startsWith(`${said} · `) ? full.slice(said.length + 3) : '';
       return [{ text: said, optional: index > 0 }, ...(age ? [{ text: age, optional: true }] : [])];
     });
-    const first = items[0];
-    const key = first?.key ?? '';
-    const reminder = key.startsWith('appliance.m_') ? (key.slice(12) as MaintenanceKey) : undefined;
-    const briefs = reminder
+    return { parts, briefs: this.needBriefs(view, items[0]) };
+  }
+
+  /**
+   * What asks for attention in shorter words, longest first: its thing and what to do for a reminder ("Rinse aid",
+   * "Refill"), "Empty" for a load, "Error" for a failure, "Check" for a call for a hand.
+   */
+  private needBriefs(view: View, item: Attention | undefined): string[] {
+    if (!item) return [];
+    const reminder = item.key.startsWith('appliance.m_')
+      ? (item.key.slice(12) as MaintenanceKey)
+      : undefined;
+    const word = needWord(this.hass, item);
+    return reminder
       ? [this.reminderNoun(view, reminder), this.t(DUE_WORD[reminder])]
-      : key === 'appliance.unload' || key === 'appliance.anti_crease'
-        ? [s(this.hass, 'do_empty')]
-        : key === 'appliance.failure' || key === 'appliance.aborted'
-          ? [s(this.hass, 'status_error')]
-          : [];
-    return { parts, briefs };
+      : word
+        ? [word]
+        : [];
   }
 
   /**
@@ -2865,7 +2896,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
    * The tiles are as even as their words allow: the row's room shared equally (on the 4 grid), a tile whose words need
    * more (8 a side) taking only what they need, so the row ends on the column's edge; as many as hold their words. A
    * name the whole row cannot hold (the device's own, never translated) takes the row and ends in its ellipsis. Out of
-   * reach, or where it says no programme, the slots stay, their words a dash.
+   * reach, or where it says no programme, the slots stay as their names lay them out, their words a dash.
    */
   private renderDrinks(view: View): TemplateResult {
     const { r } = view;
@@ -2874,13 +2905,15 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     const listed = optionsOf(state);
     const drinks = (this.config?.drinks ?? listed).slice(0, 3);
     const off = view.unavailable || !id;
-    const slots = off || !drinks.length ? ['', '', ''] : drinks;
-    const words = slots.map((option) => (option ? optionWord(this.hass, state, option) : '—'));
+    const slots = drinks.length ? drinks : ['', '', ''];
+    // laid out by their names live or not (a select lists its options out of reach too): out of reach, a dash each
+    const names = slots.map((option) => (option ? optionWord(this.hass, state, option) : '—'));
+    const words = off ? slots.map(() => '—') : names;
     const room = this.contentWidth - 48 - 8;
-    const sizes = words.map((word) =>
+    const sizes = names.map((name) =>
       Math.min(
         room,
-        Math.max(64, Math.ceil((this.head.ruler.width('ap-drink__name', word) + 16) / 4) * 4),
+        Math.max(64, Math.ceil((this.head.ruler.width('ap-drink__name', name) + 16) / 4) * 4),
       ),
     );
     const span = (count: number): number =>
@@ -3318,7 +3351,14 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
           : r.attention.find((item) => !item.key.startsWith('appliance.m_'));
         entity = r.roles.error ?? r.roles.door ?? view.entity;
         if (need) {
-          label = attentionText(this.hass, need, now);
+          // its words where the row's line holds them, else their shorter form ("Error" for a failure): one line, as
+          // every row's
+          const said = attentionText(this.hass, need, now);
+          const holds = (text: string): boolean =>
+            this.head.ruler.width('ap-item__text', text) <= this.contentWidth;
+          label = holds(said) ? said : (this.needBriefs(view, need).find(holds) ?? said);
+          // the device's own words for it, in no language of the house's (a DE1's "Refill"): its value
+          value = need.detail ?? '';
           glyphName = 'warn';
           tint = 'warning';
           warn = true;
@@ -4552,18 +4592,22 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
           if (id) add(key, s(this.hass, `r_${key}`), this.valueText(id), id);
       }
     }
-    // the device's own name, as Home Assistant puts it at the head of its entities' names
+    // the words its entities' names begin with: the device's own name, as Home Assistant puts it at their head, and
+    // its integration's after it
     const device = view.found.device ? this.hass?.devices?.[view.found.device] : undefined;
-    const deviceName = device?.name_by_user || device?.name || '';
+    const head = namesHead(
+      view.found.candidates.map((candidate) => this.entity(candidate.id).name),
+      device?.name_by_user || device?.name || '',
+    );
     for (const id of r.counters)
       out.push({
-        label: ownWords(this.entity(id).name, deviceName),
+        label: ownWords(this.entity(id).name, head),
         ...this.valueText(id),
         entity: id,
       });
     for (const sensor of this.sensors())
       out.push({
-        label: sensor.name ?? ownWords(this.entity(sensor.entity).name, deviceName),
+        label: sensor.name ?? ownWords(this.entity(sensor.entity).name, head),
         ...this.valueText(sensor.entity),
         entity: sensor.entity,
       });
@@ -4839,10 +4883,19 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       summary !== '' &&
       (view.hero === 'cold' || width(summary) <= this.contentWidth);
     // what asks for attention says it in its own words where the bare row holds them (beside the least picture the card
-    // keeps), else in its state's (the warning ink, the ring's tone and the row's name say the rest)
+    // keeps), else in its state's (the warning ink, the ring's tone and the row's name say the rest), else in its
+    // shorter words ("Check" for a call for a hand)
     const need = attention ? attention.text || this.t(attention.key) : '';
     const bare = this.contentWidth - (ladder.keep && least ? least + 12 : 0);
-    const first = need && width(need) <= bare ? need : quiet ? summary : word;
+    const holds = (text: string): boolean => width(text) <= bare;
+    const first =
+      need && holds(need)
+        ? need
+        : quiet
+          ? summary
+          : !attention || holds(word)
+            ? word
+            : (this.needBriefs(view, attention).find(holds) ?? word);
     const said =
       attention && first === need ? attentionText(this.hass, attention, view.now) : first;
     const age = said.startsWith(`${first} · `) ? said.slice(first.length + 3) : '';

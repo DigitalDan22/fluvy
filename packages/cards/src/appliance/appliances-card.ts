@@ -91,6 +91,7 @@ import {
   attentionText,
   durationText,
   kindGlyph,
+  needWord,
   petWords,
   shownOf,
   spanText,
@@ -624,6 +625,7 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
       const shown = shownOf(this.hass, r, 'main');
       const roles = found.entities.roles;
       const first = r.unavailable ? undefined : r.attention[0];
+      const word = first && needWord(this.hass, first);
       // what a tap opens: the entity a role names (never an attribute of it)
       const opens =
         item.entity ?? roles.state ?? roles.power ?? roles.watts ?? found.entities.zones[0];
@@ -644,8 +646,8 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
                 this.t(first.key.replace('.m_', '.n_') as MessageKey),
                 this.t(DUE_WORD[first.key.slice(12) as MaintenanceKey]),
               ]
-            : first?.key === 'appliance.unload'
-              ? [s(this.hass, 'do_empty')]
+            : word
+              ? [word]
               : [],
         },
       ];

@@ -103,6 +103,25 @@ export function attentionText(
     : said;
 }
 
+/**
+ * What asks for attention, other than a reminder, in one shorter word: "Empty" for a load, "Error" for a failure,
+ * "Check" for a call for a hand; none for anything else.
+ */
+export function needWord(hass: HomeAssistant | undefined, item: Attention): string | undefined {
+  switch (item.key) {
+    case 'appliance.unload':
+    case 'appliance.anti_crease':
+      return s(hass, 'appliance.do_empty');
+    case 'appliance.failure':
+    case 'appliance.aborted':
+      return s(hass, 'appliance.status_error');
+    case 'appliance.status_attention':
+      return s(hass, 'appliance.do_check');
+    default:
+      return undefined;
+  }
+}
+
 /** How the times are said: both the time left and when it is ready, the time left alone, or when alone (`time`). */
 export type TimeShown = 'both' | 'left' | 'end';
 export const TIMES_SHOWN: readonly TimeShown[] = ['both', 'left', 'end'];

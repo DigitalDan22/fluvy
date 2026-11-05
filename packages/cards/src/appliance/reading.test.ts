@@ -11,6 +11,7 @@ import {
   lgDryer,
   LOCALTHINGS_ROLES,
   type ApplianceFixture,
+  type De1Moment,
 } from './fixtures/index.js';
 import { findAppliance, readAppliance, type ApplianceConfig } from './reading.js';
 
@@ -98,6 +99,33 @@ describe('an appliance read', () => {
     const dry = houseOf([de1('refill')(NOW)], NOW);
     dry.states['sensor.decent_espresso_de1pro_de1_water_level']!.state = '0';
     expect(read('de1', {}, dry).maintenance[0]).toMatchObject({ severity: 'due' });
+    // and so is one with water left in it while the machine says it wants more ("Refill"), the tank's entity still its
+    const wants = read('de1', {}, houseOf([de1('refill')(NOW)], NOW));
+    expect(wants.maintenance).toEqual([
+      {
+        key: 'water_tank',
+        entity: 'sensor.decent_espresso_de1pro_de1_water_level',
+        severity: 'due',
+        since: NOW - 5 * MINUTE,
+      },
+    ]);
+    expect(wants.attention.map((item) => item.key)).toEqual([
+      'appliance.status_attention',
+      'appliance.m_water_tank',
+    ]);
+  });
+
+  it('says the DE1’s failure and its call for a hand in the card’s words, its own English their detail', () => {
+    const at = (moment: De1Moment) => read('de1', {}, houseOf([de1(moment)(NOW)], NOW));
+    const refill = at('refill');
+    expect(refill.word).toBe('');
+    expect(refill.attention[0]).toEqual({ key: 'appliance.status_attention', detail: 'Refill' });
+    const fatal = at('fatal');
+    expect(fatal.word).toBe('');
+    expect(fatal.attention[0]).toEqual({ key: 'appliance.failure', detail: 'Fatal error' });
+    // what it is doing otherwise is said in its words
+    expect(at('espresso').word).toBe('Espresso');
+    expect(at('espresso').attention).toEqual([]);
   });
 
   it('reads a washer and a dryer on hcpy by their own keys run together (#115): times, programme, door, buttons', () => {

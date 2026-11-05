@@ -204,6 +204,14 @@ const WITHIN: ReadonlyArray<readonly [ApplianceStatus, ReadonlySet<string>]> = [
   ['idle', new Set(['idle', 'init'])],
 ];
 
+/**
+ * Whether an unknown integration's word asks for water: a refill alone, or of its water or its tank ("Refill", a DE1's;
+ * "WaterTankRefill"), never one of something it names (salt, beans).
+ */
+export const asksWater = (state: string | undefined, platform?: string): boolean =>
+  !knownPlatform(platform) &&
+  /^((water|tank)_)*refill(_(water|tank))*$/.test(wordOf(apart(state ?? '')));
+
 /** A word before that denies it ("NoError") or one after that makes it something else ("ErrorCleared", "SleepTimer"). */
 const DENIED = new Set(['no', 'not', 'non', 'without', 'zero']);
 const QUALIFIED = new Set(['cleared', 'ok', 'resolved', 'free', 'none', 'timer', 'mode', 'count']);

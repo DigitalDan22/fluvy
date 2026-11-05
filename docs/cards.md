@@ -473,10 +473,11 @@ what it is (`kind`, where its name or its maker's does not say); the card reads 
 words (what it is doing, its power switch, its programme, a temperature, its counters, its water tank), and
 **Entities named by hand** (`roles`) names what it did not find: the editor offers the roles of its kind, and its
 entity pickers the device's own entities (a switch over them offers the whole house: a plug's power under a washer
-plays a role too). More of its readings go in `rows` (**Another entity**), or `sensors` on a compact card. A Decent
-DE1 over MQTT (its tablet's de1plus-mqtt plugin) reads by itself as a coffee machine: what it is doing in its own
-words, its profiles as its drinks, its last shot and its tank in millilitres. Named by hand, with its steam's
-temperature as a row:
+plays a role too). More of its readings go in `rows` (**Another entity**), or `sensors` on a compact card, named
+without the words all its entities' names begin with. A Decent DE1 over MQTT (its tablet's de1plus-mqtt plugin) reads
+by itself as a coffee machine: what it is doing in its own words (a failure or a call for a hand in Fluvy's, its own
+word as its alarm row's value), its profiles as its drinks, its last shot and its tank in millilitres, due while the
+machine asks for water. Named by hand, with its steam's temperature as a row:
 
 ```yaml
 type: custom:fluvy-appliance-card

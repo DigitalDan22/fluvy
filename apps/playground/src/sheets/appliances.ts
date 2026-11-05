@@ -1232,6 +1232,20 @@ export const sheet: SheetSpec = {
         card('de1', { variant: 'row', cols: 6 }),
       ],
     }),
+    // wanting water, failed and out of reach on half a section, compact and as a row: the house's words, never the
+    // device's English, its readouts named without the plugin's "DE1+"
+    ...DE1_SHOWN.filter(([moment]) => ['refill', 'fatal', 'lost'].includes(moment)).map(
+      ([moment, title]) =>
+        frame({
+          title: `Any device · DE1 ${title}, half a section`,
+          width: 360,
+          hass: de1At(moment),
+          cards: [
+            card('de1', { variant: 'compact', cols: 6 }),
+            card('de1', { variant: 'row', cols: 6 }),
+          ],
+        }),
+    ),
     // as the docs name it by hand: its drinks, its rows (its steam's temperature one), its roles
     frame({
       title: 'Any device · DE1 named by hand',
