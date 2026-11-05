@@ -36,7 +36,10 @@ the card editor and the card picker; not to Fluvy's own pages (Activity, History
 card (a sheet, a menu, a dialog), which stay solid. Home Assistant's own cards follow the theme's `ha-card-background`,
 not this setting. A card that draws no surface (a heading, the greeting, the web page card `bare`) is unchanged.
 Inside a see-through card its wells and washes go see-through with it, one material; a lit tile, a light card lit
-whole, a switch's thumb and a knob keep their colour solid (a light's colour is what it says).
+whole, a switch's thumb and a knob keep their colour solid (a light's colour is what it says). Its quieter words (a
+line under a name, a ruler's figures) darken in light mode and lighten in dark mode as the card goes see-through, and
+from 50 % down they are written like its names, so they read on the background. Below about 35 % the background
+decides what reads: in light mode pick a light picture, in dark mode a dark one.
 
 What shows through is the view's background: Home Assistant's *Background* in a view's settings (a picture, its size,
 alignment and opacity), else the theme's `lovelace-background`, else the page's colour. Fluvy never paints over it; on a

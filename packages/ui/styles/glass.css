@@ -6,9 +6,24 @@
  * what is painted to look like it are one material. These rules are the rest.
  */
 
-/* what the host computes of the card's colour (the knob's halo, the dark dial's disc) is computed again over it */
+/* what the host computes of the card's colour (the knob's halo, the dark dial's disc) is computed again over it; and
+   how much of its own colour a quiet word keeps (the secondary, the disabled, the unavailable ink, core's
+   look/glass.ts): all of it solid, none from half see-through, where it is the main ink — the less of the card there
+   is behind a word, the less it may be quiet */
 :host([glass]) > * {
   --knob-halo: var(--fluvy-card);
+  --fv-quiet: clamp(0%, var(--fv-glass) * 2 - 100%, 100%);
+  --fv-quiet-tick: var(--fv-glass);
+}
+
+/* a ruler's and a dial's resting ticks go the same way at the card's own pace, so they keep about the contrast they
+   have on a solid card and never outweigh the lit ticks (in their tone's ink, which the background takes down too) */
+:host([glass]) :is(fluvy-ruler, fluvy-dial, .fv-ruler, .fv-dial) {
+  --fluvy-border-strong: color-mix(
+    in srgb,
+    var(--fv-tick-off, var(--fv-solid-border-strong)) var(--fv-quiet-tick),
+    var(--fv-glass-ink)
+  );
 }
 
 :host([glass][dark]) > * {
@@ -33,7 +48,7 @@
 
 /* …and so are a lit tile (its light's colour is what it says), a switch's thumb (what the finger holds), what sits on
    a room's photo (its name's pill, its quick actions) and words in the card's colour on an ink (a chart's time, a
-   chosen chip's, a reading in the water); a lit tile's own wells stay its own (tiles.css) */
+   chosen chip's, a reading in the water), their quiet inks with them; a lit tile's own wells stay its own (tiles.css) */
 :host([glass])
   :is(
     dialog,
@@ -59,33 +74,22 @@
   --fluvy-page-alt: var(--fv-solid-page-alt);
   --fluvy-wash-base: var(--fv-solid-wash-base);
   --fv-card-plain: var(--fv-solid-card-plain);
+  --fluvy-text-secondary: var(--fv-solid-text-secondary);
+  --fluvy-text-disabled: var(--fv-solid-text-disabled);
+  --fluvy-unavailable: var(--fv-solid-unavailable);
+  --fv-quiet-tick: 100%;
 }
 
-/* blurred, what shows through goes soft under the words: on a layer of its own beneath each outermost surface that lets
-   it through (a lit one does not), which holds nothing — a menu fixed in place and a dialog without the top layer keep
-   the page as theirs */
+/* blurred, what shows through goes soft under the words: on each outermost surface that lets it through (a lit one does
+   not), the surface itself — a layer beneath its content would blur the card's own colour alone, for the card's
+   entrance holds an opacity that cuts what is inside it off from the page (a Backdrop Root); what opens from a card
+   (menus, sheets, the keypad) lives in the top layer, so a blurred card still leaves it the page */
 :host([glass='blur'])
   :is(.fv-card, .fv-tile, .fv-scene, .fv-chip__pill, .fv-empty-state):not(
     :is(.fv-card, .fv-tile) *,
     .fv-tile.is-on,
     .fv-card.is-lit
   ) {
-  position: relative;
-  isolation: isolate;
-}
-
-:host([glass='blur'])
-  :is(.fv-card, .fv-tile, .fv-scene, .fv-chip__pill, .fv-empty-state):not(
-    :is(.fv-card, .fv-tile) *,
-    .fv-tile.is-on,
-    .fv-card.is-lit
-  )::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
-  pointer-events: none;
 }

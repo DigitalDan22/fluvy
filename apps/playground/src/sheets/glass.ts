@@ -119,6 +119,7 @@ export const sheet: SheetSpec = {
     dozen('Blue · 0', BLUE, 0),
     dozen('Picture · 80', PICTURE, 80),
     dozen('Picture · 50', PICTURE, 50),
+    dozen('Picture · 0', PICTURE, 0),
     // what opens from a see-through card is solid over it: a select's menu, the alarm's keypad
     {
       title: 'A menu and a sheet from a see-through card',

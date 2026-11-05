@@ -132,4 +132,18 @@ describe('the see-through writer', () => {
     expect(css).toContain('--fluvy-border:#00ff00;');
     expect(css).toContain(':host([glass=');
   });
+
+  it('takes the quiet inks towards the main ink as the card lets the background through, solid ones kept', () => {
+    const css = seeThrough('linen', 'light', '');
+    const ink = /--fv-glass-ink:(#[0-9a-f]{6});/.exec(css)?.[1];
+    expect(ink).toBeDefined();
+    for (const name of ['text-secondary', 'text-disabled', 'unavailable']) {
+      const solid = new RegExp(`--fv-solid-${name}:(#[0-9a-f]{6});`).exec(css)?.[1];
+      expect(solid).toBeDefined();
+      expect(css).toContain(`--fluvy-${name}:color-mix(in srgb,${solid} var(--fv-quiet),${ink});`);
+    }
+    // the main ink and the hairline stay themselves: a switch's off track is drawn in it
+    expect(css).not.toMatch(/--fluvy-text:/);
+    expect(css).not.toMatch(/--fluvy-border-strong:color-mix\(in srgb,#/);
+  });
 });

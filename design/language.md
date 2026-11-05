@@ -140,9 +140,18 @@ through, blurred by default.
   the card's own as they were (`--fv-solid-…`, written beside the see-through ones).
 - **A knob's halo** stays the card's material: at 50 % it reads as a soft frosted ring that still cuts the tick or the
   line under it; transparent, the arc's ticks would touch the knob.
-- **The blur** (16 px) is a layer of its own under each outermost surface (`::before`, the surface isolated), which
-  holds nothing: a card that blurred itself would hold a menu fixed in place and a dialog without the top layer to its
-  own box. A wall tablet that scrolls slowly is better without it; the cards stay see-through.
+- **Quiet inks** go towards the main ink as the background comes through: the secondary, the disabled and the
+  unavailable ink keep all of their own colour solid and none from 50 % down, where they are the main ink (between,
+  in proportion). Measured over the issue's blue and a busy picture, light and dark, blur on and off, against the
+  worst pixel behind each word: at 80 % and 50 % every quiet word reads at 3.3:1 or more (it was 1.0:1 at 50 % on
+  the blue). A ruler's and a dial's resting ticks go the same way at the card's own pace (half their colour at 50 %):
+  they keep about the contrast they have on a solid card and stay under the lit ticks, whose tone the background takes
+  down too; at the words' pace they outweighed them. Below about 35 % what reads is the background's to say: dark
+  words need a light picture and light words a dark one, the main ink included.
+- **The blur** (16 px) is on each outermost surface itself: a layer beneath its content would see the card alone, for
+  the card's entrance holds an opacity that cuts it off from the page (a Backdrop Root). What opens from a card lives
+  in the top layer (menus, sheets, the keypad), so a blurred card still leaves it the page. A wall tablet that scrolls
+  slowly is better without it; the cards stay see-through.
 - **Never see-through**: Fluvy's own pages (Activity, History, the panel), and the screensaver's clock (it has no
   surface of its own). Home Assistant's cards follow the theme's `ha-card-background`.
 

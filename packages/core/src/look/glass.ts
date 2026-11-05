@@ -10,20 +10,24 @@ import { colorsOf } from './accent.js';
  * those solid ones, its blur).
  */
 
-/** A palette's own surfaces, per palette × mode, kept (the last 32). */
+/** A palette's own surfaces and quiet inks, per palette × mode, kept (the last 32). */
 const kept = new Map<string, string>();
 
 /**
  * A palette's own surfaces, for a see-through card to take at its opacity: the card's, the lifted card's, the page's
  * and the sunken page's colours, the ground a resting circle washes into, and the plain card a lit wash keeps for its
- * circle (slider.css).
+ * circle (slider.css). Then its quiet inks — the secondary and the disabled words (a line under a name, a ruler's or a
+ * dial's figures) and the unavailable ink — towards its main ink as far as the card lets the background through
+ * (`--fv-quiet`, ui/styles/glass.css), their solid colours kept beside them as the fills' are; and the main ink and the
+ * strong hairline for a ruler's and a dial's resting ticks to take the same way.
  */
 function surfacesCss(paletteKey: string, mode: PaletteMode): string {
   const key = `${paletteKey}|${mode}`;
   let css = kept.get(key);
   if (css === undefined) {
     const colors = colorsOf(paletteKey, mode);
-    const { card, cardElevated, page, pageAlt } = colors.surface;
+    const { card, cardElevated, page, pageAlt, borderStrong } = colors.surface;
+    const { primary, secondary, disabled } = colors.text;
     css = declarationsCss([
       ['--fluvy-card', card],
       ['--fluvy-card-elevated', cardElevated],
@@ -31,7 +35,15 @@ function surfacesCss(paletteKey: string, mode: PaletteMode): string {
       ['--fluvy-page-alt', pageAlt],
       ['--fluvy-wash-base', colors.washBase],
       ['--fv-card-plain', card],
+      ['--fv-glass-ink', primary],
+      ['--fv-solid-border-strong', borderStrong],
     ]);
+    for (const [name, hex] of [
+      ['text-secondary', secondary],
+      ['text-disabled', disabled],
+      ['unavailable', colors.unavailable.ink],
+    ])
+      css += `--fv-solid-${name}:${hex};--fluvy-${name}:color-mix(in srgb,${hex} var(--fv-quiet),${primary});`;
     kept.set(key, css);
     if (kept.size > 32) kept.delete(kept.keys().next().value as string);
   }
