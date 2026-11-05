@@ -20,6 +20,14 @@ export const entry = (
   ...(translation_key ? { translation_key } : {}),
 });
 
+/** A device, as the registry lists it: the integration's name, the printer it is reached through, a person's name. */
+const device = (
+  id: string,
+  name: string,
+  via_device_id: string | null = null,
+  name_by_user: string | null = null,
+) => ({ id, name, name_by_user, via_device_id });
+
 /** A house with one printer of each integration, as their registries name them — and a few things that are not one. */
 export const PRINTER_HOUSE = {
   entities: Object.fromEntries(
@@ -47,7 +55,7 @@ export const PRINTER_HOUSE = {
       entry('sensor.mk4_nozzle_temperature', 'd-prusa', 'prusalink', 'nozzle_temperature'),
       entry('camera.mk4_preview', 'd-prusa', 'prusalink', 'job_preview'),
       entry('button.mk4_cancel_job', 'd-prusa', 'prusalink', 'cancel_job'),
-      // Bambu Lab (a wifi status before its print status: never the status)
+      // Bambu Lab before its 2.2 (a wifi status before its print status: never the status)
       entry('sensor.p1s_wifi_status', 'd-bambu', 'bambu_lab'),
       entry('sensor.p1s_print_status', 'd-bambu', 'bambu_lab', 'print_status'),
       entry('sensor.p1s_print_progress', 'd-bambu', 'bambu_lab', 'print_progress'),
@@ -60,10 +68,49 @@ export const PRINTER_HOUSE = {
       entry('sensor.p1s_current_stage', 'd-bambu', 'bambu_lab', 'stage'),
       entry('binary_sensor.p1s_print_error', 'd-bambu', 'bambu_lab', 'print_error'),
       entry('sensor.p1s_active_tray', 'd-bambu', 'bambu_lab', 'active_tray'),
-      // its AMS: a device of its own, reached through the printer
+      // its AMS: a device of its own, reached through the printer, its trays keyed by their slot
       entry('sensor.p1s_ams_tray_2', 'd-ams', 'bambu_lab', 'tray_2'),
       entry('sensor.p1s_ams_tray_1', 'd-ams', 'bambu_lab', 'tray_1'),
       entry('sensor.p1s_ams_humidity', 'd-ams', 'bambu_lab', 'humidity_index'),
+      // Bambu Lab since its 2.2 (#119): every AMS tray keyed "tray", its slot an attribute; the spool outside a device
+      // of its own reached through the printer; the AMS and the spool renamed, so their trays' ids say neither
+      entry('sensor.workshop_p1s_print_status', 'd-p1s', 'bambu_lab', 'print_status'),
+      entry('sensor.workshop_p1s_print_progress', 'd-p1s', 'bambu_lab', 'print_progress'),
+      entry('sensor.workshop_p1s_active_tray', 'd-p1s', 'bambu_lab', 'active_tray'),
+      entry('sensor.ams_tray_3', 'd-p1s-ams', 'bambu_lab', 'tray'),
+      entry('sensor.ams_tray_1', 'd-p1s-ams', 'bambu_lab', 'tray'),
+      entry('sensor.ams_tray_4', 'd-p1s-ams', 'bambu_lab', 'tray'),
+      entry('sensor.ams_tray_2', 'd-p1s-ams', 'bambu_lab', 'tray'),
+      entry('sensor.ams_humidity_index', 'd-p1s-ams', 'bambu_lab', 'humidity_index'),
+      entry(
+        'sensor.p1s_external_spool_external_spool',
+        'd-p1s-spool',
+        'bambu_lab',
+        'external_spool',
+      ),
+      entry('binary_sensor.p1s_external_spool_active', 'd-p1s-spool', 'bambu_lab', 'active_ams'),
+      // two AMS and an AMS HT on an H2D, the first renamed (one of its trays too), and its two spools outside, the
+      // left and the right nozzle's: each tray's id sorts it nowhere near its unit and its slot
+      entry('sensor.h2d_print_status', 'd-h2d', 'bambu_lab', 'print_status'),
+      entry('sensor.h2d_print_progress', 'd-h2d', 'bambu_lab', 'print_progress'),
+      entry(
+        'sensor.h2d_external_spool_2_external_spool',
+        'd-h2d-spool-2',
+        'bambu_lab',
+        'external_spool',
+      ),
+      entry(
+        'sensor.h2d_external_spool_external_spool',
+        'd-h2d-spool',
+        'bambu_lab',
+        'external_spool',
+      ),
+      entry('sensor.h2d_ams_ht_tray_1', 'd-h2d-ht', 'bambu_lab', 'tray'),
+      entry('sensor.h2d_ams_2_tray_2', 'd-h2d-ams-2', 'bambu_lab', 'tray'),
+      entry('sensor.h2d_ams_2_tray_1', 'd-h2d-ams-2', 'bambu_lab', 'tray'),
+      entry('sensor.shelf_tray_1', 'd-h2d-ams-1', 'bambu_lab', 'tray'),
+      entry('sensor.black_petg', 'd-h2d-ams-1', 'bambu_lab', 'tray'),
+      entry('sensor.shelf_tray_3', 'd-h2d-ams-1', 'bambu_lab', 'tray'),
       // Moonraker
       entry('sensor.voron_current_print_state', 'd-voron', 'moonraker', 'current_print_state'),
       entry('sensor.voron_print_eta', 'd-voron', 'moonraker', 'print_eta'),
@@ -329,11 +376,39 @@ export const PRINTER_HOUSE = {
       entry('sensor.kitchen_temperature', 'd-kitchen', 'zha'),
     ].map((e) => [e.entity_id, e]),
   ),
-  devices: {
-    'd-bambu': { id: 'd-bambu', name: 'P1S', via_device_id: null },
-    'd-ams': { id: 'd-ams', name: 'AMS', via_device_id: 'd-bambu' },
-    'd-kobra': { id: 'd-kobra', name: 'Kobra S1', via_device_id: null },
-    'd-ace': { id: 'd-ace', name: 'ACE Pro', via_device_id: 'd-kobra' },
-  },
-  states: {},
+  // Bambu Lab names its units by their number (an AMS HT's from 128), whatever a person renames them
+  devices: Object.fromEntries(
+    [
+      device('d-bambu', 'P1S'),
+      device('d-ams', 'AMS', 'd-bambu'),
+      device('d-p1s', 'P1S_01P00A000000001', null, 'Workshop P1S'),
+      device('d-p1s-ams', 'P1S_01P00A000000001_AMS_1', 'd-p1s', 'AMS'),
+      device('d-p1s-spool', 'P1S_01P00A000000001_ExternalSpool', 'd-p1s', 'P1S External Spool'),
+      device('d-h2d', 'H2D_0948AD000000001'),
+      device('d-h2d-ams-1', 'H2D_0948AD000000001_AMS_1', 'd-h2d', 'Shelf'),
+      device('d-h2d-ams-2', 'H2D_0948AD000000001_AMS_2', 'd-h2d'),
+      device('d-h2d-ht', 'H2D_0948AD000000001_AMS_128', 'd-h2d'),
+      device('d-h2d-spool', 'H2D_0948AD000000001_ExternalSpool', 'd-h2d'),
+      device('d-h2d-spool-2', 'H2D_0948AD000000001_ExternalSpool2', 'd-h2d'),
+      device('d-kobra', 'Kobra S1'),
+      device('d-ace', 'ACE Pro', 'd-kobra'),
+    ].map((d) => [d.id, d]),
+  ),
+  // a Bambu Lab tray says its slot since 2.2
+  states: Object.fromEntries(
+    (
+      [
+        ['sensor.ams_tray_1', 1],
+        ['sensor.ams_tray_2', 2],
+        ['sensor.ams_tray_3', 3],
+        ['sensor.ams_tray_4', 4],
+        ['sensor.shelf_tray_1', 1],
+        ['sensor.black_petg', 2],
+        ['sensor.shelf_tray_3', 3],
+        ['sensor.h2d_ams_2_tray_1', 1],
+        ['sensor.h2d_ams_2_tray_2', 2],
+        ['sensor.h2d_ams_ht_tray_1', 1],
+      ] as const
+    ).map(([entity_id, slot]) => [entity_id, { entity_id, state: 'PLA', attributes: { slot } }]),
+  ),
 } as unknown as HomeAssistant;

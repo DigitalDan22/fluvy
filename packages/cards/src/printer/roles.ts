@@ -1,4 +1,4 @@
-import type { HomeAssistant } from '@fluvy/core';
+import type { EntityRegistryDisplayEntry, HomeAssistant } from '@fluvy/core';
 
 /*
  * A 3D printer's entities, found on its device. Every printer integration hangs its entities on one device — OctoPrint
@@ -173,6 +173,7 @@ const KEYS_BY_PLATFORM: Readonly<Record<PrinterPlatform, Readonly<Record<string,
     continue_job: 'resume',
     cancel_job: 'stop',
   },
+  // its HMS messages (`hms_errors`) say the failure only where the print's error is missing: by the end of their id
   bambu_lab: {
     nozzle_temp: 'nozzle',
     target_nozzle_temp: 'nozzle_target',
@@ -184,11 +185,14 @@ const KEYS_BY_PLATFORM: Readonly<Record<PrinterPlatform, Readonly<Record<string,
     stage: 'stage',
     current_stage: 'stage',
     print_error: 'error',
-    hms: 'error',
     active_tray: 'filament',
     speed_profile: 'speed',
     cover_image: 'preview',
     chamber_light: 'light',
+    camera_light: 'light',
+    // the chamber's target (its id ends as the reading's); the light under the plate, never the printer's
+    target_chamber_temp: null,
+    heatbed_light: null,
   },
   moonraker: {
     current_print_state: 'status',
@@ -401,10 +405,13 @@ const LOOSE: ReadonlyArray<readonly [RegExp, PrinterRole]> = [
 const NEVER = /shutdown|shut_down|reboot|restart|emergency|firmware|system/;
 
 /**
- * A filament unit's tray, by its translation key: Bambu Lab's AMS slots ("tray_1" …) and the spool outside it,
- * Creality's CFS slots and its external filament, Anycubic's ACE slots. Never a role: the trays are read apart.
+ * A filament unit's tray, by its translation key: Bambu Lab's AMS slots ("tray" since its 2.2, "tray_1" … before)
+ * and the spool outside it, Creality's CFS slots and its external filament, Anycubic's ACE slots. Never a role: the
+ * trays are read apart.
  */
-const TRAY = /^(tray_\d+|external_spool|cfs_(slot|ext)_filament|ace_slot)$/;
+const TRAY = /^(tray(_\d+)?|external_spool|cfs_(slot|ext)_filament|ace_slot)$/;
+/** An AMS slot: its number the key's before Bambu Lab's 2.2, its `slot` attribute since. */
+const AMS_SLOT = /^tray(?:_(\d+))?$/;
 /** The spool outside the unit: after the unit's own trays. */
 const OUTSIDE = /^(external_spool|cfs_ext_filament)$/;
 
@@ -588,21 +595,33 @@ export function printerDevices(hass: Pick<HomeAssistant, 'entities'> | undefined
 
 /**
  * The filament a printer can pick from, in order: the trays of its unit (on the printer's device, or on devices of
- * their own reached through it), the unit's own slots first and the spool outside it last, in their number within
- * each — as sensors whose attributes say the filament's type and colour.
+ * their own reached through it), the units' own slots first and the spools outside them last (one a nozzle, each a
+ * device of its own on Bambu Lab's); unit by unit in the integration's name for it (AMS 1, AMS 2, an AMS HT's 128),
+ * never the one a person gave it; within each by an AMS tray's slot, else by id — as sensors whose attributes say the
+ * filament's type and colour.
  */
 export function printerTrays(
-  hass: Pick<HomeAssistant, 'entities' | 'devices'> | undefined,
+  hass: Pick<HomeAssistant, 'entities' | 'devices' | 'states'> | undefined,
   device: string | undefined,
 ): string[] {
   if (!device || !hass) return [];
+  const devices = hass.devices ?? {};
   const units = new Set(
-    Object.values(hass.devices ?? {})
+    Object.values(devices)
       .filter((entry) => entry.via_device_id === device)
       .map((entry) => entry.id),
   );
   units.add(device);
-  const outside = (key: string | undefined): number => (OUTSIDE.test(key ?? '') ? 1 : 0);
+  const outside = (entry: EntityRegistryDisplayEntry): number =>
+    OUTSIDE.test(entry.translation_key ?? '') ? 1 : 0;
+  const unit = (entry: EntityRegistryDisplayEntry): string =>
+    devices[entry.device_id ?? '']?.name ?? '';
+  // a person renames a tray's id: its slot is the integration's word (0 where it says none)
+  const slot = (entry: EntityRegistryDisplayEntry): number => {
+    const ams = AMS_SLOT.exec(entry.translation_key ?? '');
+    return ams ? Number(ams[1] ?? hass.states?.[entry.entity_id]?.attributes['slot']) || 0 : 0;
+  };
+  const numbered = (a: string, b: string): number => a.localeCompare(b, 'en', { numeric: true });
   return Object.values(hass.entities ?? {})
     .filter(
       (entry) =>
@@ -614,8 +633,10 @@ export function printerTrays(
     )
     .sort(
       (a, b) =>
-        outside(a.translation_key) - outside(b.translation_key) ||
-        a.entity_id.localeCompare(b.entity_id, 'en', { numeric: true }),
+        outside(a) - outside(b) ||
+        numbered(unit(a), unit(b)) ||
+        slot(a) - slot(b) ||
+        numbered(a.entity_id, b.entity_id),
     )
     .map((entry) => entry.entity_id);
 }

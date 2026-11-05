@@ -25,6 +25,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   "60 mL" in a fine tone under a head that said Refill.
 - The Appliance card out of reach draws a coffee machine's drinks as it draws them live, as many and as wide, each a
   dash, where the DE1 out of reach drew three where it draws two and "…".
+- The 3D printer card shows a Bambu Lab printer's AMS trays again, AMS by AMS and slot by slot whatever their ids, the
+  spools outside last, where since the integration's 2.2 it showed only the external spool (#119).
 
 ## [1.14.2] — 2026-11-04
 

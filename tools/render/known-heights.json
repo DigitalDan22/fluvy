@@ -356,6 +356,20 @@
       "reason": "the printer's filament trays (AMS, CFS, ACE) are the device's own: not counted"
     },
     {
+      "frame": "printer/Bambu Lab 2.2 · its AMS, then the spool outside",
+      "tag": "fluvy-printer-card",
+      "declared": 528,
+      "drawn": 708,
+      "reason": "the printer's filament trays (AMS, CFS, ACE) are the device's own: not counted"
+    },
+    {
+      "frame": "printer/Bambu Lab 2.2 · two AMS, an AMS HT, two spools",
+      "tag": "fluvy-printer-card",
+      "declared": 528,
+      "drawn": 888,
+      "reason": "the printer's filament trays (AMS, CFS, ACE) are the device's own: not counted"
+    },
+    {
       "frame": "printer/Bambu Lab · printing",
       "tag": "fluvy-printer-card",
       "declared": 528,

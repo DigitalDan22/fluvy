@@ -76,12 +76,77 @@ describe('a printer’s entities', () => {
     expect(bambu.error).toBe('binary_sensor.p1s_print_error');
     expect(bambu.filament).toBe('sensor.p1s_active_tray');
     expect(printerEntities(hass, 'd-voron').elapsed).toBe('sensor.voron_print_duration');
-    // the trays of the unit reached through the printer, never its humidity
+    // the trays of the unit reached through the printer, keyed by their slot before 2.2, never its humidity
     expect(printerTrays(hass, 'd-bambu')).toEqual([
       'sensor.p1s_ams_tray_1',
       'sensor.p1s_ams_tray_2',
     ]);
     expect(printerTrays(hass, 'd-prusa')).toEqual([]);
+  });
+
+  it('finds a Bambu Lab AMS’s trays as its 2.2 keys them, "tray" with the slot an attribute, in their slot, and the spool outside on a device of its own last (#119)', () => {
+    expect(printerTrays(hass, 'd-p1s')).toEqual([
+      'sensor.ams_tray_1',
+      'sensor.ams_tray_2',
+      'sensor.ams_tray_3',
+      'sensor.ams_tray_4',
+      'sensor.p1s_external_spool_external_spool',
+    ]);
+    // a tray is never a role, the printer's or its unit's
+    expect(printerEntities(hass, 'd-p1s')).toEqual({
+      status: 'sensor.workshop_p1s_print_status',
+      progress: 'sensor.workshop_p1s_print_progress',
+      filament: 'sensor.workshop_p1s_active_tray',
+    });
+    expect(
+      roleOf({ id: 'sensor.ams_tray_1', domain: 'sensor', key: 'tray', platform: 'bambu_lab' }),
+    ).toBeUndefined();
+    expect(printerEntities(hass, 'd-p1s-ams')).toEqual({});
+    expect(printerEntities(hass, 'd-p1s-spool')).toEqual({});
+  });
+
+  it('reads Bambu Lab’s words as its 2.2 says them: its HMS never the error over the print’s, the A1 mini’s camera light its light, never the heatbed’s, never a chamber’s target for its reading', () => {
+    const house = (...entries: ReturnType<typeof entry>[]) =>
+      ({
+        entities: Object.fromEntries(entries.map((e) => [e.entity_id, e])),
+      }) as unknown as HomeAssistant;
+    // each listed before the one that plays the role
+    const h2d = house(
+      entry('binary_sensor.h2d_hms_errors', 'd-x', 'bambu_lab', 'hms_errors'),
+      entry('binary_sensor.h2d_print_error', 'd-x', 'bambu_lab', 'print_error'),
+      entry('light.h2d_heatbed_light', 'd-x', 'bambu_lab', 'heatbed_light'),
+      entry('light.h2d_chamber_light', 'd-x', 'bambu_lab', 'chamber_light'),
+      entry('sensor.h2d_target_chamber_temperature', 'd-x', 'bambu_lab', 'target_chamber_temp'),
+      entry('sensor.h2d_chamber_temperature', 'd-x', 'bambu_lab', 'chamber_temp'),
+    );
+    expect(printerEntities(h2d, 'd-x')).toEqual({
+      error: 'binary_sensor.h2d_print_error',
+      light: 'light.h2d_chamber_light',
+      chamber: 'sensor.h2d_chamber_temperature',
+    });
+    // the HMS says the failure where the print's error is hidden; a heatbed's light and a chamber's target play none
+    const bare = house(
+      entry('binary_sensor.h2d_hms_errors', 'd-x', 'bambu_lab', 'hms_errors'),
+      entry('light.h2d_heatbed_light', 'd-x', 'bambu_lab', 'heatbed_light'),
+      entry('sensor.h2d_target_chamber_temperature', 'd-x', 'bambu_lab', 'target_chamber_temp'),
+    );
+    expect(printerEntities(bare, 'd-x')).toEqual({ error: 'binary_sensor.h2d_hms_errors' });
+    // the A1 mini's one light, by its key whatever its id
+    const a1 = house(entry('light.a1_mini_lamp', 'd-x', 'bambu_lab', 'camera_light'));
+    expect(printerEntities(a1, 'd-x')).toEqual({ light: 'light.a1_mini_lamp' });
+  });
+
+  it('lists two AMS and an AMS HT unit by unit in their number, each in its slots, whatever their ids, then the two spools outside, the left nozzle’s first', () => {
+    expect(printerTrays(hass, 'd-h2d')).toEqual([
+      'sensor.shelf_tray_1',
+      'sensor.black_petg',
+      'sensor.shelf_tray_3',
+      'sensor.h2d_ams_2_tray_1',
+      'sensor.h2d_ams_2_tray_2',
+      'sensor.h2d_ams_ht_tray_1',
+      'sensor.h2d_external_spool_external_spool',
+      'sensor.h2d_external_spool_2_external_spool',
+    ]);
   });
 
   it('finds Creality’s by its keys — the targets as numbers, the light, the camera and the preview — never its CFS’s own readings, its maxima or its own buttons', () => {
@@ -305,9 +370,11 @@ describe('a printer’s entities', () => {
       'd-bambu',
       'd-elegoo',
       'd-fork',
+      'd-h2d',
       'd-k1c',
       'd-kobra',
       'd-octo',
+      'd-p1s',
       'd-prusa',
       'd-u1',
       'd-voron',

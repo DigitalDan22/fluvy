@@ -15,7 +15,8 @@ if (!customElements.get('fluvy-printer-card'))
  * error, in the status's own attributes), an Elegoo Centauri Carbon preheating (its durations in milliseconds), an
  * Anycubic Kobra S1 printing from its ACE (a device of its own), a Snapmaker U1 paused (its emergency stop never a
  * button), an older Snapmaker A350 (fixed names, "HH:MM:SS" durations, nothing to press) and a FlashForge Adventurer
- * 5M that completed its job.
+ * 5M that completed its job. Then issue #119's: Bambu Lab since its 2.2, a P1S and an H2D with two AMS, an AMS HT and
+ * two spools outside.
  */
 
 /** The mock's moment: the time left is counted from it. */
@@ -716,6 +717,132 @@ const AD5M: readonly StateSeed[] = [
   ['button.adventurer_5m_clear_status', 'unknown', { friendly_name: 'Adventurer 5M Clear status' }],
 ];
 
+/**
+ * Issue #119: Bambu Lab since its 2.2, every AMS tray keyed "tray" with its slot an attribute and the spool outside a
+ * device of its own. A P1S printing from its AMS, the AMS and the spool renamed by a person (their trays' ids say
+ * neither); an H2D printing from its second AMS, with two AMS and an AMS HT, the first renamed (one of its trays too),
+ * and its two nozzles' spools outside, the left and the right: only the units' names and the slots order them.
+ */
+const slotted = (
+  id: string,
+  slot: number,
+  name: string,
+  type: string,
+  color: string,
+  extra: Attributes = {},
+) =>
+  [
+    id,
+    name,
+    { friendly_name: `Tray ${slot}`, slot, type, color, active: false, empty: !type, ...extra },
+  ] as const satisfies StateSeed;
+const P1S_22: readonly StateSeed[] = [
+  [
+    'sensor.workshop_p1s_print_status',
+    'running',
+    { friendly_name: 'Workshop P1S Print status', device_class: 'enum' },
+  ],
+  ['sensor.workshop_p1s_print_progress', '38', percent('Workshop P1S Print progress')],
+  ['sensor.workshop_p1s_remaining_time', '104', duration('Workshop P1S Remaining time', 'min')],
+  ['sensor.workshop_p1s_nozzle_temperature', '220', temp('Workshop P1S Nozzle temperature')],
+  ['sensor.workshop_p1s_bed_temperature', '60', temp('Workshop P1S Bed temperature')],
+  ['sensor.workshop_p1s_current_layer', '61', { friendly_name: 'Workshop P1S Current layer' }],
+  ['sensor.workshop_p1s_total_layer_count', '160', { friendly_name: 'Workshop P1S Total layers' }],
+  ['sensor.workshop_p1s_task_name', 'Spool_holder.gcode', { friendly_name: 'Workshop P1S Task' }],
+  [
+    'camera.workshop_p1s_camera',
+    'idle',
+    { friendly_name: 'Workshop P1S Camera', entity_picture: CAMERA },
+  ],
+  [
+    'image.workshop_p1s_cover_image',
+    at(-80),
+    { friendly_name: 'Workshop P1S Cover image', entity_picture: COVER },
+  ],
+  ['button.workshop_p1s_pause', 'unknown', { friendly_name: 'Workshop P1S Pause printing' }],
+  ['button.workshop_p1s_resume', 'unknown', { friendly_name: 'Workshop P1S Resume printing' }],
+  ['button.workshop_p1s_stop', 'unknown', { friendly_name: 'Workshop P1S Stop printing' }],
+];
+const P1S_22_AMS: readonly StateSeed[] = [
+  slotted('sensor.ams_tray_1', 1, 'Bambu PLA Basic', 'PLA', '#2E6FD9FF', { active: true }),
+  slotted('sensor.ams_tray_2', 2, 'Bambu PLA Matte', 'PLA', '#F4F1EAFF'),
+  slotted('sensor.ams_tray_3', 3, 'Bambu PETG HF', 'PETG', '#1F1F1FFF'),
+  slotted('sensor.ams_tray_4', 4, 'Bambu ABS', 'ABS', '#D93A2BFF'),
+];
+const P1S_22_SPOOL: readonly StateSeed[] = [
+  [
+    'sensor.p1s_external_spool_external_spool',
+    'Generic TPU',
+    {
+      friendly_name: 'External spool',
+      type: 'TPU',
+      color: '#E8763FFF',
+      active: false,
+      empty: false,
+    },
+  ],
+];
+const H2D: readonly StateSeed[] = [
+  [
+    'sensor.h2d_print_status',
+    'running',
+    { friendly_name: 'H2D Print status', device_class: 'enum' },
+  ],
+  ['sensor.h2d_print_progress', '71', percent('H2D Print progress')],
+  ['sensor.h2d_remaining_time', '46', duration('H2D Remaining time', 'min')],
+  ['sensor.h2d_nozzle_temperature', '250', temp('H2D Nozzle temperature')],
+  ['sensor.h2d_bed_temperature', '80', temp('H2D Bed temperature')],
+  ['sensor.h2d_current_layer', '204', { friendly_name: 'H2D Current layer' }],
+  ['sensor.h2d_total_layer_count', '288', { friendly_name: 'H2D Total layers' }],
+  ['sensor.h2d_task_name', 'Drawer_front.gcode', { friendly_name: 'H2D Task' }],
+  ['camera.h2d_camera', 'idle', { friendly_name: 'H2D Camera', entity_picture: CAMERA }],
+  ['image.h2d_cover_image', at(-120), { friendly_name: 'H2D Cover image', entity_picture: COVER }],
+  ['button.h2d_pause', 'unknown', { friendly_name: 'H2D Pause printing' }],
+  ['button.h2d_resume', 'unknown', { friendly_name: 'H2D Resume printing' }],
+  ['button.h2d_stop', 'unknown', { friendly_name: 'H2D Stop printing' }],
+];
+const H2D_SHELF: readonly StateSeed[] = [
+  slotted('sensor.shelf_tray_1', 1, 'Bambu PLA Basic', 'PLA', '#F4F1EAFF'),
+  slotted('sensor.black_petg', 2, 'Bambu PETG HF', 'PETG', '#1F1F1FFF'),
+  slotted('sensor.shelf_tray_3', 3, 'Bambu PLA Matte', 'PLA', '#2E8B57FF'),
+  slotted('sensor.shelf_tray_4', 4, '', '', '00000000'),
+];
+const H2D_AMS_2: readonly StateSeed[] = [
+  slotted('sensor.h2d_ams_2_tray_1', 1, 'Bambu ASA', 'ASA', '#E8763FFF', { active: true }),
+  slotted('sensor.h2d_ams_2_tray_2', 2, 'Bambu PLA Silk', 'PLA', '#C9A227FF'),
+  slotted('sensor.h2d_ams_2_tray_3', 3, 'Bambu PLA Basic', 'PLA', '#2E6FD9FF'),
+  slotted('sensor.h2d_ams_2_tray_4', 4, 'Bambu PETG HF', 'PETG', '#D93A2BFF'),
+];
+const H2D_HT: readonly StateSeed[] = [
+  slotted('sensor.h2d_ams_ht_tray_1', 1, 'Bambu PA6-CF', 'PA6-CF', '#3B3A36FF'),
+];
+const H2D_SPOOL_LEFT: readonly StateSeed[] = [
+  [
+    'sensor.h2d_external_spool_external_spool',
+    'Generic TPU',
+    {
+      friendly_name: 'External spool',
+      type: 'TPU',
+      color: '#8A8579FF',
+      active: false,
+      empty: false,
+    },
+  ],
+];
+const H2D_SPOOL_RIGHT: readonly StateSeed[] = [
+  [
+    'sensor.h2d_external_spool_2_external_spool',
+    'Generic PVA',
+    {
+      friendly_name: 'External spool',
+      type: 'PVA',
+      color: '#ECE8E1FF',
+      active: false,
+      empty: false,
+    },
+  ],
+];
+
 /** Each printer's registry: its device, and the integration's own name for each entity. */
 const entries = (
   device: string,
@@ -734,12 +861,22 @@ const entries = (
     },
   ]);
 
-const device = (id: string, name: string, model: string, via: string | null = null) => [
+/** A filament unit's trays, each under the integration's one key for them. */
+const trays = (device: string, seeds: readonly StateSeed[], key: string) =>
+  entries(device, 'bambu_lab', seeds, Object.fromEntries(seeds.map(([id]) => [id, key])));
+
+const device = (
+  id: string,
+  name: string,
+  model: string,
+  via: string | null = null,
+  name_by_user: string | null = null,
+) => [
   id,
   {
     id,
     name,
-    name_by_user: null,
+    name_by_user,
     model,
     manufacturer: '',
     area_id: null,
@@ -768,6 +905,15 @@ export const sheet: SheetSpec = {
     ...U1,
     ...A350,
     ...AD5M,
+    ...P1S_22,
+    ...P1S_22_AMS,
+    ...P1S_22_SPOOL,
+    ...H2D,
+    ...H2D_SHELF,
+    ...H2D_AMS_2,
+    ...H2D_HT,
+    ...H2D_SPOOL_LEFT,
+    ...H2D_SPOOL_RIGHT,
   ],
   registry: {
     entities: Object.fromEntries([
@@ -1012,6 +1158,44 @@ export const sheet: SheetSpec = {
         'button.adventurer_5m_cancel_print': 'cancel_print',
         'button.adventurer_5m_clear_status': 'clear_status',
       }),
+      // Bambu Lab since its 2.2: every AMS tray "tray", the spool outside a device of its own
+      ...entries('d-p1s-22', 'bambu_lab', P1S_22, {
+        'sensor.workshop_p1s_print_status': 'print_status',
+        'sensor.workshop_p1s_print_progress': 'print_progress',
+        'sensor.workshop_p1s_remaining_time': 'remaining_time',
+        'sensor.workshop_p1s_nozzle_temperature': 'nozzle_temp',
+        'sensor.workshop_p1s_bed_temperature': 'bed_temp',
+        'sensor.workshop_p1s_current_layer': 'current_layer',
+        'sensor.workshop_p1s_total_layer_count': 'total_layers',
+        'sensor.workshop_p1s_task_name': 'subtask_name',
+        'camera.workshop_p1s_camera': 'camera',
+        'image.workshop_p1s_cover_image': 'cover_image',
+        'button.workshop_p1s_pause': 'pause',
+        'button.workshop_p1s_resume': 'resume',
+        'button.workshop_p1s_stop': 'stop',
+      }),
+      ...trays('d-p1s-22-ams', P1S_22_AMS, 'tray'),
+      ...trays('d-p1s-22-spool', P1S_22_SPOOL, 'external_spool'),
+      ...entries('d-h2d', 'bambu_lab', H2D, {
+        'sensor.h2d_print_status': 'print_status',
+        'sensor.h2d_print_progress': 'print_progress',
+        'sensor.h2d_remaining_time': 'remaining_time',
+        'sensor.h2d_nozzle_temperature': 'nozzle_temp',
+        'sensor.h2d_bed_temperature': 'bed_temp',
+        'sensor.h2d_current_layer': 'current_layer',
+        'sensor.h2d_total_layer_count': 'total_layers',
+        'sensor.h2d_task_name': 'subtask_name',
+        'camera.h2d_camera': 'camera',
+        'image.h2d_cover_image': 'cover_image',
+        'button.h2d_pause': 'pause',
+        'button.h2d_resume': 'resume',
+        'button.h2d_stop': 'stop',
+      }),
+      ...trays('d-h2d-ams-1', H2D_SHELF, 'tray'),
+      ...trays('d-h2d-ams-2', H2D_AMS_2, 'tray'),
+      ...trays('d-h2d-ht', H2D_HT, 'tray'),
+      ...trays('d-h2d-spool', H2D_SPOOL_LEFT, 'external_spool'),
+      ...trays('d-h2d-spool-2', H2D_SPOOL_RIGHT, 'external_spool'),
     ]),
     devices: Object.fromEntries([
       device('d-p1s', 'P1S', 'P1S'),
@@ -1031,6 +1215,22 @@ export const sheet: SheetSpec = {
       device('d-u1', 'Snapmaker U1', 'U1'),
       device('d-a350', 'Snapmaker A350', 'A350'),
       device('d-ad5m', 'Adventurer 5M', 'Adventurer 5M'),
+      // Bambu Lab names its units by their number (an AMS HT's from 128); a person renamed some
+      device('d-p1s-22', 'P1S_01P00A000000001', 'P1S', null, 'Workshop P1S'),
+      device('d-p1s-22-ams', 'P1S_01P00A000000001_AMS_1', 'AMS', 'd-p1s-22', 'AMS'),
+      device(
+        'd-p1s-22-spool',
+        'P1S_01P00A000000001_ExternalSpool',
+        'External Spool',
+        'd-p1s-22',
+        'P1S External Spool',
+      ),
+      device('d-h2d', 'H2D_0948AD000000001', 'H2D', null, 'H2D'),
+      device('d-h2d-ams-1', 'H2D_0948AD000000001_AMS_1', 'AMS 2 Pro', 'd-h2d', 'Shelf'),
+      device('d-h2d-ams-2', 'H2D_0948AD000000001_AMS_2', 'AMS 2 Pro', 'd-h2d'),
+      device('d-h2d-ht', 'H2D_0948AD000000001_AMS_128', 'AMS HT', 'd-h2d'),
+      device('d-h2d-spool', 'H2D_0948AD000000001_ExternalSpool', 'External Spool', 'd-h2d'),
+      device('d-h2d-spool-2', 'H2D_0948AD000000001_ExternalSpool2', 'External Spool', 'd-h2d'),
     ]),
   },
   frames: [
@@ -1295,6 +1495,15 @@ export const sheet: SheetSpec = {
         { type: 'custom:fluvy-printer-card', device: 'd-p1s', variant: 'row', _now: NOW, cols: 6 },
         { type: 'custom:fluvy-printer-card', device: 'd-mk4', variant: 'row', _now: NOW, cols: 6 },
       ],
+    },
+    // issue #119: Bambu Lab's 2.2, its AMS trays in their unit and slot, the spools outside last, whatever their ids
+    {
+      title: 'Bambu Lab 2.2 · its AMS, then the spool outside',
+      cards: [{ type: 'custom:fluvy-printer-card', device: 'd-p1s-22', _now: NOW }],
+    },
+    {
+      title: 'Bambu Lab 2.2 · two AMS, an AMS HT, two spools',
+      cards: [{ type: 'custom:fluvy-printer-card', device: 'd-h2d', _now: NOW }],
     },
   ],
 };
