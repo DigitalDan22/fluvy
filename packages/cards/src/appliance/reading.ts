@@ -1,4 +1,6 @@
 import {
+  deviceNameOf,
+  registryText,
   resolveEntity,
   stateText,
   strings,
@@ -138,10 +140,10 @@ export interface ApplianceFound {
 export function findAppliance(hass: House | undefined, config: ApplianceConfig): ApplianceFound {
   const device = applianceDevice(hass, config.device, config.entity);
   const scanned = config.scan === false ? undefined : device;
-  const entry = device ? hass?.devices?.[device] : undefined;
   const entries = entriesOf(hass, device);
   const platform =
-    platformOf(entries) ?? (config.entity ? hass?.entities?.[config.entity]?.platform : undefined);
+    platformOf(entries) ??
+    (config.entity ? registryText(hass?.entities?.[config.entity]?.platform) : undefined);
   const printer = device !== undefined && printerDevices(hass).includes(device);
   const signals = device ? signalsOf(hass, device, printer) : undefined;
   // a plug's entity may be named for what it powers ("Washing machine") where its device is not ("Plug 3")
@@ -155,7 +157,7 @@ export function findAppliance(hass: House | undefined, config: ApplianceConfig):
     device,
     platform,
     entities: applianceEntities(hass, scanned, config.roles ?? [], config.entity),
-    candidates: scanned ? candidatesOf(hass, entries, entry?.name_by_user ?? entry?.name) : [],
+    candidates: scanned ? candidatesOf(hass, entries, signals?.name) : [],
     verdict: verdict ?? byWords(named, config.entity),
   };
 }
@@ -539,10 +541,8 @@ function nameOf(
   found: ApplianceFound,
   config: ApplianceConfig,
 ): string {
-  const device = found.device ? hass?.devices?.[found.device] : undefined;
   return (
-    device?.name_by_user ??
-    device?.name ??
+    deviceNameOf(found.device ? hass?.devices?.[found.device] : undefined) ??
     (config.entity ? resolveEntity(hass, config.entity).name : '')
   );
 }

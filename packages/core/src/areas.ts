@@ -4,6 +4,7 @@ import type {
   FloorRegistryEntry,
   HomeAssistant,
 } from './ha/types.js';
+import { registryText, withTextName } from './registry.js';
 
 /*
  * The house by its rooms: which area an entity is in, what an area holds, and the order floors and areas read
@@ -174,7 +175,7 @@ function plugControl(hass: Registries, id: string): boolean {
     return words.every((word) => typeof word === 'string' && PLUG_WORDS.has(word.toLowerCase()));
   }
   if (domainOf(id) !== 'number') return false;
-  const key = hass.entities?.[id]?.translation_key ?? '';
+  const key = registryText(hass.entities?.[id]?.translation_key) ?? '';
   return (
     /countdown|timer/.test(`${id} ${key}`) ||
     ['s', 'min', 'h'].includes(String(state?.attributes['unit_of_measurement']))
@@ -409,11 +410,13 @@ const byName = (a: { name: string }, b: { name: string }): number => a.name.loca
 
 /** The floors by level (the ground first), the unnumbered ones after, each group by name. */
 export function floorsInOrder(hass: Registries): FloorRegistryEntry[] {
-  return Object.values(hass.floors ?? {}).sort((a, b) => {
-    const la = typeof a.level === 'number' ? a.level : Number.POSITIVE_INFINITY;
-    const lb = typeof b.level === 'number' ? b.level : Number.POSITIVE_INFINITY;
-    return la - lb || byName(a, b);
-  });
+  return Object.values(hass.floors ?? {})
+    .map(withTextName)
+    .sort((a, b) => {
+      const la = typeof a.level === 'number' ? a.level : Number.POSITIVE_INFINITY;
+      const lb = typeof b.level === 'number' ? b.level : Number.POSITIVE_INFINITY;
+      return la - lb || byName(a, b);
+    });
 }
 
 /** The areas floor by floor (in the floors' order), the ones on no floor last, each group by name. */
@@ -423,5 +426,7 @@ export function areasInOrder(hass: Registries): AreaRegistryEntry[] {
     const index = area.floor_id ? floors.indexOf(area.floor_id) : -1;
     return index === -1 ? floors.length : index;
   };
-  return Object.values(hass.areas ?? {}).sort((a, b) => rank(a) - rank(b) || byName(a, b));
+  return Object.values(hass.areas ?? {})
+    .map(withTextName)
+    .sort((a, b) => rank(a) - rank(b) || byName(a, b));
 }

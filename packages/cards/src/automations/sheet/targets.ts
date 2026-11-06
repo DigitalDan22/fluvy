@@ -2,6 +2,7 @@ import {
   areaOf,
   isUsable,
   localize,
+  registryText,
   resolveEntity,
   stateText,
   strings,
@@ -76,7 +77,7 @@ export function findCandidates(
     const view = resolveEntity(hass, id);
     const hay = `${view.name} ${id}`.toLocaleLowerCase();
     if (!words.every((word) => hay.includes(word))) continue;
-    found.push({ id, view, area: (areaId && hass.areas[areaId]?.name) || '' });
+    found.push({ id, view, area: (areaId && registryText(hass.areas[areaId]?.name)) || '' });
   }
   const language = hass.language;
   found.sort((a, b) => {

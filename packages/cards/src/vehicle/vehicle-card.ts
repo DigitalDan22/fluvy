@@ -1,4 +1,5 @@
 import {
+  deviceNameOf,
   formatNumber,
   relativeTime,
   stateText,
@@ -1191,9 +1192,10 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
     if (this.config?.name)
       return this.nameFor(this.view('battery') ?? this.entity(), this.config?.name);
     const device = vehicleDevice(this.hass, this.config?.device, this.config?.entity);
-    const entry = device ? this.hass?.devices?.[device] : undefined;
     return (
-      entry?.name_by_user || entry?.name || this.view('battery')?.name || s(this.hass, 'title')
+      deviceNameOf(device ? this.hass?.devices?.[device] : undefined) ||
+      this.view('battery')?.name ||
+      s(this.hass, 'title')
     );
   }
 

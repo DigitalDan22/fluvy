@@ -1,4 +1,11 @@
-import { areaOf, domainOf, type HassEntity, type HomeAssistant } from '@fluvy/core';
+import {
+  areaOf,
+  deviceNameOf,
+  domainOf,
+  registryText,
+  type HassEntity,
+  type HomeAssistant,
+} from '@fluvy/core';
 import { onOff } from '../shared/config.js';
 import {
   many,
@@ -230,7 +237,7 @@ function partTests(part: MatchConfig): { tests: Test[]; domains: ReadonlySet<str
     const devices = perRegistry<HomeAssistant['devices']>((registry) => {
       const ids = new Set<string>();
       for (const device of Object.values(registry)) {
-        const name = (device.name_by_user ?? device.name ?? '').toLowerCase();
+        const name = (deviceNameOf(device) ?? '').toLowerCase();
         if (
           deviceList.includes(device.id) ||
           deviceList.some((text) => !wild(text) && text.toLowerCase() === name) ||
@@ -251,7 +258,7 @@ function partTests(part: MatchConfig): { tests: Test[]; domains: ReadonlySet<str
     const areas = byIdOrName<{ area_id: string; name: string }>(
       areaList,
       (a) => a.area_id,
-      (a) => a.name,
+      (a) => registryText(a.name),
     );
     tests.push((id, _state, hass) => {
       const area = areaOf(hass, id);
@@ -262,7 +269,7 @@ function partTests(part: MatchConfig): { tests: Test[]; domains: ReadonlySet<str
     const floors = byIdOrName<{ floor_id: string; name: string }>(
       floorList,
       (f) => f.floor_id,
-      (f) => f.name,
+      (f) => registryText(f.name),
     );
     tests.push((id, _state, hass) => {
       const area = areaOf(hass, id);

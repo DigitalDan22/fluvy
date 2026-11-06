@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 // the cards register their heights with core: the strategy lays columns out with them
 import { catalogue } from '../index.js';
 
@@ -61,6 +61,68 @@ const everything = () =>
   ) as never;
 const cardsOf = (views: readonly View[]) =>
   views.flatMap((v) => v.sections.flatMap((s) => s.cards));
+
+/**
+ * `everything()` with what custom integrations write where Home Assistant types text (#129), each through `write`: the
+ * reporter's two fuel stations, their model a number; a thermometer whose integration names it, its maker and its
+ * model by numbers; a loft whose name and floor's name are numbers.
+ */
+function numbered(write: (value: number) => unknown): HomeAssistant {
+  const hass = everything() as unknown as HomeAssistant;
+  const reading = (
+    id: string,
+    device: string,
+    value: string,
+    attributes: Record<string, unknown>,
+  ): void => {
+    hass.states[id] = {
+      entity_id: id,
+      state: value,
+      attributes,
+      last_changed: '',
+      last_updated: '',
+    };
+    hass.entities[id] = { entity_id: id, device_id: device, platform: 'prix_carburant' };
+  };
+  const device = (id: string, name: unknown, manufacturer: unknown, model: unknown): void => {
+    hass.devices[id] = {
+      id,
+      name,
+      name_by_user: null,
+      area_id: null,
+      manufacturer,
+      model,
+    } as never;
+  };
+  device('station-leclerc', 'Station Bapdis Sas', 'Leclerc', write(76380002));
+  device('station-esso', 'Station Esso DU MIN', 'Esso Express', write(76000007));
+  reading('sensor.station_bapdis_sas_gazole', 'station-leclerc', '1.689', {
+    friendly_name: 'Station Bapdis Sas Gazole',
+    unit_of_measurement: '€/L',
+  });
+  reading('sensor.station_esso_du_min_sp98', 'station-esso', '1.859', {
+    friendly_name: 'Station Esso DU MIN SP98',
+    unit_of_measurement: '€/L',
+  });
+  device('thermo', write(4711), write(1234), write(3));
+  hass.devices['thermo']!.model_id = write(7) as never;
+  reading('sensor.thermo_temperature', 'thermo', '19.5', {
+    friendly_name: '4711 Temperature',
+    device_class: 'temperature',
+    unit_of_measurement: '°C',
+  });
+  hass.floors = { ...hass.floors, attic: { floor_id: 'attic', name: write(2) as never, level: 2 } };
+  hass.areas['loft'] = { area_id: 'loft', name: write(3) as never, floor_id: 'attic' };
+  hass.states['light.loft'] = {
+    entity_id: 'light.loft',
+    state: 'on',
+    attributes: { friendly_name: 'Loft light' },
+    last_changed: '',
+    last_updated: '',
+  };
+  hass.entities['light.loft'] = { entity_id: 'light.loft', area_id: 'loft' };
+  return hass;
+}
 
 /** Every `entity` a card config names, however deep, and every id of its `entities`. */
 function entitiesOf(value: unknown, out: unknown[] = []): unknown[] {
@@ -430,6 +492,77 @@ describe('the dashboard templates', () => {
     hass.areas['garage'] = { area_id: 'garage', name: 'Garage', icon: 'mdi:garage' } as never;
     const { views } = await generate({ type: 'custom:fluvy-rooms' }, hass as never);
     expect(views.find((view) => view.path === 'room-garage')).toMatchSnapshot();
+  });
+
+  it('build every dashboard for a house whose registries say numbers, each read as it is written (#129)', async () => {
+    for (const template of TEMPLATES) {
+      const read = await generate({ type: template.type }, numbered((value) => value) as never);
+      expect(read, template.id).toEqual(
+        await generate({ type: template.type }, numbered(String) as never),
+      );
+    }
+    // the thermometer on no area is placed by its device's name; the loft's page is titled by its own
+    const { views } = await generate({ type: 'custom:fluvy-rooms' }, numbered((v) => v) as never);
+    expect(views.find((view) => view.path === 'room-loft')?.title).toBe('3');
+    const home = await generate({ type: 'custom:fluvy-home' }, numbered((v) => v) as never);
+    expect(
+      cardsOf(home.views).find((card) => card['entity'] === 'sensor.thermo_temperature')?.['name'],
+    ).toBe('4711');
+  });
+
+  it('draw a dashboard without a part that throws on a house nobody foresaw, and say once which part (#129)', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    /** A house whose registry entry throws when that field of it is read. */
+    const broken = (entry: (hass: HomeAssistant) => object, key: string): HomeAssistant => {
+      const hass = everything() as unknown as HomeAssistant;
+      Object.defineProperty(entry(hass), key, {
+        get: () => {
+          throw new Error(`${key} nobody foresaw`);
+        },
+      });
+      return hass;
+    };
+    const parts = [
+      // a device's model: the appliances' search alone reads it
+      { part: 'appliances', hass: () => broken((hass) => hass.devices['hc-dish']!, 'model') },
+      // a printer entity's key: the printers' search, and the appliances' (which leaves the printers out)
+      {
+        part: 'printers',
+        hass: () => broken((hass) => hass.entities['sensor.p1s_print_status']!, 'translation_key'),
+      },
+      // a device's name: the names its entities are called and placed by, and the appliances' search
+      { part: 'names', hass: () => broken((hass) => hass.devices['d-garden']!, 'name') },
+    ];
+    const whole = await generate({ type: 'custom:fluvy-home' }, everything());
+    for (const { part, hass } of parts) {
+      warn.mockClear();
+      const { views } = await generate({ type: 'custom:fluvy-home' }, hass() as never);
+      const said = warn.mock.calls.map(([words]) => words);
+      expect(
+        said.filter(
+          (words) => words === `fluvy: the automatic dashboard is drawn without its ${part}`,
+        ),
+        part,
+      ).toHaveLength(1);
+      expect(
+        warn.mock.calls.every(([, error]) => error instanceof Error),
+        part,
+      ).toBe(true);
+      // every view still drawn, but the appliances' own where their search failed
+      const kept = whole.views.map((view) => view.path);
+      expect(
+        views.map((view) => view.path),
+        part,
+      ).toEqual(
+        said.some((words) => String(words).endsWith('appliances'))
+          ? kept.filter((path) => path !== 'appliances')
+          : kept,
+      );
+      expect(cardsOf(views).length, part).toBeGreaterThan(cardsOf(whole.views).length / 2);
+      for (const template of TEMPLATES)
+        await expect(generate({ type: template.type }, hass() as never)).resolves.toBeDefined();
+    }
+    warn.mockRestore();
   });
 
   it('end a capped list with "N more" and open every one on a subview (golden file, #78)', async () => {

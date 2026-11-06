@@ -1,4 +1,4 @@
-import type { EntityRegistryDisplayEntry, HomeAssistant } from '@fluvy/core';
+import { registryText, type EntityRegistryDisplayEntry, type HomeAssistant } from '@fluvy/core';
 
 /*
  * A 3D printer's entities, found on its device. Every printer integration hangs its entities on one device — OctoPrint
@@ -495,7 +495,7 @@ export function printerDevice(
   return entity ? hass?.entities?.[entity]?.device_id : undefined;
 }
 
-/** A registry entry as a candidate for a role. */
+/** A registry entry as a candidate for a role, its key and integration as text (`registryText`). */
 const candidateOf = (entry: {
   readonly entity_id: string;
   readonly translation_key?: string | undefined;
@@ -503,8 +503,8 @@ const candidateOf = (entry: {
 }): Candidate => ({
   id: entry.entity_id,
   domain: domainOf(entry.entity_id),
-  key: entry.translation_key,
-  platform: entry.platform,
+  key: registryText(entry.translation_key),
+  platform: registryText(entry.platform),
 });
 
 /** An entity holding a role, and how surely. */
@@ -546,14 +546,9 @@ export function printerEntities(
     found[role] = holder.id;
   // the entity the card names is its status when it plays no other part
   if (entity && !Object.values(found).includes(entity)) {
-    const entry = registry[entity];
     const role =
-      roleOf({
-        id: entity,
-        domain: domainOf(entity),
-        key: entry?.translation_key,
-        platform: entry?.platform,
-      }) ?? (domainOf(entity) === 'sensor' ? 'status' : undefined);
+      roleOf(candidateOf(registry[entity] ?? { entity_id: entity })) ??
+      (domainOf(entity) === 'sensor' ? 'status' : undefined);
     if (role) found[role] = entity;
   }
   for (const { role, entity: id } of named)
@@ -573,10 +568,11 @@ export function printerDevices(hass: Pick<HomeAssistant, 'entities'> | undefined
   const devices = new Map<string, { known: boolean; readonly roles: Set<PrinterRole> }>();
   for (const entry of Object.values(hass?.entities ?? {})) {
     if (!entry.device_id) continue;
-    const role = roleOf(candidateOf(entry), 'strict');
+    const candidate = candidateOf(entry);
+    const role = roleOf(candidate, 'strict');
     if (!role) continue;
     const device = devices.get(entry.device_id) ?? { known: false, roles: new Set() };
-    device.known ||= knownPlatform(entry.platform);
+    device.known ||= knownPlatform(candidate.platform);
     device.roles.add(role);
     devices.set(entry.device_id, device);
   }
@@ -612,13 +608,14 @@ export function printerTrays(
       .map((entry) => entry.id),
   );
   units.add(device);
-  const outside = (entry: EntityRegistryDisplayEntry): number =>
-    OUTSIDE.test(entry.translation_key ?? '') ? 1 : 0;
+  const key = (entry: EntityRegistryDisplayEntry): string =>
+    registryText(entry.translation_key) ?? '';
+  const outside = (entry: EntityRegistryDisplayEntry): number => (OUTSIDE.test(key(entry)) ? 1 : 0);
   const unit = (entry: EntityRegistryDisplayEntry): string =>
-    devices[entry.device_id ?? '']?.name ?? '';
+    registryText(devices[entry.device_id ?? '']?.name) ?? '';
   // a person renames a tray's id: its slot is the integration's word (0 where it says none)
   const slot = (entry: EntityRegistryDisplayEntry): number => {
-    const ams = AMS_SLOT.exec(entry.translation_key ?? '');
+    const ams = AMS_SLOT.exec(key(entry));
     return ams ? Number(ams[1] ?? hass.states?.[entry.entity_id]?.attributes['slot']) || 0 : 0;
   };
   const numbered = (a: string, b: string): number => a.localeCompare(b, 'en', { numeric: true });
@@ -629,7 +626,7 @@ export function printerTrays(
         units.has(entry.device_id) &&
         !entry.hidden &&
         entry.entity_id.startsWith('sensor.') &&
-        TRAY.test(entry.translation_key ?? ''),
+        TRAY.test(key(entry)),
     )
     .sort(
       (a, b) =>

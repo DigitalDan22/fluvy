@@ -1,3 +1,4 @@
+import { deviceNameOf } from '@fluvy/core';
 import type { ApplianceKind } from '../appliance/kinds.js';
 import { applianceVariant } from '../appliances-family.js';
 import type { HomeRegistry } from './home-registry.js';
@@ -71,10 +72,7 @@ export function bandsOf(
     .map((device) => ({
       device,
       kind: home.applianceKind(device),
-      name:
-        home.registries.devices?.[device]?.name_by_user ??
-        home.registries.devices?.[device]?.name ??
-        '',
+      name: deviceNameOf(home.registries.devices?.[device]) ?? '',
     }))
     .sort(
       (a, b) =>

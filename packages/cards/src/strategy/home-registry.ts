@@ -13,9 +13,11 @@ import {
   areaContents,
   areaOf,
   areasInOrder,
+  deviceNameOf,
   floorsInOrder,
   isLoad,
   localize,
+  registryText,
   usableEntity,
   type AreaContents,
   type AreaRegistryEntry,
@@ -44,7 +46,8 @@ import {
  * through word rules (the way people name things, in every language Fluvy ships: `words.generated.ts`, from
  * the catalogues) and device classes. Where a name is read among classes of words — a switch's, a place's — the
  * longest of words that overlap wins (`shared/words.ts`). Pure queries, no cards — the views (`views/`) turn them
- * into cards.
+ * into cards. What the dashboard can do without (the appliances, the pets' among them, the printers, the names it
+ * reads) is read as `optional`: a throw on a house nobody foresaw costs that part alone.
  */
 
 export {
@@ -136,6 +139,8 @@ export class HomeRegistry {
   private readonly byDomain = new Map<string, string[]>();
   /** Answers already computed: the registries do not change while a dashboard is generated. */
   private readonly cache = new Map<string, unknown>();
+  /** The parts the dashboard is drawn without (`optional`), each said once. */
+  private readonly missed = new Set<string>();
 
   /** The registries as core's readers take them (`areaEntities`, `areaClimate`). */
   get registries(): Registry {
@@ -158,6 +163,23 @@ export class HomeRegistry {
   private memo<T>(key: string, compute: () => T): T {
     if (!this.cache.has(key)) this.cache.set(key, compute());
     return this.cache.get(key) as T;
+  }
+
+  /**
+   * A part the dashboard can do without: what it reads, else what the dashboard draws without it, where it throws on a
+   * house nobody foresaw (#129: a fuel station's model, a number, took every dashboard down). The rest is drawn all the
+   * same; the throw is said once on the console, by the part's name.
+   */
+  private optional<T>(part: string, read: () => T, without: T): T {
+    try {
+      return read();
+    } catch (error) {
+      if (!this.missed.has(part)) {
+        this.missed.add(part);
+        console.warn(`fluvy: the automatic dashboard is drawn without its ${part}`, error);
+      }
+      return without;
+    }
   }
 
   /**
@@ -204,7 +226,7 @@ export class HomeRegistry {
     return String(this.attr<string>(id, 'friendly_name') ?? id);
   }
   private platform(id: string): string {
-    return this.reg(id)?.platform ?? '';
+    return registryText(this.reg(id)?.platform) ?? '';
   }
   /** The device an entity is of. */
   deviceOf(id: string): string | undefined {
@@ -223,8 +245,7 @@ export class HomeRegistry {
 
   deviceName(id: string): string | undefined {
     const deviceId = this.deviceOf(id);
-    const device = deviceId ? this.hass.devices?.[deviceId] : undefined;
-    return (device?.name_by_user ?? device?.name) || undefined;
+    return deviceNameOf(deviceId ? this.hass.devices?.[deviceId] : undefined);
   }
   /** The entity's own words: the friendly name without the device's name in front of it. */
   ownName(id: string): string {
@@ -236,14 +257,20 @@ export class HomeRegistry {
         : full;
     return own || full;
   }
+  /** A name the dashboard reads for an entity (`optional`): its friendly name where it cannot be read. */
+  private called(id: string, read: () => string): string {
+    return this.optional('names', read, this.name(id));
+  }
   /** What a tile or a row calls the entity: its own name, or its device's when the own name only says the kind of reading. */
   displayName(id: string): string {
-    const own = this.ownName(id);
-    return GENERIC.test(own.trim()) ? (this.deviceName(id) ?? own) : own;
+    return this.called(id, () => {
+      const own = this.ownName(id);
+      return GENERIC.test(own.trim()) ? (this.deviceName(id) ?? own) : own;
+    });
   }
   /** What a list row calls a device's reading (a battery, a phone): the device, else the display name. */
   deviceLabel(id: string): string {
-    return this.deviceName(id) ?? this.displayName(id);
+    return this.called(id, () => this.deviceName(id) ?? this.displayName(id));
   }
   /**
    * Where a reading is: the area, else the device's name without the sensor words (and the separators they leave at
@@ -252,10 +279,12 @@ export class HomeRegistry {
   placeName(id: string): string {
     const area = this.areaName(this.areaOf(id));
     if (area) return area;
-    const device = withoutPlaceNoise(this.deviceName(id) ?? '')
-      .replace(/\s{2,}/g, ' ')
-      .replace(LOOSE_ENDS, '');
-    return device || this.displayName(id);
+    return this.called(id, () => {
+      const device = withoutPlaceNoise(this.deviceName(id) ?? '')
+        .replace(/\s{2,}/g, ' ')
+        .replace(LOOSE_ENDS, '');
+      return device || this.displayName(id);
+    });
   }
   /** `name` for a card only when it improves on what the card would show by itself. */
   named(id: string, name = this.displayName(id)): Record<string, string> {
@@ -276,7 +305,7 @@ export class HomeRegistry {
     return this.domain('zone');
   }
   areaName(areaId: string | undefined): string | undefined {
-    return areaId ? this.hass.areas?.[areaId]?.name : undefined;
+    return areaId ? registryText(this.hass.areas?.[areaId]?.name) : undefined;
   }
 
   /** An entity a dashboard should show: known, not hidden, not a config or diagnostic entity unless asked for. */
@@ -485,19 +514,29 @@ export class HomeRegistry {
    * Creality, Elegoo, Anycubic, Snapmaker, FlashForge), and any other device with a printer's signature.
    */
   get printers(): readonly string[] {
-    return this.memo('printers', () => printerDevices(this.hass));
+    return this.memo('printers', () =>
+      this.optional('printers', () => printerDevices(this.hass), []),
+    );
   }
   /**
    * The house's appliances (#47): the devices the appliance card reads as one — a washer or a fridge of its
    * integration, a kettle on its plug — found strictly, as the card's own search finds them.
    */
   get applianceDevices(): readonly string[] {
-    return this.memo('applianceDevices', () => applianceDevices(this.hass));
+    return this.memo('applianceDevices', () =>
+      this.optional('appliances', () => applianceDevices(this.hass), []),
+    );
   }
-  /** What an appliance is, as its card reads it (`appliance` where nothing says more). */
+  /** What an appliance is, as its card reads it (`appliance` where nothing says more): a feeder is a pet's. */
   applianceKind(device: string): ApplianceKind {
-    const verdict = kindOf(signalsOf(this.hass, device));
-    return verdict && 'kind' in verdict ? verdict.kind : 'appliance';
+    return this.optional(
+      'appliances',
+      () => {
+        const verdict = kindOf(signalsOf(this.hass, device));
+        return verdict && 'kind' in verdict ? verdict.kind : 'appliance';
+      },
+      'appliance',
+    );
   }
   /**
    * The appliances' switches a tile shows: the loads (`isLoad`, as a room counts its devices: never a dishwasher's

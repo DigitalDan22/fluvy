@@ -9,3 +9,11 @@ const english = join(dirname(fileURLToPath(import.meta.url)), '../core/src/i18n/
 for (const part of readdirSync(english))
   addEnglish(JSON.parse(readFileSync(join(english, part), 'utf8')));
 await preloadLanguages();
+
+// the automatic dashboards draw without a part that throws and say so on the console (`HomeRegistry`'s `optional`): in
+// a test the throw fails it, unless the test listens for the warning itself
+const warn = console.warn.bind(console);
+console.warn = (...said: unknown[]) => {
+  if (String(said[0]).startsWith('fluvy: the automatic dashboard')) throw said[1];
+  warn(...said);
+};

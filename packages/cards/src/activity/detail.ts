@@ -1,6 +1,7 @@
 /** The Activity page's row detail: its facts, the cause as a way in, the buttons laid out by measurement. */
 import { html, nothing, type TemplateResult } from 'lit';
 import {
+  deviceNameOf,
   domainOf,
   formatDate,
   localize,
@@ -34,7 +35,7 @@ export function renderDetail(
   const registry = event.entity_id ? hass.entities?.[event.entity_id] : undefined;
   const device = registry?.device_id ? hass.devices?.[registry.device_id] : undefined;
   // where it is: its area, then its device — said once when the device is named like its area
-  const where = [view?.areaName ?? '', device?.name_by_user ?? device?.name ?? ''].filter(
+  const where = [view?.areaName ?? '', deviceNameOf(device) ?? ''].filter(
     (part, i, parts) =>
       part !== '' && parts.findIndex((other) => other.toLowerCase() === part.toLowerCase()) === i,
   );

@@ -3,6 +3,7 @@ import {
   formatNumber,
   localize,
   plural,
+  registryText,
   resolveEntity,
   stateText,
   type HomeAssistant,
@@ -154,7 +155,7 @@ export function rowGlyph(context: LookContext, result: AlertResult, row: AlertRo
 /** Where a row is: its area's name. */
 export function rowArea({ hass }: LookContext, row: AlertRow): string {
   const area = row.state ? areaOf(hass, row.id) : undefined;
-  return (area && hass?.areas?.[area]?.name) || '';
+  return (area && registryText(hass?.areas?.[area]?.name)) || '';
 }
 
 /** "3 devices" / "1 entity" / "2 repairs": what an alert counts. */

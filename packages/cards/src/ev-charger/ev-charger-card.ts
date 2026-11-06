@@ -2,6 +2,7 @@ import { chargerHeight } from '../energy-family.js';
 import {
   clock12,
   dateFormat,
+  deviceNameOf,
   formatNumber,
   formatTime,
   stateText,
@@ -259,8 +260,7 @@ export class FluvyEvChargerCard extends Card<EvChargerCardConfig> {
 
   private name(view: EntityView): string {
     if (this.config?.name) return this.nameFor(view, this.config?.name);
-    const device = this.hass?.devices?.[this.hass.entities?.[view.id]?.device_id ?? ''];
-    const own = device?.name_by_user ?? device?.name;
+    const own = deviceNameOf(this.hass?.devices?.[this.hass.entities?.[view.id]?.device_id ?? '']);
     if (own) return own;
     return view.status === 'missing' ? s(this.hass, 'title') : deviceName(view);
   }

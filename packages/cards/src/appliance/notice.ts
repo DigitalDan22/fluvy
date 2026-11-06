@@ -1,4 +1,4 @@
-import type { HomeAssistant } from '@fluvy/core';
+import { registryText, type HomeAssistant } from '@fluvy/core';
 import type { NoticeTrigger } from '../automations/notice.js';
 import type { ApplianceKind } from './kinds.js';
 import { COMPLETED, type ApplianceFound } from './reading.js';
@@ -105,7 +105,7 @@ export function phoneOf(hass: HomeAssistant): string | undefined {
     const entry = hass.entities?.[String(tracker)];
     if (entry?.platform !== 'mobile_app') continue;
     const device = entry.device_id ? hass.devices?.[entry.device_id] : undefined;
-    const service = `mobile_app_${slug(device?.name ?? String(tracker).replace(/^[^.]*\./, ''))}`;
+    const service = `mobile_app_${slug(registryText(device?.name) ?? String(tracker).replace(/^[^.]*\./, ''))}`;
     if (service in services) return service;
   }
   return undefined;

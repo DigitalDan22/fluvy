@@ -380,6 +380,52 @@ describe('the house’s appliances', () => {
     expect([...printers].sort()).toEqual([...printerDevices(PRINTER_HOUSE)].sort());
   });
 
+  it('reads a model, a model id, a maker and a name an integration writes as numbers as they are written (#129)', () => {
+    // the reporter's fuel station beside the house's appliances: its model a number, and no appliance
+    const house = {
+      ...HOUSE,
+      entities: {
+        ...HOUSE.entities,
+        'sensor.station_gazole': {
+          entity_id: 'sensor.station_gazole',
+          device_id: 'station',
+          platform: 'prix_carburant',
+        },
+      },
+      devices: {
+        ...HOUSE.devices,
+        station: {
+          id: 'station',
+          name: 'Station Bapdis Sas',
+          name_by_user: null,
+          area_id: null,
+          manufacturer: 'Leclerc',
+          model: 76380002 as never,
+        },
+        thermo: {
+          id: 'thermo',
+          name: 4711 as never,
+          name_by_user: null,
+          area_id: null,
+          manufacturer: 1234 as never,
+          model: 3 as never,
+          model_id: 7 as never,
+        },
+      },
+    } as HomeAssistant;
+    expect([...applianceDevices(house)].sort()).toEqual([...applianceDevices(HOUSE)].sort());
+    expect(signalsOf(house, 'station')).toMatchObject({
+      model: '76380002',
+      manufacturer: 'Leclerc',
+    });
+    expect(signalsOf(house, 'thermo')).toMatchObject({
+      name: '4711',
+      model: '3',
+      modelId: '7',
+      manufacturer: '1234',
+    });
+  });
+
   it('reads the house again only when its registries change, not on every state', () => {
     const first = applianceDevices(HOUSE);
     const ticked = { ...HOUSE, states: { ...HOUSE.states } } as HomeAssistant;

@@ -1,3 +1,4 @@
+import { deviceNameOf, registryText } from '@fluvy/core';
 import type { Tone } from '@fluvy/ui';
 import { printerDevices } from '../printer/roles.js';
 import type { CommandName } from './commands.js';
@@ -495,10 +496,13 @@ function makerKind(manufacturer: string | null | undefined): KindVerdict | undef
 /** The programme select's options: Home Connect's selected or active programme, Matter's mode. */
 const PROGRAM_SELECTS = ['selected_program', 'active_program'];
 
-/** What a device says about its kind, from the registries and the states. */
+/**
+ * What a device says about its kind, from the registries (their words as text, `registryText`: a fuel station's model
+ * may be a number, #129) and the states.
+ */
 export function signalsOf(hass: House | undefined, device: string, printer = false): KindSignals {
   const entry = hass?.devices?.[device];
-  const name = entry?.name_by_user ?? entry?.name;
+  const name = deviceNameOf(entry);
   const entries = entriesOf(hass, device);
   const candidates = candidatesOf(hass, entries, name);
   const programs: string[] = [];
@@ -520,10 +524,10 @@ export function signalsOf(hass: House | undefined, device: string, printer = fal
   }
   return {
     platform: platformOf(entries),
-    model: entry?.model,
-    modelId: entry?.model_id,
+    model: registryText(entry?.model),
+    modelId: registryText(entry?.model_id),
     name,
-    manufacturer: entry?.manufacturer,
+    manufacturer: registryText(entry?.manufacturer),
     keys: new Set(
       candidates.map((candidate) => candidate.key).filter((key): key is string => Boolean(key)),
     ),
@@ -783,12 +787,7 @@ function isAppliance(hass: House, device: string, printer: boolean): boolean {
   const signals = signalsOf(hass, device, printer);
   const verdict = kindOf(signals);
   if (!verdict || 'excluded' in verdict) return false;
-  const entry = hass.devices?.[device];
-  const candidates = candidatesOf(
-    hass,
-    entriesOf(hass, device),
-    entry?.name_by_user ?? entry?.name,
-  );
+  const candidates = candidatesOf(hass, entriesOf(hass, device), signals.name);
   const roles = new Set(candidates.map((candidate) => roleOf(candidate, 'strict')));
   if (knownPlatform(signals.platform)) {
     if (JOB_ROLES.some((role) => roles.has(role))) return true;

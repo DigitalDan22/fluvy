@@ -2,7 +2,7 @@
 
 import { html, nothing, type TemplateResult } from 'lit';
 
-import { resolveEntity, writeStored } from '@fluvy/core';
+import { deviceNameOf, registryText, resolveEntity, writeStored } from '@fluvy/core';
 import {
   countFilters,
   countTargets,
@@ -84,12 +84,9 @@ export function sourceSummary(page: FluvyActivity): string {
   const list = (value: string | readonly string[] | undefined): readonly string[] =>
     value === undefined ? [] : typeof value === 'string' ? [value] : value;
   const names = [
-    ...list(page.target.floor_id).map((id) => floors?.[id]?.name ?? id),
-    ...list(page.target.area_id).map((id) => hass.areas?.[id]?.name ?? id),
-    ...list(page.target.device_id).map((id) => {
-      const device = hass.devices?.[id];
-      return device?.name_by_user ?? device?.name ?? id;
-    }),
+    ...list(page.target.floor_id).map((id) => registryText(floors?.[id]?.name) ?? id),
+    ...list(page.target.area_id).map((id) => registryText(hass.areas?.[id]?.name) ?? id),
+    ...list(page.target.device_id).map((id) => deviceNameOf(hass.devices?.[id]) ?? id),
     ...list(page.target.entity_id).map((id) => resolveEntity(hass, id).name),
   ];
   const labels = list(page.target.label_id).length;

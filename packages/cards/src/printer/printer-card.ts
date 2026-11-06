@@ -1,4 +1,5 @@
 import {
+  deviceNameOf,
   formatNumber,
   stateText,
   strings,
@@ -940,10 +941,7 @@ export class FluvyPrinterCard extends Card<PrinterCardConfig> {
       }
     }
     // the device's own name, as Home Assistant puts it at the head of its entities' names
-    const entry = this.printer().device
-      ? this.hass?.devices?.[this.printer().device ?? '']
-      : undefined;
-    const device = entry?.name_by_user || entry?.name || '';
+    const device = deviceNameOf(this.hass?.devices?.[this.printer().device ?? '']) ?? '';
     for (const sensor of this.sensors()) {
       const v = this.entity(sensor.entity);
       const n = v.status === 'ok' ? v.number : null;
@@ -1199,9 +1197,11 @@ export class FluvyPrinterCard extends Card<PrinterCardConfig> {
   private printerName(): string {
     if (this.config?.name)
       return this.nameFor(this.view('status') ?? this.entity(), this.config?.name);
-    const device = this.printer().device;
-    const entry = device ? this.hass?.devices?.[device] : undefined;
-    return entry?.name_by_user || entry?.name || this.view('status')?.name || s(this.hass, 'title');
+    return (
+      deviceNameOf(this.hass?.devices?.[this.printer().device ?? '']) ||
+      this.view('status')?.name ||
+      s(this.hass, 'title')
+    );
   }
 
   /**

@@ -193,6 +193,24 @@ describe('the matcher', () => {
     );
   });
 
+  it('finds a device, an area and a floor an integration names by a number, by that number (#129)', () => {
+    const numbered = house(
+      { 'sensor.station_gazole': { state: '1.689', device: 'station' } },
+      {
+        devices: { station: { name: 76380002 as never, area_id: 'forecourt' } },
+        areas: { forecourt: { name: 3 as never, floor_id: 'street' } },
+        floors: { street: { name: 0 as never } },
+      },
+    );
+    for (const alert of [
+      { device: '76380002' },
+      { device: '7638*' },
+      { area: '3' },
+      { floor: '0' },
+    ])
+      expect(matched(alert, numbered), JSON.stringify(alert)).toEqual(['sensor.station_gazole']);
+  });
+
   it('finds a label on the entity, its device or its area', () => {
     expect(matched({ label: 'night' }, HOUSE)).toEqual(['light.kitchen']);
     expect(matched({ label: 'security' }, HOUSE)).toEqual([

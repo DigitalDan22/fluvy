@@ -1,6 +1,8 @@
 import {
   areaOf,
+  deviceNameOf,
   domainOf,
+  registryText,
   type HassEntities,
   type HassEntity,
   type HomeAssistant,
@@ -154,12 +156,11 @@ export function nameOf(hass: HomeAssistant, id: string, by: NameBy = 'entity'): 
   const entry = hass.entities?.[id];
   const own = hass.states[id]?.attributes.friendly_name ?? entry?.name ?? id;
   if (by === 'device') {
-    const device = entry?.device_id ? hass.devices?.[entry.device_id] : undefined;
-    return device?.name_by_user ?? device?.name ?? own;
+    return deviceNameOf(entry?.device_id ? hass.devices?.[entry.device_id] : undefined) ?? own;
   }
   if (by === 'area') {
     const area = areaOf(hass, id);
-    return (area && hass.areas?.[area]?.name) || own;
+    return (area && registryText(hass.areas?.[area]?.name)) || own;
   }
   return own;
 }
@@ -563,7 +564,7 @@ export class AlertEngine {
     const name = (row: AlertRow): string => nameOf(hass, row.id, definition.nameBy);
     const area = (row: AlertRow): string => {
       const id = areaOf(hass, row.id);
-      return (id && hass.areas?.[id]?.name) || '';
+      return (id && registryText(hass.areas?.[id]?.name)) || '';
     };
     const compare = (a: string, b: string): number => a.localeCompare(b, hass.language);
     const by: Record<AlertDefinition['sortRows'], (a: AlertRow, b: AlertRow) => number> = {

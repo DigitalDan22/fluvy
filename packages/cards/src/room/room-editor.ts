@@ -2,6 +2,7 @@ import {
   addEnglish,
   areaContents,
   areaEntities,
+  deviceNameOf,
   lightDefaults,
   resolveEntity,
   type ClimateKind,
@@ -169,7 +170,7 @@ function roomEntries(config: Readonly<Record<string, unknown>>, hass?: HomeAssis
     ...ids.map((id) => ({ value: id, label: `${resolveEntity(hass, id).name} (${id})` })),
     ...devices.map((device) => ({
       value: device,
-      label: hass.devices?.[device]?.name_by_user ?? hass.devices?.[device]?.name ?? device,
+      label: deviceNameOf(hass.devices?.[device]) ?? device,
     })),
     ...[...new Set(ids.map((id) => id.slice(0, id.indexOf('.'))))].map((domain) => ({
       value: domain,

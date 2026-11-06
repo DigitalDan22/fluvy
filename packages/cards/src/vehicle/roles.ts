@@ -1,4 +1,5 @@
 import type { EntityRegistryDisplayEntry, HassEntity, HomeAssistant } from '@fluvy/core';
+import { deviceNameOf, registryText } from '@fluvy/core';
 import { deviceSlug, withoutSlug } from '../appliance/roles.js';
 
 /*
@@ -837,9 +838,10 @@ const HELPERS: ReadonlySet<string> = new Set([
 
 /** The integration a car is of: one the card reads by its words, else the one most of its entities are of. */
 export function platformOf(entries: readonly EntityRegistryDisplayEntry[]): string | undefined {
-  const all = entries.flatMap((entry) =>
-    entry.platform && !HELPERS.has(entry.platform) ? [entry.platform] : [],
-  );
+  const all = entries.flatMap((entry) => {
+    const platform = registryText(entry.platform);
+    return platform && !HELPERS.has(platform) ? [platform] : [];
+  });
   const count = (platform: string): number => all.filter((other) => other === platform).length;
   return (
     all.find(known) ??
@@ -858,8 +860,8 @@ function candidateOf(
   return {
     id: entry.entity_id,
     domain: domainOf(entry.entity_id),
-    key: entry.translation_key,
-    platform: entry.platform,
+    key: registryText(entry.translation_key),
+    platform: registryText(entry.platform),
     deviceClass: state?.attributes.device_class,
     unit: state?.attributes.unit_of_measurement,
     category: entry.entity_category,
@@ -921,10 +923,7 @@ export function vehicleEntities(
     : [];
   const platform = platformOf(entries);
   const objects = entries.map((entry) => entry.entity_id.slice(entry.entity_id.indexOf('.') + 1));
-  const name = device
-    ? (hass?.devices?.[device]?.name_by_user ?? hass?.devices?.[device]?.name)
-    : undefined;
-  const slug = deviceSlug(objects, name);
+  const slug = deviceSlug(objects, deviceNameOf(device ? hass?.devices?.[device] : undefined));
   const take = (candidate: Candidate): void => {
     const part = partOf(candidate);
     if (!part) return;

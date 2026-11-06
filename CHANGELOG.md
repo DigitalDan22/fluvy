@@ -41,6 +41,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   card and a door left open opened the appliance's error sensor where it has one.
 - The Appliance card's readouts keep a word all of a device's entities share after its name, "Total coffees" and "Rinse
   aid level", where they read "Coffees" and "Aid level"; only a mark in capitals goes, as the DE1's "DE1+".
+- The automatic dashboards, the Appliances card and the Appliance card in the card picker load in a house where an
+  integration writes a device's model, maker or name, or an area's name, as a number, where the Home dashboard said
+  "Error loading the dashboard strategy: TypeError: (e.model ?? "").trim is not a function" for a fuel station whose
+  model is 76380002 (#129).
+- A part of an automatic dashboard that cannot be read (its appliances, its printers, the names it reads off its
+  devices) is left out with a warning in the browser's console, where it took the whole dashboard down (#129).
 
 ## [1.15.0] — 2026-11-06
 

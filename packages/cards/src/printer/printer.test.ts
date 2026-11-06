@@ -149,6 +149,17 @@ describe('a printer’s entities', () => {
     ]);
   });
 
+  it('orders the units an integration names by numbers as it orders their names (#129)', () => {
+    const numbered = { ...hass, devices: { ...hass.devices } } as HomeAssistant;
+    for (const [id, name] of [
+      ['d-h2d-ams-1', 1],
+      ['d-h2d-ams-2', 2],
+      ['d-h2d-ht', 128],
+    ] as const)
+      numbered.devices[id] = { ...numbered.devices[id]!, name: name as never };
+    expect(printerTrays(numbered, 'd-h2d')).toEqual(printerTrays(hass, 'd-h2d'));
+  });
+
   it('finds Creality’s by its keys — the targets as numbers, the light, the camera and the preview — never its CFS’s own readings, its maxima or its own buttons', () => {
     const k1c = printerEntities(hass, 'd-k1c');
     expect(k1c).toEqual({

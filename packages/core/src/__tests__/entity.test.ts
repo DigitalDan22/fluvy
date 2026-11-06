@@ -101,6 +101,28 @@ describe('resolveEntity', () => {
     expect(view.attr('nothing')).toBeUndefined();
   });
 
+  it('reads a name, an area’s name and a key a custom integration writes as a number as text (#129)', () => {
+    const h = hass(
+      { 'sensor.price': { state: '1.689', attributes: { friendly_name: 76380002 } } },
+      {
+        entities: {
+          'sensor.price': {
+            entity_id: 'sensor.price',
+            area_id: 'forecourt',
+            translation_key: 7 as never,
+          },
+          'sensor.gone': { entity_id: 'sensor.gone', name: 4711 as never },
+        },
+        areas: { forecourt: { area_id: 'forecourt', name: 3 as never } },
+      },
+    );
+    const view = resolveEntity(h, 'sensor.price');
+    expect(view.name).toBe('76380002');
+    expect(view.areaName).toBe('3');
+    expect(view.translationKey).toBe('7');
+    expect(resolveEntity(h, 'sensor.gone').name).toBe('4711');
+  });
+
   it('reads supported features as a bitmask and survives their absence', () => {
     const h = hass({
       'cover.a': { state: 'open', attributes: { supported_features: 15 } },

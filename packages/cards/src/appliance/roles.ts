@@ -1,4 +1,5 @@
 import type { EntityRegistryDisplayEntry, HassEntity, HomeAssistant } from '@fluvy/core';
+import { deviceNameOf, registryText } from '@fluvy/core';
 import { boostOf, hobOf, zoneOf } from './zones.js';
 import { maintenanceOf } from './maintenance.js';
 import { entityOf, stateOf } from './refs.js';
@@ -1006,7 +1007,7 @@ const HELPERS: ReadonlySet<string> = new Set([
  * first's on a tie) — never a helper of Home Assistant's a person attached to it, where it has anything else.
  */
 export function platformOf(entries: readonly EntityRegistryDisplayEntry[]): string | undefined {
-  const all = entries.flatMap((entry) => (entry.platform ? [entry.platform] : []));
+  const all = entries.flatMap((entry) => registryText(entry.platform) ?? []);
   const others = all.filter((platform) => !HELPERS.has(platform));
   const platforms = others.length ? others : all;
   const count = (platform: string): number =>
@@ -1067,8 +1068,8 @@ function candidateOf(
   return {
     id: entry.entity_id,
     domain: domainOf(entry.entity_id),
-    key: entry.translation_key,
-    platform: entry.platform,
+    key: registryText(entry.translation_key),
+    platform: registryText(entry.platform),
     deviceClass: state?.attributes.device_class,
     unit: state?.attributes.unit_of_measurement,
     category: entry.entity_category,
@@ -1161,9 +1162,7 @@ export function applianceEntities(
   };
   const entries = entriesOf(hass, device);
   const platform = platformOf(entries);
-  const name = device
-    ? (hass?.devices?.[device]?.name_by_user ?? hass?.devices?.[device]?.name)
-    : undefined;
+  const name = device ? deviceNameOf(hass?.devices?.[device]) : undefined;
   for (const candidate of candidatesOf(hass, entries, name)) {
     if (hass?.entities?.[entityOf(candidate.id)]?.hidden) continue;
     const kind = gatheredOf(candidate);

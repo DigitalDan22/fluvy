@@ -18,6 +18,7 @@ import {
   strings,
   textName,
   valueParts,
+  withTextName,
   type AreaContents,
   type ClimateKind,
   type FluvyCardConfig,
@@ -272,8 +273,10 @@ export class FluvyRoomCard extends FluvyTileCard {
     return this.config as RoomCardConfig | undefined;
   }
 
+  /** The room's area, its name as text (`withTextName`). */
   private area() {
-    return this.hass?.areas?.[this.room?.area ?? ''];
+    const area = this.hass?.areas?.[this.room?.area ?? ''];
+    return area && withTextName(area);
   }
 
   private get variant(): RoomVariant {

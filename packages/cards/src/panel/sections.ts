@@ -11,6 +11,7 @@ import {
   localize,
   offeredLanguages,
   parsePalette,
+  registryText,
   resolveLanguage,
   type Scope,
   chromeOf,
@@ -26,6 +27,7 @@ import {
   WALL_NIGHT_DIM,
   type WallSettings,
   wearsLook,
+  withTextName,
 } from '@fluvy/core';
 import {
   chipColumns,
@@ -1276,7 +1278,9 @@ function optionChoice(
 
 /** Which rooms a dashboard shows, a chip a room; every room chosen (the default) writes nothing. */
 function areasChoice(ctx: PanelContext, urlPath: string, current: unknown): TemplateResult {
-  const rooms = Object.values(ctx.hass.areas ?? {}).sort((a, b) => a.name.localeCompare(b.name));
+  const rooms = Object.values(ctx.hass.areas ?? {})
+    .map(withTextName)
+    .sort((a, b) => a.name.localeCompare(b.name));
   const chosen = Array.isArray(current) ? new Set(current as readonly string[]) : null;
   return choice(
     ctx,
@@ -1484,7 +1488,7 @@ function motionSensors(
     .map((state) => ({
       id: state.entity_id,
       name: String(state.attributes['friendly_name'] ?? state.entity_id),
-      area: hass.areas?.[areaOf(hass, state.entity_id) ?? '']?.name,
+      area: registryText(hass.areas?.[areaOf(hass, state.entity_id) ?? '']?.name),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }

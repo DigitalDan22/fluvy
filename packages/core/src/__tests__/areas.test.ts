@@ -610,4 +610,21 @@ describe('the house by its rooms', () => {
     const { states, entities, devices, areas } = hass;
     expect(floorsInOrder({ states, entities, devices, areas })).toEqual([]);
   });
+
+  it('orders the floors and areas a custom integration names by numbers, each name as it is written (#129)', () => {
+    const hass = house();
+    hass.areas['hall'] = { ...hass.areas['hall']!, name: 10 as never };
+    hass.areas['living'] = { ...hass.areas['living']!, name: 9 as never };
+    hass.floors!['roof'] = { ...hass.floors!['roof']!, name: 3 as never };
+    hass.floors!['attic'] = { floor_id: 'attic', name: 2 as never };
+    expect(floorsInOrder(hass).map((floor) => floor.name)).toEqual([
+      'Ground',
+      'Upstairs',
+      '2',
+      '3',
+    ]);
+    expect(areasInOrder(hass).map((area) => area.name)).toEqual(['10', '9', 'Office', 'Attic']);
+    // an entry whose name is text already is the registry's own
+    expect(areasInOrder(hass)).toContain(hass.areas['office']);
+  });
 });

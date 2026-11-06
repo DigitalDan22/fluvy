@@ -234,6 +234,18 @@ describe('a car’s entities', () => {
     ]);
   });
 
+  it('reads a car whose integration names it by a number as one named by words (#129)', () => {
+    // a lone entity: the car's id is read off its name
+    const battery = ['sensor.model_3_battery', '71', undefined, BATTERY] as const;
+    const car = {
+      device: 'd-custom',
+      name: 4711 as never,
+      platform: 'tesla_custom',
+      seeds: [battery],
+    };
+    expect(vehicleEntities(carHouse([car]), car.device)).toEqual(custom([]));
+  });
+
   it('knows a wheel by its key or its id', () => {
     expect(wheelOf('vehicle_state_tpms_soft_warning_fl')).toBe('fl');
     expect(wheelOf('tire_pressure_rear_left_warning_is_on')).toBe('rl');

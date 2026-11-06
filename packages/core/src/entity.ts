@@ -1,5 +1,6 @@
 import { areaOf } from './areas.js';
 import type { HassEntity, HomeAssistant } from './ha/types.js';
+import { registryText } from './registry.js';
 
 /**
  * One honest view of an entity. `unavailable`, `unknown` and `missing` are first-class: a fifth of a
@@ -119,14 +120,16 @@ export function resolveEntity(hass: HomeAssistant | undefined, id: string | unde
     status,
     stateObj,
     state: stateObj?.state ?? 'missing',
-    name: attr<string>('friendly_name') ?? registry?.name ?? titleCase(entityId),
-    areaName: (areaId && hass?.areas?.[areaId]?.name) || '',
+    // a name a custom integration writes as a number is text too (#129)
+    name:
+      registryText(attr('friendly_name')) ?? registryText(registry?.name) ?? titleCase(entityId),
+    areaName: (areaId && registryText(hass?.areas?.[areaId]?.name)) || '',
     number: Number.isFinite(parsed) ? parsed : null,
     unit: attr<string>('unit_of_measurement') ?? '',
     deviceClass: attr<string>('device_class') ?? '',
     registryIcon,
     ownIcon: stated !== registryIcon ? stated : undefined,
-    translationKey: registry?.translation_key,
+    translationKey: registryText(registry?.translation_key),
     supports: (bit) => ((attr<number>('supported_features') ?? 0) & bit) !== 0,
     attr,
   };
