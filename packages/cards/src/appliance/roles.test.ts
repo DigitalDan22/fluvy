@@ -396,4 +396,41 @@ describe('an appliance’s entities', () => {
       ]).roles.running,
     ).toBe('binary_sensor.washer_running');
   });
+
+  it('drops a role named `none`, or with no entity, from what it found, the rest as found; an entity named for it wins (#127)', () => {
+    const found = applianceEntities(HOUSE, 'lt-dish').roles;
+    expect(found.remote).toBe('binary_sensor.geschirrspuler_kuche_intelligente_steuerung');
+    const rest = Object.fromEntries(Object.entries(found).filter(([role]) => role !== 'remote'));
+    expect(applianceEntities(HOUSE, 'lt-dish', [{ role: 'remote', entity: 'none' }]).roles).toEqual(
+      rest,
+    );
+    // the editor's picker cleared: written without an entity, or an empty one
+    expect(applianceEntities(HOUSE, 'lt-dish', [{ role: 'remote' }]).roles).toEqual(rest);
+    expect(applianceEntities(HOUSE, 'lt-dish', [{ role: 'remote', entity: '' }]).roles).toEqual(
+      rest,
+    );
+    // named twice, none and an entity: the entity plays it, in either order
+    const own = { role: 'remote', entity: 'input_boolean.dishwasher_remote' };
+    const none = { role: 'remote', entity: 'none' };
+    for (const named of [
+      [none, own],
+      [own, none],
+    ])
+      expect(applianceEntities(HOUSE, 'lt-dish', named).roles.remote).toBe(own.entity);
+    // the entity the card names plays none of the part dropped; a role nobody plays, or none the card knows, is nothing
+    expect(
+      applianceEntities(
+        HOUSE,
+        'plug-washer',
+        [{ role: 'power', entity: 'none' }],
+        'switch.waschmaschine_keller',
+      ).roles.power,
+    ).toBeUndefined();
+    expect(
+      applianceEntities(HOUSE, 'lt-dish', [
+        { role: 'door', entity: 'none' },
+        { role: 'doors', entity: 'none' },
+      ]).roles,
+    ).toEqual(found);
+  });
 });

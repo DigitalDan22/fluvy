@@ -417,8 +417,10 @@ litter box — or any appliance on a smart plug, read from the plug's switch and
 ThinQ and LG's older SmartThinQ, Home Connect, Miele, SmartThings, LocalThings, Matter, Whirlpool, Tuya, hOn,
 Electrolux, PetKit, PETLIBRO) or by its name in any of Fluvy's languages, else its maker's; `kind` names it when the
 card guesses wrong, `roles` names an entity for a role (a helper you attached to its device, a template or a utility
-meter, plays one only where nothing of its integration's own does), and `scan: false` makes it read only the entities
-you name (`entity` and `roles`) and nothing else of its device. The card is the design a reader drew for us: a picture
+meter, plays one only where nothing of its integration's own does) or `none` for one the card found and should leave
+out, everything else as found (#127: a remote start that says off while the appliance takes a start, the wrong door, a
+water meter of its whole life; the editor's **None**, or an entity left empty), and `scan: false` makes it read only
+the entities you name (`entity` and `roles`) and nothing else of its device. The card is the design a reader drew for us: a picture
 of the appliance (`picture`: a drawing a kind, the icon, none, or `image` for your own photo; it steps down from 64 to
 44 and 32 before it gives way to a letter of the name, and `picture_min: 32`, `44` or `64` keeps it at least that large,
 a long name ending in "…" beside it), its name and what it is doing (off while its power switch is off, unless it says
@@ -451,6 +453,14 @@ type: custom:fluvy-appliance-card
 entity: switch.oven_power
 variant: row
 confirm: [start, stop, off]   # its round asks before it starts the oven too
+```
+
+```yaml
+type: custom:fluvy-appliance-card
+device: 3c5d…            # a dishwasher that starts with its remote start off
+roles:
+  - role: remote
+    entity: none         # not the card's to say; the rest as found
 ```
 
 ```yaml

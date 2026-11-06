@@ -5,6 +5,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- The Appliance card leaves out a role it found that a home names `none` (`roles: [{role: remote, entity: none}]`), or
+  None in the editor, everything else as found: a dishwasher whose remote start says off at rest, and starts all the
+  same, gets its Start back; a wrong door or a water meter of the machine's whole life goes the same way (#127).
+
 ## [1.15.0] — 2026-11-06
 
 ### Visible on upgrade

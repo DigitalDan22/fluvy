@@ -806,6 +806,21 @@ export const sheet: SheetSpec = {
       hass: changed(DISH_WASHING),
     }),
     frame({ title: 'LocalThings · as #91’s owner named its roles', cards: [localthings()] }),
+    // #127's dishwasher, switched on and waiting: its Smart Control says off at rest, and it starts all the same; as
+    // found, its Start greyed; its remote start named none, its Start back
+    frame({
+      title: 'LocalThings · dishwasher at rest, its Smart Control off, then named none',
+      cards: [
+        card('lt-dish', { show_controls: true }),
+        card('lt-dish', { show_controls: true, roles: [{ role: 'remote', entity: 'none' }] }),
+      ],
+      hass: changed(
+        said({
+          'switch.geschirrspuler_kuche_ein_aus': 'on',
+          'binary_sensor.geschirrspuler_kuche_intelligente_steuerung': 'off',
+        }),
+      ),
+    }),
     // a card that scans nothing (#98): the washer's state, phase, time left and buttons named, nothing else of its
     // device (no programme, no softener to refill, no energy); `device: none`, the way until then, reads no device at
     // all: named after its entity, a washer by its entity's words

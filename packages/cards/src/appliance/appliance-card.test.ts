@@ -638,6 +638,47 @@ describe('the appliance card', () => {
     }
   });
 
+  it('starts a dishwasher whose remote start says off at rest once the card names that role none (#127), and leaves out a door so named', async () => {
+    // the reporter's LocalThings dishwasher: switched on and waiting, its Smart Control off, which it ignores
+    const hass = house({
+      'switch.geschirrspuler_kuche_ein_aus': { state: 'on' },
+      'binary_sensor.geschirrspuler_kuche_intelligente_steuerung': { state: 'off' },
+    });
+    const start = async (config: Record<string, unknown>) =>
+      root(
+        await mount({ device: 'lt-dish', show_controls: true, ...config }, hass),
+      ).querySelector<HTMLButtonElement>('[data-action="start"]');
+    expect((await start({}))?.disabled).toBe(true);
+    // `none`, or the editor's cleared picker: written without an entity, or an empty one
+    for (const remote of [{ entity: 'none' }, {}, { entity: '' }]) {
+      const button = await start({ roles: [{ role: 'remote', ...remote }] });
+      expect(button?.disabled, JSON.stringify(remote)).toBe(false);
+      expect(button?.title).not.toMatch(/Remote start is off/);
+    }
+    (await start({ roles: [{ role: 'remote', entity: 'none' }] }))?.click();
+    expect(hass.calls.at(-1)).toEqual({
+      domain: 'button',
+      service: 'press',
+      data: { entity_id: 'button.geschirrspuler_kuche_start' },
+    });
+    // a fridge's door open past its minute: said in its line and its alarm row, until the card names the door none
+    const said = async (config: Record<string, unknown>) =>
+      text(root(await mount({ device: 'lg-fridge', ...config })).querySelector('article'));
+    expect(await said({})).toMatch(/Door open/);
+    expect(await said({ roles: [{ role: 'door', entity: 'none' }] })).not.toMatch(/Door/);
+    // a row's reading named none: its row goes, the kind's next takes its place, never a dash for an entity "none"
+    const rows = async (config: Record<string, unknown>) =>
+      [...root(await mount({ device: 'hc-dish', ...config })).querySelectorAll('.ap-item')].map(
+        text,
+      );
+    expect(await rows({})).toEqual(['Eco 50', 'Add salt', 'Add rinse aid']);
+    expect(await rows({ roles: [{ role: 'program', entity: 'none' }] })).toEqual([
+      'Add salt',
+      'Add rinse aid',
+      'Elapsed 40 min',
+    ]);
+  });
+
   it.each([
     ['LocalThings', 'lt-washer', /9,121/, /214\.7|215/],
     ['SmartThings', 'st-washer', /1,642/, /312/],
@@ -1391,6 +1432,17 @@ describe('the appliance card’s editor', () => {
     expect(roles({ device: 'de1', roles: [{ role: 'feed', entity: 'button.x' }] })).toContain(
       'feed',
     );
+  });
+
+  it('offers None for a role’s entity, first in Home Assistant’s picker, in the editor’s words (#127)', () => {
+    const roles = FluvyApplianceCard.lists?.find((list) => list.key === 'roles');
+    const form = roles?.schemaOf?.({ role: 'remote' }) ?? [];
+    expect(form.map((field) => field.name)).toEqual(['role', 'entity']);
+    expect(form[1]?.selector).toEqual({
+      entity: { extra_options: [{ id: 'none', primary: 'None', icon: 'mdi:cancel' }] },
+    });
+    // the same form while the language is
+    expect(roles?.schemaOf?.({ role: 'door' })).toBe(form);
   });
 
   it('offers its device’s own entities in every list that picks one, none without a device (#115)', () => {

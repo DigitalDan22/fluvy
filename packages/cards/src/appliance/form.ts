@@ -1,12 +1,13 @@
 import type { HaFormSchemaItem, MessageKey } from '@fluvy/core';
-import { editorWord, orderedField, type OptionWord } from '../shared/form.js';
+import { editorWord, entityField, orderedField, type OptionWord } from '../shared/form.js';
 import { CONFIRM_ACTION, CONFIRM_NAMES, type ConfirmName } from './commands.js';
 import { APPLIANCE_KINDS, type ApplianceKind } from './kinds.js';
+import { NO_ENTITY } from './roles.js';
 
 /*
  * The appliance cards' editor parts: a choice whose words are the family's own (they travel with its chunk, never in
  * core's `option` table), the folding group every long editor shares (`sectionField`, the shared form's), the kinds,
- * the least a picture steps down to, the commands asked before, and the device picker.
+ * the least a picture steps down to, the commands asked before, a role's entity, and the device picker.
  */
 
 /** A choice among values, each named by a word of the catalogue (the family's, or core's `option` words). */
@@ -64,6 +65,21 @@ export const confirmChoices = (
   names: readonly ConfirmName[],
 ): ReadonlyArray<{ readonly value: string; readonly label: string }> =>
   names.map((name) => ({ value: name, label: editorWord(`appliance.${CONFIRM_ACTION[name]}`) }));
+
+/**
+ * A role's entity (`roles`): one of the house, or None (Home Assistant's picker lists it first), which leaves out what
+ * the card found for the role (#127); its word in the editor's language.
+ */
+export const roleEntityField = (): HaFormSchemaItem => ({
+  ...entityField(undefined, 'entity'),
+  selector: {
+    entity: {
+      extra_options: [
+        { id: NO_ENTITY, primary: editorWord('appliance.editor_role_none'), icon: 'mdi:cancel' },
+      ],
+    },
+  },
+});
 
 /**
  * The device picker: any device of the house, of an integration the cards read or not (#115: an espresso machine over

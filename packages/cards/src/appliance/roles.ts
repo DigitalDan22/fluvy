@@ -13,9 +13,9 @@ import { entityOf, stateOf } from './refs.js';
  * integration's own translation key, then by the keys they share, then by the end of its id, then by what it is (a
  * door by its device class, a power reading by its unit); where two entities could play it, the integration's own
  * plays it over a helper a person attached to its device (a template, a utility meter), then the one known more
- * surely. A role the card names by hand (`roles`) wins. The rest of a device's entities are read in kind:
- * its compartments and their setpoints, its maintenance flags, a fridge's quick modes, a hob's plates, a coffee
- * machine's counters. An integration's system buttons — firmware, reboot, a factory reset — are never anything, read
+ * surely. A role the card names by hand (`roles`) wins, and one it names `none` plays no part (#127). The rest of a
+ * device's entities are read in kind: its compartments and their setpoints, its maintenance flags, a fridge's quick
+ * modes, a hob's plates, a coffee machine's counters. An integration's system buttons — firmware, reboot, a factory reset — are never anything, read
  * by their key or their id without the device's name (a Miele coffee machine is the "Coffee system", and all its ids
  * say so). LG's older integration says the whole cycle in the attributes of the device's own sensor, and the sensors
  * it makes for most of them are off by default: each of those attributes is a candidate of its own
@@ -1120,16 +1120,33 @@ function twinUnit(keys: readonly (string | undefined)[]): Twin['unit'] {
   return 'second';
 }
 
+/** A role named by hand (`roles`): the entity that plays it, or `NO_ENTITY` (or none at all) for none. */
+export interface RoleEntry {
+  readonly role: string;
+  readonly entity?: string | undefined;
+}
+
+/**
+ * `entity: none`, or no entity (the editor's picker cleared): the role plays no part, whatever the scan found for it
+ * (#127) — a remote start that says off while the appliance takes a start, a door that is the wrong door.
+ */
+export const NO_ENTITY = 'none';
+
+/** Whether a role named by hand names an entity to play it. */
+export const namesEntity = (entity: string | undefined): entity is string =>
+  Boolean(entity) && entity !== NO_ENTITY;
+
 /**
  * Every role the appliance's device fills — by the entity known most surely to play it, its integration's own over a
- * helper a person attached to it — and everything else it has, read in kind; then the roles named by hand over them.
- * Hidden entities are left out of the search. The entity the card names (a plug's switch, a state sensor) is its
- * state, power or power reading when it plays no other part, over a helper's guess.
+ * helper a person attached to it — and everything else it has, read in kind; then the roles named by hand over them,
+ * those named `none` dropped (an entity named for the same role wins, in either order). Hidden entities are left out of
+ * the search. The entity the card names (a plug's switch, a state sensor) is its state, power or power reading when it
+ * plays no other part, over a helper's guess.
  */
 export function applianceEntities(
   hass: House | undefined,
   device: string | undefined,
-  named: ReadonlyArray<{ readonly role: string; readonly entity: string }> = [],
+  named: readonly RoleEntry[] = [],
   entity?: string,
 ): ApplianceEntities {
   const held: Partial<Record<ApplianceRole, Holder>> = {};
@@ -1175,9 +1192,10 @@ export function applianceEntities(
       ];
     if (role && !held[role]?.own) roles[role] = entity;
   }
-  for (const { role, entity: id } of named)
-    if ((APPLIANCE_ROLES as readonly string[]).includes(role) && id)
-      roles[role as ApplianceRole] = id;
+  const known = named.filter((item) => (APPLIANCE_ROLES as readonly string[]).includes(item.role));
+  for (const item of known) if (!namesEntity(item.entity)) delete roles[item.role as ApplianceRole];
+  for (const item of known)
+    if (namesEntity(item.entity)) roles[item.role as ApplianceRole] = item.entity;
   const twinRoles = rolesOf(twinHeld);
   return {
     roles,

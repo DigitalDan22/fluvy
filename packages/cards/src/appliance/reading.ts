@@ -48,11 +48,13 @@ import {
   candidatesOf,
   entriesOf,
   knownPlatform,
+  namesEntity,
   platformOf,
   type ApplianceEntities,
   type ApplianceRoles,
   type Candidate,
   type House,
+  type RoleEntry,
   type Twin,
 } from './roles.js';
 import { refState, refView } from './refs.js';
@@ -86,8 +88,8 @@ export interface ApplianceConfig {
   readonly device?: string | undefined;
   readonly entity?: string | undefined;
   readonly kind?: ApplianceKind | 'auto' | undefined;
-  /** Entities named by hand for what the card does not find: `{ role, entity }`. */
-  readonly roles?: ReadonlyArray<{ readonly role: string; readonly entity: string }> | undefined;
+  /** Entities named by hand for what the card does not find (`{ role, entity }`), or `none` for what it should not. */
+  readonly roles?: readonly RoleEntry[] | undefined;
   /** Whether the card searches the appliance's device for its entities (default); off, it reads only those it names. */
   readonly scan?: boolean | undefined;
   /** Whether a finished cycle waits to be unloaded (the kind's say by default). */
@@ -163,7 +165,7 @@ export function findAppliance(hass: House | undefined, config: ApplianceConfig):
  * the first a role names (`device: none`'s); none where it names nothing, and there is no appliance to show.
  */
 export const applianceKey = (found: ApplianceFound, config: ApplianceConfig): string | undefined =>
-  found.device || config.entity || config.roles?.find((named) => named.entity)?.entity;
+  found.device || config.entity || config.roles?.map((named) => named.entity).find(namesEntity);
 
 /** Something the card says under the head, most pressing first: why it failed, a door left open, a load to take out, what to look after. */
 export interface Attention {

@@ -8,6 +8,7 @@ import {
   type ActionConfig,
   type EntityView,
   type FluvyCardConfig,
+  type HaFormSchemaItem,
   type HassEntity,
   type HomeAssistant,
   type KeyOf,
@@ -73,6 +74,7 @@ import {
   boolField,
   cardOpacityField,
   editorLabels,
+  editorLanguage,
   editorWord,
   entityField,
   fieldRow,
@@ -130,6 +132,7 @@ import {
   kindField,
   option,
   pictureMinField,
+  roleEntityField,
   sectionField,
 } from './form.js';
 import {
@@ -357,8 +360,8 @@ export interface ApplianceCardConfig extends FluvyCardConfig, HeadConfig {
   /** On a plug: watts from which it runs (5), and minutes under them before its cycle is over (3). */
   running_power?: number;
   finished_after?: number;
-  /** Entities named by hand for what the card does not find: `{ role, entity }`. */
-  roles?: ReadonlyArray<{ readonly role: ApplianceRole; readonly entity: string }>;
+  /** Entities named by hand for what the card does not find (`{ role, entity }`), or `none` for what it should not. */
+  roles?: ReadonlyArray<{ readonly role: ApplianceRole; readonly entity?: string }>;
   /** Whether it searches the appliance's device for the rest (default); off, it reads only `entity` and `roles`. */
   scan?: boolean;
   /** Test hook: an ISO instant the card takes for "now". */
@@ -476,6 +479,15 @@ function rolesOffered(kind: ApplianceKind, named: ApplianceCardConfig['roles']):
       where.includes(hero) ||
       named?.some((entry) => entry.role === role),
   ).map(([role]) => ({ value: role, label: editorWord(`appliance.role_${role}`) }));
+}
+
+/** A role named by hand: which, and its entity or None, in the editor's language (one form a language). */
+const roleForms = new Map<string, readonly HaFormSchemaItem[]>();
+function roleFields(): readonly HaFormSchemaItem[] {
+  const { language } = editorLanguage();
+  const form = roleForms.get(language) ?? [rolePicker(), roleEntityField()];
+  roleForms.set(language, form);
+  return form;
 }
 
 /** What the editor's lists offer while the card names its appliance's device: the device's own entities (#115). */
@@ -1503,7 +1515,9 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       computeLabel: (schema) =>
         schema.name === 'role' ? editorWord('appliance.editor_role') : undefined,
       picker: rolePicker(),
-      schema: [rolePicker(), entityField(undefined, 'entity')],
+      schema: roleFields(),
+      // its words in the editor's language: None's too
+      schemaOf: roleFields,
       // whether the card searches its device for the rest, over the roles named by hand
       fields: ['scan'],
       helper: 'appliance.editor_roles_helper',
