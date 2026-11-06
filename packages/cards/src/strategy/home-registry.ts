@@ -36,6 +36,7 @@ import {
   LIGHT_WORDS,
   NOT_APPLIANCE,
   OUTDOOR,
+  PLACE_JOINS,
   PLACE_NOISE,
   SOLAR,
   TODAY,
@@ -99,32 +100,63 @@ const PLACE_WORDS: Rules<'outdoor' | 'home'> = [
 /**
  * The separators and spaces at a name's ends, once words are taken out of it: the device's name in front of its
  * entity's ("Kitchen sensor: Temperature"), a reading's words after its place ("Kitchen · Temperature", 「寝室：温度」,
- * 「キッチン温度・湿度」, whose 温度 and 湿度 leave 「キッチン ・」).
+ * 「キッチン温度・湿度」, whose 温度 and 湿度 leave 「キッチン ・」), the mark that joined two of them ("Temperature &
+ * Humidity Kitchen").
  */
-const LOOSE_ENDS = /^[\s・：:·\-–—/／|]+|[\s・：:·\-–—/／|]+$/g;
+const LOOSE_ENDS = /^[\s・：:·\-–—/／|&,]+|[\s・：:·\-–—/／|&,]+$/g;
+
+/** A word found in a place's name, where it stands: one that says a reading, or one that joins (`PLACE_JOINS`). */
+interface PlaceWord {
+  readonly at: number;
+  readonly end: number;
+  readonly join: boolean;
+}
 
 /**
- * A name without the words that say a reading rather than a place (`PLACE_NOISE`, written plain): read plain letter
- * by letter where each stands ("Snímač" as "snimac", "Hőmérséklet" as "homerseklet"), cut from the name as written.
- * A letter that would not stay one (ß) is read as written, and so is a word of one letter, its mark its meaning
- * (French "à" is no article "a").
+ * A name without the words that say a reading rather than a place (`PLACE_NOISE`, written plain, read plain letter by
+ * letter where each stands: "Snímač" as "snimac", "Hőmérséklet" as "homerseklet"; a letter that would not stay one, ß,
+ * as written), nor the words that join them (`PLACE_JOINS`: an article, a preposition, a conjunction, an elision),
+ * read as written — "là" is no "la", "Nó" no "no" — save where one stands between two words that stay: "Fürdő és
+ * Konyha", "Sala de estar" and "Salle d'eau" keep theirs, where "Capteur d'humidité Salon" is "Salon". What goes is cut
+ * from the name as written.
  */
 function withoutPlaceNoise(name: string): string {
   const written = name.normalize('NFC');
-  const read = written.replace(/\p{L}{2,}/gu, (word) =>
-    [...word]
-      .map((letter) => {
-        const bare = plain(letter);
-        return bare.length === letter.length ? bare : letter;
-      })
-      .join(''),
+  const read = [...written]
+    .map((letter) => {
+      const bare = plain(letter);
+      return bare.length === letter.length ? bare : letter;
+    })
+    .join('');
+  const found = (text: string, words: RegExp, join: boolean): PlaceWord[] =>
+    [...text.matchAll(words)].map(({ index, 0: word }) => ({
+      at: index,
+      end: index + word.length,
+      join,
+    }));
+  const words = [...found(read, PLACE_NOISE, false), ...found(written, PLACE_JOINS, true)].sort(
+    (a, b) => a.at - b.at,
   );
+  // whether the nearest word that is no join stays, one way from a join: a letter or a figure between two words found
+  const staysBeside = (from: number, step: -1 | 1): boolean => {
+    for (let at = from; ; at += step) {
+      const here = words[at]!;
+      const next = words[at + step];
+      const between =
+        step < 0
+          ? written.slice(next?.end ?? 0, here.at)
+          : written.slice(here.end, next?.at ?? written.length);
+      if (/[\p{L}\p{N}]/u.test(between)) return true;
+      if (!next?.join) return false;
+    }
+  };
   let kept = '';
   let from = 0;
-  for (const { index, 0: noise } of read.matchAll(PLACE_NOISE)) {
-    kept += `${written.slice(from, index)} `;
-    from = index + noise.length;
-  }
+  words.forEach((word, at) => {
+    if (word.join && staysBeside(at, -1) && staysBeside(at, 1)) return;
+    kept += `${written.slice(from, word.at)} `;
+    from = Math.max(from, word.end);
+  });
   return kept + written.slice(from);
 }
 

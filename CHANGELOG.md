@@ -47,6 +47,11 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   model is 76380002 (#129).
 - A part of an automatic dashboard that cannot be read (its appliances, its printers, the names it reads off its
   devices) is left out with a warning in the browser's console, where it took the whole dashboard down (#129).
+- The automatic dashboards name a reading by its device's place as it is written: "Sala de estar", "Fürdő és Konyha",
+  "Quarto Nº 2" and "Là-haut" keep their small words, "Capteur d'humidité Salon" is "Salon" and "Snímač teploty
+  Obývačka" is "Obývačka", where they read "Sala estar", "Fürdő Konyha", "Quarto 2", "haut", "d' Salon" and "teploty
+  Obývačka"; a sensor's "and" goes with its words in every language ("Temperature and Humidity Sensor Kitchen" is
+  "Kitchen").
 
 ## [1.15.0] — 2026-11-06
 

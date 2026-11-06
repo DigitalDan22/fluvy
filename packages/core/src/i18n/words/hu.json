@@ -69,16 +69,17 @@
   "place_noise": [
     "klima",
     "erzekelo",
+    "erzekeloje",
     "erzekelok",
     "szenzor",
     "homerseklet",
+    "homerseklete",
     "paratartalom",
+    "paratartalma",
     "termosztat",
-    "mero",
-    "a",
-    "az",
-    "es"
+    "mero"
   ],
+  "place_joins": ["a", "az", "és", "es"],
   "appliance_never": [
     "porszivo",
     "takaritorobot",

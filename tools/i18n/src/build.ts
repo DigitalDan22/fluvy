@@ -12,13 +12,15 @@
  *
  * A stem is matched as a substring; a stem may carry regex of its own (a boundary: `pv\b`, `mode$`; a lookaround:
  * `(?<!ガス)レンジ`). `light` matches whole words between separators, `generic` matches the whole name, `place_noise`
- * whole words, no Latin letter beside them whatever its marks — for a stem in Latin letters. A stem in kana or kanji
- * is matched as a substring whatever its category's shape (Japanese writes no spaces between words): its alternation
- * follows the word-shaped one. The appliance words are plain lower-case letters, matched against a name with its
- * accents taken off and its width made ordinary ("Kühlschrank" is read as "kuhlschrank", as Home Assistant writes it
- * into an entity's id; "ＬＥＤ" as "led"); a kana's voicing mark stays (が is not か). The place words are read so too,
- * plain at build (`snimac`, `temperature` for `température`), on a name made plain letter by letter where it stands
- * (`placeName` in packages/cards/src/strategy/home-registry.ts: "Snímač" is read as "snimac").
+ * and `place_joins` whole words, no Latin letter beside them whatever its marks — for a stem in Latin letters; a join
+ * that ends in an apostrophe (an elision: "d'", "dell'") leans on the word after it, either apostrophe. A stem in kana
+ * or kanji is matched as a substring whatever its category's shape (Japanese writes no spaces between words): its
+ * alternation follows the word-shaped one. The appliance words are plain lower-case letters, matched against a name
+ * with its accents taken off and its width made ordinary ("Kühlschrank" is read as "kuhlschrank", as Home Assistant
+ * writes it into an entity's id; "ＬＥＤ" as "led"); a kana's voicing mark stays (が is not か). The place's noise is
+ * read so too, plain at build (`snimac`, `temperature` for `température`), on a name made plain letter by letter where
+ * it stands (`placeName` in packages/cards/src/strategy/home-registry.ts: "Snímač" is read as "snimac"); the words
+ * that join it are read as written, a mark making another word ("és" is "and", "là" is no "la").
  *
  * Every regex captures the stem it found as the first group that takes part in the match — the alternation of its
  * stems, never the separator a word shape consumes around them (a stem's own groups are numbered after it). Where
@@ -45,8 +47,16 @@ export const APPLIANCE_OUT = join(
 
 type Shape = 'substring' | 'word' | 'whole' | 'words';
 
-/** Each category's shape, and the constant it becomes. */
-const CATEGORIES: ReadonlyArray<{ category: string; name: string; shape: Shape }> = [
+/**
+ * Each category's shape, and the constant it becomes; a category of whole words is read plain unless it is `written`
+ * (a mark makes another word).
+ */
+const CATEGORIES: ReadonlyArray<{
+  category: string;
+  name: string;
+  shape: Shape;
+  written?: boolean;
+}> = [
   { category: 'light', name: 'LIGHT_WORDS', shape: 'word' },
   { category: 'outdoor', name: 'OUTDOOR', shape: 'substring' },
   { category: 'solar', name: 'SOLAR', shape: 'substring' },
@@ -59,6 +69,7 @@ const CATEGORIES: ReadonlyArray<{ category: string; name: string; shape: Shape }
   { category: 'not_appliance', name: 'NOT_APPLIANCE', shape: 'substring' },
   { category: 'generic', name: 'GENERIC', shape: 'whole' },
   { category: 'place_noise', name: 'PLACE_NOISE', shape: 'words' },
+  { category: 'place_joins', name: 'PLACE_JOINS', shape: 'words', written: true },
 ];
 
 /**
@@ -168,10 +179,24 @@ export function pattern(stems: readonly string[], shape: Shape): string {
         .join('|');
     case 'whole':
       return `^(${both})$`;
-    case 'words':
-      return [worded && `(?<!${IN_A_WORD})(${worded})(?!${IN_A_WORD})`, cjk && `(${cjk})`]
+    case 'words': {
+      // an elision leans on the word after it: no boundary there, and either apostrophe
+      const whole = latin
+        .filter((stem) => !stem.endsWith("'"))
+        .map(fragment)
+        .join('|');
+      const elided = latin
+        .filter((stem) => stem.endsWith("'"))
+        .map((stem) => fragment(stem).replace(/'$/, "['’]"))
+        .join('|');
+      return [
+        whole && `(?<!${IN_A_WORD})(${whole})(?!${IN_A_WORD})`,
+        elided && `(?<!${IN_A_WORD})(${elided})`,
+        cjk && `(${cjk})`,
+      ]
         .filter(Boolean)
         .join('|');
+    }
     default:
       return `(${both})`;
   }
@@ -215,10 +240,11 @@ async function stemsOf(
 /** The strategy's word rules. */
 export async function generate(): Promise<string> {
   const { codes, lists } = await stemsOf(CATEGORIES.map(({ category }) => category));
-  const lines = CATEGORIES.map(({ category, name, shape }) => {
+  const lines = CATEGORIES.map(({ category, name, shape, written }) => {
     const stems = lists.get(category) ?? [];
-    // the place words read a plain name, so are written plain; every one in it is taken out
-    const source = shape === 'words' ? pattern(stems.map(plain), shape) : pattern(stems, shape);
+    // the place's noise reads a plain name, so is written plain; the words that join it are read as written
+    const source =
+      shape === 'words' && !written ? pattern(stems.map(plain), shape) : pattern(stems, shape);
     const flags = shape === 'words' ? 'giu' : 'i';
     return `/** ${category}: ${stems.length} stems in ${codes.join(', ')}. */\nexport const ${name} = ${literal(source, flags)};`;
   });

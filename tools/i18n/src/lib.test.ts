@@ -270,6 +270,19 @@ describe('the generated patterns', () => {
     expect(pattern(['washer', '洗濯', '洗濯機'], 'substring')).toBe('(washer|洗濯機|洗濯)');
   });
 
+  it('take a word that joins as written, and an elision before the word it leans on, in either apostrophe', async () => {
+    const joins = new RegExp(pattern(['de', "d'", "dell'"], 'words'), 'giu');
+    expect("Capteur d'humidité Salle de bain".match(joins)).toEqual(["d'", 'de']);
+    expect('Capteur d’humidité'.match(joins)).toEqual(['d’']);
+    expect("Sensore dell'umidità".match(joins)).toEqual(["dell'"]);
+    // never inside a word: a street's "Grand'Rue" holds no elision
+    expect("Grand'Rue".match(joins)).toBeNull();
+    // the place's noise is built plain, the words that join it as written: "és" is Hungarian's "and", no "es"
+    const built = await generate();
+    expect(built).toMatch(/PLACE_NOISE = [^\n]*\|humidite\|/);
+    expect(built).toMatch(/PLACE_JOINS = [^\n]*\|és\|/);
+  });
+
   it('try a stem after every longer stem that begins with it: a prefix never hides the longer stem', () => {
     // as the words list them, the shorter first: in kana and kanji (every shape a substring) and in a substring shape
     expect(stem(pattern(['温度', '湿度', '温度計'], 'words'), 'giu', 'リビングの温度計')).toBe(

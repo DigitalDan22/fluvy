@@ -52,18 +52,8 @@
     "luz",
     "estado"
   ],
-  "place_noise": [
-    "clima",
-    "sensor",
-    "sensores",
-    "temperatura",
-    "humedad",
-    "termostato",
-    "de",
-    "del",
-    "la",
-    "el"
-  ],
+  "place_noise": ["clima", "sensor", "sensores", "temperatura", "humedad", "termostato"],
+  "place_joins": ["de", "del", "la", "el", "y"],
   "appliance_never": ["aspirador", "calientaplatos", "secador[ _-]de[ _-]pelo"],
   "appliance_washer_dryer": ["lavasecadora", "lavadora[ _-]secadora"],
   "appliance_dishwasher": ["lavavajillas", "lavaplatos"],

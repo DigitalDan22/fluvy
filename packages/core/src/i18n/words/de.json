@@ -61,19 +61,8 @@
     "füllstand",
     "fuellstand"
   ],
-  "place_noise": [
-    "klima",
-    "sensor",
-    "sensoren",
-    "temperatur",
-    "luftfeuchtigkeit",
-    "thermostat",
-    "der",
-    "die",
-    "das",
-    "im",
-    "in"
-  ],
+  "place_noise": ["klima", "sensor", "sensoren", "temperatur", "luftfeuchtigkeit", "thermostat"],
+  "place_joins": ["der", "die", "das", "im", "in", "und"],
   "appliance_never": [
     "staubsauger",
     "saugroboter",

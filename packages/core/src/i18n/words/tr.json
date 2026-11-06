@@ -158,6 +158,7 @@
     "nemi",
     "termostat"
   ],
+  "place_joins": ["ve"],
   "appliance_never": ["supurge", "sac[ _-]kurutma"],
   "appliance_washer_dryer": ["kurutmali"],
   "appliance_dishwasher": ["bulasik"],

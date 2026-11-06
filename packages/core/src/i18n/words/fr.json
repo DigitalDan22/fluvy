@@ -76,14 +76,9 @@
     "temperature",
     "humidité",
     "humidite",
-    "thermostat",
-    "de",
-    "du",
-    "la",
-    "le",
-    "les",
-    "des"
+    "thermostat"
   ],
+  "place_joins": ["de", "du", "la", "le", "les", "des", "et", "d'", "l'"],
   "appliance_never": ["aspirateur", "tiroir[ _-]chauffant", "seche[ _-]cheveux"],
   "appliance_washer_dryer": ["lavante[ _-]sechante", "lave[ _-]linge[ _-]sechant"],
   "appliance_dishwasher": ["lave[ _-]vaisselle"],

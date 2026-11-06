@@ -74,21 +74,8 @@
     "nível",
     "nivel"
   ],
-  "place_noise": [
-    "clima",
-    "sensor",
-    "sensores",
-    "temperatura",
-    "umidade",
-    "termostato",
-    "da",
-    "do",
-    "de",
-    "a",
-    "o",
-    "no",
-    "na"
-  ],
+  "place_noise": ["clima", "sensor", "sensores", "temperatura", "umidade", "termostato"],
+  "place_joins": ["da", "do", "de", "a", "o", "no", "na", "e"],
   "appliance_never": ["aspirador", "gaveta[ _-]aquecedora", "secador[ _-]de[ _-]cabelo"],
   "appliance_washer_dryer": ["lava[ _-]e[ _-]seca", "lava[ _-]seca"],
   "appliance_dishwasher": ["lava[ _-]loucas", "lava[ _-]pratos"],

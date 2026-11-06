@@ -56,18 +56,8 @@
     "lek",
     "niveau"
   ],
-  "place_noise": [
-    "klimaat",
-    "sensor",
-    "sensoren",
-    "temperatuur",
-    "vochtigheid",
-    "thermostaat",
-    "de",
-    "het",
-    "van",
-    "in"
-  ],
+  "place_noise": ["klimaat", "sensor", "sensoren", "temperatuur", "vochtigheid", "thermostaat"],
+  "place_joins": ["de", "het", "van", "in", "en"],
   "appliance_never": ["stofzuiger", "warmhoudlade", "haardroger", "fohn"],
   "appliance_washer_dryer": ["was[ _-]?droog[ _-]?combinatie", "wasmachine[ _-]droger"],
   "appliance_dishwasher": ["vaatwas"],

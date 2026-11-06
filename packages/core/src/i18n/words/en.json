@@ -59,6 +59,7 @@
     "level"
   ],
   "place_noise": ["sensor", "sensors", "temperature", "humidity", "thermostat"],
+  "place_joins": ["the", "of", "in", "and"],
   "appliance_never": [
     "vacuum",
     "robot",

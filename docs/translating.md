@@ -41,7 +41,11 @@ catalogue per language, and a person may choose theirs in the panel's *Preferenc
   an appliance card tells a washer from a dishwasher by (plain lower-case letters: a name is read with its accents
   taken off and in ordinary width, so "Kühlschrank" is `kuhlschrank` and "ＬＥＤ" is `led`). A stem in Latin letters
   is matched as its category asks (a light's as a whole word, a place's noise as whole words, the rest as a substring);
-  a stem in kana or kanji is always matched as a substring, since Japanese writes no spaces between words. Where
+  a stem in kana or kanji is always matched as a substring, since Japanese writes no spaces between words. The words
+  that join a place's noise to the place (`place_joins`: an article, a preposition, the language's "and", an elision
+  such as `d'`) are written as the language writes them, marks and all, since a mark makes another word (`és` is
+  Hungarian's "and", "là" is no `la`); the dashboard takes one out of a place's name beside a sensor word or at the
+  name's end, and keeps one between two words that stay ("Sala de estar", "Fürdő és Konyha"). Where
   lists compete for one name (a light's against the appliances' kinds, the kinds against each other, the energy
   roles), every list is run and of two words that overlap in the name the longer wins, whatever the lists' order —
   電気ケトル is a kettle, not the light 電気; ガスレンジ a hob, not the microwave レンジ; オーブントースター a toaster —

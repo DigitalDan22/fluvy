@@ -278,7 +278,11 @@ describe('custom:fluvy-home strategy — a place named by its device, no separat
     expect(registry.placeName('sensor.tr')).toBe('Oturma odası');
   });
 
-  it('takes every language’s sensor words out of a name, as the words write them and capitalised', async () => {
+  /**
+   * Every language's place words of a category, as the words files write them; a stem of its own regex (Japanese の
+   * before a reading's word) is the generator's to test.
+   */
+  const listed = async (category: 'place_noise' | 'place_joins'): Promise<string[]> => {
     const folder = join(
       dirname(fileURLToPath(import.meta.url)),
       '..',
@@ -289,19 +293,147 @@ describe('custom:fluvy-home strategy — a place named by its device, no separat
       'i18n',
       'words',
     );
-    const stems = (
-      await Promise.all(
-        (await readdir(folder)).map(async (file) => {
-          const words = JSON.parse(await readFile(join(folder, file), 'utf8')) as {
-            place_noise?: string[];
-          };
-          return words.place_noise ?? [];
-        }),
-      )
-    )
-      .flat()
-      // a stem of its own regex (Japanese の before a reading's word) is the generator's to test
-      .filter((stem) => !/[\\[\]()$^]/.test(stem));
+    const lists = await Promise.all(
+      (await readdir(folder)).map(
+        async (file) =>
+          (JSON.parse(await readFile(join(folder, file), 'utf8')) as Record<string, string[]>)[
+            category
+          ] ?? [],
+      ),
+    );
+    return lists.flat().filter((stem) => !/[\\[\]()$^]/.test(stem));
+  };
+  /** Where each name places its reading, each the name of a device of its own in no area. */
+  const placed = (names: readonly string[]): string[] => {
+    const registry = readings(Object.fromEntries(names.map((name, at) => [`sensor.${at}`, name])));
+    return names.map((_, at) => registry.placeName(`sensor.${at}`));
+  };
+
+  it('reads a word that joins as written, a mark making another word: "Nº", "Nó" and "Là" are none of the articles they fold into', async () => {
+    expect(placed(['Sensor Quarto Nº 2', 'Sensor Nó 3', 'Capteur Là-haut'])).toEqual([
+      'Quarto Nº 2',
+      'Nó 3',
+      'Là-haut',
+    ]);
+    // every language's: each beside a sensor word goes, and with a mark on its first vowel stays (unless that is one too)
+    const joins = (await listed('place_joins')).filter((join) => !join.endsWith("'"));
+    const marked = joins
+      .map((join) => join.replace(/[aeiouy]/, (vowel) => `${vowel}\u0301`).normalize('NFC'))
+      .filter((word) => !joins.includes(word));
+    expect(marked.length).toBeGreaterThan(30);
+    expect(placed(joins.map((join) => `Sensor ${join} 3`))).toEqual(joins.map(() => '3'));
+    expect(placed(marked.map((word) => `Sensor ${word} 3`))).toEqual(
+      marked.map((word) => `${word} 3`),
+    );
+  });
+
+  it('takes an elision with the sensor word it leans on, in either apostrophe, and keeps one between two words that stay', () => {
+    expect(
+      placed([
+        "Capteur d'humidité Salon",
+        'Capteur d’humidité Salon',
+        "Sensore dell'umidità Cucina",
+        "Capteur l'Entrée",
+        "Capteur Salle d'eau",
+      ]),
+    ).toEqual(['Salon', 'Salon', 'Cucina', 'Entrée', "Salle d'eau"]);
+  });
+
+  it('reads Slovak’s sensor words in every case they are said in, and Hungarian’s as the reading’s own', () => {
+    expect(
+      placed([
+        'Snímač teploty Obývačka',
+        'Senzor teploty a vlhkosti Spálňa',
+        'Snímač vlhkosti Kúpeľňa',
+        'Teplota v Pracovni',
+        'Snímačom teploty Garáž',
+        'Konyha hőmérséklete',
+        'Nappali páratartalma',
+      ]),
+    ).toEqual(['Obývačka', 'Spálňa', 'Kúpeľňa', 'Pracovni', 'Garáž', 'Konyha', 'Nappali']);
+  });
+
+  it('keeps a word that joins two places, a conjunction among them, and takes one that joins the sensor words, in every language', () => {
+    // each language's "and" between two sensor words, then between two places: [name, its place] each
+    const and: Record<string, readonly (readonly [string, string])[]> = {
+      de: [
+        ['Temperatur und Luftfeuchtigkeit Bad', 'Bad'],
+        ['Bad und Küche Thermostat', 'Bad und Küche'],
+      ],
+      en: [
+        ['Temperature and Humidity Sensor Kitchen', 'Kitchen'],
+        ['Kitchen and Dining Sensor', 'Kitchen and Dining'],
+      ],
+      es: [
+        ['Sensor de temperatura y humedad Salón', 'Salón'],
+        ['Cocina y Comedor Sensor', 'Cocina y Comedor'],
+      ],
+      fr: [
+        ['Capteur température et humidité Salon', 'Salon'],
+        ['Salon et Cuisine Capteur', 'Salon et Cuisine'],
+      ],
+      hu: [
+        ['Hőmérséklet és páratartalom érzékelő Nappali', 'Nappali'],
+        ['Fürdő és Konyha', 'Fürdő és Konyha'],
+      ],
+      it: [
+        ['Sensore temperatura e umidità Cucina', 'Cucina'],
+        ['Cucina e Sala Sensore', 'Cucina e Sala'],
+      ],
+      ja: [
+        ['キッチン温度と湿度', 'キッチン'],
+        ['リビングとキッチン温度', 'リビングとキッチン'],
+      ],
+      nl: [
+        ['Temperatuur en vochtigheid sensor Keuken', 'Keuken'],
+        ['Keuken en Woonkamer Sensor', 'Keuken en Woonkamer'],
+      ],
+      'pt-BR': [
+        ['Sensor de temperatura e umidade Sala', 'Sala'],
+        ['Sala e Cozinha Sensor', 'Sala e Cozinha'],
+      ],
+      'pt-PT': [
+        ['Sensor de temperatura e humidade Sala', 'Sala'],
+        ['Sala e Cozinha Sensor', 'Sala e Cozinha'],
+      ],
+      sk: [
+        ['Senzor teploty a vlhkosti Spálňa', 'Spálňa'],
+        ['Kuchyňa a Obývačka Senzor', 'Kuchyňa a Obývačka'],
+      ],
+      tr: [
+        ['Sıcaklık ve nem sensörü Salon', 'Salon'],
+        ['Mutfak ve Salon Sensör', 'Mutfak ve Salon'],
+      ],
+    };
+    for (const [code, names] of Object.entries(and))
+      expect(placed(names.map(([name]) => name)), code).toEqual(names.map(([, place]) => place));
+    // a name typed without its marks says its "and" as plainly; an article or a preposition between two places stays
+    expect(
+      placed([
+        'Homerseklet es paratartalom erzekelo Nappali',
+        'Temperature & Humidity Sensor Hall',
+        'Sensor Sala de estar',
+        'Salle de bain Capteur',
+        'Casa de banho Sensor',
+        'Sala da pranzo Sensore',
+        'Thermostat Bad im Keller',
+        'Temperatur im Bad',
+      ]),
+    ).toEqual([
+      'Nappali',
+      'Hall',
+      'Sala de estar',
+      'Salle de bain',
+      'Casa de banho',
+      'Sala da pranzo',
+      'Bad im Keller',
+      'Bad',
+    ]);
+  });
+
+  it('takes every language’s sensor words out of a name, as the words write them and capitalised', async () => {
+    // a word that joins goes too where it joins nothing that stays: at a name's end
+    const stems = [...(await listed('place_noise')), ...(await listed('place_joins'))];
     expect(stems.length).toBeGreaterThan(100);
     const names = Object.fromEntries(
       stems.flatMap((stem, at) => [
