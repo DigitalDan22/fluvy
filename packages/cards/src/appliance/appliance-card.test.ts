@@ -615,6 +615,15 @@ describe('the appliance card', () => {
     // LG cannot pause from Home Assistant; a washer on a plug only switches off
     expect(offered({ device: 'lg-washer' }, hass)).toEqual(['start', 'stop', 'off']);
     expect(offered({ device: 'plug-washer' }, hass)).toEqual(['off']);
+    // what it can send at all, by the entities it found: LG's operation lists nothing while the washer sleeps, nor out
+    // of reach, and still starts and stops it
+    const asleep = house({ 'select.waschmaschine_betrieb': { attributes: { options: [] } } });
+    expect(offered({ device: 'lg-washer' }, asleep)).toEqual(['start', 'stop', 'off']);
+    expect(offered({ device: 'lg-washer' }, house(unavailable('lg-washer')))).toEqual([
+      'start',
+      'stop',
+      'off',
+    ]);
     // its words are its buttons'
     expect(
       FluvyApplianceCard.choices?.({ type: 'x', device: 'lg-washer' }, hass)['confirm'],

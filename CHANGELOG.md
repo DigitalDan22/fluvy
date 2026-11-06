@@ -23,6 +23,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The Appliance card reads the commands it asks before (`confirm`) in any case and `power` as switching off, where
   `Start` and `power` were dropped without a word, and a list of only names it does not know asks as by default, a stop
   included, where it asked nothing; its editor, and the Appliances card's, say which names they do not know.
+- The Appliance card's editor offers to ask before every command its appliance can send, by the entities it found,
+  where an LG or SmartThings washer's Start and Stop through its operation select left the list while the select listed
+  nothing (the washer asleep or out of reach).
 
 ## [1.15.0] — 2026-11-06
 

@@ -440,7 +440,7 @@ kettle, which stops at the boil, and a washer, a dryer or a dishwasher start at 
 Stop, the light and its power, each where its integration can do it. A list replaces that set: name every command that
 asks, `off` included (`confirm: [start, stop, off]`); `confirm: []` asks for nothing, which is the home's choice, where
 a list of names the card does not know asks as unset does, and its editor says which it does not know. The editor
-offers the commands its appliance can send. `variant: compact`, `ring` (a dial) and `row` are the smaller layouts; every part
+offers the commands its appliance can send at all, by the entities the card found, whatever they list at the moment. `variant: compact`, `ring` (a dial) and `row` are the smaller layouts; every part
 switches off (`show_power`, `show_hero`, `show_progress`, `show_rows`, `show_controls`…). An administrator sees a bell
 beside the time left: "Tell me when it's done" writes a normal automation that notifies their phone when the appliance
 finishes.

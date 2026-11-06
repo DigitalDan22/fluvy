@@ -306,8 +306,32 @@ export function callFor(
   action: Action,
   amount?: number,
 ): ServiceCall | undefined {
+  return callAt('now', hass, platform, roles, action, amount);
+}
+
+/**
+ * Whether an appliance can do an action at all, by the entities it found, whatever they say now: a select's option
+ * whatever the select lists (LG's operation lists nothing while the washer sleeps, nor out of reach), a meal whatever
+ * amounts its entity takes — what its editor offers to ask before (`confirm`).
+ */
+export const canAtAll = (
+  hass: Pick<HomeAssistant, 'states'> | undefined,
+  platform: string | undefined,
+  roles: ApplianceRoles,
+  action: Action,
+): boolean => callAt('ever', hass, platform, roles, action) !== undefined;
+
+/** The call that does an action now (`callFor`), or (`ever`) one it could take at all, by its entities alone. */
+function callAt(
+  at: 'now' | 'ever',
+  hass: Pick<HomeAssistant, 'states'> | undefined,
+  platform: string | undefined,
+  roles: ApplianceRoles,
+  action: Action,
+  amount?: number,
+): ServiceCall | undefined {
   if (writable(platform, action)) {
-    const own = pinnedCall(hass, platform, roles, action, amount);
+    const own = pinnedCall(at, hass, platform, roles, action, amount);
     if (own) return own;
   }
   if (action !== 'start' && action !== 'pause' && action !== 'resume' && action !== 'stop')
@@ -317,8 +341,12 @@ export function callFor(
   return id && service ? { domain: domainOf(id), service, data: { entity_id: id } } : undefined;
 }
 
-/** The call an integration's source pins for an action, from the entities it found (a meal's amount: PetKit's). */
+/**
+ * The call an integration's source pins for an action, from the entities it found (a meal's amount: PetKit's): one it
+ * takes now, or (`ever`) one it could take at all.
+ */
 function pinnedCall(
+  at: 'now' | 'ever',
   hass: Pick<HomeAssistant, 'states'> | undefined,
   platform: string | undefined,
   roles: ApplianceRoles,
@@ -327,9 +355,11 @@ function pinnedCall(
 ): ServiceCall | undefined {
   // what a select lists is its capability: a card can say what it could do while it is out of reach
   const state = (id: string | undefined): HassEntity | undefined => stateOf(hass, id);
-  // a select's option, where the select lists it
+  // a select's option, where the select lists it (any select, for what it could do at all)
   const option = (id: string | undefined, wanted: string): ServiceCall | undefined =>
-    id && options(state(id)).includes(wanted) ? choose(id, wanted) : undefined;
+    id && (at === 'ever' ? domainOf(id) === 'select' : options(state(id)).includes(wanted))
+      ? choose(id, wanted)
+      : undefined;
   const button = (id: string | undefined): ServiceCall | undefined =>
     id && domainOf(id) === 'button' ? press(id) : undefined;
   const { operation, launch, program, start, pause, resume, stop, cancel, power, light } = roles;
@@ -339,6 +369,9 @@ function pinnedCall(
       if (!feed) return undefined;
       // petlibro button.py:60-64: its manual feed's button gives the amount its number holds
       if (domainOf(feed) === 'button') return press(feed);
+      // what it could do at all: a meal at its entity, whatever amounts it takes now
+      if (at === 'ever')
+        return { domain: domainOf(feed), service: 'set_value', data: { entity_id: feed } };
       // petkit text.py:196-213, number.py:107-122: the meal is the amount written to its text, or to its number
       const value = mealAmount(state(feed), amount);
       if (value === undefined) return undefined;
@@ -358,10 +391,8 @@ function pinnedCall(
         case 'lg_thinq':
           return option(operation, 'start');
         // home_connect/select.py:99-106: choosing the active programme starts it; the one chosen on the appliance
-        case 'home_connect': {
-          const chosen = state(program)?.state;
-          return chosen ? option(launch, chosen) : undefined;
-        }
+        case 'home_connect':
+          return option(launch, state(program)?.state ?? '');
         // smartthings/select.py:170-197: the operating state's "run"; the dishwasher's start button otherwise
         case 'smartthings':
           return option(operation, 'run') ?? button(start);

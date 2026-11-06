@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   boostCall,
   callFor,
+  canAtAll,
   commandsOf,
   CONFIRM_DEFAULT,
   confirmDefault,
@@ -16,7 +17,14 @@ import {
   type Action,
   type CommandInput,
 } from './commands.js';
-import { allFixtures, device, entriesFor, hcDishwasherDone, houseOf } from './fixtures/index.js';
+import {
+  allFixtures,
+  device,
+  entriesFor,
+  hcDishwasherDone,
+  houseOf,
+  petFixtures,
+} from './fixtures/index.js';
 import { applianceEntities } from './roles.js';
 import type { ApplianceStatus } from './status.js';
 
@@ -531,6 +539,32 @@ describe('the commands an appliance takes now', () => {
       'stop stop stop',
       'power power_off power_off',
     ]);
+    // what it can do at all is its entities', whatever they list now: the editor's choices
+    const at = (hass: HomeAssistant, device: string, action: Action) => {
+      const { platform, roles } = input(device, 'idle', hass);
+      return canAtAll(hass, platform, roles, action);
+    };
+    expect(at(noStart, 'lg-washer', 'start')).toBe(true);
+    expect(at(noStart, 'lg-washer', 'pause')).toBe(false);
+    // a Home Connect start whatever programme it holds; a PetKit meal whatever amounts its entity takes now
+    const blank = {
+      ...HOUSE,
+      states: Object.fromEntries(
+        Object.entries(HOUSE.states).map(([id, state]) => [
+          id,
+          { ...state, state: 'unavailable', attributes: {} },
+        ]),
+      ),
+    } as HomeAssistant;
+    expect(call('hc-dish', 'start', blank)).toBeUndefined();
+    expect(at(blank, 'hc-dish', 'start')).toBe(true);
+    const feeder = houseOf(petFixtures(NOW), NOW);
+    const hungry = {
+      ...feeder,
+      states: { ...feeder.states, 'text.futterautomat_manual_feed': undefined },
+    } as unknown as HomeAssistant;
+    expect(call('pk-feeder', 'feed', hungry)).toBeUndefined();
+    expect(at(hungry, 'pk-feeder', 'feed')).toBe(true);
   });
 });
 

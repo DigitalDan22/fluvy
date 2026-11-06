@@ -109,6 +109,7 @@ import {
   BLOCKED,
   boostCall,
   callFor,
+  canAtAll,
   COMMAND_NAMES,
   CONFIRM,
   CONFIRM_ACTION,
@@ -5115,8 +5116,9 @@ const canDo = (
 ): boolean => actions.some((action) => callFor(hass, r.platform, r.roles, action) !== undefined);
 
 /**
- * What a card may ask before (#120): the commands its appliance can send, as its integration and its roles let a card;
- * every one where nothing of an appliance is found (none picked yet, or one the house no longer has).
+ * What a card may ask before (#120): the commands its appliance can send at all, as its integration and its roles let a
+ * card, whatever its entities say now (`canAtAll`: a select that lists nothing while the appliance sleeps); every one
+ * where nothing of an appliance is found (none picked yet, or one the house no longer has).
  */
 function confirmable(
   config: ApplianceCardConfig,
@@ -5124,8 +5126,10 @@ function confirmable(
 ): readonly ConfirmName[] {
   const found = hass ? findAppliance(hass, config) : undefined;
   if (!found || !Object.keys(found.entities.roles).length) return CONFIRM_NAMES;
-  const r = { platform: found.platform, roles: found.entities.roles };
-  return CONFIRM_NAMES.filter((name) => canDo(hass, r, [CONFIRM_ACTION[name]]));
+  const { platform, entities } = found;
+  return CONFIRM_NAMES.filter((name) =>
+    canAtAll(hass, platform, entities.roles, CONFIRM_ACTION[name]),
+  );
 }
 
 /** A full chip row's columns, and whether its chips say their glyphs alone. */
