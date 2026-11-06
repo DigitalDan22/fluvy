@@ -18,8 +18,8 @@ import { setterFor, type Setter } from './zones.js';
  * never written to (1.9.1). A select's option is offered only when it is in the select's own options. Starting needs
  * the appliance at rest and, where it has one, its remote start on. What asks first is the card's to say (`confirm`,
  * #120); by default stopping asks, and so does switching off one that is not at rest (at work, waiting to start,
- * failed) and switching off what keeps food cold, whatever its compressor is doing; a meal, a litter box's clean and
- * its levelling ask first too.
+ * failed) and switching off what keeps food cold, whatever its compressor is doing; starting what heats a cavity (an
+ * oven, a microwave, an air fryer), a meal, a litter box's clean and its levelling ask first too.
  */
 
 /**
@@ -73,6 +73,18 @@ export const CONFIRM_NAMES: readonly ConfirmName[] = [
 /** What a card asks before where it names nothing: a stop, switching off, a meal, a clean, a levelling. */
 export const CONFIRM_DEFAULT: readonly ConfirmName[] = ['stop', 'off', 'feed', 'clean', 'level'];
 
+/**
+ * What heats a cavity: started by a stray tap, an oven, a microwave or an air fryer heats whatever was left in it (or
+ * nothing) with nobody by it, so where its card names nothing it asks before a start too (the owner's call,
+ * 2026-11-06). A kettle stops at the boil and is started at one tap; a hob, a toaster and a sandwich maker are
+ * switched on, never started.
+ */
+const CAVITY: ReadonlySet<ApplianceKind> = new Set(['oven', 'microwave', 'air_fryer']);
+
+/** What a card of a kind asks before where it names nothing: `CONFIRM_DEFAULT`, a start first where it heats a cavity. */
+export const confirmDefault = (kind: ApplianceKind | undefined): readonly ConfirmName[] =>
+  kind && CAVITY.has(kind) ? ['start', ...CONFIRM_DEFAULT] : CONFIRM_DEFAULT;
+
 /** The action each name asks before. */
 export const CONFIRM_ACTION: Readonly<Record<ConfirmName, Action>> = {
   start: 'start',
@@ -87,14 +99,14 @@ export const CONFIRM_ACTION: Readonly<Record<ConfirmName, Action>> = {
 
 /**
  * What a card asks before, as its config names it (one written without its dash a list of one), those the card knows:
- * its default where it names nothing, nothing for an empty list.
+ * its kind's default where it names nothing, nothing for an empty list.
  */
-export function confirmOf(named: unknown): readonly ConfirmName[] {
+export function confirmOf(named: unknown, kind?: ApplianceKind): readonly ConfirmName[] {
   const list: readonly unknown[] | undefined =
     typeof named === 'string' ? [named] : Array.isArray(named) ? named : undefined;
   return list
     ? list.filter((name): name is ConfirmName => CONFIRM_NAMES.includes(name as ConfirmName))
-    : CONFIRM_DEFAULT;
+    : confirmDefault(kind);
 }
 
 /** A service call, as `hass.callService` takes it (the entity in its data). */
@@ -190,7 +202,7 @@ export interface CommandInput {
   readonly kind?: ApplianceKind | undefined;
   /** A meal's amount, as the card names it (`feed_amount`): the integration's smallest otherwise. */
   readonly amount?: number | undefined;
-  /** What the card asks before (`confirmOf`): `CONFIRM_DEFAULT` where it names nothing. */
+  /** What the card asks before (`confirmOf`): its kind's default (`confirmDefault`) where it names nothing. */
   readonly confirm?: readonly ConfirmName[] | undefined;
 }
 
@@ -390,12 +402,12 @@ const PET_ACTIONS = ['feed', 'clean', 'deodorize', 'level'] as const;
  * stop, power, light, then a pet device's meal, clean, deodorizing and levelling): start at rest or done, resume
  * while paused, pause while it runs a job that pauses (`pausable`), stop while it has a job (or waits to start), switch
  * off unless off, on when off, the light always, a pet device's own while it is reached. Each with what it asks first,
- * of what the card asks before (by default stopping; switching off one not at rest, or what keeps food cold; a meal, a
- * clean, a levelling), and why it cannot be done now.
+ * of what the card asks before (by default stopping; switching off one not at rest, or what keeps food cold; starting
+ * what heats a cavity; a meal, a clean, a levelling), and why it cannot be done now.
  */
 export function commandsOf(input: CommandInput): Command[] {
   const { hass, platform, roles, status, kind, amount } = input;
-  const asked: ReadonlySet<ConfirmName> = new Set(input.confirm ?? CONFIRM_DEFAULT);
+  const asked: ReadonlySet<ConfirmName> = new Set(input.confirm ?? confirmDefault(kind));
   const running = status === 'running' || status === 'preheating';
   const remote = roles.remote ? hass?.states?.[roles.remote]?.state : undefined;
   const wanted: Array<readonly [CommandName, Action]> = [];

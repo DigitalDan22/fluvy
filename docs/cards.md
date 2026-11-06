@@ -434,9 +434,12 @@ or a script), found by themselves where the integration names its buttons so. `c
 first in Home Assistant's dialog, wherever they are tapped (its buttons, its power button, the row's round): `start`,
 `resume`, `pause`, `stop`, `off` (switching off), `feed`, `clean` and `level`, in words that name the appliance ("Start
 Oven?"). Unset, a stop asks, and so do switching off while it runs, waits to start or has failed (a fridge at any
-time), a meal, a clean and a levelling, and a litter box's resume. A list replaces that set: name every command that
-asks, `off` included (`confirm: [start, stop, off]`); `confirm: []` asks for nothing, which is the home's choice. The
-editor offers the commands its appliance can send. `variant: compact`, `ring` (a dial) and `row` are the smaller layouts; every part
+time), a meal, a clean and a levelling, and a litter box's resume; an oven, a microwave and an air fryer ask before
+they start too (#128: a stray tap heats whatever was left inside, with nobody by it), where a kettle, which stops at the
+boil, and a washer, a dryer or a dishwasher start at one tap. An oven's buttons are Start, Stop, the light and its
+power, each where its integration can do it. A list replaces that set: name every command that asks, `off` included
+(`confirm: [start, stop, off]`); `confirm: []` asks for nothing, which is the home's choice. The editor offers the
+commands its appliance can send. `variant: compact`, `ring` (a dial) and `row` are the smaller layouts; every part
 switches off (`show_power`, `show_hero`, `show_progress`, `show_rows`, `show_controls`…). An administrator sees a bell
 beside the time left: "Tell me when it's done" writes a normal automation that notifies their phone when the appliance
 finishes.
@@ -450,9 +453,9 @@ rows: [program, water, energy]
 
 ```yaml
 type: custom:fluvy-appliance-card
-entity: switch.oven_power
+entity: switch.washer_power
 variant: row
-confirm: [start, stop, off]   # its round asks before it starts the oven too
+confirm: [start, stop, off]   # its round asks before it starts the washer too
 ```
 
 ```yaml

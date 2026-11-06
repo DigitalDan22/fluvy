@@ -535,6 +535,63 @@ describe('the appliance card', () => {
     }
   });
 
+  it('draws an oven’s Start where its integration can start it, asked about first (#128); one that cannot, as before', async () => {
+    const handed: Array<{ config?: { tap_action?: Record<string, unknown> } }> = [];
+    const listen = (event: Event): void => void handed.push((event as CustomEvent).detail);
+    document.body.addEventListener('hass-action', listen);
+    try {
+      // LocalThings' oven at rest: Start, Stop, the light, its power; a tap on Start asks first
+      const hass = house({
+        'sensor.backofen_kuche_maschinenzustand': { state: 'idle' },
+        'sensor.backofen_kuche_garraumstatus': { state: 'ready' },
+      });
+      const actions = (card: Mounted): Array<string | null> =>
+        [...root(card).querySelectorAll('[data-action]')].map((el) =>
+          el.getAttribute('data-action'),
+        );
+      const oven = await mount({ device: 'lt-oven', show_controls: true }, hass);
+      expect(actions(oven)).toEqual(['start', 'stop', 'light', 'power']);
+      root(oven).querySelector<HTMLButtonElement>('[data-action="start"]')?.click();
+      expect(hass.calls).toEqual([]);
+      expect(handed.at(-1)?.config?.tap_action).toMatchObject({
+        perform_action: 'button.press',
+        target: { entity_id: 'button.backofen_kuche_garen_starten' },
+        confirmation: { text: 'Start Backofen Küche?' },
+      });
+      // the home's own list over the kind's: a start at one tap
+      const quick = await mount(
+        { device: 'lt-oven', show_controls: true, confirm: ['stop'] },
+        hass,
+      );
+      root(quick).querySelector<HTMLButtonElement>('[data-action="start"]')?.click();
+      expect(hass.calls).toEqual([
+        {
+          domain: 'button',
+          service: 'press',
+          data: { entity_id: 'button.backofen_kuche_garen_starten' },
+        },
+      ]);
+      // Whirlpool's oven has no start from Home Assistant: the cells it drew before
+      expect(actions(await mount({ device: 'wp-oven', show_controls: true }))).toEqual([
+        'stop',
+        'light',
+      ]);
+      // its height is its config's, whatever it can do: the one row of buttons it declared before
+      for (const variant of ['full', 'compact', 'ring'])
+        for (const device of ['lt-oven', 'wp-oven']) {
+          const config = { type: 'x', device, kind: 'oven', variant, show_controls: true };
+          expect(applianceHouseHeight(config as never, hass), `${device} ${variant}`).toBe(
+            applianceHouseHeight(
+              { ...config, controls: ['stop', 'light', 'power'] } as never,
+              hass,
+            ),
+          );
+        }
+    } finally {
+      document.body.removeEventListener('hass-action', listen);
+    }
+  });
+
   it('offers in its editor what an appliance can be asked before, those it can send; every one where it names none (#120)', () => {
     const form = FluvyApplianceCard.getConfigForm();
     const field = form.schema

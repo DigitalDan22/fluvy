@@ -5,6 +5,7 @@ import {
   callFor,
   commandsOf,
   CONFIRM_DEFAULT,
+  confirmDefault,
   confirmOf,
   programCall,
   programChoice,
@@ -456,6 +457,47 @@ describe('the commands an appliance takes now', () => {
     // an empty list asks nothing: the home's choice
     expect(asked('hc-dish', 'running', [])).toEqual(['pause', 'stop', 'power_off']);
     expect(asked('plug-washer', 'idle', [], 'fridge')).toEqual(['power_off']);
+  });
+
+  it('asks before starting what heats a cavity where its card names nothing: an oven, a microwave, an air fryer (#128)', () => {
+    expect(confirmDefault('oven')).toEqual(['start', ...CONFIRM_DEFAULT]);
+    expect(confirmDefault('microwave')).toEqual(['start', ...CONFIRM_DEFAULT]);
+    expect(confirmDefault('air_fryer')).toEqual(['start', ...CONFIRM_DEFAULT]);
+    // a kettle stops at the boil; the rest are switched on, never started; no kind, today's set
+    for (const kind of [
+      'kettle',
+      'hob',
+      'toaster',
+      'sandwich_maker',
+      'washer',
+      'dishwasher',
+    ] as const)
+      expect(confirmDefault(kind), kind).toBe(CONFIRM_DEFAULT);
+    expect(confirmDefault(undefined)).toBe(CONFIRM_DEFAULT);
+    expect(confirmOf(undefined, 'oven')).toEqual(confirmDefault('oven'));
+    // LocalThings' oven at rest: its start asks, unless the home's own list says otherwise
+    const rest = withStates({
+      'sensor.backofen_kuche_maschinenzustand': 'idle',
+      'sensor.backofen_kuche_garraumstatus': 'ready',
+    });
+    const start = (confirm?: unknown) =>
+      commandsOf({
+        ...input('lt-oven', 'idle', rest),
+        kind: 'oven',
+        confirm: confirmOf(confirm, 'oven'),
+      }).find((command) => command.action === 'start');
+    expect(start()).toMatchObject({
+      call: { service: 'press', data: { entity_id: 'button.backofen_kuche_garen_starten' } },
+      confirm: 'start',
+    });
+    expect(start(['stop', 'off'])?.confirm).toBeUndefined();
+    expect(start([])?.confirm).toBeUndefined();
+    // a washer's start is one tap, as before
+    expect(
+      commandsOf({ ...input('hc-dish', 'idle'), kind: 'dishwasher' }).find(
+        (command) => command.action === 'start',
+      )?.confirm,
+    ).toBeUndefined();
   });
 
   it('offers only an option the select lists', () => {

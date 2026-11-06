@@ -112,7 +112,7 @@ import {
   COMMAND_NAMES,
   CONFIRM,
   CONFIRM_ACTION,
-  CONFIRM_DEFAULT,
+  confirmDefault,
   CONFIRM_NAMES,
   mealAmount,
   programCall,
@@ -348,7 +348,7 @@ export interface ApplianceCardConfig extends FluvyCardConfig, HeadConfig {
   /**
    * The commands it asks before, in Home Assistant's dialog (#120): a start, a resume, a pause, a stop, switching off,
    * a meal, a clean, a levelling (default: a stop, switching off where it cuts something short, a meal, a clean, a
-   * levelling; an empty list asks nothing).
+   * levelling, and an oven's, a microwave's or an air fryer's start; an empty list asks nothing).
    */
   confirm?: readonly ConfirmName[];
   /** The programmes as chips to choose from at rest, where the integration lets a card choose. */
@@ -1556,7 +1556,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       modes_style: 'chips',
       show_controls: variant === 'ring',
       controls: [...defaults.controls],
-      confirm: CONFIRM_DEFAULT.filter((name) => confirmable(c, hass).includes(name)),
+      confirm: confirmDefault(kind).filter((name) => confirmable(c, hass).includes(name)),
       show_programs: false,
       unload_reminder: defaults.unload,
       unload_after: 30,

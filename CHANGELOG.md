@@ -5,6 +5,13 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Visible on upgrade
+
+- The Appliance card of an oven whose integration can start it (LocalThings, Home Connect, Miele, SmartThings) shows a
+  Start button first among its buttons, and as a row its round is that Start, as a kettle's is, where it was its power;
+  an oven's, a microwave's or an air fryer's start asks first ("Start Oven?") unless the home's own `confirm` says
+  otherwise (#128).
+
 ### Added
 
 - The Appliance card leaves out a role it found that a home names `none` (`roles: [{role: remote, entity: none}]`), or

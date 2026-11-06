@@ -682,7 +682,7 @@ export const KIND_DEFAULTS: Readonly<Record<ApplianceKind, KindDefaults>> = {
     tone: 'heat',
     hero: 'heat',
     readouts: ['program', 'probe', 'elapsed'],
-    controls: ['stop', 'light', 'power'],
+    controls: ['start', 'stop', 'light', 'power'],
     steps: [],
     unload: false,
     doorAlert: 0,

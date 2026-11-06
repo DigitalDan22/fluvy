@@ -796,6 +796,17 @@ export const sheet: SheetSpec = {
       title: 'LocalThings · oven preheating, its buttons',
       cards: [card('lt-oven', { show_controls: true })],
     }),
+    // #128: an oven at rest whose integration can start it, its Start first among its buttons (asked about first)
+    frame({
+      title: 'LocalThings · oven at rest, its Start',
+      cards: [card('lt-oven', { show_controls: true }), card('lt-oven', { variant: 'row' })],
+      hass: changed(
+        said({
+          'sensor.backofen_kuche_maschinenzustand': 'idle',
+          'sensor.backofen_kuche_garraumstatus': 'ready',
+        }),
+      ),
+    }),
     frame({
       title: 'LocalThings · rows',
       cards: [
