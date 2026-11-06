@@ -77,7 +77,7 @@ describe('a see-through card', () => {
     const card = await mounted({ card_opacity: 80 });
     expect(card.getAttribute('glass')).toBe('blur');
     expect(card.style.getPropertyValue('--fv-glass')).toBe('80%');
-    await landed(card);
+    // the first see-through card's first frame waited for what it wears: never drawn solid a moment before
     const sheet = ownSheet(card);
     expect(sheet).toContain('--fv-solid-card');
     expect(sheet).toMatch(

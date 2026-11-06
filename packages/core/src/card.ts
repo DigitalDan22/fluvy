@@ -137,8 +137,8 @@ export const cardDefaults = (): CardSurface => houseCards;
 export function setCardDefaults(next: CardSurface): void {
   if (next.opacity === houseCards.opacity && next.blur === houseCards.blur) return;
   houseCards = { opacity: next.opacity, blur: next.blur };
-  // a house of see-through cards fetches what they wear before they draw
-  if (next.opacity < 100) fetchGlass();
+  // a house of see-through cards fetches what they wear before they draw (a card's first frame waits for it)
+  if (next.opacity < 100) void fetchGlass();
   wearSurfaces();
 }
 
@@ -147,14 +147,21 @@ const wearSurfaces = (): void => {
   for (const card of live) if (card.hasUpdated) card.wearGlass();
 };
 
-/** What a see-through card wears (`look/glass.ts`), once the first one (or the house) has fetched it. */
+/**
+ * What a see-through card wears (`look/glass.ts`), once the first one (or the house) has fetched it; one that cannot
+ * be fetched leaves the cards solid.
+ */
 let glass: typeof import('./look/glass.js') | undefined;
 let fetchingGlass: Promise<void> | undefined;
-function fetchGlass(): void {
-  fetchingGlass ??= import('./look/glass.js').then((module) => {
-    glass = module;
-    wearSurfaces();
-  });
+function fetchGlass(): Promise<void> {
+  fetchingGlass ??= import('./look/glass.js').then(
+    (module) => {
+      glass = module;
+      wearSurfaces();
+    },
+    () => undefined,
+  );
+  return fetchingGlass;
 }
 
 /**
@@ -381,6 +388,9 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
     // a picker's preview out of sight: its first update waits (`waitForSight`), later asks joining it
     const sighted = this.sighted;
     if (sighted) return sighted.promise.then(() => this.scheduleUpdate());
+    // see-through, the first frame is drawn in what it wears, never solid a moment before
+    const wearing = this.hasUpdated ? undefined : this.wearing();
+    if (wearing) return wearing.then(() => this.scheduleUpdate());
     if (unread.has(this)) {
       const cards = [...unread];
       unread.clear();
@@ -507,6 +517,11 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
     this.wearGlass();
   }
 
+  /** What the card's first frame waits for: what a see-through card wears, until it has landed. */
+  private wearing(): Promise<void> | undefined {
+    return this.surface && cardOpacity(this.config) < 100 && !glass ? fetchGlass() : undefined;
+  }
+
   /** Whether the card draws a surface of its own (a greeting, a heading draw none): what may be see-through. */
   protected get surface(): boolean {
     return true;
@@ -525,7 +540,7 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
       const blur = houseCards.blur ? 'blur' : '';
       if (this.getAttribute('glass') !== blur) this.setAttribute('glass', blur);
       this.style.setProperty('--fv-glass', `${level}%`);
-      if (!glass) fetchGlass();
+      if (!glass) void fetchGlass();
     } else if (this.hasAttribute('glass')) {
       this.removeAttribute('glass');
       this.style.removeProperty('--fv-glass');

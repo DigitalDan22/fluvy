@@ -13,6 +13,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   otherwise (#128).
 - A card's name field in its editor, and a list item's, is Home Assistant's own name picker wherever an entity is
   beside it, as in Home Assistant's own cards; a name you wrote in words stays your words.
+- The chips card's tabs stay solid on a see-through house, as the greeting and the headings do, where they turned
+  see-through and blurred with the cards in 1.15.
 
 ### Added
 
@@ -59,6 +61,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The Room card's picture pill fits its glyph and its name whole when the card's width changes after it is drawn (a
   phone turned, a column resized, a slow first layout), where a pill first drawn without its glyph kept that width
   and squeezed the glyph and cut the name once the glyph came; its glyph never shrinks.
+- A see-through card on a dashboard opened cold draws its first frame see-through, where it drew solid for a moment
+  until what it wears arrived.
 
 ## [1.15.0] — 2026-11-06
 

@@ -34,7 +34,8 @@ while they are see-through; a card that sets `card_opacity` keeps its own (its e
 chosen, and never writes it). It applies to every Fluvy card on a dashboard, a wall included, and to its preview in
 the card editor and the card picker; not to Fluvy's own pages (Activity, History, this panel), nor to what opens from a
 card (a sheet, a menu, a dialog), which stay solid. Home Assistant's own cards follow the theme's `ha-card-background`,
-not this setting. A card that draws no surface (a heading, the greeting, the web page card `bare`) is unchanged.
+not this setting. A card that draws no surface (a heading, the greeting, the chips card's tabs, the web page card
+`bare`) is unchanged.
 Inside a see-through card its wells and washes go see-through with it, one material; a lit tile, a light card lit
 whole, a switch's thumb and a knob keep their colour solid (a light's colour is what it says). Its quieter words (a
 line under a name, a ruler's figures) darken in light mode and lighten in dark mode as the card goes see-through, and
@@ -46,6 +47,8 @@ alignment and opacity), else the theme's `lovelace-background`, else the page's 
 wall the view's own background shows, and the wall's (the mesh, or the plain page) where the view has none.
 
 Blur costs a tablet's graphics: on an older wall panel that scrolls slowly, turn it off (the cards stay see-through).
+
+A card on a dashboard that opens in a see-through house draws its first frame see-through, never solid a moment before.
 
 ## Lights
 

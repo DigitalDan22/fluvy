@@ -129,10 +129,9 @@ through, blurred by default.
 
 - **See-through** — the card's own colours, each at the card's opacity: the card, its off and unavailable fill (the
   page's), a `card_color` wash, a lit light card's wash, a resting `tint: always` wash; a tile that is a card of its
-  own, the chips on the page; the wells inside (the page's fill, the sunken page, the wash's deeper step) and what is
-  painted to look like the card (an icon circle washed into it, the dial's disc, a knob's halo). Wells on a
-  see-through card are a second layer of the same material: they read a step denser, as they read a step deeper on a
-  solid one.
+  own; the wells inside (the page's fill, the sunken page, the wash's deeper step) and what is painted to look like the
+  card (an icon circle washed into it, the dial's disc, a knob's halo). Wells on a see-through card are a second layer
+  of the same material: they read a step denser, as they read a step deeper on a solid one.
 - **Solid** — what says a state in its colour (a lit tile, a light card lit whole: the light's colour is the
   information, and over a blue picture it would turn another), what a finger holds (a switch's thumb, a knob: see-through,
   a thumb takes its lit track's colour and vanishes at 0), what sits on a picture (a room's name pill and quick actions
@@ -152,11 +151,14 @@ through, blurred by default.
   the card's entrance holds an opacity that cuts it off from the page (a Backdrop Root). What opens from a card lives
   in the top layer (menus, sheets, the keypad), so a blurred card still leaves it the page. A wall tablet that scrolls
   slowly is better without it; the cards stay see-through.
-- **Never see-through**: Fluvy's own pages (Activity, History, the panel), and the screensaver's clock (it has no
-  surface of its own). Home Assistant's cards follow the theme's `ha-card-background`.
+- **Never see-through**: Fluvy's own pages (Activity, History, the panel), the screensaver's clock and the dashboard's
+  own on the page — the greeting, a heading, the chips card's tabs (1.16: controls on the page, with no surface or
+  card colour of their own; a pill under the finger stays solid, as on a see-through card). Home Assistant's cards
+  follow the theme's `ha-card-background`.
 
 What a see-through card wears (its sheet's writer and its rules) is fetched by the first card under 100 %: a house of
-solid cards never pays for it.
+solid cards never pays for it, and a house under 100 fetches it as the page starts. A see-through card's first frame
+waits for it (1.16): on a cold load it is drawn see-through from the start, never solid a moment before.
 
 ## Header pattern (every card except the weather hero)
 

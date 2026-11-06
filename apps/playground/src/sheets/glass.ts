@@ -129,13 +129,23 @@ export const sheet: SheetSpec = {
         ...cardsOf(security, 'Alarm'),
       ].map((card) => ({ ...card, card_opacity: 60 })),
     },
-    // a light card lit whole (its light's colour, what it says) stays solid; a card that draws none is unchanged
+    // a light card lit whole (its light's colour, what it says) stays solid; a card that draws none is unchanged: a
+    // heading, and the dashboard's tabs (1.16: the chips card draws no surface, its pills solid as a greeting's are)
     {
       title: 'Lit whole, and no surface',
       backdrop: BLUE,
       cards: [
         { type: 'custom:fluvy-light-card', entity: 'light.lamp', tint: 'on', card_opacity: 50 },
         { type: 'custom:fluvy-heading-card', title: 'Living room', card_opacity: 50 },
+        {
+          type: 'custom:fluvy-chips-card',
+          chips: [
+            { name: 'Home', path: '/fluvy-auto/home' },
+            { name: 'Living room', path: '/fluvy-auto/living' },
+            { name: 'Energy', path: '/energy' },
+          ],
+          card_opacity: 50,
+        },
       ],
     },
   ],

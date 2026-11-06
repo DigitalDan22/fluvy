@@ -90,6 +90,14 @@ export class FluvyChipsCard extends Card<ChipsCardConfig> {
 
   static override still = true;
 
+  /**
+   * The tabs are the dashboard's own, on the page as a greeting and a heading are: no card's surface, so never
+   * see-through (a pill under the finger is solid, as on a see-through card).
+   */
+  protected override get surface(): boolean {
+    return false;
+  }
+
   static override styles: CSSResultGroup = [
     ...(Card.styles as CSSResultGroup[]),
     sheetStyles.home,
