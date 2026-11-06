@@ -1024,6 +1024,58 @@ describe('the appliance card', () => {
     expect(await alarm(211)).toEqual(['Fehler', 'Fatal error']);
   });
 
+  it('keeps a failure’s whole words in reach where its alarm row says them shorter: its title, and its tap opens what failed', async () => {
+    const ruler = {
+      width: (_cls: string, text: string) => text.length * 8,
+      pill: (_cls: string, text: string, sides: number) => text.length * 8 + sides,
+      clear() {},
+    };
+    const reason = 'water_supply_error_check_the_tap';
+    const handed: Array<{ entityId?: string }> = [];
+    const listen = (event: Event): void => void handed.push((event as CustomEvent).detail);
+    document.body.addEventListener('hass-more-info', listen);
+    try {
+      const alarm = async (width: number) => {
+        const hass = house({
+          'event.waschmaschine_fehler': {
+            state: new Date(NOW - 4 * 60_000).toISOString(),
+            attributes: { event_type: reason },
+          },
+        });
+        const card = await mount({ device: 'lg-washer' }, hass, width);
+        Object.assign((card as unknown as { head: object }).head, { ruler });
+        card.requestUpdate();
+        await card.updateComplete;
+        const row = root(card).querySelector<HTMLElement & { fvTap?: () => void }>(
+          '.ap-item.is-warning',
+        );
+        row?.fvTap?.();
+        return {
+          said: text(row?.querySelector('.ap-item__text')),
+          title: row?.getAttribute('title'),
+          label: row?.getAttribute('aria-label'),
+          opens: handed.at(-1)?.entityId,
+        };
+      };
+      // the row holds it: said whole
+      expect(await alarm(412)).toEqual({
+        said: reason,
+        title: null,
+        label: reason,
+        opens: 'event.waschmaschine_fehler',
+      });
+      // a 211 card's line does not: "Error", the reason its title and its name, its details a tap away
+      expect(await alarm(211)).toEqual({
+        said: 'Error',
+        title: reason,
+        label: reason,
+        opens: 'event.waschmaschine_fehler',
+      });
+    } finally {
+      document.body.removeEventListener('hass-more-info', listen);
+    }
+  });
+
   it('says the DE1’s call for a hand and its failure in the house’s language, never its own English but as the alarm’s detail', async () => {
     for (const language of ['de', 'sk'] as const) {
       await ensureLanguage(language);

@@ -26,6 +26,10 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The Appliance card's editor offers to ask before every command its appliance can send, by the entities it found,
   where an LG or SmartThings washer's Start and Stop through its operation select left the list while the select listed
   nothing (the washer asleep or out of reach).
+- The Appliance card's alarm row that says "Error" on a narrow card, where its line does not hold a failure's own words,
+  keeps them as the row's title and in what it says to a screen reader, and a tap on any alarm row opens what says it
+  (what failed, the door left open, the state that asks for a hand), where at 211 px the reason showed nowhere on the
+  card and a door left open opened the appliance's error sensor where it has one.
 
 ## [1.15.0] — 2026-11-06
 

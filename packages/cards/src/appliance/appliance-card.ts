@@ -623,6 +623,8 @@ interface Item {
   readonly brief?: string;
   /** The brief's shorter form, for a tile it would not hold in: a moment another day by its time alone. */
   readonly briefShort?: string;
+  /** Its whole words, where its line says them shorter (a failure's reason on a narrow card): its title. */
+  readonly words?: string;
   readonly entity: string | undefined;
   readonly entry: RowEntry | undefined;
   readonly reminder: Reminder | undefined;
@@ -3279,6 +3281,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     let phrase: string | undefined;
     let brief: string | undefined;
     let briefShort: string | undefined;
+    let words: string | undefined;
     switch (key) {
       case 'program': {
         label = (off ? '' : r.program) || dash;
@@ -3369,14 +3372,16 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         const need = off
           ? undefined
           : r.attention.find((item) => !item.key.startsWith('appliance.m_'));
-        entity = r.roles.error ?? r.roles.door ?? view.entity;
+        // what says it opens on a tap: what failed and why, the door left open, in Home Assistant's details
+        entity = need?.entity ?? r.roles.error ?? r.roles.door ?? view.entity;
         if (need) {
           // its words where the row's line holds them, else their shorter form ("Error" for a failure): one line, as
-          // every row's
+          // every row's, its whole words its title and what it says to a screen reader, its tap their details
           const said = attentionText(this.hass, need, now);
           const holds = (text: string): boolean =>
             this.head.ruler.width('ap-item__text', text) <= this.contentWidth;
           label = holds(said) ? said : (this.needBriefs(view, need).find(holds) ?? said);
+          if (label !== said) words = said;
           // the device's own words for it, in no language of the house's (a DE1's "Refill"): its value
           value = need.detail ?? '';
           glyphName = 'warn';
@@ -3512,6 +3517,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       ...(phrase && entry?.name === undefined ? { phrase } : {}),
       ...(brief ? { brief } : {}),
       ...(briefShort && briefShort !== brief ? { briefShort } : {}),
+      ...(words && entry?.name === undefined ? { words } : {}),
     };
   }
 
@@ -3567,7 +3573,8 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
           data-accent=${this.accents.item(item.entry?.color) ?? nothing}
           role="button"
           tabindex="0"
-          aria-label=${[item.label, said(item)].filter(Boolean).join(' · ')}
+          title=${item.words ?? nothing}
+          aria-label=${[item.words ?? item.label, said(item)].filter(Boolean).join(' · ')}
           .fvTap=${tap}
           .fvHold=${hold}
           @pointerdown=${startPress}

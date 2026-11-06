@@ -119,10 +119,20 @@ describe('an appliance read', () => {
     const at = (moment: De1Moment) => read('de1', {}, houseOf([de1(moment)(NOW)], NOW));
     const refill = at('refill');
     expect(refill.word).toBe('');
-    expect(refill.attention[0]).toEqual({ key: 'appliance.status_attention', detail: 'Refill' });
+    // each with the entity that says it, which a tap on its alarm row opens: its state
+    const state = 'sensor.decent_espresso_de1pro_de1_state';
+    expect(refill.attention[0]).toEqual({
+      key: 'appliance.status_attention',
+      detail: 'Refill',
+      entity: state,
+    });
     const fatal = at('fatal');
     expect(fatal.word).toBe('');
-    expect(fatal.attention[0]).toEqual({ key: 'appliance.failure', detail: 'Fatal error' });
+    expect(fatal.attention[0]).toEqual({
+      key: 'appliance.failure',
+      detail: 'Fatal error',
+      entity: state,
+    });
     // what it is doing otherwise is said in its words
     expect(at('espresso').word).toBe('Espresso');
     expect(at('espresso').attention).toEqual([]);
@@ -532,7 +542,13 @@ describe('an appliance read', () => {
     } as HomeAssistant;
     expect(read('lg-washer', {}, lg)).toMatchObject({
       status: 'error',
-      attention: [{ key: 'appliance.failure', text: 'Out-of-balance load' }],
+      attention: [
+        {
+          key: 'appliance.failure',
+          text: 'Out-of-balance load',
+          entity: 'event.waschmaschine_fehler',
+        },
+      ],
     });
     // Miele's failure flag
     expect(
@@ -545,6 +561,7 @@ describe('an appliance read', () => {
         .attention[0],
     ).toEqual({
       key: 'appliance.aborted',
+      entity: 'sensor.geschirrspuler_programm_abgebrochen',
     });
     // LG's older integration's message
     expect(
@@ -553,6 +570,7 @@ describe('an appliance read', () => {
     ).toEqual({
       key: 'appliance.failure',
       text: 'UE',
+      entity: 'sensor.lg_waschmaschine_error_message',
     });
     // an old error is not one
     expect(read('lg-washer').status).toBe('running');

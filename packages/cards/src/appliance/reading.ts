@@ -179,6 +179,8 @@ export interface Attention {
   readonly detail?: string;
   /** Since when (ms): said as its age ("Door open · 2 min"). */
   readonly since?: number;
+  /** The entity that says it, which a tap on it opens: what failed, the state that asks for a hand, the door. */
+  readonly entity?: string;
 }
 
 /** An oven's or a kettle's heat: where it is, where it is going, and whether it is there. */
@@ -462,9 +464,14 @@ export function readAppliance(
     attention.push({
       key: status === 'error' ? 'appliance.failure' : 'appliance.status_attention',
       ...(own ? { detail: own } : word ? { text: word } : {}),
+      ...(roles.state ? { entity: roles.state } : {}),
     });
   if (door?.open && doorAlert > 0 && door.since !== null && now - door.since >= doorAlert * 1000)
-    attention.push({ key: 'appliance.door_open', since: door.since });
+    attention.push({
+      key: 'appliance.door_open',
+      since: door.since,
+      ...(roles.door ? { entity: roles.door } : {}),
+    });
   if (unload) attention.push({ key: 'appliance.unload', since: unload.since });
   if (status === 'running' && step === 'anti_crease')
     attention.push({ key: 'appliance.anti_crease' });
@@ -734,11 +741,13 @@ function failureOf(
   view: (id: string | undefined) => EntityView | undefined,
   now: number,
 ): Attention | null {
-  const v = view(roles.error);
-  if (!v || v.status !== 'ok') return null;
+  const entity = roles.error;
+  const v = view(entity);
+  if (!entity || !v || v.status !== 'ok') return null;
   const failing = (text?: string): Attention => ({
     key: 'appliance.failure',
     ...(text ? { text } : {}),
+    entity,
   });
   switch (v.domain) {
     case 'binary_sensor':
@@ -755,7 +764,7 @@ function failureOf(
     default: {
       const word = wordOf(v.state);
       // Home Connect's "Program aborted" event, present or confirmed
-      if (word === 'present' || word === 'confirmed') return { key: 'appliance.aborted' };
+      if (word === 'present' || word === 'confirmed') return { key: 'appliance.aborted', entity };
       // nothing, or a word for none (LG's older integration's dash is nothing once read)
       if (/^(off|none|no_error|ok|normal|0|no|false)?$/.test(word)) return null;
       if (word === 'on' || word === 'true') return failing();

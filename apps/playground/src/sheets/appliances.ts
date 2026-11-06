@@ -991,6 +991,17 @@ export const sheet: SheetSpec = {
         },
       }),
     }),
+    // a reason longer than a narrow card's line: "Error" there, the reason its row's title, a tap its details
+    frame({
+      title: 'Failed · a long reason',
+      cards: [card('lg-washer')],
+      hass: changed({
+        'event.waschmaschine_fehler': {
+          state: new Date(now - 4 * 60_000).toISOString(),
+          attributes: { event_type: 'water_supply_error_check_the_tap_and_the_hose' },
+        },
+      }),
+    }),
     // the house's appliances
     frame({ title: 'Appliances · rows', cards: [list()] }),
     frame({
