@@ -389,7 +389,7 @@ export class FluvyWebCard extends Card<WebCardConfig> {
         fieldRow(boolField('show_open'), boolField('show_fullscreen')),
         boolField('show_reload'),
         // no card, no colours to wear; no head, no button for the actions
-        ...colourFields().map((field) => onlyWhen(notBare, field)),
+        ...colourFields({ unavailable: false }).map((field) => onlyWhen(notBare, field)),
         onlyWhen(isPlate, actionFields()),
       ],
       ...editorLabels(

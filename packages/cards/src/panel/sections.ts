@@ -22,6 +22,8 @@ import {
   type TabStyle,
   tabsOf,
   type Chrome,
+  UNAVAILABLE_LOOKS,
+  type UnavailableLook,
   type ViewTabs,
   WALL_AFTER,
   WALL_NIGHT_DIM,
@@ -745,9 +747,10 @@ const OPACITY_MARKS = [0, 25, 50, 75, 100] as const;
 
 /**
  * Every card's surface where a card says nothing of its own (1.15, #121): how opaque it is, on the ruler a light's
- * brightness is set on (5 % steps, its figure at the row's end), and whether what shows through a see-through card is
- * blurred — said always, as a card may be see-through of its own on a solid house. The house's, an administrator's to
- * set; shown on the preview and the page while it is chosen.
+ * brightness is set on (5 % steps, its figure at the row's end), whether what shows through a see-through card is
+ * blurred — said always, as a card may be see-through of its own on a solid house — and how a card out of reach looks
+ * (1.16, #126: dashed, or as when off). The house's, an administrator's to set; shown on the preview and the page while
+ * it is chosen.
  */
 function cardsCard(ctx: PanelContext): TemplateResult {
   const { shown, admin } = ctx;
@@ -798,6 +801,18 @@ function cardsCard(ctx: PanelContext): TemplateResult {
         onToggle: (on) => ctx.editHouse({ cards: { ...shown.cards, blur: on } }),
       })}
     </div>
+    <p class="fv-label pn-label">${ctx.t('cards.unavailable')}</p>
+    ${choice(
+      ctx,
+      UNAVAILABLE_LOOKS.map((look) => ({
+        key: look,
+        label: localize(ctx.hass, `option.${look}`),
+        active: shown.cards.unavailable === look,
+      })),
+      admin
+        ? (key) => ctx.editHouse({ cards: { ...shown.cards, unavailable: key as UnavailableLook } })
+        : null,
+    )}
   </section>`;
 }
 

@@ -204,6 +204,12 @@ const VIEW_ICONS = /\/packages\/core\/src\/look\/view-icons\.ts/;
  */
 const GLASS = /\/packages\/(core\/src\/look\/glass|ui\/src\/styles\/(generated\/)?glass)\.ts/;
 
+/**
+ * What a card quiet out of reach wears (1.16, #126): its sheet — fetched by the first card that is one, or as the house
+ * asks for it; a dashboard of dashed cards never pays for it.
+ */
+const QUIET = /\/packages\/(core\/src\/look\/quiet|ui\/src\/styles\/(generated\/)?quiet)\.ts/;
+
 /** The icon set's other part (`fluvy:washer`, `fluvy:gate-open` …): fetched the first time Home Assistant asks for one. */
 const ICONS = /\/packages\/core\/src\/icons\/generated-on-demand\.ts/;
 
@@ -240,8 +246,8 @@ const FORMS =
  * (the history bars' readings on their own), devices (the cameras' sheet on its own), appliances (their pictures on
  * their own), automations and alerts families (each sheet on its own), the template card, the web page card, the Slider
  * card, the Vehicle card, the items card (its sheet on its own), the light card's colours, a room's quick actions, the cards' editor, the
- * fields every editor is built of, the view icons, what a see-through card wears, the icon set's other part, and everything else (Fluvy's packages and Lit) in `core`. The bundle's own
- * entry stays in `fluvy.js`. Rolldown processes the groups in this order; the priorities only say so out loud.
+ * fields every editor is built of, the view icons, what a see-through card wears, what a quiet one wears, the icon
+ * set's other part, and everything else (Fluvy's packages and Lit) in `core`. The bundle's own entry stays in `fluvy.js`. Rolldown processes the groups in this order; the priorities only say so out loud.
  * @type {readonly Group[]}
  */
 export const GROUPS = [
@@ -281,6 +287,7 @@ export const GROUPS = [
   { name: 'fields', test: FIELDS },
   { name: 'view-icons', test: VIEW_ICONS },
   { name: 'glass', test: GLASS },
+  { name: 'quiet', test: QUIET },
   { name: 'icons', test: ICONS },
   { name: 'core', test: (id) => !id.includes('/packages/bundle/src/') },
 ];

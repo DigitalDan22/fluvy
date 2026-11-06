@@ -72,7 +72,7 @@ describe('parsing stored settings', () => {
         lightTint: 'always',
         lightColors: true,
         statuses: { warning: '#DC630B', danger: 'red' },
-        cards: { opacity: 60, blur: false },
+        cards: { opacity: 60, blur: false, unavailable: 'quiet' },
         extra: true,
       }),
     ).toEqual({
@@ -101,7 +101,7 @@ describe('parsing stored settings', () => {
       statuses: { warning: '#dc630b' },
       charts: CHART_DEFAULTS,
       chartSets: [],
-      cards: { opacity: 60, blur: false },
+      cards: { opacity: 60, blur: false, unavailable: 'quiet' },
     });
   });
 
@@ -137,17 +137,40 @@ describe('parsing stored settings', () => {
   it('reads the cards’ surface, each broken field as solid and blurred (1.15: nothing changes on upgrade)', () => {
     // a 1.14 house stored none: every card solid, as before, and the same version (a field with its default)
     const upgraded = parseHouse({ version: 3, palette: 'volt' });
-    expect(upgraded.cards).toEqual({ opacity: 100, blur: true });
-    expect(HOUSE_DEFAULTS.cards).toEqual({ opacity: 100, blur: true });
+    expect(upgraded.cards).toEqual({ opacity: 100, blur: true, unavailable: 'dashed' });
+    expect(HOUSE_DEFAULTS.cards).toEqual({ opacity: 100, blur: true, unavailable: 'dashed' });
     expect(upgraded.version).toBe(3);
-    expect(parseCards({ opacity: 80, blur: false })).toEqual({ opacity: 80, blur: false });
+    expect(parseCards({ opacity: 80, blur: false })).toEqual({
+      opacity: 80,
+      blur: false,
+      unavailable: 'dashed',
+    });
     expect(parseCards({ opacity: 0 }).opacity).toBe(0);
     // off its 5 % steps, out of 0 to 100, or not a number: solid; a blur that is not a switch: on
     for (const opacity of [82, -5, 105, '80', null, Number.NaN])
-      expect(parseCards({ opacity, blur: 'no' })).toEqual({ opacity: 100, blur: true });
+      expect(parseCards({ opacity, blur: 'no' })).toEqual({
+        opacity: 100,
+        blur: true,
+        unavailable: 'dashed',
+      });
     expect(
       resolveSettings(parseHouse({ cards: { opacity: 50 } }), PERSONAL_DEFAULTS).cards,
-    ).toEqual({ opacity: 50, blur: true });
+    ).toEqual({ opacity: 50, blur: true, unavailable: 'dashed' });
+  });
+
+  it('reads how a card out of reach looks: dashed until the house says quiet (1.16, #126: nothing changes on upgrade)', () => {
+    // a 1.15 house stored its surface without it: dashed, as before, and the same version
+    const upgraded = parseHouse({ version: 3, cards: { opacity: 80, blur: true } });
+    expect(upgraded.cards.unavailable).toBe('dashed');
+    expect(upgraded.version).toBe(3);
+    expect(parseCards({ unavailable: 'quiet' }).unavailable).toBe('quiet');
+    expect(parseCards({ unavailable: 'dashed' }).unavailable).toBe('dashed');
+    // a word it does not know, another case, or not a word: dashed
+    for (const unavailable of ['normal', 'Quiet', true, null, 1])
+      expect(parseCards({ unavailable }).unavailable).toBe('dashed');
+    expect(
+      resolveSettings(parseHouse({ cards: { unavailable: 'quiet' } }), PERSONAL_DEFAULTS).cards,
+    ).toEqual({ opacity: 100, blur: true, unavailable: 'quiet' });
   });
 
   it('reads the house’s chart settings: a 1.10 house (version 2, none stored) draws every chart classic, as before', () => {

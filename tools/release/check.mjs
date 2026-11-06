@@ -114,6 +114,8 @@ const BUDGETS = {
   'view-icons': 4096,
   // what a see-through card wears (1.15): its sheet and what writes its fills at its opacity
   glass: 4096,
+  // what a card quiet out of reach wears (1.16): its sheet
+  quiet: 4096,
   // the icon set's other part: the appliances, the garage, the gate, the window and the door open (13 outlines)
   icons: 4096,
   // what the pages share: the date picker, the time field, the dropdown; the Activity and History pages' period,

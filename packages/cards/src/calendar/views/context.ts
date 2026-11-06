@@ -25,6 +25,8 @@ export interface ViewContext {
    * the view draws itself at rest; '' while one can be.
    */
   readonly away: string;
+  /** Out of reach, the view draws itself as it rests, its own glyph in the ban one's place (`unavailable: quiet`). */
+  readonly quiet: boolean;
   /** Content width of the card (its width minus the 20 px sides). */
   readonly width: number;
   /** The selected day (today until the user picks another). */

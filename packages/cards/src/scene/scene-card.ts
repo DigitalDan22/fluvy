@@ -207,7 +207,11 @@ export class FluvySceneCard extends Card<SceneCardConfig> {
         data-target
         @click=${() => this.tap(view.id, { action: 'more-info' })}
       >
-        ${ico('ban', 'off')}
+        ${
+          this.looksQuiet
+            ? ico(iconOf(view, this.config?.icon), toneOf(this.config, 'accent'))
+            : ico('ban', 'off')
+        }
         <span class="fv-row__text"
           ><span class="fv-row__title" data-name>${name}</span
           >${why ? html`<span class="fv-row__sub">${why}</span>` : nothing}</span

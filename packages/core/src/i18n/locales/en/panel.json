@@ -303,6 +303,7 @@
     "cards.opacity_sub": "Under 100 %, the background shows through",
     "cards.blur": "Blur what shows through",
     "cards.blur_sub": "On every see-through card, the house’s or its own",
+    "cards.unavailable": "When unavailable",
     "statuses.title": "Status colours",
     "statuses.sub": "The palette’s own, or yours, fitted to read on every card",
     "statuses.warning": "Warning",

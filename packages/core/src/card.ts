@@ -22,7 +22,12 @@ import { idsOf, type EntityEntry } from './lists.js';
 import { AccentSheet } from './look/accent.js';
 import { entityName, type EntityName } from './names.js';
 import { CHART_DEFAULTS, type ChartSettings, type SavedSeries } from './settings/charts.js';
-import type { CardSurface, LightTint } from './settings/schema.js';
+import {
+  UNAVAILABLE_LOOKS,
+  type CardSurface,
+  type LightTint,
+  type UnavailableLook,
+} from './settings/schema.js';
 
 /**
  * What every card's config may carry. `tone` is the role a card's parts are drawn in (a palette tone); `color` is
@@ -42,6 +47,8 @@ export interface FluvyCardConfig extends LovelaceCardConfig {
   card_color?: string;
   /** How opaque its surface is, in percent (1.15); unset, the house's (`cardOpacity`). */
   card_opacity?: number;
+  /** How it looks while what it shows is out of reach (1.16, #126); unset, the house's (`unavailableLook`). */
+  unavailable?: UnavailableLook;
   tap_action?: ActionConfig;
   hold_action?: ActionConfig;
 }
@@ -128,23 +135,29 @@ export function setChartDefaults(next: HouseCharts): void {
 }
 
 /** What the house says of every card's surface where a card says nothing (fluvy's settings → Appearance, 1.15). */
-let houseCards: CardSurface = { opacity: 100, blur: true };
+let houseCards: CardSurface = { opacity: 100, blur: true, unavailable: 'dashed' };
 
-/** The house's cards' surface, as the settings last said (a card's own `card_opacity` wins). */
+/** The house's cards' surface, as the settings last said (a card's own `card_opacity` and `unavailable` win). */
 export const cardDefaults = (): CardSurface => houseCards;
 
 /** The house's cards' surface changed (saved, or previewed in the panel): every card wears it at once. */
 export function setCardDefaults(next: CardSurface): void {
-  if (next.opacity === houseCards.opacity && next.blur === houseCards.blur) return;
-  houseCards = { opacity: next.opacity, blur: next.blur };
-  // a house of see-through cards fetches what they wear before they draw (a card's first frame waits for it)
+  if (
+    next.opacity === houseCards.opacity &&
+    next.blur === houseCards.blur &&
+    next.unavailable === houseCards.unavailable
+  )
+    return;
+  houseCards = { opacity: next.opacity, blur: next.blur, unavailable: next.unavailable };
+  // a house of see-through or quiet cards fetches what they wear before they draw (a card's first frame waits for it)
   if (next.opacity < 100) void fetchGlass();
+  if (next.unavailable === 'quiet') void fetchQuiet();
   wearSurfaces();
 }
 
 /** Every card on the page wears its surface again; a card not drawn yet wears it with its first frame. */
 const wearSurfaces = (): void => {
-  for (const card of live) if (card.hasUpdated) card.wearGlass();
+  for (const card of live) if (card.hasUpdated) card.wearSurface();
 };
 
 /**
@@ -162,6 +175,34 @@ function fetchGlass(): Promise<void> {
     () => undefined,
   );
   return fetchingGlass;
+}
+
+/**
+ * What a card quiet out of reach wears (`look/quiet.ts`: one sheet every such card adopts), once the first one (or the
+ * house) has fetched it; one that cannot be fetched leaves them dashed.
+ */
+let quietSheet: CSSStyleSheet | undefined;
+let fetchingQuiet: Promise<void> | undefined;
+function fetchQuiet(): Promise<void> {
+  fetchingQuiet ??= import('./look/quiet.js').then(
+    (module) => {
+      quietSheet = module.quietSheet;
+      wearSurfaces();
+    },
+    () => undefined,
+  );
+  return fetchingQuiet;
+}
+
+const isUnavailableLook = (value: unknown): value is UnavailableLook =>
+  (UNAVAILABLE_LOOKS as readonly unknown[]).includes(value);
+
+/**
+ * How a card or an item of it looks out of reach (1.16, #126): the first of `own` that is one of the words (an item's
+ * own, then its card's), else the house's.
+ */
+export function unavailableLook(...own: readonly unknown[]): UnavailableLook {
+  return own.find(isUnavailableLook) ?? houseCards.unavailable;
 }
 
 /**
@@ -241,6 +282,12 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
 {
   /** Cards that are the dashboard's chrome (greeting, tabs, the readouts strip) draw at once, without the entrance, so they read as fixed while the views below them change. */
   static still = false;
+
+  /**
+   * A group whose items each say how they look out of reach (the tiles card's tiles, `unavailableOf`) marks them, its
+   * root never: a dashed tile in a quiet group stays dashed.
+   */
+  static markedItems = false;
 
   /**
    * The card's height at a 360 column for this config, for whoever lays cards out before they are drawn: the
@@ -388,7 +435,7 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
     // a picker's preview out of sight: its first update waits (`waitForSight`), later asks joining it
     const sighted = this.sighted;
     if (sighted) return sighted.promise.then(() => this.scheduleUpdate());
-    // see-through, the first frame is drawn in what it wears, never solid a moment before
+    // see-through or quiet, the first frame is drawn in what it wears, never solid or dashed a moment before
     const wearing = this.hasUpdated ? undefined : this.wearing();
     if (wearing) return wearing.then(() => this.scheduleUpdate());
     if (unread.has(this)) {
@@ -514,12 +561,40 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
     super.updated(changed);
     this.accents.host(this.config?.color);
     this.accents.surface(this.config?.card_color);
-    this.wearGlass();
+    this.wearSurface();
   }
 
-  /** What the card's first frame waits for: what a see-through card wears, until it has landed. */
+  /** What the card's first frame waits for: what a see-through or a quiet card wears, until it has landed. */
   private wearing(): Promise<void> | undefined {
-    return this.surface && cardOpacity(this.config) < 100 && !glass ? fetchGlass() : undefined;
+    if (this.surface && cardOpacity(this.config) < 100 && !glass) return fetchGlass();
+    if (this.asksQuiet() && !quietSheet) return fetchQuiet();
+    return undefined;
+  }
+
+  /** Whether the card looks quiet out of reach (1.16, #126): its own `unavailable`, else the house's. */
+  protected get looksQuiet(): boolean {
+    return unavailableLook(this.config?.unavailable) === 'quiet';
+  }
+
+  /** Whether the card, or an item its config names, looks quiet out of reach (a group's tiles say so in `asksQuiet`). */
+  protected asksQuiet(): boolean {
+    return this.looksQuiet;
+  }
+
+  /** Whether an item drawn this render looks quiet out of reach (`unavailableOf`): the card wears the quiet sheet. */
+  private quietItems = false;
+
+  /**
+   * How an item of the card looks out of reach (a tile, a group's or the card's own): the card's, else the house's —
+   * an item's own `unavailable` first in a group whose items say their own (`markedItems`), the rest following their
+   * card, whose root is marked. The card marks the item with it (`data-unavailable="quiet"` where it is quiet: what the
+   * quiet sheet reads).
+   */
+  protected unavailableOf(item: { readonly unavailable?: unknown }): UnavailableLook {
+    const own = (this.constructor as typeof FluvyCard).markedItems ? item.unavailable : undefined;
+    const look = unavailableLook(own, this.config?.unavailable);
+    if (look === 'quiet') this.quietItems = true;
+    return look;
   }
 
   /** Whether the card draws a surface of its own (a greeting, a heading draw none): what may be see-through. */
@@ -531,9 +606,17 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
    * Its surface as its config and the house say (1.15): under 100 the host is marked `glass` (`blur` while what shows
    * through is blurred) with its opacity in `--fv-glass`, and its sheet is written see-through (`look/glass.ts`, fetched
    * by the first card that is one); solid, or without a surface, the host carries neither. Its sheet is written in
-   * either case.
+   * either case. Quiet out of reach (1.16), what it draws at its root is marked `data-unavailable="quiet"` (a group
+   * whose items each say their own marks them instead: `markedItems`), and it adopts the quiet sheet (`look/quiet.ts`,
+   * fetched by the first card that is quiet) where it or an item is.
    */
-  wearGlass(): void {
+  wearSurface(): void {
+    const quiet = this.looksQuiet;
+    if (!(this.constructor as typeof FluvyCard).markedItems)
+      for (const root of this.renderRoot.children)
+        if (quiet) root.setAttribute('data-unavailable', 'quiet');
+        else root.removeAttribute('data-unavailable');
+    if (quiet || this.quietItems) this.wearQuiet();
     const level = this.surface ? cardOpacity(this.config) : 100;
     const see = level < 100;
     if (see) {
@@ -547,6 +630,14 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
     }
     this.accents.glass(see ? glass?.seeThrough : undefined);
     this.accents.commit();
+  }
+
+  /** The quiet sheet adopted after the card's own, once it has landed (fetched by the first card that wears it). */
+  private wearQuiet(): void {
+    const root = this.renderRoot;
+    if (!quietSheet) void fetchQuiet();
+    else if (root instanceof ShadowRoot && !root.adoptedStyleSheets.includes(quietSheet))
+      root.adoptedStyleSheets = [...root.adoptedStyleSheets, quietSheet];
   }
 
   /* ---------- optimistic state ---------- */
@@ -645,6 +736,7 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
   protected override render(): TemplateResult | typeof nothing {
     if (!this.config) return nothing;
     this.accents.begin();
+    this.quietItems = false;
     return this.renderCard();
   }
 }

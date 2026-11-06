@@ -631,6 +631,8 @@
     "always": "Always",
     "active": "When active",
     "never": "Never",
+    "dashed": "Dashed",
+    "quiet": "As when off",
     "sources": "By source",
     "signed": "Centred on zero",
     "water": "Water",

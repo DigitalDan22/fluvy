@@ -42,6 +42,7 @@ import {
   actionFields,
   boolField,
   cardOpacityField,
+  unavailableField,
   editorLabels,
   entityField,
   fieldRow,
@@ -272,6 +273,7 @@ export class FluvyWeatherCard extends Card<WeatherCardConfig> {
     'color',
     'card_color',
     'card_opacity',
+    'unavailable',
     'tap_action',
     'hold_action',
     'show_icon',
@@ -312,6 +314,7 @@ export class FluvyWeatherCard extends Card<WeatherCardConfig> {
         accentField(),
         accentField('card_color', { none: true }),
         cardOpacityField(),
+        unavailableField(),
         actionFields(),
       ],
       ...editorLabels(
@@ -799,8 +802,10 @@ export class FluvyWeatherCard extends Card<WeatherCardConfig> {
     const mode = this.mode();
     const hours = mode === 'hourly' || mode === 'both';
     const days = mode === 'daily' || mode === 'both';
+    // out of reach the ban glyph, or quiet (`unavailable`) the sky's own at rest
     const icon =
-      this.config?.icon ?? (usable ? conditionGlyph(known ? view.state : '', night) : 'ban');
+      this.config?.icon ??
+      (usable || this.looksQuiet ? conditionGlyph(known ? view.state : '', night) : 'ban');
     const name = this.nameFor(view, this.config?.name);
 
     if (this.compact())

@@ -370,11 +370,17 @@ export class FluvyHelloCard extends Card<HelloCardConfig> {
     return named.trim().split(/\s+/)[0] ?? '';
   }
 
-  /** Condition glyph + "18° Clear". An unreachable weather entity says so; it never shows a number it does not have. */
+  /**
+   * Condition glyph + "18° Clear". An unreachable weather entity says so (beside the ban glyph, or quiet the sky's own);
+   * it never shows a number it does not have.
+   */
   private weather(view: EntityView): TemplateResult {
     if (view.status !== 'ok') {
       return html`<span class="hm-hello__weather"
-        >${glyph('ban')}<span class="hm-hello__condition">${stateText(this.hass, view)}</span></span
+        >${glyph(this.looksQuiet ? conditionGlyph('', isNight(this.hass)) : 'ban')}<span
+          class="hm-hello__condition"
+          >${stateText(this.hass, view)}</span
+        ></span
       >`;
     }
     const night = isNight(this.hass, view.state);

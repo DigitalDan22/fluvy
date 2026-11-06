@@ -42,6 +42,7 @@ import {
   actionFields,
   boolField,
   cardOpacityField,
+  unavailableField,
   editorLabels,
   editorWord,
   entityField,
@@ -565,6 +566,7 @@ export class FluvyPrinterCard extends Card<PrinterCardConfig> {
     'color',
     'card_color',
     'card_opacity',
+    'unavailable',
     'tap_action',
     'hold_action',
     'show_icon',
@@ -641,6 +643,7 @@ export class FluvyPrinterCard extends Card<PrinterCardConfig> {
         accentField(),
         accentField('card_color', { none: true }),
         cardOpacityField(),
+        unavailableField(),
         actionFields(),
       ],
       ...editorLabels(

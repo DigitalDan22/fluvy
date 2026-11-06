@@ -9,8 +9,10 @@ names them (a select's values in brackets, a list with its item keys), and *Read
 accepts (read, never written back). Every entity card also takes
 `entity`, `name`, `icon`, `tap_action`, `hold_action`, `tone`, `color`, `card_color` (a quiet wash of a colour as
 the card's own surface, its edge and dividers in it — see [the theme guide](theme.md#a-colour-per-card-and-per-item))
-and `card_opacity` (how solid its surface is, 0 to 100: under 100 the view's background shows through; left out, the
-house's — see [the settings panel](settings-panel.md#cards));
+`card_opacity` (how solid its surface is, 0 to 100: under 100 the view's background shows through; left out, the
+house's — see [the settings panel](settings-panel.md#cards)) and `unavailable` (how it looks while its device is out
+of reach: `dashed`, the default, on the page's fill in a dashed hairline; `quiet`, as it is while off, still saying
+"Unavailable"; left out, the house's — a tile of the tiles card may say its own);
 a list card takes `title`. A card with a head also takes `show_icon`: `auto` (the default: the circle gives way where
 a long name in a narrow column needs its room, and only then), `always` (the circle stays while the name keeps a
 few letters beside it: a smaller circle first, then none) or `never`. An `icon` left out — a card's, a row's or a
@@ -1076,7 +1078,7 @@ roles:
 | Card | Type | What it is | Options | Reads |
 | --- | --- | --- | --- | --- |
 | **Tile** | `custom:fluvy-tile-card` | A light, switch, cover, fan, player, number or sensor as a tile: large with a precision ruler or two readouts, compact row, or mini. | `size` (`large`, `compact`, `mini`), `name_lines` (`1`, `2`), `since`, `tint` (`on`, `always`), `light_colors`, `light_whites` (`palette`, `temperature`), `readouts` | — |
-| **Tiles** | `custom:fluvy-tiles-card` | A group of compact or mini tiles, two to four per row, 8 px apart. | `size` (`compact`, `mini`, `large`), `columns` (`1`, `2`, `3`, `4`, `auto`), `name_lines` (`1`, `2`), `tint` (`on`, `always`), `light_colors`, `light_whites` (`palette`, `temperature`), `readouts`, `empty_text`, `hide_empty`, `tiles` (a list: `entity`, `name`, `icon`, `tone`, `color`, `readouts`, `since`, `tap_action`, `hold_action`) | `entities` → `tiles` |
+| **Tiles** | `custom:fluvy-tiles-card` | A group of compact or mini tiles, two to four per row, 8 px apart. | `size` (`compact`, `mini`, `large`), `columns` (`1`, `2`, `3`, `4`, `auto`), `name_lines` (`1`, `2`), `tint` (`on`, `always`), `light_colors`, `light_whites` (`palette`, `temperature`), `readouts`, `empty_text`, `hide_empty`, `tiles` (a list: `entity`, `name`, `icon`, `tone`, `color`, `readouts`, `since`, `unavailable`, `tap_action`, `hold_action`) | `entities` → `tiles` |
 | **Template** | `custom:fluvy-template-card` | A tile whose name, line, icon, colour and fill are templates, with or without an entity; a Mushroom template card pastes in. | `secondary` (`state`, `area`, `last-changed`, `none`), `since`, `variant` (`compact`, `mini`, `large`), `active` (`auto`, `always`, `never`), `name_lines` (`1`, `2`), `tint` (`on`, `always`), `readouts` | `primary` → `name`, `icon_color` → `color`, `layout` → `variant`, `vertical` → `variant` |
 | **Light** | `custom:fluvy-light-card` | The precision dimmer: relative drag, slide away to slow down, hold for the 1 % scale, colour temperature. | `show_brightness` (`true`, `when_on`, `false`), `variant` (`auto`, `full`, `compact`), `show_stepper`, `live_update`, `show_temperature`, `show_color`, `temperature_tint`, `tint` (`off`, `on`, `always`), `tint_strength` (`soft`, `brightness`, `full`), `light_whites` (`palette`, `temperature`), `colors` (a list: `color`, `name`, `rgb`) | — |
 | **Slider** | `custom:fluvy-slider-card` | Any value on the precision ruler: a player’s volume with its mute, a number or a helper, a fan’s speed, another entity’s switch in its head. | `variant` (`full`, `compact`, `tile`), `show_stepper`, `control` (`auto`, `mute`, `switch`, `none`), `toggle_entity`, `min`, `max`, `label`, `live_update`, `tint` (`off`, `on`, `always`) | — |

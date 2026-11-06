@@ -355,7 +355,7 @@ export class FluvyNowPlayingCard extends Card<NowPlayingCardConfig> {
     const loaded = (event: Event): void =>
       (event.currentTarget as HTMLElement).classList.add('is-on');
     return html`<span class="fv-art hm-art ${active ? '' : 'fv-art--idle'}">
-      ${isUsable(view) ? icon(this.config?.icon, 'speaker') : glyph('ban')}
+      ${isUsable(view) || this.looksQuiet ? icon(this.config?.icon, 'speaker') : glyph('ban')}
       ${picture ? keyed(picture, html`<img class="fv-art__img" src=${picture} alt="" draggable="false" @load=${loaded} />`) : nothing}
     </span>`;
   }

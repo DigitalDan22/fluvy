@@ -39,7 +39,7 @@ const landed = async (card: GlassCard): Promise<void> => {
 };
 
 afterEach(() => {
-  setCardDefaults({ opacity: 100, blur: true });
+  setCardDefaults({ opacity: 100, blur: true, unavailable: 'dashed' });
   document.body.replaceChildren();
 });
 
@@ -47,7 +47,7 @@ describe('a card’s opacity', () => {
   it('is its own, else the house’s, else solid', () => {
     expect(cardOpacity(undefined)).toBe(100);
     expect(cardOpacity({ type: 'x' })).toBe(100);
-    setCardDefaults({ opacity: 80, blur: true });
+    setCardDefaults({ opacity: 80, blur: true, unavailable: 'dashed' });
     expect(cardOpacity({ type: 'x' })).toBe(80);
     expect(cardOpacity({ type: 'x', card_opacity: 30 })).toBe(30);
     // its own 100 is solid on a see-through house
@@ -55,7 +55,7 @@ describe('a card’s opacity', () => {
   });
 
   it('holds a number to 0 to 100, whole, and reads anything else as unsaid', () => {
-    setCardDefaults({ opacity: 80, blur: true });
+    setCardDefaults({ opacity: 80, blur: true, unavailable: 'dashed' });
     expect(cardOpacity({ type: 'x', card_opacity: 140 })).toBe(100);
     expect(cardOpacity({ type: 'x', card_opacity: -20 })).toBe(0);
     expect(cardOpacity({ type: 'x', card_opacity: 72.4 })).toBe(72);
@@ -85,17 +85,17 @@ describe('a see-through card', () => {
     );
     expect(sheet).toContain('--fv-solid-page');
     // the house's blur off: the mark stays, unblurred
-    setCardDefaults({ opacity: 100, blur: false });
+    setCardDefaults({ opacity: 100, blur: false, unavailable: 'dashed' });
     expect(card.getAttribute('glass')).toBe('');
   });
 
   it('follows the house at once, and is solid again when the house is', async () => {
     const card = await mounted();
-    setCardDefaults({ opacity: 50, blur: true });
+    setCardDefaults({ opacity: 50, blur: true, unavailable: 'dashed' });
     expect(card.getAttribute('glass')).toBe('blur');
     expect(card.style.getPropertyValue('--fv-glass')).toBe('50%');
     await landed(card);
-    setCardDefaults({ opacity: 100, blur: true });
+    setCardDefaults({ opacity: 100, blur: true, unavailable: 'dashed' });
     expect(card.hasAttribute('glass')).toBe(false);
     expect(card.style.getPropertyValue('--fv-glass')).toBe('');
     expect(ownSheet(card)).not.toContain('--fv-solid');

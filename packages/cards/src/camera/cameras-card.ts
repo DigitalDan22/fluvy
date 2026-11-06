@@ -296,6 +296,7 @@ export class FluvyCamerasCard extends Card<CamerasCardConfig> {
     'color',
     'card_color',
     'card_opacity',
+    'unavailable',
     'tap_action',
     'hold_action',
     'show_icon',
@@ -673,7 +674,7 @@ export class FluvyCamerasCard extends Card<CamerasCardConfig> {
     return items.map((item, i) => {
       const view = this.entity(item.entity);
       const mode = this.mode(item);
-      const said = cameraStatus(this.hass, view, mode, item.motion);
+      const said = cameraStatus(this.hass, view, mode, item.motion, this.looksQuiet);
       const sensor =
         view.status === 'ok' ? motionSensor(this.hass, view.id, mode, item.motion) : undefined;
       return {
@@ -699,7 +700,9 @@ export class FluvyCamerasCard extends Card<CamerasCardConfig> {
       class="fv-ico fv-ico--${tone}"
       data-icon
       data-accent=${line?.motion ? (this.accents.item(item.color) ?? nothing) : nothing}
-      >${icon(usable ? iconOf(view, item.icon ?? view.registryIcon ?? area) : 'ban')}</span
+      >${icon(
+        usable || this.looksQuiet ? iconOf(view, item.icon ?? view.registryIcon ?? area) : 'ban',
+      )}</span
     >`;
   }
 

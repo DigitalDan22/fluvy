@@ -18,6 +18,7 @@ import {
   sinceField,
   tintField,
   toneField,
+  unavailableField,
 } from '../shared/form.js';
 import type { BaseKey } from '../shared/base.js';
 import { configKeys } from '../shared/config.js';
@@ -30,7 +31,14 @@ import { SIZES, type TilesCardConfig } from './tiles-card.js';
 const COLUMNS = ['1', '2', '3', '4', 'auto'] as const;
 
 /** The group has no entity of its own: its tone and colour are its tiles' default. */
-export const base: readonly BaseKey[] = ['entities', 'tone', 'color', 'card_color', 'card_opacity'];
+export const base: readonly BaseKey[] = [
+  'entities',
+  'tone',
+  'color',
+  'card_color',
+  'card_opacity',
+  'unavailable',
+];
 
 export const keys = configKeys<TilesCardConfig>()([
   'size',
@@ -57,6 +65,7 @@ export const lists: readonly RowsListSpec[] = [
       'color',
       'readouts',
       'since',
+      'unavailable',
       'tap_action',
       'hold_action',
     ],
@@ -66,6 +75,7 @@ export const lists: readonly RowsListSpec[] = [
       fieldRow(toneField(), accentField('color', { item: 'bulb' })),
       entitiesField('readouts', ['sensor']),
       sinceField(),
+      unavailableField({ item: true }),
       actionFields(),
     ],
   },

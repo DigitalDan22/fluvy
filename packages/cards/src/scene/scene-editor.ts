@@ -25,6 +25,7 @@ export const base: readonly BaseKey[] = [
   'color',
   'card_color',
   'card_opacity',
+  'unavailable',
   'hold_action',
 ];
 

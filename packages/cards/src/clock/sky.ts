@@ -57,17 +57,19 @@ function windText(hass: HomeAssistant | undefined, view: EntityView): string {
   return [formatNumber(hass, speed, { digits: 0 }), unit, direction].filter(Boolean).join(' ');
 }
 
-export function readSky(hass: HomeAssistant | undefined, view: EntityView): Sky {
+export function readSky(hass: HomeAssistant | undefined, view: EntityView, quiet = false): Sky {
   if (view.status !== 'ok') {
     const text = stateText(hass, view);
+    const night = isNight(hass);
     return {
       ok: false,
       text,
       // "Entity not found" is the longest thing a weather can say: a narrow line says the house's word ("Offline")
       short: localize(hass, 'state.unavailable'),
       inline: lowerFirst(text),
-      glyph: 'ban',
-      night: isNight(hass),
+      // the ban glyph, or quiet out of reach (`unavailable`) the sky's own at rest
+      glyph: quiet ? conditionGlyph('', night) : 'ban',
+      night,
       temperature: null,
       unit: '',
       feels: null,

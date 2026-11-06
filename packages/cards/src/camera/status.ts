@@ -25,12 +25,18 @@ export interface StatusLine {
 
 /**
  * The camera's own state in words: online while it waits, recording, streaming, else as Home Assistant says it; out of
- * reach, "Offline" (unavailable) or the state's word — what its plate says too.
+ * reach, "Offline" (unavailable) or the state's word — what its plate says too — beside the ban glyph, or quiet
+ * (`unavailable`) the camera's own.
  */
-export function stateLine(hass: HomeAssistant | undefined, view: EntityView): StatusLine {
+export function stateLine(
+  hass: HomeAssistant | undefined,
+  view: EntityView,
+  quiet = false,
+): StatusLine {
+  const away: GlyphName = quiet ? 'camera' : 'ban';
   if (view.status === 'unavailable')
-    return { glyph: 'ban', text: s(hass, 'offline'), motion: false };
-  if (view.status !== 'ok') return { glyph: 'ban', text: stateWord(hass, view), motion: false };
+    return { glyph: away, text: s(hass, 'offline'), motion: false };
+  if (view.status !== 'ok') return { glyph: away, text: stateWord(hass, view), motion: false };
   const own = view.state === 'recording' || view.state === 'streaming' ? view.state : 'online';
   return { glyph: 'wifi', text: s(hass, own), motion: false };
 }
@@ -57,6 +63,7 @@ export function cameraStatus(
   view: EntityView,
   mode: CameraStatus,
   motion: string | undefined,
+  quiet = false,
 ): StatusLine | null {
   if (mode === 'none') return null;
   const sensor = view.status === 'ok' ? motionSensor(hass, view.id, mode, motion) : undefined;
@@ -65,7 +72,7 @@ export function cameraStatus(
     return seen.state === 'on'
       ? { glyph: 'motion', text: s(hass, 'motion'), motion: true }
       : { glyph: 'eye', text: s(hass, 'no_motion'), motion: false };
-  return stateLine(hass, view);
+  return stateLine(hass, view, quiet);
 }
 
 /**

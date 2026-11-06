@@ -52,13 +52,13 @@ async function mount(config: LovelaceCardConfig): Promise<HTMLElement> {
 }
 
 afterEach(() => {
-  setCardDefaults({ opacity: 100, blur: true });
+  setCardDefaults({ opacity: 100, blur: true, unavailable: 'dashed' });
   document.body.replaceChildren();
 });
 
 describe('a see-through house', () => {
   it('reaches a card with a surface, and leaves one without', async () => {
-    setCardDefaults({ opacity: 50, blur: true });
+    setCardDefaults({ opacity: 50, blur: true, unavailable: 'dashed' });
     const tile = await mount({ type: 'custom:fluvy-tile-card', entity: 'light.desk' });
     expect(tile.getAttribute('glass')).toBe('blur');
     expect(tile.style.getPropertyValue('--fv-glass')).toBe('50%');
@@ -77,7 +77,7 @@ describe('a see-through house', () => {
   });
 
   it('keeps a card’s own opacity over the house’s, its own 100 solid', async () => {
-    setCardDefaults({ opacity: 50, blur: false });
+    setCardDefaults({ opacity: 50, blur: false, unavailable: 'dashed' });
     const own = await mount({
       type: 'custom:fluvy-tile-card',
       entity: 'light.desk',

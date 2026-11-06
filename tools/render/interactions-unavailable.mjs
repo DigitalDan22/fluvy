@@ -23,13 +23,17 @@
  * and 360. It fails when the twins' heights differ by more than 0.5 px, when the broken twin draws its one quiet line
  * or hides itself while the live one does not, when the twins say different sizes (`getCardSize`), or, where the
  * declared height speaks (`layoutHeight`: the 360 column, so a full card at 360 and a half card at 172), when the broken
- * twin is off it by more than heights.mjs allows while the live twin is not. Twins that agree but are both off their
- * declared height are a drift of the declaration, said at the end and never failed (heights.mjs holds it). A card that
- * shows no entity, hides itself while live or draws its quiet line while live (a stub that finds nothing) is listed
- * with the reason instead. A card that finds what it shows (`FOUND`: a room in its area, the house's automations) has
- * only what its config names taken out of the house when missing: what it finds and the house no longer has is not
- * its own. Where a card's rows are what its entities say (`BY_CONTENT`), the broken twin is held to everything but the
- * live one's height, with the reason said. Exit code 1 on any failure.
+ * twin is off it by more than heights.mjs allows while the live twin is not. Beside the broken twin stands a third, the
+ * same card quiet out of reach (`unavailable: quiet`, #126): it fails where its height, its size, its quiet line or its
+ * hiding differ from the broken twin's, where anything in it still draws a dashed hairline or fades as unavailable, or
+ * where it draws the ban glyph for what is unavailable (one gone from the house keeps it: it has no kind to borrow a
+ * glyph from). Twins that agree but are both off their declared height are a drift of the declaration, said at the end
+ * and never failed (heights.mjs holds it). A card that shows no entity, hides itself while live or draws its quiet
+ * line while live (a stub that finds nothing) is listed with the reason instead. A card that finds what it shows
+ * (`FOUND`: a room in its area, the house's automations) has only what its config names taken out of the house when
+ * missing: what it finds and the house no longer has is not its own. Where a card's rows are what its entities say
+ * (`BY_CONTENT`), the broken twin is held to everything but the live one's height, with the reason said. Exit code 1
+ * on any failure.
  *   PLAYGROUND=http://127.0.0.1:5183/ node interactions-unavailable.mjs [--cards light,tile,fluvy-fan-card]
  *     [--states unavailable,unknown,missing] [--widths 211,360] [--json out/unavailable.json]
  * `--cards` takes a card's tag or its short name (`light` for `fluvy-light-card`): a sweep runs its own cards alone.
@@ -311,6 +315,23 @@ const measure = (page, tag, source, cases) =>
         quiet: Boolean(el.renderRoot?.querySelector('.fv-card--empty')),
         size: await el.getCardSize?.(),
       });
+      /**
+       * What a quiet twin still draws of the unavailable skin: a dashed hairline, a fade, the ban glyph — in its own
+       * shadow root and in the cards it holds (the Appliances card's whole cards).
+       */
+      const skin = (el, said = new Set()) => {
+        for (const node of el.renderRoot?.querySelectorAll('*') ?? []) {
+          const style = getComputedStyle(node);
+          const what = `${node.localName}.${[...node.classList].join('.')}`;
+          if (style.outlineStyle === 'dashed' && parseFloat(style.outlineWidth) > 0)
+            said.add(`a dashed hairline on ${what}`);
+          if (node.classList.contains('is-unavailable') && Number(style.opacity) < 1)
+            said.add(`${what} faded to ${style.opacity}`);
+          if (/^fluvy-.+-card$/.test(node.localName)) skin(node, said);
+        }
+        if (el.renderRoot?.querySelector('path[d="m6.5 6.5 11 11"]')) said.add('the ban glyph');
+        return [...said];
+      };
       const frames = () =>
         new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
 
@@ -321,14 +342,14 @@ const measure = (page, tag, source, cases) =>
         const section = document.createElement('section');
         section.className = 'pg-frame';
         section.dataset['stress'] = `unavailable/${tag} · ${c.variant} · ${c.kind} · ${c.width}`;
-        section.style.width = `${c.width * 2 + 16}px`;
-        section.style.gridTemplateColumns = `${c.width}px ${c.width}px`;
+        section.style.width = `${c.width * 3 + 32}px`;
+        section.style.gridTemplateColumns = `${c.width}px ${c.width}px ${c.width}px`;
         section.style.alignItems = 'start';
         stage.append(section);
-        const make = () => {
+        const make = (config = c.config) => {
           const el = document.createElement(tag);
           el.style.gridColumn = 'auto';
-          el.setConfig(c.config);
+          el.setConfig(config);
           return el;
         };
         const a = make();
@@ -353,21 +374,22 @@ const measure = (page, tag, source, cases) =>
         const never = pair.c.kind === 'never';
         pair.ids = entitiesOf(pair.a, pair.c.config, never || (found && pair.c.kind === 'missing'));
         // broken from its first frame, as a dashboard opened while the device is away
-        pair.b = never ? document.createElement(tag) : pair.make();
-        if (never) {
-          pair.b.style.gridColumn = 'auto';
-          pair.b.setConfig(unread(pair.c.config, pair.ids));
-          pair.b.hass = live;
-        } else pair.b.hass = window.fluvyOutOfReach(pair.ids, pair.c.kind)(live);
-        pair.section.append(pair.b);
+        const broken = never ? unread(pair.c.config, pair.ids) : pair.c.config;
+        const away = never ? live : window.fluvyOutOfReach(pair.ids, pair.c.kind)(live);
+        pair.b = pair.make(broken);
+        // the same card quiet out of reach: the look alone changes
+        pair.q = pair.make({ ...broken, unavailable: 'quiet' });
+        pair.b.hass = away;
+        pair.q.hass = away;
+        pair.section.append(pair.b, pair.q);
       }
-      await Promise.all(pairs.map(({ b }) => b.updateComplete));
+      await Promise.all(pairs.map(({ b, q }) => Promise.all([b.updateComplete, q.updateComplete])));
       await document.fonts.ready;
       // their width taken, the house's answers in (history, statistics, forecasts: 30 ms), drawn again
       await new Promise((done) => setTimeout(done, 700));
       await frames();
       const out = [];
-      for (const { c, a, b, ids } of pairs) {
+      for (const { c, a, b, q, ids } of pairs) {
         const declared = planned(a);
         // never read, the card declares what it draws where the house is not there to say
         const unread = c.kind === 'never' ? planned(b) : declared;
@@ -381,6 +403,7 @@ const measure = (page, tag, source, cases) =>
           unread: typeof unread === 'number' ? unread : null,
           live: await read(a),
           twin: await read(b),
+          still: { ...(await read(q)), skin: skin(q) },
         });
       }
       stage.replaceChildren();
@@ -482,6 +505,20 @@ async function hold(tag, source) {
         said.push(row.twin.hidden ? 'hides itself' : 'shows itself');
       if (row.twin.size !== row.live.size && !never)
         said.push(`getCardSize ${row.live.size} → ${row.twin.size}`);
+      // quiet, the look alone changes: the broken twin's size and anatomy, nothing of the unavailable skin
+      const still = round(row.still.height - row.twin.height);
+      if (Math.abs(still) > TWINS)
+        said.push(
+          `dashed ${round(row.twin.height)} · quiet ${round(row.still.height)} (${sign(still)})`,
+        );
+      if (row.still.size !== row.twin.size)
+        said.push(`quiet getCardSize ${row.twin.size} → ${row.still.size}`);
+      if (row.still.quiet !== row.twin.quiet || row.still.hidden !== row.twin.hidden)
+        said.push('quiet, it shows or hides otherwise');
+      const skin = row.still.skin.filter(
+        (what) => what !== 'the ban glyph' || kind === 'unavailable',
+      );
+      if (skin.length) said.push(`quiet, it still draws ${skin.join(', ')}`);
       if (
         row.width === DECLARED_AT[row.half ? 'half' : 'full'] &&
         row.unread !== null &&

@@ -346,7 +346,9 @@ export class FluvyClockCard extends Card<ClockCardConfig> {
     const hour12 = resolveHour12(this.hass, config.hour12);
     const format: ClockFormat = { language: this.hass?.language ?? 'en', hour12, timeZone };
     const wall = wallClock(now, timeZone);
-    const sky = config.weather ? readSky(this.hass, this.entity(config.weather)) : null;
+    const sky = config.weather
+      ? readSky(this.hass, this.entity(config.weather), this.looksQuiet)
+      : null;
     const tone: Tone = sky?.ok && !sky.night ? 'solar' : 'accent'; // the sky's tone: solar by day, accent at night; plain clocks are accent
     const calm = reducedMotion();
     const dates = {

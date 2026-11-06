@@ -408,7 +408,13 @@ export class FluvyEnergyPeriodCard extends Card<EnergyPeriodCardConfig> {
     `,
   ];
 
-  static override base: readonly BaseKey[] = ['tone', 'color', 'card_color', 'card_opacity'];
+  static override base: readonly BaseKey[] = [
+    'tone',
+    'color',
+    'card_color',
+    'card_opacity',
+    'unavailable',
+  ];
   static override keys = configKeys<EnergyPeriodCardConfig>()([
     'collection_key',
     'variant',

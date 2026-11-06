@@ -28,6 +28,11 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The Light card shows its brightness always, never or only while the light is on (`show_brightness`: `true`, `false`,
   `when_on`): never, the card is its head alone; while on, it is its head alone while the light is off and eases open
   to its brightness, its rulers and its colours as it turns on (#124).
+- A card out of reach can look as it does while off (#126): in Fluvy's settings (Appearance › Cards › When
+  unavailable) every card says Dashed (the default, as before) or As when off, and each card may say its own
+  (`unavailable: quiet`), a tile of the tiles card too. As when off, a tile, a light card, a row, a room or any other
+  card keeps its own surface, its own glyph and its controls at full strength, still says "Unavailable", writes "—"
+  for what it cannot know and takes no tap where it cannot act, at the same size.
 
 ### Fixed
 

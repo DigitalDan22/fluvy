@@ -4,6 +4,7 @@ import {
   accentField,
   actionField,
   cardOpacityField,
+  unavailableField,
   emptyFields,
   entitiesField,
   entityField,
@@ -29,6 +30,7 @@ export const base: readonly BaseKey[] = [
   'color',
   'card_color',
   'card_opacity',
+  'unavailable',
   'hold_action',
 ];
 
@@ -71,6 +73,7 @@ export function getConfigForm(): LovelaceConfigForm {
         actionField('hold_action'),
       ),
       cardOpacityField(),
+      unavailableField(),
       tintField(),
       emptyFields(),
     ],

@@ -2,6 +2,7 @@
 import type { HassEntity, HomeAssistant, LovelaceCardConfig } from '@fluvy/core';
 import { OUT_OF_REACH, outOfReachStates } from '@fluvy/demo-home/out-of-reach';
 import { afterAll, afterEach, describe, expect, it } from 'vitest';
+import { glyphBody } from '@fluvy/ui';
 import { catalogue, familiesDefined } from '../index.js';
 
 // the index fetches the families: they land before this file's page goes
@@ -336,5 +337,30 @@ describe('an unavailable card keeps its anatomy (1.9)', () => {
   it('names only cases that exist', () => {
     const names = new Set(cases.map((c) => `${c.tag} · ${c.variant} · ${c.kind}`));
     for (const name of PENDING) expect(names.has(name), name).toBe(true);
+  });
+});
+
+/** The ban glyph, by its stroke: what a dashed card draws for what it cannot read. */
+const BAN = `path[d="${/d="([^"]+)"/.exec(glyphBody('ban').body)![1]}"]`;
+
+/*
+ * Quiet out of reach (#126): the same card, `unavailable: quiet`, keeps the dashed one's anatomy part for part (its look
+ * alone changes: `ui/styles/quiet.css`), carries the quiet sheet's mark where the dashed one carries none, and draws its
+ * own glyph where the dashed one draws the ban (an entity gone from the house has no kind to borrow one from: it keeps
+ * the ban, quiet too).
+ */
+describe('a card quiet out of reach keeps the dashed one’s anatomy, marked, in its own glyph (#126)', () => {
+  it.each(variants)('$tag · $variant', async ({ tag, config }) => {
+    const live = await drawn(tag, config, hass);
+    if (live.shadowRoot!.querySelector('.fv-card--empty')) return;
+    const ids = entitiesOf(live, config);
+    if (!ids.length) return;
+    const away = { ...hass, states: outOfReachStates(hass.states, ids, 'unavailable') };
+    const dashed = await drawn(tag, config, away);
+    const quiet = await drawn(tag, { ...config, unavailable: 'quiet' }, away);
+    expect(anatomy(quiet.shadowRoot!)).toEqual(anatomy(dashed.shadowRoot!));
+    expect(dashed.shadowRoot!.querySelector('[data-unavailable]')).toBeNull();
+    expect(quiet.shadowRoot!.querySelector('[data-unavailable="quiet"]')).not.toBeNull();
+    expect(quiet.shadowRoot!.querySelector(BAN)).toBeNull();
   });
 });

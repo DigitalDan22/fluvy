@@ -76,6 +76,7 @@ export const base: readonly BaseKey[] = [
   'color',
   'card_color',
   'card_opacity',
+  'unavailable',
   'tap_action',
   'hold_action',
   'show_icon',
@@ -121,12 +122,15 @@ const ENTITY_ITEM: readonly HaFormSchemaItem[] = [
   ...GROUP_ITEM.slice(2),
 ];
 
+/** A room's tiles are a group's but for their look out of reach, which is the room's: they sit inside it. */
+const ownLook = (key: string): boolean => key !== 'unavailable';
+
 export const lists: readonly RowsListSpec[] = [
   {
     key: 'tiles',
     title: 'editor.tiles',
-    keys: tilesLists[0]?.keys ?? [],
-    schema: tilesLists[0]?.schema ?? [],
+    keys: (tilesLists[0]?.keys ?? []).filter(ownLook),
+    schema: (tilesLists[0]?.schema ?? []).filter((field) => ownLook(field.name)),
     when: drawsTiles,
   },
   {

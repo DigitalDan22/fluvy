@@ -85,6 +85,28 @@ describe('a colour field', () => {
     expect(label(formLabels(), 'card_opacity')).toBe('Card opacity');
   });
 
+  it('offers how the card looks out of reach after its opacity, dashed or as when off, the house’s until chosen (#126)', () => {
+    const [, , , look] = colourFields();
+    expect(look).toMatchObject({
+      name: 'unavailable',
+      helper: 'editor.unavailable_helper',
+      selector: { select: { mode: 'dropdown' } },
+    });
+    document.documentElement.lang = 'en';
+    expect(
+      (look!.selector as { select: { options: { value: string; label: string }[] } }).select
+        .options,
+    ).toEqual([
+      { value: 'dashed', label: 'Dashed' },
+      { value: 'quiet', label: 'As when off' },
+    ]);
+    expect(label(formLabels(), 'unavailable')).toBe('When unavailable');
+    // a card that shows no entity has nothing out of reach
+    expect(colourFields({ unavailable: false }).map((field) => field.name)).not.toContain(
+      'unavailable',
+    );
+  });
+
   it('shows none chosen for an item’s colour, and says under it what the item wears then', () => {
     // the picker would call the card's colour "Primary": no default of its own, the word under the field instead
     const bulb = accentField('color', { item: 'bulb' });

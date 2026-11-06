@@ -16,6 +16,7 @@ import {
   type FluvyCardConfig,
   type HomeAssistant,
   type LovelaceGridOptions,
+  type UnavailableLook,
 } from '@fluvy/core';
 
 import {
@@ -72,6 +73,8 @@ export interface TileItem {
   readouts?: readonly string[];
   /** Where its last change is read from (#67): a timestamp sensor, or `attribute:<name>` of its own; else Home Assistant's. */
   since?: string;
+  /** How it looks out of reach (1.16, #126): `quiet`, as it rests; else the group's, else the house's (`dashed`). */
+  unavailable?: UnavailableLook;
   tap_action?: ActionConfig;
   hold_action?: ActionConfig;
 }
@@ -618,9 +621,11 @@ export class FluvyTileCard extends Card<TileCardConfig> {
 
     // a missing or unreachable entity wears the off skin on the live tile's own anatomy and size — the ban circle, the
     // name, its state line, a dash in every reading, a switch that does not move: only the colours change, so it never
-    // stands shorter than its neighbours. An unknown one is a live tile whose word is "Unknown". Its switch, its ruler
-    // and its flip follow the entity (`lit`), its fill its look (`on`): the template card may tell them apart.
+    // stands shorter than its neighbours; quiet (`unavailable`), the tile at rest with its own glyph, the same words and
+    // dashes. An unknown one is a live tile whose word is "Unknown". Its switch, its ruler and its flip follow the entity
+    // (`lit`), its fill its look (`on`): the template card may tell them apart.
     const lit = this.lit(view);
+    const quiet = this.unavailableOf(item) === 'quiet';
     const {
       name,
       label,
@@ -680,8 +685,9 @@ export class FluvyTileCard extends Card<TileCardConfig> {
         data-card
         data-accent=${(usable && accent) || nothing}
         data-surface=${surface}
+        data-unavailable=${quiet ? 'quiet' : nothing}
       >
-        ${usable ? ico(icon, iconTone) : ico('ban', 'off')}
+        ${usable || quiet ? ico(icon, iconTone) : ico('ban', 'off')}
         <div class="fv-tile__text">
           <h3 class="fv-tile__name">${name}</h3>
           <p class="fv-tile__state" data-name=${words ? '' : nothing}>${line}</p>
@@ -708,7 +714,7 @@ export class FluvyTileCard extends Card<TileCardConfig> {
       this.flip(view, !lit);
     };
     const lead = !usable
-      ? ico('ban', 'off')
+      ? ico(quiet ? icon : 'ban', quiet ? iconTone : 'off')
       : control === undefined && canToggle && !switchApart
         ? ico(icon, iconTone, { onTap: flip, label, checked: lit })
         : ico(icon, iconTone);
@@ -802,6 +808,7 @@ export class FluvyTileCard extends Card<TileCardConfig> {
       data-card
       data-accent=${(usable && accent) || nothing}
       data-surface=${surface}
+      data-unavailable=${quiet ? 'quiet' : nothing}
     >
       <div class="fv-tile__head">${lead}${trailing}</div>
       <h3 class="fv-tile__name">${name}</h3>

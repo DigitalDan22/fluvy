@@ -21,13 +21,14 @@ alone — whether it is a wall panel, and the size it reads at — and never fol
 
 ## Cards
 
-How solid every card is, where a card says nothing of its own (1.15). Solid until chosen, so a dashboard looks as it
-did:
+How solid every card is, and how one looks while a device is unavailable, where a card says nothing of its own
+(1.15, 1.16). Solid and dashed until chosen, so a dashboard looks as it did:
 
 | Setting | Values | What a card takes from it |
 | --- | --- | --- |
 | **Opacity** | 0 to 100 %, in 5 % steps, on a ruler with its figure beside it (100: solid) | `card_opacity`: under 100 the view's background shows through the card |
 | **Blur what shows through** | on · off (on by default) | what shows through a see-through card is blurred, so its words read over a busy picture; it covers every see-through card, the house's and one that sets its own `card_opacity` |
+| **When unavailable** | Dashed · As when off (Dashed by default) | `unavailable`: `dashed` draws a card or a tile out of reach on the page's fill in a dashed hairline, its words faded and the ⊘ glyph in its circle; `quiet` (As when off) draws it as it is while off — its own surface, its own glyph, its words and controls at full strength — still saying "Unavailable", every value it cannot know a dash, every control still |
 
 A change shows on every card of the page at once, before it is saved, and the preview stands its cards on a picture
 while they are see-through; a card that sets `card_opacity` keeps its own (its editor shows the house's until a value is
@@ -48,7 +49,15 @@ wall the view's own background shows, and the wall's (the mesh, or the plain pag
 
 Blur costs a tablet's graphics: on an older wall panel that scrolls slowly, turn it off (the cards stay see-through).
 
-A card on a dashboard that opens in a see-through house draws its first frame see-through, never solid a moment before.
+**When unavailable** covers every card that shows a device: a tile, the tiles of a group (each may say its own: a
+tile's `unavailable` in `tiles`), the light card, rows, rounds, chips, a room's tiles, an appliance's and a printer's
+head, and the rest. As when off, only the look of being out of reach goes: the card keeps its size and its anatomy,
+says "Unavailable", writes "—" for what it cannot know, and takes no tap where it cannot act. An entity that is not in
+the house at all keeps the ⊘ glyph: it has no kind to borrow one from. A card that sets its own `unavailable` keeps it
+(its editor shows the house's until one is chosen, and never writes it).
+
+A card on a dashboard that opens in a see-through or an as-when-off house draws its first frame in that look, never
+solid or dashed a moment before.
 
 ## Lights
 

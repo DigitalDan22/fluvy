@@ -1,0 +1,157 @@
+/*
+ * fluvy · quiet out of reach (1.16, #126): what a card that says `unavailable: quiet` (its own, or the house's) adopts
+ * — fetched with the first card that is one, a dashboard of dashed cards never pays for it. What is quiet is marked
+ * `data-unavailable="quiet"`: a card's root (core's card.ts), or in the tiles card each tile, which may say its own
+ * (its `unavailable` in `tiles`). Each rule here answers a rule of the unavailable skin, at its specificity and after
+ * it (the mark, `:where(…)`, weighs nothing), and gives its paint back: the card or the tile draws as it does while off
+ * — its surface, its circle and its words in their resting inks, its controls at full strength — while its anatomy, its
+ * dashes and its words ("Unavailable") stay, and what cannot act still takes no tap. Nothing here moves a pixel of
+ * layout: a card keeps its size.
+ */
+
+/* the card's and the tile's own surface, no dashed hairline; their words in their resting inks */
+.fv-card.is-off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.fv-tile--off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.fv-tile.is-off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.fv-scene.fv-tile--off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *) {
+  background: var(--fluvy-card);
+  box-shadow: inset 0 0 0 1px var(--fluvy-border);
+  outline: none;
+  color: inherit;
+}
+
+/* a tile inside a card (a room's controls) on the page's fill, as it rests */
+.fv-tile--inner.fv-tile--off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *) {
+  background: var(--fluvy-inset, var(--fluvy-page));
+  box-shadow: none;
+}
+
+.fv-tile--off .fv-row__title:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.fv-tile.is-off .fv-readout__value:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.is-off .fv-readout__value:where([data-unavailable='quiet'], [data-unavailable='quiet'] *) {
+  color: inherit;
+}
+
+.fv-tile--off .fv-row__sub:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.fv-tile--off .fv-tile__state:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.fv-tile.is-off .fv-readout__label:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.cd-note--off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.dv-cam__off p:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.pr-plate.is-off p:where([data-unavailable='quiet'], [data-unavailable='quiet'] *) {
+  color: var(--fluvy-text-secondary);
+}
+
+/* a light card's level out of reach: its dash in the figure's own ink and weight */
+.sl-card.is-off .fv-readout__value:where([data-unavailable='quiet'], [data-unavailable='quiet'] *) {
+  color: inherit;
+  font-weight: 600;
+}
+
+/* no fade: a row, a list, a card at full strength */
+.is-unavailable:where([data-unavailable='quiet'], [data-unavailable='quiet'] *) {
+  opacity: 1;
+}
+
+/* the person's own pictures in their colours (a head's, a player's art, an appliance's, a car's) */
+.is-unavailable .fv-ico--picture:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.is-unavailable .fv-art__img--own:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.is-unavailable .ap-pic:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.is-unavailable .vh-picture > img:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.is-unavailable .vh-face > img:where([data-unavailable='quiet'], [data-unavailable='quiet'] *) {
+  opacity: 1;
+  filter: none;
+}
+
+/* the off tone is the resting one: the neutral circle, badge, bar and control (tones.css) */
+.fv-tone--off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.fv-ico--off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.fv-badge--off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.fv-ruler--off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.fv-dial--off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.fv-knob--off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.fv-switch--off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *) {
+  --tone-ink: var(--fluvy-text-secondary);
+  --tone-fill: var(--fluvy-page);
+  --tone-border: var(--fluvy-border);
+  --tone-on: var(--fluvy-text-secondary);
+}
+
+.fv-bar--off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *) {
+  background: var(--fluvy-border-strong);
+}
+
+/* the circle's own fill (surfaces.css), the neutral one's ground, and no dashed ring */
+.fv-ico--off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *) {
+  --tone-fill: var(--fluvy-inset, var(--fluvy-page));
+  background: color-mix(
+    in srgb,
+    var(--tone-fill) var(--fluvy-wash, 100%),
+    var(--fluvy-wash-base, var(--fluvy-card))
+  );
+  outline: none;
+}
+
+.fv-badge--off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.fv-option.is-unavailable:where([data-unavailable='quiet'], [data-unavailable='quiet'] *) {
+  outline: none;
+}
+
+.fv-option.is-unavailable:where([data-unavailable='quiet'], [data-unavailable='quiet'] *) {
+  color: inherit;
+}
+
+/* a chip, a cover's command and a power round on their resting fills */
+.fv-chip.is-unavailable
+  .fv-chip__pill:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.is-off .fv-chip__pill:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.is-off .fv-action:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.ap-power--off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *) {
+  background: var(--fluvy-inset, var(--fluvy-page));
+  outline: none;
+  color: var(--fluvy-text-secondary);
+}
+
+/* what cannot act is drawn as it rests, at full strength (it still takes no tap) */
+:is(.is-off, .is-unavailable, .fv-tile--off)
+  .fv-switch[aria-disabled='true']:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+:is(.is-off, .is-unavailable, .fv-tile--off)
+  button:disabled:where([data-unavailable='quiet'], [data-unavailable='quiet'] *) {
+  opacity: 1;
+}
+
+:is(.is-off, .is-unavailable, .fv-tile--off)
+  .fv-stepper__half[disabled]:where([data-unavailable='quiet'], [data-unavailable='quiet'] *) {
+  color: var(--fluvy-text);
+}
+
+/* a person's face, a camera's thumb and plate, a printer's plate: no dashed ring, their words in the secondary ink */
+.am-avatar.is-off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *) {
+  background: var(--fluvy-page);
+  outline: none;
+  color: var(--fluvy-text-secondary);
+}
+
+.cm-thumb.is-off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.dv-cam.is-off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.pr-plate.is-off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *) {
+  outline: none;
+  color: var(--fluvy-text-secondary);
+}
+
+/* an energy source that cannot be read: its circle as it rests */
+.en-node.is-outage .fv-ico:where([data-unavailable='quiet'], [data-unavailable='quiet'] *) {
+  background: color-mix(
+    in srgb,
+    var(--tone-fill) var(--fluvy-wash, 100%),
+    var(--fluvy-wash-base, var(--fluvy-card))
+  );
+  box-shadow: inset 0 0 0 1px var(--tone-ring, transparent);
+  outline: none;
+}
+
+/* the history bars in the card's own ink */
+.fv-card.is-off .hb-chart:where([data-unavailable='quiet'], [data-unavailable='quiet'] *),
+.fv-card.is-off .hb-spark:where([data-unavailable='quiet'], [data-unavailable='quiet'] *) {
+  --tone-ink: inherit;
+  --ink: var(--tone-ink, var(--fluvy-accent));
+}

@@ -254,7 +254,9 @@ export class FluvyPeopleCard extends Card<PeopleCardConfig> {
           : charge.number;
     const presence: Presence = !usable ? 'off' : view.state === 'home' ? 'home' : 'away';
     const changed = changedAt(this.hass, view, item.since);
-    const picture = usable ? (view.attr<string | null>('entity_picture') ?? '') : '';
+    // out of reach the dashed ring, or quiet (`unavailable`) their face as it rests
+    const picture =
+      usable || this.looksQuiet ? (view.attr<string | null>('entity_picture') ?? '') : '';
     return {
       item,
       view,

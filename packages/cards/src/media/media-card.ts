@@ -987,7 +987,7 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
       second = stateText(this.hass, view);
     const speaker = this.sourceLine(view, name, `${title} · ${second}`);
     const saysSpeaker = speaker !== title;
-    const plate = away ? 'ban' : 'speaker';
+    const plate = away && !this.looksQuiet ? 'ban' : 'speaker';
     const classes = `fv-card md-card ${hero ? 'md-card--hero' : ''} ${away ? 'is-off is-unavailable' : ''} ${this.isPlaying(view) ? 'is-playing' : ''} ${this.scrub_ === null ? '' : 'is-scrubbing'}`;
     const wide = this.contentWidth >= 312;
     const power = this.power(view);
@@ -1191,7 +1191,7 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
         ${
           !art
             ? nothing
-            : away && !own
+            : away && !own && !this.looksQuiet
               ? ico('ban', 'off')
               : picture
                 ? this.art(44, picture, `md-art--s ${own ? 'fv-art--idle' : ''}`)

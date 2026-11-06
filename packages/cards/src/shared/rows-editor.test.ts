@@ -265,9 +265,9 @@ describe('editor defaults', () => {
     const form = { schema: colourFields() };
     const shown = editorDefaults(form)!;
     expect(shown({ type: 't' }, undefined)).toMatchObject({ card_opacity: 100 });
-    setCardDefaults({ opacity: 80, blur: true });
+    setCardDefaults({ opacity: 80, blur: true, unavailable: 'dashed' });
     expect(shown({ type: 't' }, undefined)).toMatchObject({ card_opacity: 80 });
-    setCardDefaults({ opacity: 100, blur: true });
+    setCardDefaults({ opacity: 100, blur: true, unavailable: 'dashed' });
     // untouched, nothing written; moved, its own
     expect(
       withoutUntouchedDefaults({ card_opacity: 100 }, { type: 't' }, { card_opacity: 100 }),
@@ -279,6 +279,25 @@ describe('editor defaults', () => {
     });
     // a card without a surface shows none
     expect(editorDefaults({ schema: [textField('title')] })).toBeUndefined();
+  });
+
+  it('shows the house’s look out of reach on a card that offers it, as the house says it when asked, and never writes it (#126)', () => {
+    const shown = editorDefaults({ schema: colourFields() })!;
+    expect(shown({ type: 't' }, undefined)).toMatchObject({ unavailable: 'dashed' });
+    setCardDefaults({ opacity: 100, blur: true, unavailable: 'quiet' });
+    expect(shown({ type: 't' }, undefined)).toMatchObject({ unavailable: 'quiet' });
+    setCardDefaults({ opacity: 100, blur: true, unavailable: 'dashed' });
+    // untouched, nothing written; chosen, its own
+    expect(
+      withoutUntouchedDefaults({ unavailable: 'dashed' }, { type: 't' }, { unavailable: 'dashed' }),
+    ).toEqual({});
+    expect(
+      withoutUntouchedDefaults({ unavailable: 'quiet' }, { type: 't' }, { unavailable: 'dashed' }),
+    ).toEqual({ unavailable: 'quiet' });
+    // a card that shows no entity shows none
+    expect(
+      editorDefaults({ schema: colourFields({ unavailable: false }) })!({ type: 't' }, undefined),
+    ).not.toHaveProperty('unavailable');
   });
 
   it('never writes a number’s Automatic, even chosen after a value the config held', () => {

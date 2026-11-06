@@ -33,6 +33,7 @@ export const ENTITY_BASE: readonly BaseKey[] = [
   'color',
   'card_color',
   'card_opacity',
+  'unavailable',
 ];
 
 /** The same for a card of one entity with a head: whether its circle shows too. */

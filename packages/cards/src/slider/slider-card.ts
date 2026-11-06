@@ -558,7 +558,7 @@ export class FluvySliderCard extends FluvyTileCard {
       data-surface=${surface ?? nothing}
     >
       ${head({
-        icon: fitted.icon ? (usable ? iconOf(view, config.icon) : 'ban') : null,
+        icon: fitted.icon ? (usable || this.looksQuiet ? iconOf(view, config.icon) : 'ban') : null,
         small: fitted.small,
         tone: usable ? (stance.live ? tone : 'neutral') : 'off',
         title: name,

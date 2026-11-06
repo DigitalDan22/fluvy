@@ -9,6 +9,7 @@ import {
   type LovelaceCardConfig,
   type LovelaceConfigForm,
   type MessageKey,
+  UNAVAILABLE_LOOKS,
 } from '@fluvy/core';
 import { TONES } from '@fluvy/ui';
 import type { EditorChoices, RowsListSpec, SelectOption } from './rows-editor.js';
@@ -416,11 +417,25 @@ export const cardOpacityField = (): HaFormSchemaItem => ({
   helper: 'editor.card_opacity_helper',
 });
 
-/** A tone and a colour on one row, then the card's own surface: its colour (`card_color`, none by default), its opacity. */
-export const colourFields = ({ state = false } = {}): HaFormSchemaItem[] => [
+/**
+ * How the card looks out of reach (`unavailable`, 1.16, #126): dashed, or as when off, its words saying so — the
+ * house's, shown and never written, until one is chosen (`editorDefaults`), the word under it saying so. An item's
+ * (`item`: a tile of a group) is empty until chosen, its group's then.
+ */
+export const unavailableField = ({ item = false } = {}): HaFormSchemaItem => ({
+  ...selectField('unavailable', UNAVAILABLE_LOOKS),
+  helper: item ? 'editor.item_unavailable_helper' : 'editor.unavailable_helper',
+});
+
+/**
+ * A tone and a colour on one row, then the card's own surface: its colour (`card_color`, none by default), its opacity
+ * and how it looks out of reach (`unavailable: false`: a card that shows no entity has nothing out of reach).
+ */
+export const colourFields = ({ state = false, unavailable = true } = {}): HaFormSchemaItem[] => [
   fieldRow(toneField(), accentField('color', { state })),
   accentField('card_color', { none: true }),
   cardOpacityField(),
+  ...(unavailable ? [unavailableField()] : []),
 ];
 
 /**

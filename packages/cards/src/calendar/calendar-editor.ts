@@ -3,6 +3,7 @@ import type { BaseKey } from '../shared/base.js';
 import {
   accentField,
   cardOpacityField,
+  unavailableField,
   editorLabels,
   entitiesField,
   entityField,
@@ -40,6 +41,7 @@ export const base: readonly BaseKey[] = [
   'color',
   'card_color',
   'card_opacity',
+  'unavailable',
   'show_icon',
 ];
 
@@ -117,6 +119,7 @@ export function getConfigForm(): LovelaceConfigForm {
       ),
       fieldRow(accentField(), accentField('card_color', { none: true })),
       cardOpacityField(),
+      unavailableField(),
     ],
     ...editorLabels(s, EDITOR_LABELS, { days: 'editor.days' }),
   };

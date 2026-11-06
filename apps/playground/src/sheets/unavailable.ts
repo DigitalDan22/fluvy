@@ -26,7 +26,9 @@ import { sheet as solar } from './solar.js';
  * neighbours). Then a family at a time, its cards live and, in the frame after, the same cards with every entity they
  * read out of reach as Home Assistant writes it (`out-of-reach.ts`). The appliances' pair is in their own sheet ("Live ·
  * its twin out of reach next", "Out of reach"). The suite `interactions-unavailable.mjs` holds every card of the
- * catalogue to it, in every variant, unavailable, unknown and missing.
+ * catalogue to it, in every variant, unavailable, unknown and missing. Last, a card out of reach dashed beside the same
+ * card quiet (`unavailable: quiet`, #126: as it rests, saying so): tiles, a group's tiles each its own, the light card,
+ * rows and the room.
  */
 
 /** The sheets the families' cards come from: their house is this sheet's. */
@@ -122,6 +124,26 @@ const APPLIANCES = (['washer', 'dryer', 'dishwasher', 'printer'] as const).map((
   readouts: [`sensor.ac_${name}_power`, `sensor.ac_${name}_energy`],
 }));
 
+/** The printer's tile, dashed (the house's) beside quiet (#126): large, then compact, in half a section each. */
+const PRINTER = APPLIANCES[3]!;
+const dashedAndQuiet = (config: LovelaceCardConfig, cols?: number): LovelaceCardConfig[] => [
+  { ...config, ...(cols ? { cols } : {}) },
+  { ...config, unavailable: 'quiet', ...(cols ? { cols } : {}) },
+];
+
+/** A card out of reach dashed, then the same card quiet, the house as `pair` takes it out of reach. */
+function dashedBesideQuiet(
+  title: string,
+  config: LovelaceCardConfig,
+  also: readonly string[] = [],
+): FrameSpec {
+  return {
+    title: `Dashed and quiet · ${title}`,
+    cards: dashedAndQuiet(config),
+    hass: outOfReachView([...new Set([...named(config), ...also])]),
+  };
+}
+
 const frames: FrameSpec[] = [
   // the owner's case: four large tiles, the 3D printer out of reach keeps the size of its neighbours
   {
@@ -170,6 +192,39 @@ const frames: FrameSpec[] = [
     [from(ambient, 'Who is home'), from(rooms, 'Room · photo')],
     inArea('rm_living'),
   ),
+  // #126: dashed (the house's), then quiet — the printer's tile large and compact, half a section each
+  {
+    title: 'Dashed and quiet · tiles',
+    cards: [
+      ...dashedAndQuiet({ type: 'custom:fluvy-tile-card', ...PRINTER }, 6),
+      ...dashedAndQuiet({ type: 'custom:fluvy-tile-card', ...PRINTER, size: 'compact' }, 6),
+    ],
+  },
+  // a group quiet, and a dashed group whose printer says it is quiet of its own (and the other way round)
+  {
+    title: 'Dashed and quiet · a group’s tiles',
+    cards: [
+      { type: 'custom:fluvy-tiles-card', size: 'compact', unavailable: 'quiet', tiles: APPLIANCES },
+      {
+        type: 'custom:fluvy-tiles-card',
+        size: 'compact',
+        tiles: [...APPLIANCES.slice(0, 3), { ...PRINTER, unavailable: 'quiet' }],
+      },
+      {
+        type: 'custom:fluvy-tiles-card',
+        size: 'compact',
+        unavailable: 'quiet',
+        tiles: [...APPLIANCES.slice(0, 3), { ...PRINTER, unavailable: 'dashed' }],
+      },
+    ],
+  },
+  dashedBesideQuiet('the light card', from(slider, 'On')),
+  dashedBesideQuiet('rows', {
+    type: 'custom:fluvy-entities-card',
+    title: 'Living room',
+    entities: ['light.ceiling', 'switch.ac_washer', 'sensor.ac_washer_power', 'lock.front_door'],
+  }),
+  dashedBesideQuiet('the room', from(rooms, 'Room · photo'), inArea('rm_living')),
 ];
 
 export const sheet: SheetSpec = {

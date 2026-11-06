@@ -272,6 +272,26 @@ describe('the editors’ contract', () => {
     },
   );
 
+  it.each(cards)(
+    '$tag: offers its look out of reach wherever it offers its opacity, but on a card that shows no entity (#126)',
+    ({ tag, editor }) => {
+      const shown = names(editor.getConfigForm().schema);
+      const none = tag === 'fluvy-web-card';
+      expect(shown.includes('unavailable')).toBe(shown.includes('card_opacity') && !none);
+      expect(editor.base.includes('unavailable')).toBe(
+        editor.base.includes('card_opacity') && !none,
+      );
+    },
+  );
+
+  it('offers a clock’s look out of reach where it shows a weather, the one thing on it that can be', () => {
+    const clock = cards.find((c) => c.tag === 'fluvy-clock-card')!.editor.getConfigForm();
+    expect(names(visibleFields(clock.schema, {}))).not.toContain('unavailable');
+    expect(names(visibleFields(clock.schema, { weather: 'weather.home' }))).toContain(
+      'unavailable',
+    );
+  });
+
   it('hides the opacity where a card draws no surface: the web page card bare', () => {
     const web = cards.find((c) => c.tag === 'fluvy-web-card')!.editor.getConfigForm();
     expect(names(visibleFields(web.schema, { variant: 'bare' }))).not.toContain('card_opacity');

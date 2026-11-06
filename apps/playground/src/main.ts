@@ -189,7 +189,8 @@ if (params.has('charts')) {
 }
 
 // the house's cards' surface, as fluvy's settings would hand it to every card
-if (params.has('opacity') || params.has('blur')) setCardDefaults(cardsFor(params));
+if (params.has('opacity') || params.has('blur') || params.has('unavailable'))
+  setCardDefaults(cardsFor(params));
 
 const activity = params.get('activity') === '1';
 const history = params.get('history') === '1';

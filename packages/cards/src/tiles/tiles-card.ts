@@ -68,6 +68,8 @@ export class FluvyTilesCard extends FluvyTileCard {
     return rowsOf(n, perRow) * ({ mini: 116, compact: 84, large: 176 }[size] + lines) - 8;
   }
 
+  static override markedItems = true;
+
   static override styles: CSSResultGroup = [
     ...(FluvyTileCard.styles as CSSResultGroup[]),
     css`
@@ -136,6 +138,11 @@ export class FluvyTilesCard extends FluvyTileCard {
 
   override getGridOptions(): LovelaceGridOptions {
     return { columns: 12, rows: 'auto', min_columns: 6 };
+  }
+
+  /** A tile that says it is quiet out of reach is drawn so from the group's first frame. */
+  protected override asksQuiet(): boolean {
+    return super.asksQuiet() || this.items().some((item) => item.unavailable === 'quiet');
   }
 
   /** The tiles' entities (a light group's members too), their readouts, and what their last change is read from. */

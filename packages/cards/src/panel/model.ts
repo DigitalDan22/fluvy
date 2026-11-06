@@ -426,13 +426,17 @@ export function changeLines(ctx: PanelContext): string[] {
   if (ctx.dirty) lines.push(changeTitle(ctx.settings.look, ctx.draft, t, knownPalettes(ctx.saved)));
   const house = ctx.houseEdit;
   if (house.cards) {
-    const { opacity, blur } = house.cards;
+    const { opacity, blur, unavailable } = house.cards;
     if (opacity !== ctx.settings.cards.opacity)
       lines.push(
         `${t('cards.title')} · ${t('cards.opacity')} · ${t('wall.percent', { count: opacity })}`,
       );
     if (blur !== ctx.settings.cards.blur)
       lines.push(`${t('cards.title')} · ${t('cards.blur')} · ${onOff(blur)}`);
+    if (unavailable !== ctx.settings.cards.unavailable)
+      lines.push(
+        `${t('cards.title')} · ${t('cards.unavailable')} · ${localize(ctx.hass, `option.${unavailable}`)}`,
+      );
   }
   if (house.lightTint)
     lines.push(

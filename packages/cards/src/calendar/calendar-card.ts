@@ -426,6 +426,7 @@ export class FluvyCalendarCard extends Card<CalendarCardConfig> {
       status,
       notice: this.notice(),
       away: status === 'unavailable' ? stateText(this.hass, this.entity(ids[0])) : '',
+      quiet: this.looksQuiet,
       width: view === 'tile' ? Math.max(80, this.width - 32) : this.contentWidth,
       day: this.day,
       month: this.shownMonth,

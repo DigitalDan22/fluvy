@@ -97,6 +97,18 @@ position, a forecast) keeps its place with "—" or at rest. A list keeps an unr
 - **A scene out of reach** is the scene's own tile (76, its name in two lines in a grid) in the off skin: the dashed
   hairline on the page fill, the `ban` circle, "Unavailable" or "Not found"; a tap opens its details.
 
+**Dashed, or quiet out of reach (1.16, #126).** Dashed is the default, the house's until it chooses and each card's
+(`unavailable`), because out of reach is a state worth seeing: the dashed hairline on the page's fill, the faded words
+and the ban glyph say at a glance that a device has gone where an off one is resting, and a dashboard must not change
+on upgrade. `quiet` is for a home where a device dropping out now and then is noise: the card or the tile draws as it
+does while off — its surface, its own glyph in its resting circle, its words, its switch and its controls at full
+strength — and keeps everything that is true: its words ("Unavailable"), "—" for every value it cannot know, every
+control still and `aria-disabled`, its anatomy and its size. Only the look of being out of reach goes. It is a sheet of
+its own (`ui/styles/quiet.css`, fetched with the first quiet card): each rule answers a rule of the dashed skin at that
+rule's own specificity (its mark weighs nothing) and gives back paint alone, never layout, on what carries the mark
+`data-unavailable="quiet"` — a card's root, or each tile of a group whose tiles say their own. An entity gone from the
+house keeps the ban glyph, quiet too: it has no kind to borrow one from.
+
 **What a chart, a figure and a reading keep out of reach (1.9, the sensors and the energy cards).** A chart keeps
 the window it had, in the off ink: a sensor's curve, its axis and its minimum · maximum · average, a gauge's ring and
 its row, a day's bars, the history bars — history is the past and stays; only the reading now is "—" (the sensor's

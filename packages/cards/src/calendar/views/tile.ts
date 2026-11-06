@@ -115,7 +115,8 @@ function nextTile(ctx: ViewContext): TemplateResult {
       why ? `${name} · ${why}` : name,
       undefined,
       html` <div class="fv-tile__head">
-          ${ico(why ? 'ban' : 'calendar', why ? 'off' : 'neutral')}<span class="fv-tile__value"
+          ${ico(why && !ctx.quiet ? 'ban' : 'calendar', why ? 'off' : 'neutral')}<span
+            class="fv-tile__value"
             >${ready || why ? '—' : nothing}</span
           >
         </div>
