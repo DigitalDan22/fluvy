@@ -108,6 +108,11 @@ describe('normaliseConfig', () => {
       ...base,
       modes: ['off', 'heat'],
     });
+    // an appliance's commands asked before: YAML reads an unquoted off as false
+    expect(normaliseConfig({ ...base, confirm: ['stop', false] }, COMMON_ALIASES)).toEqual({
+      ...base,
+      confirm: ['stop', 'off'],
+    });
     const targets = [
       'light.a',
       { entity: 'light.b', verb: true },
