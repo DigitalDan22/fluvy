@@ -962,6 +962,22 @@ describe('the appliance card', () => {
       'Zyklen',
       'Zyklen heute',
     ]);
+    // a word they all share after the device's name goes only where it is a mark in capitals, an integration's (the
+    // DE1's "DE1+", "ENERGY"), never one of their own words ("Total coffees", "Rinse aid", リンス)
+    expect(
+      await lg(named2('Waschmaschine ENERGY Zyklen', 'Waschmaschine ENERGY Gesamtzeit')),
+    ).toEqual(['Zyklen', 'Gesamtzeit']);
+    expect(
+      await lg(named2('Waschmaschine Total coffees', 'Waschmaschine Total espressos')),
+    ).toEqual(['Total coffees', 'Total espressos']);
+    expect(await lg(named2('Waschmaschine Rinse aid', 'Waschmaschine Rinse aid level'))).toEqual([
+      'Rinse aid',
+      'Rinse aid level',
+    ]);
+    expect(await lg(named2('Waschmaschine リンス 残量', 'Waschmaschine リンス 補充'))).toEqual([
+      'リンス 残量',
+      'リンス 補充',
+    ]);
   });
 
   it('draws the DE1’s drinks out of reach as it draws them live, each a dash: as many, as wide', async () => {

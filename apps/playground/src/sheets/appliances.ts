@@ -962,6 +962,28 @@ export const sheet: SheetSpec = {
         }),
       ],
     }),
+    // readouts named after their device and a word they all share, which is theirs, not a mark: "Total coffees" whole
+    frame({
+      title: 'Its own · readouts sharing a word of their own',
+      cards: [
+        card('lg-washer', {
+          variant: 'compact',
+          readouts: [],
+          sensors: ['sensor.waschmaschine_zyklen', 'sensor.waschmaschine_gesamtzeit'],
+        }),
+      ],
+      hass: changed({
+        'sensor.waschmaschine_zyklen': {
+          attributes: { friendly_name: 'Waschmaschine Total coffees' },
+        },
+        'sensor.waschmaschine_gesamtzeit': {
+          attributes: {
+            friendly_name: 'Waschmaschine Total espressos',
+            unit_of_measurement: 'min',
+          },
+        },
+      }),
+    }),
     // out of reach beside its live twin (the frame before): the same size, its values a dash
     frame({
       title: 'Live · its twin out of reach next',

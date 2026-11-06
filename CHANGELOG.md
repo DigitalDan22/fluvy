@@ -30,6 +30,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   keeps them as the row's title and in what it says to a screen reader, and a tap on any alarm row opens what says it
   (what failed, the door left open, the state that asks for a hand), where at 211 px the reason showed nowhere on the
   card and a door left open opened the appliance's error sensor where it has one.
+- The Appliance card's readouts keep a word all of a device's entities share after its name, "Total coffees" and "Rinse
+  aid level", where they read "Coffees" and "Aid level"; only a mark in capitals goes, as the DE1's "DE1+".
 
 ## [1.15.0] — 2026-11-06
 

@@ -666,10 +666,14 @@ function ownWords(name: string, device: string): string {
   return rest ? rest.charAt(0).toUpperCase() + rest.slice(1) : name;
 }
 
+/** A mark an integration puts before every name it gives (the DE1's plugin's "DE1+", "ENERGY"): in capitals, cased. */
+const capitals = (word: string): boolean => /\p{Lu}/u.test(word) && !/\p{Ll}/u.test(word);
+
 /**
- * The words a device's entities' names begin with: its name, as Home Assistant puts it at their head, and the words
- * after it that every one named after it shares, as an integration may put its own there (the DE1's plugin's "DE1+":
- * "Decent Espresso DE1PRO DE1+ Espresso Count"), never the whole of one's own words.
+ * The words a device's entities' names begin with: its name, as Home Assistant puts it at their head, and the marks in
+ * capitals after it that every one named after it shares, as an integration may put its own there (the DE1's plugin's
+ * "DE1+": "Decent Espresso DE1PRO DE1+ Espresso Count") — never a word of their own they share ("Total coffees",
+ * "Rinse aid" beside "Rinse aid level", a word of no case), nor the whole of one's own words.
  */
 function namesHead(names: readonly string[], device: string): string {
   const own = names
@@ -687,7 +691,8 @@ function namesHead(names: readonly string[], device: string): string {
     while (n < shared.length && n < words.length - 1 && shared[n] === words[n]) n += 1;
     shared = shared.slice(0, n);
   }
-  return [device, ...shared].join(' ');
+  const marks = shared.findIndex((word) => !capitals(word));
+  return [device, ...(marks < 0 ? shared : shared.slice(0, marks))].join(' ');
 }
 
 /**
