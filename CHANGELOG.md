@@ -8,9 +8,11 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 ### Visible on upgrade
 
 - The Appliance card of an oven whose integration can start it (LocalThings, Home Connect, Miele, SmartThings) shows a
-  Start button first among its buttons, and as a row its round is that Start, as a kettle's is, where it was its power;
-  an oven's, a microwave's or an air fryer's start asks first ("Start Oven?") unless the home's own `confirm` says
+  Start button first among its buttons, and as a row at rest its round is that Start, where it was its power; an
+  oven's, a microwave's or an air fryer's start asks first ("Start Oven?") unless the home's own `confirm` says
   otherwise (#128).
+- An appliance row's round is the one that can act now: while an oven, a kettle or a washer runs and its Start cannot
+  act, the round is its power round (switching off, asked first), else a Stop that can, where it was a greyed Start.
 - A card's name field in its editor, and a list item's, is Home Assistant's own name picker wherever an entity is
   beside it, as in Home Assistant's own cards; a name you wrote in words stays your words.
 - The chips card's tabs stay solid on a see-through house, as the greeting and the headings do, where they turned

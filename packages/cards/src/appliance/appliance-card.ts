@@ -4868,9 +4868,11 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
   }
 
   /**
-   * The row's round, the one that matters now: "Unloaded" while a load waits; start, resume or pause where the
-   * appliance runs cycles a card can start; else its power round (what a toaster or a kettle on a plug has, a pet
-   * device's own command).
+   * The row's round, the one that can act now: "Unloaded" while a load waits; start, resume or pause where the
+   * appliance runs cycles a card can start, at rest or while it can act; running where it cannot (an oven's Start
+   * while it cooks), its power round (switching off, asked first), else a Stop that can act, the quiet primary only
+   * where nothing can; without a primary, its power round (what a toaster or a kettle on a plug has, a pet device's
+   * own command).
    */
   private rowRound(view: View): TemplateResult | typeof nothing {
     const { r } = view;
@@ -4879,12 +4881,15 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       return round('check', 'accent', s(this.hass, 'unloaded'), () => this.unloaded(view));
     // a pet device's is the whole card's: its own command's, else its power's
     if (view.hero === 'pet') return this.powerRound(view, 'ap-power--row');
-    const cell = this.cells(view).find((item) => item.primary);
-    if (!cell)
-      return r.roles.power || r.plug || KIND_DEFAULTS[view.kind].controls.includes('power')
-        ? this.powerRound(view, 'ap-power--row')
-        : nothing;
-    return this.commandRound(cell);
+    const cells = this.cells(view);
+    const cell = cells.find((item) => item.primary);
+    const acts = (item: Cell | undefined): boolean => !!item?.command && !item.command.blocked;
+    if (cell && (acts(cell) || !busy(view.shown.status))) return this.commandRound(cell);
+    if (r.roles.power || r.plug || KIND_DEFAULTS[view.kind].controls.includes('power'))
+      return this.powerRound(view, 'ap-power--row');
+    const stop = cells.find((item) => item.control === 'stop');
+    if (acts(stop)) return this.commandRound(stop!);
+    return cell ? this.commandRound(cell) : nothing;
   }
 
   /** The round of a primary cell: its glyph (pause while it can pause), the accent while it can act, else quiet. */

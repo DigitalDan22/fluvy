@@ -593,6 +593,25 @@ describe('the appliance card', () => {
     }
   });
 
+  it('gives a row the round that can act now: an oven at rest its Start, cooking its power round, never a dead Start', async () => {
+    const roundOf = async (states: Record<string, { state: string }>): Promise<string | null> => {
+      const card = await mount({ device: 'lt-oven', variant: 'row' }, house(states));
+      const round = root(card).querySelector('.fv-round');
+      const said = round?.closest('.ap-power--row') ? 'power' : round?.getAttribute('aria-label');
+      card.remove();
+      return said ?? null;
+    };
+    // at rest, the cook set at the oven is one tap away (asked first)
+    expect(
+      await roundOf({
+        'sensor.backofen_kuche_maschinenzustand': { state: 'idle' },
+        'sensor.backofen_kuche_garraumstatus': { state: 'ready' },
+      }),
+    ).toBe('Start');
+    // preheating, its Start cannot act: the round switches it off (asked first), where it was a greyed Start
+    expect(await roundOf({})).toBe('power');
+  });
+
   it('offers in its editor what an appliance can be asked before, those it can send; every one where it names none (#120)', () => {
     const form = FluvyApplianceCard.getConfigForm();
     const field = form.schema
