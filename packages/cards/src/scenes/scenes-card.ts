@@ -5,6 +5,7 @@ import {
   strings,
   toggleEntity,
   type ActionConfig,
+  type EntityName,
   type EntityView,
   type FluvyCardConfig,
   type LovelaceGridOptions,
@@ -31,7 +32,7 @@ const s = strings('scenes');
 
 export interface SceneItemConfig {
   entity: string;
-  name?: string;
+  name?: EntityName;
   icon?: string;
   /** The second line ("All off", "Lock & arm"). Defaults to what the scene touches, else when it last ran. */
   subtitle?: string;
@@ -200,7 +201,9 @@ export class FluvyScenesCard extends Card<ScenesCardConfig> {
     const views = items.map((item) => this.entity(item.entity));
     const columns = panel
       ? 1
-      : this.columns(items.map((item, index) => item.name ?? (views[index] as EntityView).name));
+      : this.columns(
+          items.map((item, index) => this.nameFor(views[index] as EntityView, item.name)),
+        );
     const frozen = this.config?._now ? new Date(this.config._now) : null;
     const now = frozen && !Number.isNaN(frozen.getTime()) ? frozen : new Date();
 
@@ -226,7 +229,7 @@ export class FluvyScenesCard extends Card<ScenesCardConfig> {
         ${panel}
         ${items.map((item, index) => {
           const view = views[index] as EntityView;
-          const name = item.name ?? view.name;
+          const name = this.nameFor(view, item.name);
           if (view.status === 'missing' || view.status === 'unavailable') {
             const state = fitted(stateText(this.hass, view));
             // out of reach, the scene's own tile in the off skin: its name keeps its two lines

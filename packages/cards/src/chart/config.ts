@@ -1,4 +1,4 @@
-import { plural, strings, type HaFormSchemaItem } from '@fluvy/core';
+import { plural, strings, type EntityName, type HaFormSchemaItem } from '@fluvy/core';
 import type { Tone } from '@fluvy/ui';
 import type { ChartCaps, ChartPreset, Curve, FillKind } from '../shared/chart-config.js';
 import {
@@ -8,6 +8,7 @@ import {
   editorLabels,
   entityField,
   fieldRow,
+  nameField,
   numberFields,
   selectField,
   textField,
@@ -45,7 +46,7 @@ export type Windows = 'none' | 'min' | 'max' | 'both';
 /** A series of the chart: its entity and where it is read from, its name, its colour, how it is drawn and written. */
 export interface ChartSeriesConfig extends NumberKeys {
   entity: string;
-  name?: string;
+  name?: EntityName;
   /** Where its readings come from; none: a weather's forecast, a list where `attribute` is named, else its history. */
   source?: Source;
   /** The attribute that holds its list (`raw_today` reads `raw_tomorrow` after it); none: the usual ones. */
@@ -208,7 +209,7 @@ const periodField = (): HaFormSchemaItem =>
   );
 
 const ENTITY = entityField(['sensor', 'weather', 'number', 'input_number', 'counter']);
-const NAME = fieldRow(textField('name'), sourceField());
+const NAME = fieldRow(nameField(), sourceField());
 const ATTRIBUTE = selectField('attribute', ['auto'], { custom: true });
 const KEYS = fieldRow(textField('time_key'), textField('value_key'));
 const VALUE_KEY = textField('value_key');

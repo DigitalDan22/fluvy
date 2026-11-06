@@ -7,6 +7,7 @@ import {
   entitiesField,
   entityField,
   fieldRow,
+  nameField,
   numberField,
   onlyWhen,
   optionChoices,
@@ -62,7 +63,7 @@ export const lists: readonly RowsListSpec[] = [
     keys: ['entity', 'name', 'tone', 'color'],
     schema: [
       entityField(['calendar']),
-      textField('name'),
+      nameField(),
       fieldRow(toneField(), accentField('color', { item: 'own' })),
     ],
   },

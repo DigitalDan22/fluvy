@@ -101,7 +101,7 @@ export function textBlocks(
   row: HelperRowConfig,
 ): TemplateResult[] {
   const unusable = isUnusable(view);
-  const name = nameOf(view, row);
+  const name = nameOf(host, view, row);
   const state = host.state(view);
   const value = view.status === 'ok' ? state : '';
   const min = numberAttr(view, 'min');

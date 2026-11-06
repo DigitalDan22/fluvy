@@ -11,6 +11,7 @@ import {
   toggleEntity,
   valueParts,
   type ActionConfig,
+  type EntityName,
   type EntityView,
   type FluvyCardConfig,
   type HomeAssistant,
@@ -62,7 +63,7 @@ export type NameLines = 1 | 2 | '1' | '2';
 /** One tile's own settings — the single card's config, or one item of a tiles group. */
 export interface TileItem {
   entity: string;
-  name?: string;
+  name?: EntityName;
   icon?: string;
   tone?: Tone;
   /** The tile's own colour (a Home Assistant colour name or `#rrggbb`): the accent inside it. */
@@ -559,7 +560,7 @@ export class FluvyTileCard extends Card<TileCardConfig> {
 
   /** What the tile shows of its entity: its name, its icon, its skin; `lit`, whether the entity is on. */
   protected look(item: TileItem, view: EntityView, lit: boolean): TileLook {
-    const name = item.name ?? view.name;
+    const name = this.nameFor(view, item.name);
     return {
       name,
       label: name,

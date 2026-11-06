@@ -7,6 +7,7 @@ import {
   stateText,
   strings,
   textAttr,
+  type EntityName,
   type EntityView,
   type FluvyCardConfig,
   type LovelaceConfigForm,
@@ -71,7 +72,7 @@ const s = strings('now-playing');
 
 export interface NowPlayingCardConfig extends FluvyCardConfig {
   /** Speaker name shown after the artist. Defaults to the entity's name. */
-  name?: string;
+  name?: EntityName;
   /** The volume round at the end of the transport (it opens the player's dialog). */
   show_volume?: boolean;
   /** The power round, when `controls` names it: on by default, for a player that can be switched on or off. */
@@ -514,7 +515,7 @@ export class FluvyNowPlayingCard extends Card<NowPlayingCardConfig> {
 
   protected renderCard(): TemplateResult {
     const view = this.entity();
-    const speaker = this.config?.name ?? view.name;
+    const speaker = this.nameFor(view, this.config?.name);
 
     // the artwork and what is on are the card's head, and its button: a tap is the tap action, a still press on the
     // strip the hold action; the progress and the rounds under them keep their own

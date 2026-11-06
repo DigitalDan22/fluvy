@@ -189,7 +189,7 @@ export class FluvySceneCard extends Card<SceneCardConfig> {
 
   protected renderCard(): TemplateResult {
     const view = this.entity();
-    const name = this.config?.name ?? view.name;
+    const name = this.nameFor(view, this.config?.name);
 
     const isTight = this.width < TIGHT;
     const tight = isTight ? 'is-tight' : '';

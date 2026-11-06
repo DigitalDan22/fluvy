@@ -7,12 +7,14 @@ import {
   isActive,
   isUsable,
   strings,
+  type EntityName,
   type EntityView,
   type FluvyCardConfig,
   type LovelaceGridOptions,
   type Registries,
   entriesOf,
   idsOf,
+  textName,
 } from '@fluvy/core';
 import {
   chips,
@@ -58,7 +60,7 @@ export const LIGHTS_VARIANTS: readonly LightsVariant[] = ['row', 'chips', 'tiles
 /** One light of the room: its own name, icon and colour beside the entity's. */
 export interface LightItem {
   entity: string;
-  name?: string;
+  name?: EntityName;
   icon?: string;
   /** The light's own colour when it is on (a Home Assistant colour name or `#rrggbb`), over its bulb's. */
   color?: string;
@@ -274,7 +276,7 @@ export class FluvyLightsCard extends FluvyTileCard {
       return {
         item,
         view,
-        name: item.name ?? view.name,
+        name: this.nameFor(view, item.name),
         // its own icon, else the one the person set in Home Assistant (a floor lamp, a ceiling light), else the bulb
         glyph: iconOf(view, item.icon),
         usable,
@@ -355,7 +357,7 @@ export class FluvyLightsCard extends FluvyTileCard {
     const lamps = this.lamps();
     const w = this.contentWidth;
     const area = this.room?.area ? this.hass?.areas?.[this.room.area] : undefined;
-    const name = this.config?.name ?? area?.name ?? s(this.hass, 'title');
+    const name = textName(this.config?.name) ?? area?.name ?? s(this.hass, 'title');
     // the room's own glyph — never a light's, so the room's circle is never taken for one of its lights
     const glyph = this.config?.icon ?? area?.icon ?? 'home';
     hideEmpty(this, !lamps.length);

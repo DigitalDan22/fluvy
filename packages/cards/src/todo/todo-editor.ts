@@ -8,6 +8,7 @@ import {
   fieldRow,
   formLabels,
   iconField,
+  nameField,
   showIconField,
   textField,
 } from '../shared/form.js';
@@ -37,7 +38,7 @@ export function getConfigForm(): LovelaceConfigForm {
   return {
     schema: [
       entityField(['todo']),
-      fieldRow(textField('name'), textField('subtitle')),
+      fieldRow(nameField(), textField('subtitle')),
       fieldRow(iconField(), showIconField()),
       ...colourFields(),
       fieldRow(boolField('show_completed'), boolField('show_add')),

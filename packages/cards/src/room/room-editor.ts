@@ -22,6 +22,7 @@ import {
   entityField,
   fieldRow,
   formLabels,
+  iconField,
   lightColourFields,
   nameIconFields,
   nameLinesField,
@@ -108,14 +109,15 @@ const groupField = choiceField('group', [
 /** A set's round: its own name, icon, colour and actions; an entity's, the entity first. */
 const GROUP_ITEM: readonly HaFormSchemaItem[] = [
   groupField,
-  nameIconFields(),
+  fieldRow(textField('name'), iconField()),
   fieldRow(toneField(), accentField('color', { item: 'bulb' })),
   actionFields(),
 ];
 const ENTITY_ITEM: readonly HaFormSchemaItem[] = [
   groupField,
   entityField(undefined, 'entity', false),
-  ...GROUP_ITEM.slice(1),
+  nameIconFields(),
+  ...GROUP_ITEM.slice(2),
 ];
 
 export const lists: readonly RowsListSpec[] = [
@@ -218,7 +220,7 @@ export function getConfigForm(): LovelaceConfigForm {
   return {
     schema: [
       areaField(),
-      nameIconFields(),
+      fieldRow(textField('name'), iconField()),
       showIconField(),
       fieldRow(
         selectField('variant', ['photo', 'tile', 'row']),

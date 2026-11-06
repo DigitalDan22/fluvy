@@ -16,6 +16,7 @@ import {
   plural,
   stateText,
   strings,
+  textName,
   valueParts,
   type AreaContents,
   type ClimateKind,
@@ -678,7 +679,7 @@ export class FluvyRoomCard extends FluvyTileCard {
   protected override renderCard(): TemplateResult {
     const area = this.area();
     if (!area || !this.hass) return this.renderEmpty(s(this.hass, 'no_area'));
-    const name = this.config?.name ?? area.name;
+    const name = textName(this.config?.name) ?? area.name;
     const glyph = this.config?.icon ?? area.icon ?? 'home';
     const { on } = this.contents();
     const variant = this.variant;

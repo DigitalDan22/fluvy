@@ -40,7 +40,7 @@ export function selectEnd(
 ): RowEnd | undefined {
   const count = optionsOf(view, row).length;
   if (count > 0 && asChips(row, count)) return undefined;
-  return dropdownEnd(nameOf(view, row), chosenLabel(host.hass, view, row, host.state(view)));
+  return dropdownEnd(nameOf(host, view, row), chosenLabel(host.hass, view, row, host.state(view)));
 }
 
 /** What a select hands back: the label and its chips (blocks of the card), or one row its list opens from. */
@@ -70,7 +70,7 @@ export function selectPiece(
   }));
   return {
     blocks: [
-      field(nameOf(view, row), fieldContext(host, view, row), nothing, unusable),
+      field(nameOf(host, view, row), fieldContext(host, view, row), nothing, unusable),
       chipRow(items, (option) => chooseOption(host, view, option), style, {
         ruler: host.ruler,
         width: host.contentWidth,

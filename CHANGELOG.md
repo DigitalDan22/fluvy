@@ -11,12 +11,18 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   Start button first among its buttons, and as a row its round is that Start, as a kettle's is, where it was its power;
   an oven's, a microwave's or an air fryer's start asks first ("Start Oven?") unless the home's own `confirm` says
   otherwise (#128).
+- A card's name field in its editor, and a list item's, is Home Assistant's own name picker wherever an entity is
+  beside it, as in Home Assistant's own cards; a name you wrote in words stays your words.
 
 ### Added
 
 - The Appliance card leaves out a role it found that a home names `none` (`roles: [{role: remote, entity: none}]`), or
   None in the editor, everything else as found: a dishwasher whose remote start says off at rest, and starts all the
   same, gets its Start back; a wrong door or a water meter of the machine's whole life goes the same way (#127).
+- Every card reads a name as Home Assistant's own editor writes it: the entity's own name, its device's, its area's
+  or its floor's, alone or in a list, so a light of the device "EG_GA_L_Baum" named "Baum" reads "Baum" with
+  `name: { type: entity }`, where such a name read "[object Object]"; left out, a card says the friendly name as
+  before (#125).
 
 ### Fixed
 

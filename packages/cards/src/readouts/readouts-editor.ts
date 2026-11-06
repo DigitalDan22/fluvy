@@ -9,11 +9,11 @@ import {
   entityField,
   fieldRow,
   formLabels,
+  nameField,
   NUMBER_DEFAULTS,
   numberField,
   numberFields,
   selectField,
-  textField,
 } from '../shared/form.js';
 import type { EditorDefaults, RowsListSpec } from '../shared/rows-editor.js';
 import { configKeys } from '../shared/config.js';
@@ -43,7 +43,7 @@ export const lists: readonly RowsListSpec[] = [
     title: 'editor.rows',
     domains: DOMAINS,
     keys: ['entity', 'name', 'unit', 'decimals', 'tap_action'],
-    schema: [entityField(DOMAINS), textField('name'), numberFields(), actionField()],
+    schema: [entityField(DOMAINS), nameField(), numberFields(), actionField()],
   },
 ];
 

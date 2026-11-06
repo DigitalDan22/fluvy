@@ -55,6 +55,8 @@ export interface DeviceRegistryEntry {
   model_id?: string | null;
   /** The device this one is reached through (a printer's filament unit hangs on the printer). */
   via_device_id?: string | null;
+  /** The device this one is part of, whose area it is in where it has none of its own. */
+  parent_device_id?: string | null;
 }
 
 export interface AreaRegistryEntry {
@@ -215,6 +217,8 @@ export interface HaFormSchemaItem {
   title?: string;
   flatten?: boolean;
   schema?: readonly HaFormSchemaItem[];
+  /** What a selector reads beside its value, by the field that holds it (an entity's name reads `{ entity: 'entity' }`). */
+  context?: Readonly<Record<string, string>>;
   /**
    * Whether the field (or the row) can act on what the form holds — the config over the card's defaults — and the
    * house: Fluvy's editor leaves it out while it cannot, and keeps its value. Never handed to `ha-form`.

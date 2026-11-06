@@ -670,7 +670,7 @@ export class FluvySensorCard extends Card<SensorCardConfig> {
         open();
       }
     };
-    const name = this.config?.name ?? view.name;
+    const name = this.nameFor(view, this.config?.name);
     const tone = this.toneOf(view);
     const parts = this.parts(view, view.number);
     const numeric = charted(view);
@@ -725,7 +725,7 @@ export class FluvySensorCard extends Card<SensorCardConfig> {
 
   private renderChart(view: EntityView): TemplateResult {
     const tone = this.toneOf(view);
-    const title = this.config?.name ?? view.name;
+    const title = this.nameFor(view, this.config?.name);
     const usable = isUsable(view);
     // "Unavailable" is said once, here; a sensor that is a word has no window to speak of
     const sub =
@@ -977,7 +977,10 @@ export class FluvySensorCard extends Card<SensorCardConfig> {
    * the one thing it can say for every curve). The statistics are one sensor's: they stay out.
    */
   private renderSeveral(view: EntityView): TemplateResult {
-    const title = this.config?.name ?? (view.areaName || view.name);
+    const title =
+      this.config?.name == null
+        ? view.areaName || view.name
+        : this.nameFor(view, this.config?.name);
     const items: SensorItem[] = [
       {
         entity: view.id,
@@ -1023,7 +1026,13 @@ export class FluvySensorCard extends Card<SensorCardConfig> {
     const loaded = rows.every((row) => row.series !== undefined || !charted(row.sensor));
     const engine = this.charts.engine;
     const texts = rows.map(({ item, sensor, series }) => {
-      const label = labelOf(item, sensor, title, this.measureWord(sensor), measures);
+      const label = labelOf(
+        item.name == null ? {} : { name: this.nameFor(sensor, item.name) },
+        sensor,
+        title,
+        this.measureWord(sensor),
+        measures,
+      );
       if (sensor.number === null)
         return {
           label,

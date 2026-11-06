@@ -305,7 +305,7 @@ export class FluvyLightCard extends Card<LightCardConfig> {
 
   protected renderCard(): TemplateResult {
     const view = this.entity();
-    const name = this.config?.name ?? view.name;
+    const name = this.nameFor(view, this.config?.name);
     // a light that cannot be read keeps the card's whole anatomy, still: its switch, its level ("—"), its rulers
     const unusable = !isUsable(view);
     const on = !unusable && (this.stateOf(view) === 'on' || (this.level.chosen ?? 0) > 0);

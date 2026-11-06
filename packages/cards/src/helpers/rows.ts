@@ -61,7 +61,7 @@ function row(
   return listRow({
     icon: host.bare ? null : iconOf(view, config.icon),
     tone,
-    title: nameOf(view, config),
+    title: nameOf(host, view, config),
     name: true,
     sub,
     trailing,
@@ -97,7 +97,7 @@ export function menuRow(
   config: HelperRowConfig,
   value: string,
 ): TemplateResult {
-  const name = nameOf(view, config);
+  const name = nameOf(host, view, config);
   const sub = rowSub(host, view, config);
   const stack = stacks(host, dropdownEnd(name, value, sub));
   const end = dropdown({
@@ -125,7 +125,7 @@ export function switchRow(
   return listRow({
     icon: host.bare ? null : iconOf(view, config.icon),
     tone: unusable ? 'off' : on ? 'accent' : 'neutral',
-    title: nameOf(view, config),
+    title: nameOf(host, view, config),
     name: true,
     sub: rowSub(host, view, config),
     trailing: 'switch',
@@ -184,7 +184,7 @@ export function momentRow(
   const state = host.state(view); // a quick-set chip is ahead of the report: the value follows the tap
   const moment = momentOf(host, view);
   const parts = momentParts(host, view, config, moment);
-  const name = nameOf(view, config);
+  const name = nameOf(host, view, config);
   const main = row(
     host,
     view,
@@ -236,7 +236,7 @@ export function buttonRow(
     (pressed && !Number.isNaN(pressed.getTime())
       ? sentenceCase(relativeAgo(host.hass, pressed))
       : contextOf(host, view, config));
-  const name = nameOf(view, config);
+  const name = nameOf(host, view, config);
   const word = s(host.hass, 'run');
   const run = rowButton(
     'quiet',
@@ -276,7 +276,7 @@ export function plainRow(
   config: HelperRowConfig,
 ): TemplateResult {
   const missing = view.status === 'missing';
-  const name = nameOf(view, config);
+  const name = nameOf(host, view, config);
   const sub = rowSub(host, view, config);
   const value = plainValue(host, view);
   return listRow({

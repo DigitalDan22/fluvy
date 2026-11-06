@@ -929,7 +929,7 @@ export class FluvyAutomationsCard extends Card<AutomationsCardConfig> {
     const [first, ...rest] = this.targets;
     if (!first) return s(this.hass, 'empty');
     if (!this.only().length) return this.t('state.missing');
-    const own = first.name ?? this.entity(first.id).name;
+    const own = this.nameFor(this.entity(first.id), first.name);
     const name = rest.length ? s(this.hass, 'and_more', { name: own, count: rest.length }) : own;
     // a name with a word wider than the panel's line ("Wohnzimmerdeckenleuchte" at 211) would break inside it: the
     // line says it without the name, which the head says

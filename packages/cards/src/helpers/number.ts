@@ -111,7 +111,7 @@ export function numberBlocks(
   row: HelperRowConfig,
 ): TemplateResult[] {
   const m = model(host, view);
-  const name = nameOf(view, row);
+  const name = nameOf(host, view, row);
   const blocks = [
     field(
       name,
@@ -155,7 +155,7 @@ export function compactNumber(
   row: HelperRowConfig,
 ): TemplateResult {
   const m = model(host, view);
-  const name = nameOf(view, row);
+  const name = nameOf(host, view, row);
   const sub = contextOf(host, view, row);
   return html`<article
     class="fv-card in-compact ${m.unusable ? 'is-unavailable is-off' : ''}"

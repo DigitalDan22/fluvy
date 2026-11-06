@@ -34,7 +34,7 @@ import {
   entityField,
   fieldRow,
   hasLadder,
-  iconField,
+  nameIconFields,
   NUMBER_DEFAULTS,
   numberFields,
   showIconField,
@@ -125,7 +125,7 @@ export class FluvyEvChargerCard extends Card<EvChargerCardConfig> {
     return {
       schema: [
         entityField(['sensor']),
-        fieldRow(textField('name'), iconField()),
+        nameIconFields(),
         showIconField(),
         boolField('invert'),
         fieldRow(entityField(['sensor'], 'level', false), textField('target')),
@@ -258,7 +258,7 @@ export class FluvyEvChargerCard extends Card<EvChargerCardConfig> {
   }
 
   private name(view: EntityView): string {
-    if (this.config?.name) return this.config.name;
+    if (this.config?.name) return this.nameFor(view, this.config?.name);
     const device = this.hass?.devices?.[this.hass.entities?.[view.id]?.device_id ?? ''];
     const own = device?.name_by_user ?? device?.name;
     if (own) return own;

@@ -1,4 +1,5 @@
 import {
+  entityName,
   formatNumber,
   haptic,
   localize,
@@ -697,9 +698,10 @@ export class FluvyScheduleSheet extends LitElement {
 
   /** A target's name: the card's for it, else the entity's own. */
   private nameOf(id: string): string {
-    return (
-      this.request?.only?.find((choice) => choice.id === id)?.name ??
-      resolveEntity(this.hass, id).name
+    return entityName(
+      this.hass,
+      resolveEntity(this.hass, id),
+      this.request?.only?.find((choice) => choice.id === id)?.name,
     );
   }
 

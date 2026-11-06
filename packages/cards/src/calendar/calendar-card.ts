@@ -438,7 +438,7 @@ export class FluvyCalendarCard extends Card<CalendarCardConfig> {
       accentOf: (id) =>
         this.accents.item(calendarsOf(config).find((item) => item.entity === id)?.color),
       nameOf: (id) =>
-        calendarsOf(config).find((item) => item.entity === id)?.name ?? this.entity(id).name,
+        this.nameFor(this.entity(id), calendarsOf(config).find((item) => item.entity === id)?.name),
       select: (day) => this.select(day),
       stepMonth: (direction) => this.stepMonth(direction),
       moveFocus: (day) => this.moveFocus(day),

@@ -214,7 +214,7 @@ export class FluvyMapCard extends Card<MapCardConfig> {
 
   private zoneName(zoneId: string): string {
     const spec = this.zoneSpecs().find((zone) => zone.entity === zoneId);
-    return spec?.name ?? this.entity(zoneId).name;
+    return this.nameFor(this.entity(zoneId), spec?.name);
   }
 
   private goToMap(): void {

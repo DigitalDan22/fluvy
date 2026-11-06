@@ -448,7 +448,7 @@ export class FluvyAlarmCard extends RowsCard<AlarmCardConfig> {
     const other = coded ? this.alternative(view, mode, modes) : undefined;
     this.keypad?.open({
       title: this.actionLabel(mode.key),
-      sub: `${this.config?.name ?? view.name} · ${stateText(this.hass, view).toLocaleLowerCase(this.hass?.language)}`,
+      sub: `${this.nameFor(view, this.config?.name)} · ${stateText(this.hass, view).toLocaleLowerCase(this.hass?.language)}`,
       primary: action(mode),
       secondary: other ? action(other) : undefined,
       run: (chosen, code) => this.send(modes.find((m) => m.key === chosen) ?? mode, code),
@@ -488,7 +488,7 @@ export class FluvyAlarmCard extends RowsCard<AlarmCardConfig> {
 
   protected renderCard(): TemplateResult {
     const view = this.entity();
-    const name = this.config?.name ?? view.name;
+    const name = this.nameFor(view, this.config?.name);
     // out of reach (unavailable, missing) it keeps its anatomy and its size, its controls disabled: only the colours
     // change (1.9)
     const unusable = !isUsable(view);

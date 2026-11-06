@@ -1,4 +1,4 @@
-import { isEntityId } from '@fluvy/core';
+import { isEntityId, type EntityName } from '@fluvy/core';
 import { SCHEDULE_ID, VERBS, verbsFor, type Schedule, type Verb } from './schedule.js';
 
 /**
@@ -11,7 +11,7 @@ import { SCHEDULE_ID, VERBS, verbsFor, type Schedule, type Verb } from './schedu
 export interface AutomationTarget {
   entity: string;
   /** Its name in the sheet, the suggested schedule name and the card's words; the entity's own when unsaid. */
-  name?: string;
+  name?: EntityName;
   icon?: string;
   /** The Do tile a new schedule for it starts on: one its domain has. */
   verb?: Verb;
@@ -24,7 +24,7 @@ export interface AutomationTarget {
 /** A target as the card and the sheet use it: valid, its options only where its domain has them. */
 export interface TargetChoice {
   readonly id: string;
-  readonly name?: string;
+  readonly name?: EntityName;
   readonly icon?: string;
   readonly verb?: Verb;
   readonly level?: number;
@@ -54,7 +54,9 @@ export function targetChoices(raw: unknown): readonly TargetChoice[] {
     const domain = id.slice(0, id.indexOf('.'));
     if (!isEntityId(id) || !VERBS[domain] || seen.has(id)) continue;
     seen.add(id);
-    const name = text(item.name);
+    // words, or Home Assistant's parts of a name (read with the entity, `entityName`)
+    const name =
+      typeof item.name === 'object' && item.name ? (item.name as EntityName) : text(item.name);
     const icon = text(item.icon);
     const verb = verbsFor([domain]).find((each) => each === item.verb);
     const level = Number(item.level);

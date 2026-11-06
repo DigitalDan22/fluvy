@@ -452,8 +452,18 @@ export const titleFields = (): HaFormSchemaItem =>
 /** A card's icon and its tone, on one row. */
 export const iconToneFields = (): HaFormSchemaItem => fieldRow(iconField(), toneField());
 
-/** A name and an icon, on one row (a card's, or an item's in a list). */
-export const nameIconFields = (): HaFormSchemaItem => fieldRow(textField('name'), iconField());
+/**
+ * A name, a card's or an item's in a list, as Home Assistant's own editors write one (#125): words of the person's own,
+ * or the parts read with the entity beside it (its own name, its device's, its area's, its floor's: `entityName`).
+ */
+export const nameField = (): HaFormSchemaItem => ({
+  name: 'name',
+  selector: { entity_name: {} },
+  context: { entity: 'entity' },
+});
+
+/** A name and an icon, on one row (a card's, or an item's in a list): the entity's parts where one is beside them. */
+export const nameIconFields = (): HaFormSchemaItem => fieldRow(nameField(), iconField());
 
 /** Whether a card's head shows its circle: automatic (it gives way to a long name), always or never. */
 export const showIconField = (): HaFormSchemaItem =>

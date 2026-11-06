@@ -923,7 +923,7 @@ export class FluvyChartCard extends Card<ChartCardConfig> {
         item,
         view,
         source,
-        name: item.name ?? view.name,
+        name: this.nameFor(view, item.name),
         scale,
         digits,
         colour,

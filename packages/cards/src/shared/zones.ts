@@ -1,4 +1,4 @@
-import type { EntityView, HomeAssistant } from '@fluvy/core';
+import type { EntityName, EntityView, HomeAssistant } from '@fluvy/core';
 
 /*
  * Where people are, read from their `person.*` (or `device_tracker.*`) and the house's `zone.*`: home, away, a
@@ -17,7 +17,7 @@ export interface Placed {
 
 export interface ZoneSpec {
   readonly entity: string;
-  readonly name?: string;
+  readonly name?: EntityName;
   readonly icon?: string;
 }
 

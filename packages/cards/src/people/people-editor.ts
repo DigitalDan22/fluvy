@@ -11,6 +11,7 @@ import {
   entityField,
   fieldRow,
   iconField,
+  nameField,
   selectField,
   showIconField,
   sinceChoices,
@@ -58,7 +59,7 @@ export const lists: readonly RowsListSpec[] = [
     keys: ['entity', 'name', 'battery', 'color', 'since', 'tap_action', 'hold_action'],
     schema: [
       entityField(['person', 'device_tracker']),
-      fieldRow(textField('name'), entityField(['sensor'], 'battery', false)),
+      fieldRow(nameField(), entityField(['sensor'], 'battery', false)),
       accentField('color', { item: 'card' }),
       sinceField(),
       actionFields(),

@@ -1,6 +1,7 @@
 import type { Tint } from '../shared/colour.js';
 import {
   strings,
+  textName,
   type ActionConfig,
   type FluvyCardConfig,
   type LovelaceGridOptions,
@@ -396,7 +397,7 @@ export class FluvyChipsCard extends Card<ChipsCardConfig> {
 
     return html`<nav
       class="hm-rooms ${this.besideMark_ ? 'is-beside-mark' : ''}"
-      aria-label=${this.config?.name ?? s(this.hass, 'rooms')}
+      aria-label=${textName(this.config?.name) ?? s(this.hass, 'rooms')}
     >
       <div
         class="fv-chips"

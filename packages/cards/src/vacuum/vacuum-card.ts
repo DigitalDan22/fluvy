@@ -261,7 +261,7 @@ export class FluvyVacuumCard extends Card<VacuumCardConfig> {
     const found = this.entity();
     const robot = found.domain === 'lawn_mower' ? MOWER : VACUUM;
     const view = drawnAs(found, usual(robot));
-    const name = this.config?.name ?? view.name;
+    const name = this.nameFor(view, this.config?.name);
     const unusable = !isUsable(view);
     const compact = this.config?.variant === 'compact';
     const shown = this.stateOf(view);

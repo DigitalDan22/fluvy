@@ -4,6 +4,7 @@ import {
   stateText,
   strings as words,
   type ActionConfig,
+  type EntityName,
   type EntityView,
   type FluvyCardConfig,
   type LovelaceGridOptions,
@@ -70,7 +71,7 @@ function statColumns(raw: unknown, fallback: StatColumns): StatColumns {
 
 export interface StatTileConfig extends NumberKeys {
   entity: string;
-  name?: string;
+  name?: EntityName;
   icon?: string;
   tone?: Tone;
   /** Fills the tile with its tone — the one figure of the set that matters more than the rest. */
@@ -83,7 +84,7 @@ export interface StatTileConfig extends NumberKeys {
 
 export interface StatRowConfig {
   entity: string;
-  name?: string;
+  name?: EntityName;
   icon?: string;
   /** The line under the name ("This month"), or a template rendered live. Defaults to the entity's area. */
   secondary?: string;
@@ -330,7 +331,7 @@ export class FluvyStatTilesCard extends Card<StatTilesCardConfig> {
       const view = views[index] as EntityView;
       return {
         key: tile.entity,
-        label: tile.name ?? view.name,
+        label: this.nameFor(view, tile.name),
         name: true,
         value: this.text(view, scales, tile),
         glyph: iconOf(view, tile.icon),
@@ -368,7 +369,7 @@ export class FluvyStatTilesCard extends Card<StatTilesCardConfig> {
     // no second line to say why there is no figure, so the state's word is its value where it leaves the name its room
     const rows = this.rows().map((row) => {
       const view = this.entity(row.entity);
-      const title = row.name ?? view.name;
+      const title = this.nameFor(view, row.name);
       const figure = this.text(view);
       const value =
         compact && view.status !== 'ok'
@@ -400,7 +401,7 @@ export class FluvyStatTilesCard extends Card<StatTilesCardConfig> {
         name: Boolean(this.config?.title),
         cut: fitted.cut,
       })}
-      ${lead && leadParts ? html`<div class="so-top fv-value-row">${readout({ label: this.config?.name ?? lead.name, value: leadParts.value, unit: leadParts.unit, size: 'l' })}</div>` : nothing}
+      ${lead && leadParts ? html`<div class="so-top fv-value-row">${readout({ label: this.nameFor(lead, this.config?.name), value: leadParts.value, unit: leadParts.unit, size: 'l' })}</div>` : nothing}
       ${
         // the rows alone sit where the tiles would; nothing at all, the panel does
         panel || items.length

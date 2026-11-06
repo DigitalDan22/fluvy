@@ -261,7 +261,7 @@ export class FluvyEntitiesCard extends Card<EntitiesCardConfig> {
           short,
           row.since,
         );
-      return { view, usable, trailing, title: row.name ?? view.name, value, end, sub };
+      return { view, usable, trailing, title: this.nameFor(view, row.name), value, end, sub };
     });
     // the "N more" row says it in words where they hold beside its chevron, else as "+N"
     const moreWords = more ? this.t('common.more_count', { count: more.count }) : '';

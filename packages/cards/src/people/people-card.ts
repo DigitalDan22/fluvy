@@ -5,6 +5,7 @@ import {
   stateText,
   strings,
   type ActionConfig,
+  type EntityName,
   type EntityView,
   type FluvyCardConfig,
   type LovelaceGridOptions,
@@ -37,7 +38,7 @@ export type PeopleLayout = 'grid' | 'rows';
 /** A person on the card: their entity, and the name, phone battery, colour and actions they are shown with. */
 export interface PersonItem {
   readonly entity: string;
-  readonly name?: string;
+  readonly name?: EntityName;
   /** The battery sensor of their phone (shown whatever `show_battery` says); else found from their tracker. */
   readonly battery?: string;
   readonly color?: string;
@@ -257,7 +258,7 @@ export class FluvyPeopleCard extends Card<PeopleCardConfig> {
     return {
       item,
       view,
-      name: item.name ?? view.name,
+      name: this.nameFor(view, item.name),
       battery:
         source === undefined
           ? undefined

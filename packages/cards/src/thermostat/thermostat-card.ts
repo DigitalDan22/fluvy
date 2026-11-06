@@ -806,7 +806,7 @@ export class FluvyThermostatCard extends Card<ThermostatCardConfig> {
 
   protected renderCard(): TemplateResult {
     const view = this.entity();
-    const name = this.config?.name ?? view.name;
+    const name = this.nameFor(view, this.config?.name);
     // out of reach, the card keeps its anatomy and its size: the dial or the readout at "—", the modes, presets and
     // fan speeds where they stand, nothing taking a tap; only the colours change (1.9)
     const unusable = !isUsable(view);

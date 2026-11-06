@@ -1,4 +1,4 @@
-import type { ActionConfig, MessageKey } from '@fluvy/core';
+import type { ActionConfig, EntityName, MessageKey } from '@fluvy/core';
 import type { ApplianceKind, Hero } from './kinds.js';
 import { MAINTENANCE_KEYS, type MaintenanceKey } from './maintenance.js';
 
@@ -77,8 +77,8 @@ export const ROW_KEYS: readonly RowKey[] = [...READING_ROWS, ...MAINTENANCE_KEYS
 export interface RowEntry {
   readonly key?: RowKey;
   readonly entity?: string;
-  /** Its words; an empty name leaves the value to say it alone ("200 °C", "Hot air"). */
-  readonly name?: string;
+  /** Its words, or its entity's name in parts; an empty name leaves the value to say it alone ("200 °C", "Hot air"). */
+  readonly name?: EntityName;
   readonly icon?: string;
   readonly color?: string;
   readonly tap_action?: ActionConfig;

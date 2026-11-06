@@ -7,6 +7,7 @@ import {
   strings,
   toggleService,
   valueParts,
+  type EntityName,
   type EntityView,
   type FluvyCardConfig,
   type HomeAssistant,
@@ -86,7 +87,7 @@ export interface MeterConfig extends NumberKeys {
   rate?: string;
   /** A day's typical use, in the meter's unit. Without it: the mean of the last 7 full days. */
   typical?: number;
-  name?: string;
+  name?: EntityName;
   icon?: string;
   /** `water` or `gas`; by default from the meter's device class. */
   kind?: MeterKind;
@@ -94,7 +95,7 @@ export interface MeterConfig extends NumberKeys {
 
 export interface MeterRowConfig {
   entity: string;
-  name?: string;
+  name?: EntityName;
   icon?: string;
 }
 
@@ -455,7 +456,11 @@ export class FluvyMetersCard extends Card<MetersCardConfig> {
       const kind = kinds[i] as MeterKind;
       const same = kinds.filter((k) => k === kind).length;
       const label =
-        m.name ?? (same > 1 && view.status !== 'missing' ? shortName(view) : this.kindWord(kind));
+        m.name == null
+          ? same > 1 && view.status !== 'missing'
+            ? shortName(view)
+            : this.kindWord(kind)
+          : this.nameFor(view, m.name);
       // yesterday's hours are no longer today's: the meter waits for its new day
       const asked = this.days.get(m.entity);
       const day = asked?.midnight === midnight ? asked : undefined;
@@ -694,7 +699,7 @@ export class FluvyMetersCard extends Card<MetersCardConfig> {
    */
   private rowEnd(r: MeterRowConfig): { title: string; value: string; end?: number; sub: string } {
     const view = this.entity(r.entity);
-    const title = r.name ?? view.name;
+    const title = this.nameFor(view, r.name);
     if (SWITCHED.has(view.domain)) return { title, value: '', end: SWITCH_SLOT, sub: '' };
     return { title, value: this.rowValue(view), sub: this.rowSub(view)[0]?.short ?? '' };
   }
@@ -712,7 +717,7 @@ export class FluvyMetersCard extends Card<MetersCardConfig> {
   private entityRow(r: MeterRowConfig, w: number, keep: boolean): TemplateResult {
     const view = this.entity(r.entity);
     const usable = view.status === 'ok';
-    const title = r.name ?? view.name;
+    const title = this.nameFor(view, r.name);
     const glyph = keep ? iconOf(view, r.icon) : null;
     const open = (): void => this.tap(view.id, { action: 'more-info' });
     if (SWITCHED.has(view.domain)) {

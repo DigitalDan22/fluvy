@@ -2,6 +2,7 @@ import { gridHeight } from '../energy-family.js';
 import {
   formatNumber,
   strings,
+  type EntityName,
   type FluvyCardConfig,
   type HomeAssistant,
   type LovelaceConfigForm,
@@ -77,11 +78,11 @@ import {
   fieldRow,
   iconField,
   listed,
+  nameField,
   NUMBER_DEFAULTS,
   numberFields,
   onlyWhen,
   showIconField,
-  textField,
   titleFields,
 } from '../shared/form.js';
 import { statsSize } from '../shared/readouts.js';
@@ -95,7 +96,7 @@ const f = strings('energy-flow');
 
 export interface GridReadout extends NumberKeys {
   entity: string;
-  name?: string;
+  name?: EntityName;
 }
 
 export interface GridCardConfig extends FluvyCardConfig, NumberKeys {
@@ -213,7 +214,7 @@ export class FluvyGridCard extends Card<GridCardConfig> {
       title: 'editor.rows',
       domains: ['sensor'],
       keys: ['entity', 'name', 'unit', 'decimals'],
-      schema: [entityField(['sensor']), textField('name'), numberFields({ units: WATT_LADDERS })],
+      schema: [entityField(['sensor']), nameField(), numberFields({ units: WATT_LADDERS })],
     },
   ];
   static override aliases: AliasSpec = {

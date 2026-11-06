@@ -1,4 +1,10 @@
-import { stateText, type EntityView, type HomeAssistant } from '@fluvy/core';
+import {
+  entityName,
+  stateText,
+  type EntityName,
+  type EntityView,
+  type HomeAssistant,
+} from '@fluvy/core';
 import { html, nothing, type TemplateResult } from 'lit';
 import type { ControlHost } from '../shared/base.js';
 import type { SelectRowConfig } from '../shared/dropdown.js';
@@ -7,7 +13,7 @@ import type { TemplateTexts } from '../shared/templates.js';
 
 export interface HelperRowConfig extends SelectRowConfig {
   entity: string;
-  name?: string;
+  name?: EntityName;
   icon?: string;
   /** The line under the title: context or time, never the entity's domain; may be a template. Defaults to its area; '' hides it. */
   secondary?: string;
@@ -45,7 +51,12 @@ export interface HelperHost extends ControlHost {
 export const isUnusable = (view: EntityView): boolean =>
   view.status === 'unavailable' || view.status === 'missing';
 
-export const nameOf = (view: EntityView, row: HelperRowConfig): string => row.name ?? view.name;
+/** A row's name: its own (`entityName`), else its entity's. */
+export const nameOf = (
+  host: Pick<HelperHost, 'hass'>,
+  view: EntityView,
+  row: HelperRowConfig,
+): string => entityName(host.hass, view, row.name);
 
 /** The second line the owner wrote, a template rendered; undefined when the row says nothing of its own. */
 export const ownSecondary = (host: HelperHost, row: HelperRowConfig): string | undefined =>

@@ -18,6 +18,7 @@ import {
   fieldRow,
   hasLadder,
   iconField,
+  nameField,
   NUMBER_DEFAULTS,
   numberField,
   numberFields,
@@ -100,7 +101,7 @@ export function getConfigForm(): LovelaceConfigForm {
   return {
     schema: [
       entityField(['sensor', 'number', 'input_number', 'counter']),
-      fieldRow(textField('name'), textField('subtitle')),
+      fieldRow(nameField(), textField('subtitle')),
       fieldRow(iconField(), selectField('variant', GAUGE_VARIANTS)),
       // the ring's style: a bar and a signed ring have one look each; of the moving ones, those that read the sensor
       // (`choices`)

@@ -2,6 +2,7 @@ import { SANKEY_BODY, sankeyHeight } from '../energy-family.js';
 import {
   isEntityId,
   strings,
+  type EntityName,
   type FluvyCardConfig,
   type LovelaceConfigForm,
   type LovelaceGridOptions,
@@ -61,13 +62,13 @@ import {
   entityField,
   fieldRow,
   iconField,
+  nameField,
   NUMBER_DEFAULTS,
   numberField,
   numberFields,
   onlyWhen,
   selectField,
   showIconField,
-  textField,
   titleFields,
 } from '../shared/form.js';
 import type { EditorChoices, EditorDefaults, RowsListSpec } from '../shared/rows-editor.js';
@@ -81,7 +82,7 @@ const flow = strings('energy-flow');
 export interface EnergySankeyDevice {
   /** The device's energy meter. */
   entity: string;
-  name?: string;
+  name?: EntityName;
   /** Another device's meter: this device's energy is part of that one's (only top-level devices are drawn). */
   parent?: string;
 }
@@ -180,11 +181,7 @@ export class FluvyEnergySankeyCard extends Card<EnergySankeyCardConfig> {
       title: 'energy-sankey.editor_devices',
       domains: ['sensor'],
       keys: ['entity', 'name', 'parent'],
-      schema: [
-        entityField(['sensor']),
-        textField('name'),
-        entityField(['sensor'], 'parent', false),
-      ],
+      schema: [entityField(['sensor']), nameField(), entityField(['sensor'], 'parent', false)],
       computeLabel: editorLabels(s, { parent: 'editor_parent' }).computeLabel,
     },
   ];
@@ -272,12 +269,15 @@ export class FluvyEnergySankeyCard extends Card<EnergySankeyCardConfig> {
     const own = (this.config?.devices ?? [])
       .map((d) => (typeof d === 'string' ? { entity: d } : d))
       .filter((d) => typeof d.entity === 'string' && d.entity !== '');
-    const idName = (name: string | undefined, id: string): boolean =>
+    const idName = (name: EntityName | undefined, id: string): boolean =>
       idNamed(this.hass, this.entity(id), name);
     if (own.length)
       return own.map((d) => ({
         id: d.entity,
-        name: d.name ?? deviceName(this.entity(d.entity)),
+        name:
+          d.name == null
+            ? deviceName(this.entity(d.entity))
+            : this.nameFor(this.entity(d.entity), d.name),
         parent: d.parent || undefined,
         idName: idName(d.name, d.entity),
       }));

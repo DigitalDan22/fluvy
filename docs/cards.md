@@ -20,6 +20,20 @@ integration's or Home Assistant's own: a sensor of a class Fluvy has no glyph fo
 class keeps Fluvy's trend arrow unless its integration has an icon for it. The tables are generated from the code
 (`pnpm docs:cards`).
 
+A `name` is your own words, or a name made of Home Assistant's parts as its own editor writes it: the entity's own
+name, its device's, its area's or its floor's, one or a list of them (words of your own among them as
+`{ type: text, text: … }`), joined by a space as Home Assistant's own cards join them. Left out, a card says the
+entity's friendly name, as Home Assistant's cards do. A light named "Baum" on a device named "EG_GA_L_Baum" in the
+area "Garten" has the friendly name "EG_GA_L_Baum Baum"; it reads "Baum" with
+
+```yaml
+name:
+  type: entity
+```
+
+and "Baum Garten" with `[{ type: entity }, { type: area }]`. A card's editor offers Home Assistant's name picker for
+its name, and for each item's name in its lists, wherever an entity is beside it; words you type stay words.
+
 Every card holds from the floor of a narrow column — 152 px for a card that takes half a section, 211 px for a full
 one — up to a wall's 520 px, in light and dark, in every language Fluvy speaks; `unavailable`, `unknown` and a
 missing entity are drawn on purpose (a quiet surface, inert controls, a dash for the value), never as an error, and

@@ -6,6 +6,7 @@ import {
   stateText,
   strings,
   type ActionConfig,
+  type EntityName,
   type EntityView,
   type FluvyCardConfig,
   type LovelaceGridOptions,
@@ -44,7 +45,7 @@ const TILE_NAME = 'fv-tile fv-tile--compact > fv-tile__name';
 /** A sensor on the card with a name, an icon, a colour or a tap of its own. */
 export interface OpeningItem {
   readonly entity: string;
-  readonly name?: string;
+  readonly name?: EntityName;
   readonly icon?: string;
   readonly color?: string;
   /** Where its last change is read from (#67): a timestamp sensor, or `attribute:<name>` of its own; else Home Assistant's. */
@@ -310,7 +311,8 @@ export class FluvyOpeningsCard extends Card<OpeningsCardConfig> {
     // rows do, every tile gives its circle where a name beside it would end before it had begun (96, or the name)
     const named = rows.some(
       ({ item, view }) =>
-        share - 56 < Math.min(96, this.headFit.ruler.width(TILE_NAME, item.name ?? view.name)),
+        share - 56 <
+        Math.min(96, this.headFit.ruler.width(TILE_NAME, this.nameFor(view, item.name))),
     );
     const bare = widest > share - 56 || share < 104 || named;
     const room = bare ? share : share - 56;
@@ -318,7 +320,7 @@ export class FluvyOpeningsCard extends Card<OpeningsCardConfig> {
       ${rows.map(({ item, view }) => {
         const warn = this.alert(view);
         const dead = !isUsable(view);
-        const name = item.name ?? view.name;
+        const name = this.nameFor(view, item.name);
         const value = words(item, view);
         // the state stays; its time goes, whole, where the tile cannot hold both
         const timedLine = !dead && timed ? `${value} · ${this.when(item, view, warn, now)}` : '';
@@ -503,7 +505,7 @@ export class FluvyOpeningsCard extends Card<OpeningsCardConfig> {
       this.contentWidth,
       [
         ...shown.map(({ item, view }) => ({
-          title: item.name ?? view.name,
+          title: this.nameFor(view, item.name),
           value: isUsable(view) ? this.valueText(view, item) : '—',
         })),
         ...(collapsible && variant !== 'tiles'
@@ -543,7 +545,7 @@ export class FluvyOpeningsCard extends Card<OpeningsCardConfig> {
               ${(variant === 'tiles' ? [] : shown).map(({ item, view }) => {
                 const warn = this.alert(view);
                 const dead = !isUsable(view);
-                const title = item.name ?? view.name;
+                const title = this.nameFor(view, item.name);
                 return listRow({
                   icon: keep ? iconOf(view, item.icon) : null,
                   // what needs acting on is filled in the warning tone, circle and state alike; a row's own colour is who

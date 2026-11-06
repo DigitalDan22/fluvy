@@ -13,6 +13,8 @@ import {
   fieldRow,
   hasLadder,
   iconField,
+  nameField,
+  nameIconFields,
   NUMBER_DEFAULTS,
   numberField,
   numberFields,
@@ -95,7 +97,7 @@ export const lists: readonly RowsListSpec[] = [
     keys: ['entity', 'name', 'icon', 'color'],
     schema: [
       entityField(['sensor', 'number', 'input_number', 'counter']),
-      fieldRow(textField('name'), iconField()),
+      nameIconFields(),
       accentField('color', { item: 'own' }),
     ],
     computeHelper: (schema) =>
@@ -120,7 +122,7 @@ export function getConfigForm(): LovelaceConfigForm {
   return {
     schema: [
       entityField(['sensor', 'number', 'input_number', 'counter']),
-      fieldRow(textField('name'), textField('subtitle')),
+      fieldRow(nameField(), textField('subtitle')),
       fieldRow(iconField(), showIconField()),
       ...colourFields(),
       fieldRow(selectField('variant', ['chart', 'tile']), numberField('hours', 1, 168)),

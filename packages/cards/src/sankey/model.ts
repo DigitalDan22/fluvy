@@ -1,4 +1,4 @@
-import type { EntityView, HomeAssistant } from '@fluvy/core';
+import type { EntityName, EntityView, HomeAssistant } from '@fluvy/core';
 import type { Allocation, Totals } from '../energy-model/allocate.js';
 
 /**
@@ -240,7 +240,7 @@ export function houseKids(
 export const idNamed = (
   hass: HomeAssistant | undefined,
   view: EntityView,
-  name: string | undefined,
+  name: EntityName | undefined,
 ): boolean =>
   !name &&
   view.status === 'missing' &&

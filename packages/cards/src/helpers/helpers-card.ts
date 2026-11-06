@@ -205,7 +205,7 @@ export class FluvyHelpersCard extends Card<HelpersCardConfig> {
   private rowsKeepIcon(host: HelperHost): boolean {
     const ends = this.rows().flatMap((row): RowEnd[] => {
       const view = this.entity(row.entity);
-      const name = nameOf(view, row);
+      const name = nameOf(host, view, row);
       const domain = view.domain;
       if (NUMBERS.has(domain) || TEXTS.has(domain)) return [];
       if (SWITCHES.has(domain)) return [{ name, end: SWITCH_SLOT }];

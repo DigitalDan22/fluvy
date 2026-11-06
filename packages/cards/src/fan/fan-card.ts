@@ -378,7 +378,7 @@ export class FluvyFanCard extends Card<FanCardConfig> {
     // out of reach (unavailable, missing; never read: its usual parts) it keeps its anatomy and its size, its controls
     // disabled: only the colours change (1.9)
     const view = drawnAs(this.entity(), USUAL);
-    const name = this.config?.name ?? view.name;
+    const name = this.nameFor(view, this.config?.name);
     const unusable = !isUsable(view);
     const compact = this.compact;
     const state = this.stateOf(view);

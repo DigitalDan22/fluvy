@@ -5,6 +5,7 @@ import {
   personOf,
   stateText,
   strings,
+  textName,
   type DayParts,
   type EntityView,
   type FluvyCardConfig,
@@ -360,7 +361,7 @@ export class FluvyHelloCard extends Card<HelloCardConfig> {
 
   /** The configured name, else the first name of the person greeted (the avatar's), else the signed-in user's. */
   private who(): string {
-    const configured = this.config?.name?.trim();
+    const configured = textName(this.config?.name)?.trim();
     if (configured) return configured;
     const id = this.personId();
     const person = id ? this.entity(id) : null;

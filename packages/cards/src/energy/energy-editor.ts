@@ -15,6 +15,7 @@ import {
   fieldRow,
   hasLadder,
   iconField,
+  nameField,
   NUMBER_DEFAULTS,
   numberField,
   numberFields,
@@ -95,7 +96,7 @@ export const lists: readonly RowsListSpec[] = [
     keys: ['entity', 'name', 'period', 'unit', 'decimals'],
     schema: [
       entityField(['sensor']),
-      textField('name'),
+      nameField(),
       // its state, or its change since midnight (a lifetime meter's day)
       choiceField('period', [['today', 'energy-flow.period_day']]),
       numberFields({ units: WATT_LADDERS }),
@@ -133,7 +134,7 @@ export function getConfigForm(): LovelaceConfigForm {
     schema: [
       entityField(['sensor']),
       boolField('invert'),
-      fieldRow(textField('name'), textField('subtitle')),
+      fieldRow(nameField(), textField('subtitle')),
       fieldRow(iconField(), showIconField()),
       ...colourFields(),
       // a date picker's range stands in for the window

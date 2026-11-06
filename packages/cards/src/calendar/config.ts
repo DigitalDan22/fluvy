@@ -1,4 +1,4 @@
-import type { FluvyCardConfig } from '@fluvy/core';
+import type { EntityName, FluvyCardConfig } from '@fluvy/core';
 import type { HeadConfig } from '../shared/base.js';
 import type { FirstWeekday } from '../shared/dates.js';
 import { type Tone } from '@fluvy/ui';
@@ -33,7 +33,7 @@ export type CalendarTone = (typeof CALENDAR_TONES)[number];
 /** One calendar of the card: its entity, and a name, a tone or a colour of its own. */
 export interface CalendarItem {
   entity: string;
-  name?: string;
+  name?: EntityName;
   /** One of the calendar tones; anything else (the accent included) is ignored: the accent means today. */
   tone?: string;
   /** Its own colour instead: the palette's family of it paints its events. */

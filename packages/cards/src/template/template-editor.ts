@@ -11,12 +11,13 @@ import {
   entitiesField,
   entityField,
   fieldRow,
-  nameIconFields,
+  iconField,
   nameLinesField,
   onlyWhen,
   selectField,
   sinceChoices,
   sinceField,
+  textField,
   tintField,
 } from '../shared/form.js';
 import type { EditorChoices, EditorDefaults } from '../shared/rows-editor.js';
@@ -63,7 +64,7 @@ export function getConfigForm(): LovelaceConfigForm {
   return {
     schema: [
       entityField(undefined, 'entity', false),
-      nameIconFields(),
+      fieldRow(textField('name'), iconField()),
       selectField('secondary', KEYWORDS, { custom: true }),
       // where the last change is read from: an entity's
       onlyWhen((data) => Boolean(data['entity']), sinceField()),

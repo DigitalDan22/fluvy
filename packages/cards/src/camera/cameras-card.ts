@@ -6,6 +6,7 @@ import {
   isUsable,
   strings,
   type ActionConfig,
+  type EntityName,
   type EntityView,
   type FluvyCardConfig,
   type LovelaceConfigForm,
@@ -81,7 +82,7 @@ export type CamerasVariant = 'grid' | 'list' | 'compact';
 /** A camera of the card: its entity, and the name, icon, line, picture, colours and actions it is shown with. */
 export interface CameraItem {
   readonly entity: string;
-  readonly name?: string;
+  readonly name?: EntityName;
   readonly icon?: string;
   /** The motion sensor its line reads (default: the one on the camera's device). */
   readonly motion?: string;
@@ -678,7 +679,7 @@ export class FluvyCamerasCard extends Card<CamerasCardConfig> {
       return {
         item,
         view,
-        name: item.name ?? view.name,
+        name: this.nameFor(view, item.name),
         line: said && isUsable(view) && this.feed(i).unplayable ? streamLine(this.hass) : said,
         words: statusWords(this.hass, said, sensor, live.has(i)),
       };

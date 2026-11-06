@@ -2,6 +2,7 @@ import {
   formatNumber,
   stateText,
   strings,
+  type EntityName,
   type EntityView,
   type FluvyCardConfig,
   type HomeAssistant,
@@ -44,11 +45,11 @@ import {
   editorWord,
   entityField,
   fieldRow,
+  nameField,
   nameIconFields,
   orderedField,
   selectField,
   showIconField,
-  textField,
 } from '../shared/form.js';
 import {
   clockSeconds,
@@ -97,7 +98,7 @@ export const PRINTER_IMAGES: readonly PrinterImage[] = ['auto', 'camera', 'previ
 /** Any other entity of the printer as a readout of its own: a fan, the filament unit's humidity, the print's weight. */
 export interface PrinterSensor {
   readonly entity: string;
-  readonly name?: string;
+  readonly name?: EntityName;
 }
 
 export interface PrinterCardConfig extends FluvyCardConfig {
@@ -583,7 +584,7 @@ export class FluvyPrinterCard extends Card<PrinterCardConfig> {
       title: 'printer.editor_sensors',
       domains: ['sensor', 'binary_sensor', 'number', 'select', 'fan'],
       keys: ['entity', 'name'],
-      schema: [entityField(undefined, 'entity'), textField('name')],
+      schema: [entityField(undefined, 'entity'), nameField()],
     },
     {
       key: 'roles',
@@ -948,7 +949,7 @@ export class FluvyPrinterCard extends Card<PrinterCardConfig> {
       const n = v.status === 'ok' ? v.number : null;
       out.push(
         plain(
-          sensor.name ?? ownWords(v.name, device),
+          sensor.name == null ? ownWords(v.name, device) : this.nameFor(v, sensor.name),
           v.status !== 'ok'
             ? '—'
             : n !== null
@@ -1196,7 +1197,8 @@ export class FluvyPrinterCard extends Card<PrinterCardConfig> {
   /* ---------- render ---------- */
 
   private printerName(): string {
-    if (this.config?.name) return this.config.name;
+    if (this.config?.name)
+      return this.nameFor(this.view('status') ?? this.entity(), this.config?.name);
     const device = this.printer().device;
     const entry = device ? this.hass?.devices?.[device] : undefined;
     return entry?.name_by_user || entry?.name || this.view('status')?.name || s(this.hass, 'title');

@@ -177,7 +177,7 @@ export class FluvyTimerCard extends Card<TimerCardConfig> {
 
   protected renderCard(): TemplateResult {
     const view = this.entity();
-    const name = this.config?.name ?? view.name;
+    const name = this.nameFor(view, this.config?.name);
     // out of reach (unavailable, missing) it keeps its anatomy and its size, its controls disabled: only the colours
     // change (1.9)
     const unusable = !isUsable(view);

@@ -12,8 +12,10 @@ import {
 import {
   boolField,
   colourFields,
+  entityField,
   fieldRow,
   holdsLight,
+  nameIconFields,
   NUMBER_DEFAULTS,
   numberFields,
   onlyWhen,
@@ -737,6 +739,54 @@ describe('a field or a list that cannot act (`when`)', () => {
     cardForm(element).change('variant', 'compact');
     await element.updateComplete;
     expect(cardForm(element).schema).not.toBe(first);
+  });
+});
+
+describe('a name in Home Assistant’s parts or in words (#125)', () => {
+  const named: RowsListSpec = { ...rows, schema: [entityField(), nameIconFields()] };
+  const parts = [{ type: 'device' }, { type: 'entity' }];
+  const config = {
+    type: 'custom:x',
+    entity: 'light.baum',
+    name: { type: 'entity' },
+    rows: [{ entity: 'light.a', name: parts }, { entity: 'light.b', name: 'Tree' }, 'light.c'],
+  };
+  const items = (editor: FluvyRowsEditor): FormStub[] => [
+    ...editor.shadowRoot!.querySelectorAll<FormStub>('.item ha-form'),
+  ];
+
+  afterEach(() => document.body.replaceChildren());
+
+  it('shows the card’s and each item’s name as the config holds it, parts or words', async () => {
+    const editor = await drawEditor(
+      listsEditor({ schema: [entityField(), nameIconFields()] }, [named]),
+      config,
+    );
+    expect(cardForm(editor).data['name']).toEqual({ type: 'entity' });
+    expect(items(editor).map((form) => form.data['name'])).toEqual([parts, 'Tree', undefined]);
+  });
+
+  it('writes what the picker says, parts or words, and keeps the rest as they were', async () => {
+    const editor = await drawEditor(
+      listsEditor({ schema: [entityField(), nameIconFields()] }, [named]),
+      config,
+    );
+    let next = nextConfig(editor);
+    cardForm(editor).change('name', 'Baum');
+    expect(await next).toEqual({ ...config, name: 'Baum' });
+    await editor.updateComplete;
+    next = nextConfig(editor);
+    items(editor)[1]!.change('name', [{ type: 'entity' }, { type: 'area' }]);
+    expect((await next)['rows']).toEqual([
+      { entity: 'light.a', name: parts },
+      { entity: 'light.b', name: [{ type: 'entity' }, { type: 'area' }] },
+      'light.c',
+    ]);
+    await editor.updateComplete;
+    // the picker cleared: the item goes back to its bare id
+    next = nextConfig(editor);
+    items(editor)[0]!.change('name', undefined);
+    expect(((await next)['rows'] as unknown[])[0]).toBe('light.a');
   });
 });
 

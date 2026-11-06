@@ -1,6 +1,7 @@
 import { flowHeight } from '../energy-family.js';
 import {
   strings,
+  type EntityName,
   type FluvyCardConfig,
   type HomeAssistant,
   type LovelaceGridOptions,
@@ -108,12 +109,12 @@ export const FLOW_PERIODS: readonly FlowPeriod[] = ['live', ...PERIODS];
 
 export interface EnergyFlowReadout extends NumberKeys {
   entity: string;
-  name?: string;
+  name?: EntityName;
 }
 
 export interface EnergyFlowConsumer {
   entity: string;
-  name?: string;
+  name?: EntityName;
   icon?: string;
   color?: string;
 }
@@ -632,7 +633,7 @@ export class FluvyEnergyFlowCard extends Card<EnergyFlowCardConfig> {
       const view = this.entity(c.entity);
       return {
         key: `consumer-${i}`,
-        label: c.name ?? shortName(view),
+        label: c.name == null ? shortName(view) : this.nameFor(view, c.name),
         glyph: c.icon ?? 'plug',
         accent: c.color !== undefined && c.color !== '' ? this.accents.item(c.color) : undefined,
         watts: watts(view),

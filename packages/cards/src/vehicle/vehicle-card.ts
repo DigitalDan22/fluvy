@@ -3,7 +3,9 @@ import {
   relativeTime,
   stateText,
   strings,
+  textName,
   type ActionConfig,
+  type EntityName,
   type EntityView,
   type FluvyCardConfig,
   type HaFormSchemaItem,
@@ -47,6 +49,7 @@ import {
   editorWord,
   entityField,
   fieldRow,
+  iconField,
   nameIconFields,
   numberField,
   onlyWhen,
@@ -177,7 +180,7 @@ export interface ControlEntry {
 export interface RowEntry {
   readonly row?: VehicleRow;
   readonly entity?: string;
-  readonly name?: string;
+  readonly name?: EntityName;
   readonly icon?: string;
   readonly color?: string;
   readonly tap_action?: ActionConfig;
@@ -825,7 +828,7 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
       when: (data) => data['show_controls'] !== false && data['variant'] !== 'mini',
       schema: [
         controlPicker(),
-        nameIconFields(),
+        fieldRow(textField('name'), iconField()),
         fieldRow(accentField('color', { item: 'card' }), boolField('confirm')),
         actionField('tap_action'),
         actionField('hold_action'),
@@ -1185,7 +1188,8 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
 
   /** The car's name: the card's, else its device's, else its battery's. */
   private carName(): string {
-    if (this.config?.name) return this.config.name;
+    if (this.config?.name)
+      return this.nameFor(this.view('battery') ?? this.entity(), this.config?.name);
     const device = vehicleDevice(this.hass, this.config?.device, this.config?.entity);
     const entry = device ? this.hass?.devices?.[device] : undefined;
     return (
@@ -1839,7 +1843,7 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
     if (!entry.row) {
       const v = entry.entity ? this.entity(entry.entity) : undefined;
       return {
-        title: entry.name ?? v?.name ?? '—',
+        title: v ? this.nameFor(v, entry.name) : (textName(entry.name) ?? '—'),
         glyph: entry.icon ?? 'dots',
         value: read(v),
         entity: v?.id,
@@ -1847,7 +1851,7 @@ export class FluvyVehicleCard extends Card<VehicleCardConfig> {
       };
     }
     const key = entry.row;
-    const title = entry.name ?? s(this.hass, key);
+    const title = textName(entry.name) ?? s(this.hass, key);
     const GLYPHS: Readonly<Record<VehicleRow, string>> = {
       location: 'pin',
       odometer: 'odometer',

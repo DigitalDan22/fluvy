@@ -71,6 +71,7 @@ import {
   fieldRow,
   hasLadder,
   iconField,
+  nameField,
   numberField,
   numberFields,
   selectField,
@@ -799,7 +800,7 @@ export class FluvyHistoryBarsCard extends Card<HistoryBarsCardConfig> {
     return {
       schema: [
         entityField(['sensor']),
-        fieldRow(textField('name'), textField('subtitle')),
+        fieldRow(nameField(), textField('subtitle')),
         fieldRow(iconField(), selectField('variant', ['full', 'compact', 'mini'])),
         showIconField(),
         ...colourFields(),
@@ -1294,7 +1295,7 @@ export class FluvyHistoryBarsCard extends Card<HistoryBarsCardConfig> {
 
   protected renderCard(): TemplateResult {
     const view = this.entity();
-    const name = this.config?.name ?? view.name;
+    const name = this.nameFor(view, this.config?.name);
     // out of reach, the card is the live one in the off skin (the owner's rule, 1.9): its head opens its line with the
     // state, its bars are the recorder's and stay
     const unusable = !isUsable(view);

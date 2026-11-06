@@ -4,6 +4,7 @@ import {
   selfHide,
   strings,
   type ActionConfig,
+  type EntityName,
   type FluvyCardConfig,
   type HomeAssistant,
   type LovelaceCard,
@@ -115,7 +116,7 @@ export type AppliancesVariant = 'rows' | 'compact' | 'tiles' | 'cards';
 export interface ApplianceItem {
   readonly device?: string;
   readonly entity?: string;
-  readonly name?: string;
+  readonly name?: EntityName;
   readonly icon?: string;
   readonly color?: string;
   readonly kind?: ApplianceKind | 'auto';
@@ -642,7 +643,10 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
           found,
           r,
           shown,
-          title: item.name ?? (r.name || s(this.hass, `kind_${r.kind}`)),
+          title:
+            item.name == null
+              ? r.name || s(this.hass, `kind_${r.kind}`)
+              : this.nameFor(this.entity(opens), item.name),
           tone: first ? 'warning' : statusTone(shown.status, item, r.kind),
           entity: opens && entityOf(opens),
           attention: first ? attentionText(this.hass, first, now) : '',

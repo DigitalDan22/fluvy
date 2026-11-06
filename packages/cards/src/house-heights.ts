@@ -3,6 +3,7 @@ import {
   areaEntities,
   idsOf,
   layoutHeightOf,
+  textName,
   type HomeAssistant,
   type LovelaceCardConfig,
 } from '@fluvy/core';
@@ -156,7 +157,7 @@ function sensor(config: SensorCardConfig, hass: HomeAssistant): number {
     name ?? String(attrOf(hass, id, 'device_class') ?? attrOf(hass, id, 'friendly_name') ?? '');
   const labels = [
     wordOf(config.entity ?? '', config.label),
-    ...extras.map((item) => wordOf(item.entity, item.name)),
+    ...extras.map((item) => wordOf(item.entity, textName(item.name))),
   ];
   return sensorHeight(config, {
     word: state !== undefined && isWord(state.state),

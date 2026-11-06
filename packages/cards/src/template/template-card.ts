@@ -185,7 +185,8 @@ export class FluvyTemplateCard extends FluvyTileCard {
    */
   private item(): TileItem {
     const config = this.own;
-    const name = this.answer('name', config.name);
+    // Home Assistant's parts of a name are the tile's to read (`nameFor`); words and templates are answered here
+    const name = typeof config.name === 'object' ? config.name : this.answer('name', config.name);
     const icon = this.answer('icon', config.icon);
     const glyph = icon && isTemplate(config.icon ?? '') ? iconRefOf(icon) : icon;
     const { tone = config.tone, color } = this.colour();

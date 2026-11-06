@@ -1,11 +1,14 @@
 import {
+  entityName,
   formatNumber,
   localize,
   plural,
+  resolveEntity,
   stateSaid,
   stateText,
   strings,
   type ActionConfig,
+  type EntityName,
   type EntityView,
   type FluvyCardConfig,
   type HaFormSchemaItem,
@@ -78,6 +81,8 @@ import {
   editorWord,
   entityField,
   fieldRow,
+  iconField,
+  nameField,
   nameIconFields,
   numberField,
   onlyWhen,
@@ -252,7 +257,7 @@ export type ModesStyle = 'chips' | 'tiles';
 /** Another of the appliance's entities as a readout of its own (a counter, a tank's level). */
 export interface ApplianceSensor {
   readonly entity: string;
-  readonly name?: string;
+  readonly name?: EntityName;
 }
 
 /** A reminder of the card's own: which, and how it is named, drawn and answers. */
@@ -268,7 +273,7 @@ export interface MaintenanceEntry {
 /** A compartment of the card's own: its setpoint (or its reading), and how it is named, drawn and answers. */
 export interface ZoneEntry {
   readonly entity: string;
-  readonly name?: string;
+  readonly name?: EntityName;
   readonly icon?: string;
   readonly color?: string;
   readonly tap_action?: ActionConfig;
@@ -1483,7 +1488,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       title: 'appliance.editor_sensors',
       domains: ['sensor', 'binary_sensor', 'number', 'select'],
       keys: ['entity', 'name'],
-      schema: [entityField(undefined, 'entity'), textField('name')],
+      schema: [entityField(undefined, 'entity'), nameField()],
       own: OWN,
     },
     {
@@ -1496,7 +1501,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       picker: reminderPicker(),
       schema: [
         reminderPicker(),
-        nameIconFields(),
+        fieldRow(textField('name'), iconField()),
         accentField('color', { item: 'own' }),
         actionField('tap_action'),
         actionField('hold_action'),
@@ -1991,7 +1996,13 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       shown,
       kind,
       hero: r.plug ? 'plug' : KIND_DEFAULTS[kind].hero,
-      title: config.name ?? (r.name || s(this.hass, `kind_${kind}`)),
+      title:
+        config.name == null
+          ? r.name || s(this.hass, `kind_${kind}`)
+          : this.nameFor(
+              this.entity(config.entity ?? roles.state ?? roles.power ?? roles.watts),
+              config.name,
+            ),
       glyph: shown.status === 'error' ? 'warn' : (config.icon ?? kindGlyph(kind)),
       tone,
       headTone: resting ? 'neutral' : r.unload ? statusToneOf(config, 'warning') : tone,
@@ -3506,7 +3517,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       }
     }
     // the card's own words for it (an empty name leaves the value to say it alone), its icon and its colour
-    if (entry?.name !== undefined) label = entry.name;
+    if (entry?.name !== undefined) label = this.nameFor(this.entity(entity), entry.name);
     if (!label && !value) label = dash;
     return {
       key,
@@ -4044,7 +4055,9 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     const shownOf = (zone: Zone, entry?: ZoneEntry): ZoneShown => ({
       kind: zone.kind,
       label:
-        entry?.name ?? `${s(this.hass, `zone_${zone.kind}`)}${zone.index ? ` ${zone.index}` : ''}`,
+        entry?.name == null
+          ? `${s(this.hass, `zone_${zone.kind}`)}${zone.index ? ` ${zone.index}` : ''}`
+          : this.nameFor(this.entity(entry.entity), entry.name),
       entity: zone.setpoint ?? zone.current ?? '',
       current: zone.current !== zone.setpoint ? zone.current : undefined,
       setpoint: zone.setpoint,
@@ -4639,7 +4652,10 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
       });
     for (const sensor of this.sensors())
       out.push({
-        label: sensor.name ?? ownWords(this.entity(sensor.entity).name, head),
+        label:
+          sensor.name == null
+            ? ownWords(this.entity(sensor.entity).name, head)
+            : this.nameFor(this.entity(sensor.entity), sensor.name),
         ...this.valueText(sensor.entity),
         entity: sensor.entity,
       });
@@ -5020,10 +5036,9 @@ function plateNameOf(
   index: number,
 ): string {
   const burner = id ? burnerOf(id) : undefined;
-  return (
-    zoneEntriesOf(config).find((item) => item.entity === id)?.name ??
-    (burner ? s(hass, `burner_${burner}`) : s(hass, 'hob_zone', { n: index + 1 }))
-  );
+  const name = zoneEntriesOf(config).find((item) => item.entity === id)?.name;
+  if (name != null) return entityName(hass, resolveEntity(hass, id), name);
+  return burner ? s(hass, `burner_${burner}`) : s(hass, 'hob_zone', { n: index + 1 });
 }
 
 /**

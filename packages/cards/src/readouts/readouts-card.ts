@@ -3,6 +3,7 @@ import {
   stateText,
   strings,
   type ActionConfig,
+  type EntityName,
   type FluvyCardConfig,
   type HomeAssistant,
   type LovelaceGridOptions,
@@ -28,7 +29,7 @@ const s = strings('readouts');
 
 export interface ReadoutConfig extends NumberKeys {
   entity: string;
-  name?: string;
+  name?: EntityName;
   tap_action?: ActionConfig;
 }
 
@@ -302,7 +303,7 @@ export class FluvyReadoutsCard extends Card<ReadoutsCardConfig> {
       ${panel}
       ${items.map((item) => {
         const view = this.entity(item.entity);
-        const label = item.name ?? view.name;
+        const label = this.nameFor(view, item.name);
         const parts = askedParts(this.hass, view, { ...this.config, ...item });
         const trend = view.status === 'ok' ? this.trend(item.entity, view.number) : null;
         const said =

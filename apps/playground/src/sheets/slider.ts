@@ -108,7 +108,30 @@ export const sheet: SheetSpec = {
     // bulbs that only switch (#65): the card is their head alone, in every style
     ['light.pantry', 'on', { friendly_name: 'Pantry', supported_color_modes: ['onoff'] }],
     ['light.stairs', 'off', { friendly_name: 'Stairs', supported_color_modes: ['onoff'] }],
+    // #125: Govee's lights, each the entity of a device of its own; Home Assistant's friendly name says both
+    [
+      'light.nm_baum',
+      'on',
+      { friendly_name: 'EG_GA_L_Baum Baum', brightness: 150, color_mode: 'hs', ...ORANGE, ...BULB },
+    ],
+    ['light.nm_beet', 'off', { friendly_name: 'EG_GA_L_BeetTerrasse Beet', ...BULB }],
   ],
+  registry: {
+    areas: { nm_garden: { area_id: 'nm_garden', name: 'Garten' } },
+    devices: {
+      nm_baum: { id: 'nm_baum', name: 'EG_GA_L_Baum', name_by_user: null, area_id: 'nm_garden' },
+      nm_beet: {
+        id: 'nm_beet',
+        name: 'EG_GA_L_BeetTerrasse',
+        name_by_user: null,
+        area_id: 'nm_garden',
+      },
+    },
+    entities: {
+      'light.nm_baum': { entity_id: 'light.nm_baum', name: 'Baum', device_id: 'nm_baum' },
+      'light.nm_beet': { entity_id: 'light.nm_beet', name: 'Beet', device_id: 'nm_beet' },
+    },
+  },
   frames: [
     { title: 'On', cards: [{ type: 'custom:fluvy-light-card', entity: 'light.ceiling' }] },
     // a dimmer alone draws no ruler slot and no quick colours: the declared height reserves them (config only)
@@ -486,6 +509,47 @@ export const sheet: SheetSpec = {
           entity: 'light.tn_white',
           tint: 'on',
           tint_strength: 'soft',
+        },
+      ],
+    },
+    // #125: a name as Home Assistant's editor writes it, read with the entity: "Baum", where its friendly name says
+    // "EG_GA_L_Baum Baum" (the default, beside it), in a head, a compact head, a tile and a row
+    {
+      title: 'Name · the entity’s own',
+      cards: [
+        { type: 'custom:fluvy-light-card', entity: 'light.nm_baum', name: { type: 'entity' } },
+      ],
+    },
+    {
+      title: 'Name · compact, beside the friendly name',
+      cards: [
+        {
+          type: 'custom:fluvy-light-card',
+          entity: 'light.nm_baum',
+          variant: 'compact',
+          name: { type: 'entity' },
+          cols: 6,
+        },
+        { type: 'custom:fluvy-light-card', entity: 'light.nm_beet', variant: 'compact', cols: 6 },
+      ],
+    },
+    {
+      title: 'Name · tiles and rows',
+      cards: [
+        {
+          type: 'custom:fluvy-tiles-card',
+          tiles: [
+            { entity: 'light.nm_baum', name: [{ type: 'entity' }, { type: 'area' }] },
+            { entity: 'light.nm_beet', name: [{ type: 'text', text: 'Bed' }, { type: 'entity' }] },
+          ],
+        },
+        {
+          type: 'custom:fluvy-entities-card',
+          title: 'Garten',
+          entities: [
+            { entity: 'light.nm_baum', name: { type: 'entity' } },
+            { entity: 'light.nm_beet', name: { type: 'device' } },
+          ],
         },
       ],
     },

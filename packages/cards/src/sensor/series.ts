@@ -3,11 +3,12 @@
  * bare id or an entry with its name, icon and colour. What each one is called under its readout is decided here too.
  */
 
+import type { EntityName } from '@fluvy/core';
 import type { Tone } from '@fluvy/ui';
 
 export interface SensorItem {
   readonly entity: string;
-  readonly name?: string;
+  readonly name?: EntityName;
   readonly icon?: string;
   readonly color?: string;
 }

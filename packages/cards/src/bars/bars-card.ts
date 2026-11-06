@@ -4,6 +4,7 @@ import {
   strings as words,
   valueParts,
   type ActionConfig,
+  type EntityName,
   type EntityView,
   type FluvyCardConfig,
   type LovelaceGridOptions,
@@ -34,7 +35,7 @@ export type BarsVariant = 'full' | 'compact';
 
 export interface BarRowConfig {
   entity: string;
-  name?: string;
+  name?: EntityName;
   icon?: string;
   /** The row's own context in front of what its companions say ("6 panels"), or a template rendered live. */
   secondary?: string;
@@ -280,7 +281,7 @@ export class FluvyBarsCard extends Card<BarsCardConfig> {
           : parts.unit
             ? `${parts.value} ${parts.unit}`
             : parts.value;
-      const title = row.name ?? view.name;
+      const title = this.nameFor(view, row.name);
       // a compact row has no second line to say why there is no figure: the state's word is its value, where the
       // word leaves the name its room (the full row says it under the name)
       const value =

@@ -1,12 +1,15 @@
 import {
   actionRuns,
+  entityName,
   isActiveState,
   isUsable,
   lightDefaults,
   localize,
   resolveEntity,
+  textName,
   TOGGLE_DOMAINS,
   type ActionConfig,
+  type EntityName,
   type EntityView,
   type HomeAssistant,
 } from '@fluvy/core';
@@ -48,7 +51,7 @@ export interface QuickAction {
   group?: QuickGroup | 'entity';
   /** The entity a round of its own acts on. */
   entity?: string;
-  name?: string;
+  name?: EntityName;
   icon?: string;
   tone?: Tone;
   /** Its own colour while on (a Home Assistant colour name or `#rrggbb`). */
@@ -385,7 +388,9 @@ function roundOf(host: QuickHost, item: QuickAction): LevelRound {
     tap.action === 'toggle' && !tap.entity && FLIPS.has(first.domain)
       ? flipOf(first.domain, views, on)
       : undefined;
-  const name = item.name ?? (group ? localize(hass, LOOKS[group][0]) : first.name);
+  const name = group
+    ? (textName(item.name) ?? localize(hass, LOOKS[group][0]))
+    : entityName(hass, first, item.name);
   return {
     name,
     glyph: item.icon ?? (group && !single ? LOOKS[group][1] : iconOf(first)),

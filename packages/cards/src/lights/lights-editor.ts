@@ -59,11 +59,7 @@ export const lists: readonly RowsListSpec[] = [
     title: 'lights.editor_lights',
     domains: ['light'],
     keys: ['entity', 'name', 'icon', 'color'],
-    schema: [
-      entityField(['light']),
-      fieldRow(textField('name'), iconField()),
-      accentField('color', { item: 'bulb' }),
-    ],
+    schema: [entityField(['light']), nameIconFields(), accentField('color', { item: 'bulb' })],
   },
 ];
 
@@ -82,7 +78,7 @@ export function getConfigForm(): LovelaceConfigForm {
   return {
     schema: [
       areaField(),
-      nameIconFields(),
+      fieldRow(textField('name'), iconField()),
       showIconField(),
       fieldRow(selectField('variant', LIGHTS_VARIANTS), boolField('show_brightness')),
       fieldRow(boolField('show_count'), boolField('show_level')),

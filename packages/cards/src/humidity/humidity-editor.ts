@@ -8,6 +8,7 @@ import {
   entityField,
   fieldRow,
   iconField,
+  nameField,
   numberField,
   onlyWhen,
   selectField,
@@ -47,7 +48,7 @@ export function getConfigForm(): LovelaceConfigForm {
   return {
     schema: [
       entityField(['sensor', 'number', 'input_number']),
-      fieldRow(textField('name'), textField('subtitle')),
+      fieldRow(nameField(), textField('subtitle')),
       fieldRow(iconField(), showIconField()),
       ...colourFields(),
       fieldRow(numberField('low', 0, 100), numberField('high', 0, 100)),

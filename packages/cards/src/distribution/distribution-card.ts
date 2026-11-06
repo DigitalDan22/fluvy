@@ -1,6 +1,7 @@
 import {
   stateText,
   strings as words,
+  type EntityName,
   type EntityView,
   type FluvyCardConfig,
   type LovelaceGridOptions,
@@ -29,7 +30,7 @@ const strings = words('distribution');
 
 export interface DistributionEntityConfig {
   entity: string;
-  name?: string;
+  name?: EntityName;
   tone?: Tone;
   color?: string;
 }
@@ -184,7 +185,7 @@ export class FluvyDistributionCard extends Card<DistributionCardConfig> {
       }
       parts.push({
         key: source.entity,
-        label: source.name ?? (views[index] as EntityView).name,
+        label: this.nameFor(views[index] as EntityView, source.name),
         value: values[index] ?? null,
         tone,
         accent: this.accents.item(source.color),

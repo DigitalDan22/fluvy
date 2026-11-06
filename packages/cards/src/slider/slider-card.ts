@@ -427,7 +427,7 @@ export class FluvySliderCard extends FluvyTileCard {
   /* ---------- the tile: the house's large tile, its ruler at its foot ---------- */
 
   protected override look(item: TileItem, view: EntityView): TileLook {
-    const name = item.name ?? view.name;
+    const name = this.nameFor(view, item.name);
     const stance = this.stance(view, readingOf(view));
     return {
       name,
@@ -490,7 +490,7 @@ export class FluvySliderCard extends FluvyTileCard {
       return this.renderTile(this.config as TileItem & SliderCardConfig, 'large');
     const config = this.slider;
     const view = this.entity();
-    const name = config.name ?? view.name;
+    const name = this.nameFor(view, config.name);
     const kind = kindOf(view);
     const reading = readingOf(view);
     const stance = this.stance(view, reading);

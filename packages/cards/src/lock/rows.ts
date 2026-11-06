@@ -9,6 +9,7 @@ import {
   toggleEntity,
   valueParts,
   type ActionConfig,
+  type EntityName,
   type EntityView,
   type FluvyCardConfig,
   type HomeAssistant,
@@ -36,7 +37,7 @@ import { TemplateTexts } from '../shared/templates.js';
 /** A row of a list of entities; a select's offers its options in its order and words (#96). */
 export interface RowConfig extends SelectRowConfig {
   entity: string;
-  name?: string;
+  name?: EntityName;
   icon?: string;
   /** What the row says under its name: area, last change, state, none, an attribute, or a template; the area, else the time. */
   secondary?: Secondary;
@@ -273,7 +274,7 @@ export abstract class RowsCard<C extends RowsCardConfig = RowsCardConfig> extend
             : trailing === 'switch'
               ? 56
               : 44,
-      title: row.name ?? view.name,
+      title: this.nameFor(view, row.name),
       words: time ? changedTime(this.hass, view, row.since) : line(false),
       short: time ? '' : line(true),
       // an age only where the line is one: a state's word (a row that cannot be read) is never shortened into one

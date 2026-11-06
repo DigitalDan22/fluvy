@@ -64,6 +64,9 @@ const cards = await Promise.all(
   }),
 );
 
+/** The cards whose names are templates (`{{ … }}`) of the person's own: words, never Home Assistant's parts. */
+const TEMPLATED = new Set(['fluvy-template-card', 'fluvy-chips-card']);
+
 /** The parts of an editor a class may declare: none on a card that keeps its editor in a module. */
 const PARTS = ['base', 'keys', 'lists', 'defaults', 'choices', 'getConfigForm'] as const;
 
@@ -244,6 +247,28 @@ describe('the editors’ contract', () => {
       const shown = names(editor.getConfigForm().schema);
       expect(shown.includes('card_opacity')).toBe(shown.includes('card_color'));
       expect(editor.base.includes('card_opacity')).toBe(editor.base.includes('card_color'));
+    },
+  );
+
+  it.each(cards)(
+    '$tag: names its entity, and each item its own, in Home Assistant’s parts where one is beside the name (#125)',
+    ({ tag, editor, lists }) => {
+      for (const schema of [editor.getConfigForm().schema, ...lists.map((list) => list.schema)]) {
+        const shown = fields(schema);
+        const name = shown.find((field) => field.name === 'name');
+        if (!name) continue;
+        const beside = shown.some(
+          (field) =>
+            field.name === 'entity' &&
+            (field.selector as { entity?: { multiple?: boolean } } | undefined)?.entity
+              ?.multiple !== true,
+        );
+        // the template card's name and a chip's are templates of the person's own: words
+        if (beside && !TEMPLATED.has(tag)) {
+          expect(name.selector, tag).toEqual({ entity_name: {} });
+          expect(name.context, tag).toEqual({ entity: 'entity' });
+        } else expect(name.selector, tag).toEqual({ text: {} });
+      }
     },
   );
 

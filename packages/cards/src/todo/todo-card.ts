@@ -442,7 +442,7 @@ export class FluvyTodoCard extends Card<TodoCardConfig> {
 
   protected renderCard(): TemplateResult {
     const view = this.entity();
-    const name = this.config?.name ?? view.name;
+    const name = this.nameFor(view, this.config?.name);
     // a list out of reach (unavailable, or gone from the house) keeps its head, its "+" and its rows, still: only the
     // colours change (1.9: an unavailable card keeps its size)
     const unusable = view.status === 'unavailable' || view.status === 'missing';

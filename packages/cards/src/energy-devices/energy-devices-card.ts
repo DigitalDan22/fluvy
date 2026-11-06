@@ -5,6 +5,7 @@ import {
   strings,
   valueParts,
   type ActionConfig,
+  type EntityName,
   type EntityView,
   type FluvyCardConfig,
   type HomeAssistant,
@@ -105,7 +106,7 @@ const flow = strings('energy-flow');
 
 export interface DeviceRowConfig extends NumberKeys {
   entity: string;
-  name?: string;
+  name?: EntityName;
   icon?: string;
   /** Another row's sensor this device is part of: it is drawn under that row, and its share is of that row. */
   parent?: string;
@@ -442,7 +443,8 @@ export class FluvyEnergyDevicesCard extends Card<EnergyDevicesCardConfig> {
         parent: config.parent,
         config,
         view,
-        label: config.name ?? (this.fromPrefs ? shortName(view) : view.name),
+        label:
+          this.fromPrefs && config.name == null ? shortName(view) : this.nameFor(view, config.name),
         glyph: config.icon ?? (this.fromPrefs ? 'plug' : iconOf(view)),
         value: this.readingOf(config.entity, view, kind),
       };

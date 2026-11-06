@@ -24,6 +24,8 @@ import {
   entityField,
   fieldRow,
   iconField,
+  nameField,
+  nameIconFields,
   NUMBER_DEFAULTS,
   numberField,
   numberFields,
@@ -170,18 +172,14 @@ export const lists: readonly RowsListSpec[] = [
     title: 'energy-flow.editor_consumers',
     domains: ['sensor'],
     keys: ['entity', 'name', 'icon', 'color'],
-    schema: [
-      entityField(['sensor']),
-      fieldRow(textField('name'), iconField()),
-      accentField('color', { item: 'own' }),
-    ],
+    schema: [entityField(['sensor']), nameIconFields(), accentField('color', { item: 'own' })],
   },
   {
     key: 'readouts',
     title: 'editor.rows',
     domains: ['sensor'],
     keys: ['entity', 'name', 'unit', 'decimals'],
-    schema: [entityField(['sensor']), textField('name'), numberFields({ units: WATT_LADDERS })],
+    schema: [entityField(['sensor']), nameField(), numberFields({ units: WATT_LADDERS })],
   },
 ];
 

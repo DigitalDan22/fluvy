@@ -231,7 +231,7 @@ export class FluvyCameraCard extends RowsCard<CameraCardConfig> {
 
   protected renderCard(): TemplateResult {
     const view = this.entity();
-    const name = this.config?.name ?? view.name;
+    const name = this.nameFor(view, this.config?.name);
     // a camera out of reach — unavailable, unknown or gone from the house — keeps its head, its plate in its shape
     // and its rows: the plate says why, the colours say the rest (1.9: an unavailable card keeps its size)
     const unusable = view.status !== 'ok';

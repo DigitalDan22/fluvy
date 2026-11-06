@@ -11,6 +11,7 @@ import {
   stateText,
   strings,
   wallClock,
+  type EntityName,
   type EntityView,
   type FluvyCardConfig,
   type HomeAssistant,
@@ -135,7 +136,7 @@ const flow = strings('energy-flow');
 
 export interface EnergyLegendItem extends NumberKeys {
   entity: string;
-  name?: string;
+  name?: EntityName;
   /**
    * `today`: the sensor's change since the house's midnight (over the range of a date picker the card follows), from
    * its statistics — a lifetime meter's day, where its state is all it ever counted. Without it, its state.
@@ -1372,7 +1373,10 @@ export class FluvyEnergyCard extends Card<EnergyCardConfig> {
     this.plotSpan = null;
     const view = this.entity();
     const missing = view.status === 'missing';
-    const title = this.config?.name ?? (missing ? s(this.hass, 'title') : view.name);
+    const title =
+      missing && this.config?.name == null
+        ? s(this.hass, 'title')
+        : this.nameFor(view, this.config?.name);
     // a sensor that is not there keeps the card's whole anatomy (its reading "—", the chart's room), as an unavailable
     // one does: only the colours and the line under the title say so
     const off = !isUsable(view);
@@ -1510,7 +1514,10 @@ export class FluvyEnergyCard extends Card<EnergyCardConfig> {
   private renderSources(): TemplateResult {
     const id = this.config?.entity;
     const view = id ? this.entity(id) : undefined;
-    const title = this.config?.name ?? this.houseTitle(view ? 44 : 0);
+    const title =
+      this.config?.name == null
+        ? this.houseTitle(view ? 44 : 0)
+        : this.nameFor(this.entity(), this.config?.name);
     const sub = this.config?.subtitle ?? this.daySub(s(this.hass, 'by_source'));
     const fitted = this.head.fit({
       width: this.contentWidth,
@@ -1778,7 +1785,10 @@ export class FluvyEnergyCard extends Card<EnergyCardConfig> {
   private renderOverview(): TemplateResult {
     const id = this.config?.entity;
     const view = id ? this.entity(id) : undefined;
-    const title = this.config?.name ?? this.houseTitle(view ? 44 : 0);
+    const title =
+      this.config?.name == null
+        ? this.houseTitle(view ? 44 : 0)
+        : this.nameFor(this.entity(), this.config?.name);
     const sub = this.config?.subtitle ?? this.daySub(s(this.hass, 'whole_house'));
     const fitted = this.head.fit({
       width: this.contentWidth,

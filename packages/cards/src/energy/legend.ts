@@ -1,4 +1,4 @@
-import type { EntityView, HomeAssistant } from '@fluvy/core';
+import { entityName, type EntityName, type EntityView, type HomeAssistant } from '@fluvy/core';
 import type { NumberOptions } from '../shared/units.js';
 import { legendParts, shortName } from './power.js';
 import type { Stat } from './stats.js';
@@ -6,7 +6,7 @@ import type { Stat } from './stats.js';
 /** A legend's item: a sensor, the name the card was given for it, and the unit and decimals of its own if any. */
 export interface LegendItem extends NumberOptions {
   readonly entity: string;
-  readonly name?: string;
+  readonly name?: EntityName;
 }
 
 /**
@@ -25,7 +25,10 @@ export function legendStats<I extends LegendItem>(
   const views = items.map((item) => entity(item.entity, item));
   const parts = legendParts(hass, views, asked, items);
   return items.map((item, index) => ({
-    label: item.name ?? shortName(views[index] as EntityView),
+    label:
+      item.name == null
+        ? shortName(views[index] as EntityView)
+        : entityName(hass, views[index] as EntityView, item.name),
     value: parts[index]?.value ?? '—',
     unit: parts[index]?.unit ?? '',
     name: true,

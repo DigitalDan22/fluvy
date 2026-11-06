@@ -797,7 +797,7 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
     const moving = this.isPlaying(view) && this.scrub_ === null;
     // the knob keeps a 4 px optical overhang at the ends, never half outside the column (as fluvy-ruler does)
     const x = clamp(fraction * width - 14, -4, width - 24);
-    const text = `${this.config?.name ?? view.name} · ${s(this.hass, 'position')}`;
+    const text = `${this.nameFor(view, this.config?.name)} · ${s(this.hass, 'position')}`;
     return html`<div class="md-seek ${big ? 'md-seek--sheet' : ''}">
       <div
         class="md-progress"
@@ -845,7 +845,7 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
     const muted = view.attr<boolean>('is_volume_muted') === true;
     const level = numberAttr(view, 'volume_level');
     const value = level === null ? 0 : Math.round(clamp(level, 0, 1) * 100);
-    const name = this.config?.name ?? view.name;
+    const name = this.nameFor(view, this.config?.name);
     const length = this.contentWidth - (canMute ? 64 : 0);
     return html`${label(this.t('media.volume'))}
       <div class="md-volume">
@@ -1209,7 +1209,7 @@ export class FluvyMediaCard extends Card<MediaCardConfig> {
 
   protected renderCard(): TemplateResult {
     const view = this.entity();
-    const name = this.config?.name ?? view.name;
+    const name = this.nameFor(view, this.config?.name);
     const variant = this.variant;
     if (variant === 'mini') return this.renderMini(view, name);
     return this.renderPlayer(view, name, variant === 'hero');

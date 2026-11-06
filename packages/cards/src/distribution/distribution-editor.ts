@@ -11,11 +11,11 @@ import {
   fieldRow,
   iconField,
   idsOnly,
+  nameField,
   numberField,
   onlyWhen,
   selectField,
   showIconField,
-  textField,
   titleFields,
   toneField,
 } from '../shared/form.js';
@@ -60,7 +60,7 @@ export const lists: readonly RowsListSpec[] = [
     keys: ['entity', 'name', 'tone', 'color'],
     schema: [
       entityField(['sensor']),
-      textField('name'),
+      nameField(),
       fieldRow(toneField(), accentField('color', { item: 'own' })),
     ],
   },

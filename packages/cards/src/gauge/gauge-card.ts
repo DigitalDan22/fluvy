@@ -460,7 +460,7 @@ export class FluvyGaugeCard extends Card<GaugeCardConfig> {
    */
   protected renderCard(): TemplateResult {
     const view = this.entity();
-    const name = this.config?.name ?? view.name;
+    const name = this.nameFor(view, this.config?.name);
     if (this.signed) return this.renderSigned(view, name);
 
     const unusable = !isUsable(view);

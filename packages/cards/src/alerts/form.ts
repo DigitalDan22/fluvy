@@ -8,7 +8,7 @@ import {
   editorLabels,
   editorWord,
   fieldRow,
-  nameIconFields,
+  iconField,
   numberField,
   pickFields,
   textField,
@@ -54,7 +54,7 @@ const PRESET_FIELD = choiceField('preset', [
 /** Every field an alert may show, in the form's order: a preset's form is a part of it. */
 const FIELDS: readonly HaFormSchemaItem[] = [
   PRESET_FIELD,
-  nameIconFields(),
+  fieldRow(textField('name'), iconField()),
   fieldRow(
     choiceField(
       'severity',

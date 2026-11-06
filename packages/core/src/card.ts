@@ -20,6 +20,7 @@ import {
 import { layoutHeightOf } from './layout-heights.js';
 import { idsOf, type EntityEntry } from './lists.js';
 import { AccentSheet } from './look/accent.js';
+import { entityName, type EntityName } from './names.js';
 import { CHART_DEFAULTS, type ChartSettings, type SavedSeries } from './settings/charts.js';
 import type { CardSurface, LightTint } from './settings/schema.js';
 
@@ -32,7 +33,8 @@ export interface FluvyCardConfig extends LovelaceCardConfig {
   entity?: string;
   /** Ids, or objects naming one (auto-entities hands its matches over so); read through `idsOf` / `entriesOf`. */
   entities?: readonly EntityEntry[];
-  name?: string;
+  /** Words, or Home Assistant's parts of a name (`entityName`): its entity's own name where none is given. */
+  name?: EntityName;
   icon?: string;
   tone?: Tone;
   color?: string;
@@ -430,7 +432,8 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
       return true;
     if (
       previous.localize !== next.localize ||
-      previous.formatEntityState !== next.formatEntityState
+      previous.formatEntityState !== next.formatEntityState ||
+      previous.formatEntityName !== next.formatEntityName
     )
       return true;
     if (
@@ -568,6 +571,14 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
 
   protected entity(id: string | undefined = this.config?.entity): EntityView {
     return resolveEntity(this.hass, id);
+  }
+
+  /**
+   * The name an entity is shown by: the `name` configured for it (the card's for its own entity, an item's for its),
+   * else its own (`entityName`).
+   */
+  protected nameFor(view: EntityView, name: EntityName | undefined): string {
+    return entityName(this.hass, view, name);
   }
 
   protected t(key: MessageKey, values?: Record<string, string | number>): string {

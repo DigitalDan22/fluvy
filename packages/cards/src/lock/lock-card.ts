@@ -433,7 +433,7 @@ export class FluvyLockCard extends RowsCard<LockCardConfig> {
   private async request(service: LockService): Promise<void> {
     const view = this.entity();
     if (view.status !== 'ok' && view.status !== 'unknown') return;
-    const name = this.config?.name ?? view.name;
+    const name = this.nameFor(view, this.config?.name);
     const label = s(this.hass, service);
     const format = view.attr<string | null>('code_format');
     const coded = Boolean(format) && !(await this.hasDefaultCode(view.id));
@@ -525,7 +525,7 @@ export class FluvyLockCard extends RowsCard<LockCardConfig> {
 
   protected renderCard(): TemplateResult {
     const view = this.entity();
-    const name = this.config?.name ?? view.name;
+    const name = this.nameFor(view, this.config?.name);
     // out of reach (unavailable, missing) it keeps its anatomy and its size, its controls disabled: only the colours
     // change (1.9)
     const unusable = !isUsable(view);

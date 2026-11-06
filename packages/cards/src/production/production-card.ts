@@ -7,6 +7,7 @@ import {
   isUsable,
   strings as words,
   wallClock,
+  type EntityName,
   type EntityView,
   type FluvyCardConfig,
   type HomeAssistant,
@@ -76,6 +77,7 @@ import {
   fieldRow,
   hasLadder,
   iconField,
+  nameField,
   NUMBER_DEFAULTS,
   numberFields,
   selectField,
@@ -98,7 +100,7 @@ const strings = words('production');
 /** One array of panels: its own power or energy sensor, and its name in the legend. */
 export interface ProductionArray {
   entity: string;
-  name?: string;
+  name?: EntityName;
 }
 
 /**
@@ -298,7 +300,7 @@ export class FluvyProductionCard extends Card<ProductionCardConfig> {
       title: 'production.editor_arrays',
       domains: ['sensor'],
       keys: ['entity', 'name'],
-      schema: [entityField(['sensor']), textField('name')],
+      schema: [entityField(['sensor']), nameField()],
     },
   ];
   /** The card's head is its meter's name (`title` was the older word for it). */
@@ -324,7 +326,7 @@ export class FluvyProductionCard extends Card<ProductionCardConfig> {
     return {
       schema: [
         entityField(['sensor']),
-        fieldRow(textField('name'), textField('subtitle')),
+        fieldRow(nameField(), textField('subtitle')),
         fieldRow(iconField(), showIconField()),
         ...colourFields(),
         fieldRow(
@@ -506,7 +508,7 @@ export class FluvyProductionCard extends Card<ProductionCardConfig> {
 
   protected renderCard(): TemplateResult {
     const view = this.entity();
-    const name = this.config?.name ?? view.name;
+    const name = this.nameFor(view, this.config?.name);
     // out of reach, the card is the live one in the off skin (the owner's rule, 1.9): the day so far is the recorder's
     const unusable = !isUsable(view);
     const tone: Tone = unusable ? 'off' : toneOf(this.config, 'solar');
@@ -943,7 +945,7 @@ export class FluvyProductionCard extends Card<ProductionCardConfig> {
       ),
     );
     const w = this.contentWidth;
-    const names = arrays.map((a, i) => a.name ?? (views[i] as EntityView).name);
+    const names = arrays.map((a, i) => this.nameFor(views[i] as EntityView, a.name));
     // the energy legend's rule: a name or a figure that does not fit its column folds the row, never cuts it
     const columns = legendColumns(names, w, this.head.ruler, widest, LEGEND_GAP);
     return html`<div

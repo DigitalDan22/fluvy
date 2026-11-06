@@ -801,7 +801,7 @@ export class FluvyWeatherCard extends Card<WeatherCardConfig> {
     const days = mode === 'daily' || mode === 'both';
     const icon =
       this.config?.icon ?? (usable ? conditionGlyph(known ? view.state : '', night) : 'ban');
-    const name = this.config?.name ?? view.name;
+    const name = this.nameFor(view, this.config?.name);
 
     if (this.compact())
       return html`<article class="fv-card am-card ${usable ? '' : 'is-off'}" data-card>

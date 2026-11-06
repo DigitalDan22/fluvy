@@ -3,6 +3,7 @@ import {
   haptic,
   stateText,
   strings,
+  type EntityName,
   type EntityView,
   type FluvyCardConfig,
   type LovelaceGridOptions,
@@ -24,7 +25,7 @@ const s = strings('actions');
 
 export interface ActionRowConfig {
   entity: string;
-  name?: string;
+  name?: EntityName;
   icon?: string;
   /** What the action does ("Lights & blinds"): the context before "· ran 07:00", or a template rendered live. Defaults to the entity's area. */
   secondary?: string;
@@ -281,7 +282,7 @@ export class FluvyActionsCard extends Card<ActionsCardConfig> {
 
   private action(row: ActionRowConfig, layout: Layout): TemplateResult {
     const view = this.entity(row.entity);
-    const name = row.name ?? view.name;
+    const name = this.nameFor(view, row.name);
     const runnable =
       view.status !== 'unavailable' && view.status !== 'missing' && view.domain in SERVICES;
     const done = this.done_.has(view.id);
@@ -321,7 +322,7 @@ export class FluvyActionsCard extends Card<ActionsCardConfig> {
    */
   private cells(columns: number, gap: number): Layout {
     const cell = (this.contentWidth - gap * (columns - 1)) / columns;
-    const names = this.rows().map((row) => row.name ?? this.entity(row.entity).name);
+    const names = this.rows().map((row) => this.nameFor(this.entity(row.entity), row.name));
     const facts = [
       s(this.hass, 'ran', { time: formatTime(this.hass, new Date(2000, 0, 1, 23, 59)) }),
       sentence(s(this.hass, 'never')),
