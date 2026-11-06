@@ -19,6 +19,7 @@ import {
   plugFridge,
   type De1Moment,
 } from './fixtures/index.js';
+import { confirmHelper } from './form.js';
 import { applianceDevices } from './kinds.js';
 import { forgetUnloaded } from './memory.js';
 import { SETTLE_MS } from './nudge.js';
@@ -640,6 +641,17 @@ describe('the appliance card', () => {
     expect(FluvyApplianceCard.defaults?.({ type: 'x', device: 'lg-washer' }, hass)).toMatchObject({
       confirm: ['stop', 'off'],
     });
+    // a command it does not know (a typo by hand) is said under the field: left out, or the default asked in its place
+    const helper = (confirm: unknown) =>
+      confirmHelper(field ?? { name: 'confirm' }, (key) => key, { confirm });
+    expect(helper(['start', 'stop'])).toBeUndefined();
+    expect(helper(['Start', 'power'])).toBeUndefined();
+    expect(helper(['start', 'stopp'])).toBe('Not known, left out: stopp.');
+    expect(helper(['stopp', 'paus'])).toBe(
+      'Not known: stopp, paus. The card asks before its default commands.',
+    );
+    expect(form.computeHelper).toBe(confirmHelper);
+    expect(FluvyAppliancesCard.getConfigForm().computeHelper).toBe(confirmHelper);
   });
 
   it('leaves out a control it does not know, a typo by hand, and draws the others', async () => {

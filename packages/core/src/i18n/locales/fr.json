@@ -2194,6 +2194,8 @@
     "editor_show_controls": "Afficher les boutons",
     "editor_controls": "Boutons",
     "editor_confirm": "Demander avant",
+    "editor_confirm_unknown": "Inconnu, laissé de côté : {words}.",
+    "editor_confirm_unknown_all": "Inconnu : {words}. La carte demande avant ses commandes par défaut.",
     "editor_show_programs": "Programmes au choix",
     "editor_unload_reminder": "Rappel pour vider",
     "editor_unload_after": "Rappeler après (min)",

@@ -18,6 +18,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   None in the editor, everything else as found: a dishwasher whose remote start says off at rest, and starts all the
   same, gets its Start back; a wrong door or a water meter of the machine's whole life goes the same way (#127).
 
+### Fixed
+
+- The Appliance card reads the commands it asks before (`confirm`) in any case and `power` as switching off, where
+  `Start` and `power` were dropped without a word, and a list of only names it does not know asks as by default, a stop
+  included, where it asked nothing; its editor, and the Appliances card's, say which names they do not know.
+
 ## [1.15.0] — 2026-11-06
 
 ### Visible on upgrade

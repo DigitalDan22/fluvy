@@ -1290,6 +1290,8 @@
     "editor_show_controls": "ボタンを表示",
     "editor_controls": "ボタン",
     "editor_confirm": "確認する",
+    "editor_confirm_unknown": "不明なため除外：{words}",
+    "editor_confirm_unknown_all": "不明：{words}。カードは既定のコマンドの前に確認します。",
     "editor_show_programs": "選べるコース",
     "editor_unload_reminder": "取り出しリマインダー",
     "editor_unload_after": "リマインドまでの時間 (分)",

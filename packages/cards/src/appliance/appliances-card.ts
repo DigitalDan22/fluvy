@@ -51,6 +51,7 @@ import { CONFIRM_DEFAULT, type ConfirmName } from './commands.js';
 import {
   choiceField,
   confirmField,
+  confirmHelper,
   deviceField,
   kindField,
   option,
@@ -488,6 +489,8 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
         picture_min: 'editor_picture_min',
         confirm: 'editor_confirm',
       }),
+      // a command it does not know, said under what it asks before
+      computeHelper: confirmHelper,
     };
   }
 

@@ -2194,6 +2194,8 @@
     "editor_show_controls": "Mostra i pulsanti",
     "editor_controls": "Pulsanti",
     "editor_confirm": "Chiedi prima",
+    "editor_confirm_unknown": "Sconosciuto, tralasciato: {words}.",
+    "editor_confirm_unknown_all": "Sconosciuto: {words}. La scheda chiede prima dei suoi comandi predefiniti.",
     "editor_show_programs": "Programmi da scegliere",
     "editor_unload_reminder": "Promemoria per svuotare",
     "editor_unload_after": "Ricorda dopo (min)",

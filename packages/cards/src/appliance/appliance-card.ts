@@ -128,6 +128,7 @@ import {
   choiceField,
   confirmChoices,
   confirmField,
+  confirmHelper,
   deviceField,
   kindField,
   option,
@@ -1728,6 +1729,8 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
         finished_after: 'editor_finished_after',
         scan: 'editor_scan',
       }),
+      // a command it does not know, said under what it asks before
+      computeHelper: confirmHelper,
     };
   }
 

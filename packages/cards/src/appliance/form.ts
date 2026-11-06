@@ -1,6 +1,13 @@
-import type { HaFormSchemaItem, MessageKey } from '@fluvy/core';
-import { editorWord, entityField, orderedField, type OptionWord } from '../shared/form.js';
-import { CONFIRM_ACTION, CONFIRM_NAMES, type ConfirmName } from './commands.js';
+import { localize, type HaFormSchemaItem, type MessageKey } from '@fluvy/core';
+import {
+  editorLanguage,
+  editorWord,
+  entityField,
+  orderedField,
+  type OptionWord,
+} from '../shared/form.js';
+import type { FormHelper } from '../shared/rows-editor.js';
+import { CONFIRM_ACTION, CONFIRM_NAMES, unknownConfirms, type ConfirmName } from './commands.js';
 import { APPLIANCE_KINDS, type ApplianceKind } from './kinds.js';
 import { NO_ENTITY } from './roles.js';
 
@@ -59,6 +66,23 @@ export const pictureMinField = (): HaFormSchemaItem => ({
 /** The commands a card asks before (#120), each in its button's words: those `names`, every one by default. */
 export const confirmField = (names: readonly ConfirmName[] = CONFIRM_NAMES): HaFormSchemaItem =>
   orderedField('confirm', confirmChoices(names));
+
+/**
+ * What the editor says under `confirm` where it names a command the card does not know (a typo by hand): that it is
+ * left out, or, where it names none the card knows, that the card asks before its default ones.
+ */
+export const confirmHelper: FormHelper = (schema, _localize, data) => {
+  if (schema.name !== 'confirm') return undefined;
+  const named = data?.['confirm'];
+  const unknown = unknownConfirms(named);
+  if (!unknown.length) return undefined;
+  const all = unknown.length === (Array.isArray(named) ? named.length : 1);
+  return localize(
+    editorLanguage(),
+    all ? 'appliance.editor_confirm_unknown_all' : 'appliance.editor_confirm_unknown',
+    { words: unknown.join(', ') },
+  );
+};
 
 /** The commands a card may ask before, as its editor offers them. */
 export const confirmChoices = (

@@ -2194,6 +2194,8 @@
     "editor_show_controls": "Tasten zeigen",
     "editor_controls": "Tasten",
     "editor_confirm": "Vorher fragen",
+    "editor_confirm_unknown": "Unbekannt, ausgelassen: {words}.",
+    "editor_confirm_unknown_all": "Unbekannt: {words}. Die Karte fragt vor ihren Standardbefehlen.",
     "editor_show_programs": "Programme zur Auswahl",
     "editor_unload_reminder": "Entnahme-Erinnerung",
     "editor_unload_after": "Erinnern nach (min)",

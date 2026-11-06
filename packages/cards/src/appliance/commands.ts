@@ -97,17 +97,31 @@ export const CONFIRM_ACTION: Readonly<Record<ConfirmName, Action>> = {
   level: 'level',
 };
 
+/** A config's `confirm` as a list (one written without its dash a list of one); none where it names nothing. */
+const confirmList = (named: unknown): readonly unknown[] | undefined =>
+  typeof named === 'string' ? [named] : Array.isArray(named) ? named : undefined;
+
+/** A name as a person writes it, as the card reads it: in any case, `power` for switching off; none it does not know. */
+function confirmName(name: unknown): ConfirmName | undefined {
+  const word = typeof name === 'string' ? name.trim().toLowerCase() : '';
+  const read = word === 'power' ? 'off' : word;
+  return CONFIRM_NAMES.find((known) => known === read);
+}
+
 /**
- * What a card asks before, as its config names it (one written without its dash a list of one), those the card knows:
- * its kind's default where it names nothing, nothing for an empty list.
+ * What a card asks before, as its config names it (`confirmName`), those the card knows: its kind's default where it
+ * names nothing, and where it names nothing the card knows (a typo by hand: a stop still asks, and the editor says
+ * why), nothing for an empty list.
  */
 export function confirmOf(named: unknown, kind?: ApplianceKind): readonly ConfirmName[] {
-  const list: readonly unknown[] | undefined =
-    typeof named === 'string' ? [named] : Array.isArray(named) ? named : undefined;
-  return list
-    ? list.filter((name): name is ConfirmName => CONFIRM_NAMES.includes(name as ConfirmName))
-    : confirmDefault(kind);
+  const list = confirmList(named);
+  const known = (list ?? []).flatMap((name) => confirmName(name) ?? []);
+  return !list || (list.length > 0 && !known.length) ? confirmDefault(kind) : known;
 }
+
+/** The names a config's `confirm` gives that the card does not know, as written: the editor says them. */
+export const unknownConfirms = (named: unknown): string[] =>
+  (confirmList(named) ?? []).filter((name) => !confirmName(name)).map(String);
 
 /** A service call, as `hass.callService` takes it (the entity in its data). */
 export interface ServiceCall {

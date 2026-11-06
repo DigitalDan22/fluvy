@@ -11,6 +11,7 @@ import {
   programChoice,
   resetCall,
   targetSetter,
+  unknownConfirms,
   writable,
   type Action,
   type CommandInput,
@@ -444,6 +445,22 @@ describe('the commands an appliance takes now', () => {
     // one written without its dash is a list of one; a name the card does not know drops out
     expect(asked('hc-dish', 'idle', 'start')).toEqual(['start start', 'power_off']);
     expect(asked('hc-dish', 'running', ['start', 'stopp'])).toEqual(['pause', 'stop', 'power_off']);
+    // a name in any case; `power` is switching off
+    expect(confirmOf(['Start', ' STOP ', 'power'])).toEqual(['start', 'stop', 'off']);
+    expect(asked('hc-dish', 'running', ['Power'])).toEqual([
+      'pause',
+      'stop',
+      'power_off power_off',
+    ]);
+    // naming nothing the card knows asks as by default, a stop included, and the editor says why
+    expect(confirmOf(['stopp'])).toBe(CONFIRM_DEFAULT);
+    expect(confirmOf('Strat', 'oven')).toEqual(confirmDefault('oven'));
+    expect(asked('hc-dish', 'running', ['stopp', 'paus'])).toEqual(
+      asked('hc-dish', 'running', undefined),
+    );
+    expect(unknownConfirms(['Start', 'stopp', 'power', 3])).toEqual(['stopp', '3']);
+    expect(unknownConfirms('Strat')).toEqual(['Strat']);
+    expect(unknownConfirms(undefined)).toEqual([]);
     // unset is today's set exactly: a stop, switching off where it cuts something short, never a start
     expect(confirmOf(undefined)).toBe(CONFIRM_DEFAULT);
     for (const status of ['idle', 'running', 'paused', 'scheduled', 'error'] as const)

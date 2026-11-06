@@ -1290,6 +1290,8 @@
     "editor_show_controls": "A gombok megjelenítése",
     "editor_controls": "Gombok",
     "editor_confirm": "Rákérdezés előtte",
+    "editor_confirm_unknown": "Ismeretlen, kimarad: {words}.",
+    "editor_confirm_unknown_all": "Ismeretlen: {words}. A kártya az alapértelmezett parancsai előtt kérdez rá.",
     "editor_show_programs": "Választható programok",
     "editor_unload_reminder": "Kiürítési emlékeztető",
     "editor_unload_after": "Emlékeztetés ennyi idő után (perc)",

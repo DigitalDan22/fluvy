@@ -351,6 +351,8 @@
     "editor_show_controls": "Zobraziť tlačidlá",
     "editor_controls": "Tlačidlá",
     "editor_confirm": "Najprv potvrdiť",
+    "editor_confirm_unknown": "Neznáme, vynechané: {words}.",
+    "editor_confirm_unknown_all": "Neznáme: {words}. Karta sa pýta pred svojimi predvolenými príkazmi.",
     "editor_show_programs": "Výber programov",
     "editor_unload_reminder": "Pripomenúť vyloženie",
     "editor_unload_after": "Pripomenúť po (min)",

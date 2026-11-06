@@ -2194,6 +2194,8 @@
     "editor_show_controls": "Mostrar los botones",
     "editor_controls": "Botones",
     "editor_confirm": "Preguntar antes",
+    "editor_confirm_unknown": "Desconocido, se omite: {words}.",
+    "editor_confirm_unknown_all": "Desconocido: {words}. La tarjeta pregunta antes de sus órdenes predeterminadas.",
     "editor_show_programs": "Programas para elegir",
     "editor_unload_reminder": "Aviso para vaciar",
     "editor_unload_after": "Avisar tras (min)",
