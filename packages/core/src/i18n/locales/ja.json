@@ -367,6 +367,7 @@
     "modes_style": "モードの形式",
     "show_current": "現在値を表示",
     "show_modes": "モードを表示",
+    "show_brightness": "明るさを表示",
     "show_stepper": "−と+のボタンを表示",
     "options_style": "オプションの形式",
     "options": "オプション",

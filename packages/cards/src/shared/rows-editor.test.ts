@@ -451,6 +451,35 @@ describe('a select’s options as the house has them', () => {
     }
   });
 
+  it('shows a toggle among a select’s own choices as its word, and writes a pick back as the toggle (#124)', async () => {
+    // a light card's `show_brightness`: true, false or when_on
+    const schema = [
+      {
+        name: 'show_brightness',
+        selector: {
+          select: { options: ['true', 'when_on', 'false'].map((v) => ({ value: v, label: v })) },
+        },
+      },
+      textField('title'),
+    ];
+    const editor = await drawEditor(listsEditor({ schema }, []), {
+      type: 'custom:x',
+      show_brightness: false,
+    });
+    expect(cardForm(editor).data['show_brightness']).toBe('false');
+    let next = nextConfig(editor);
+    cardForm(editor).change('title', 'Lamp');
+    expect(await next).toEqual({ type: 'custom:x', show_brightness: false, title: 'Lamp' });
+    await editor.updateComplete;
+    next = nextConfig(editor);
+    cardForm(editor).change('show_brightness', 'true');
+    expect((await next)['show_brightness']).toBe(true);
+    await editor.updateComplete;
+    next = nextConfig(editor);
+    cardForm(editor).change('show_brightness', 'when_on');
+    expect((await next)['show_brightness']).toBe('when_on');
+  });
+
   it('shows an item’s number in its select as the select words it (a legend entry’s decimals: 2 in YAML)', async () => {
     const decimals = {
       name: 'decimals',

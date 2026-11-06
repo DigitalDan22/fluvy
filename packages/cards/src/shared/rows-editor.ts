@@ -343,11 +343,13 @@ const selectsOf = (schema: readonly HaFormSchemaItem[]): Map<string, readonly un
   );
 
 /**
- * A value as a select that offers `offered` words it: a number the YAML holds (`decimals: 2`, `columns: 2`) as "2",
- * and a toggle the select grew out of (1.10's `show_grid: true`) as what it meant — on its Automatic, off its None.
+ * A value as a select that offers `offered` words it: a number the YAML holds (`decimals: 2`, `columns: 2`) as "2", a
+ * toggle among the select's own choices (a light card's `show_brightness: false`, #124) as "false", and a toggle the
+ * select grew out of (1.10's `show_grid: true`) as what it meant — on its Automatic, off its None.
  */
 const wordOf = (value: unknown, offered: readonly unknown[] | undefined): unknown => {
   if (offered && typeof value === 'number') return String(value);
+  if (typeof value === 'boolean' && offered?.includes(String(value))) return String(value);
   if (offered?.includes('auto') && offered.includes('none') && typeof value === 'boolean')
     return value ? 'auto' : 'none';
   return value;
@@ -363,8 +365,8 @@ const worded = (
   );
 
 /**
- * The form's value with a toggle's words (`wordOf`) back as the toggle the config holds: nothing is rewritten that the
- * person did not pick.
+ * The form's value with a toggle's words (`wordOf`) back as the toggle the config holds, and a select's own "true" and
+ * "false" as the toggle they say: nothing is rewritten that the person did not pick.
  */
 const unworded = (
   value: Readonly<Record<string, unknown>>,
@@ -372,12 +374,17 @@ const unworded = (
   selects: ReadonlyMap<string, readonly unknown[]>,
 ): Record<string, unknown> =>
   Object.fromEntries(
-    Object.entries(value).map(([key, entry]) => [
-      key,
-      typeof held[key] === 'boolean' && entry === wordOf(held[key], selects.get(key))
-        ? held[key]
-        : entry,
-    ]),
+    Object.entries(value).map(([key, entry]) => {
+      const offered = selects.get(key);
+      return [
+        key,
+        typeof held[key] === 'boolean' && entry === wordOf(held[key], offered)
+          ? held[key]
+          : (entry === 'true' || entry === 'false') && offered?.includes(entry)
+            ? entry === 'true'
+            : entry,
+      ];
+    }),
   );
 
 const sameValue = (a: unknown, b: unknown): boolean =>

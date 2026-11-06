@@ -767,4 +767,103 @@ const ids = (call) => [].concat(call?.d?.entity_id ?? call?.t?.entity_id ?? []);
   await page.close();
 }
 
+/* ---------- #124: the brightness never shown, or shown while the light is on, on the `slider` sheet ---------- */
+{
+  const page = await suite.sheet('slider');
+  const heights = (title) =>
+    frame(page, title)
+      .locator('fluvy-light-card')
+      .evaluateAll((cards) =>
+        cards.map((el) => ({
+          height: Math.round(el.shadowRoot.querySelector('article').getBoundingClientRect().height),
+          rulers: [...el.shadowRoot.querySelectorAll('fluvy-ruler')].filter(
+            (r) => r.getBoundingClientRect().height > 0 && !r.closest('[inert]'),
+          ).length,
+        })),
+      );
+  const never = await heights('Brightness · never');
+  check(
+    'never: the card is its head alone, 84 tall, on and off, full and compact, no ruler',
+    never.length === 3 && never.every((c) => c.height === 84 && c.rulers === 0),
+    JSON.stringify(never),
+  );
+  const shown = await heights('Brightness · when on');
+  check(
+    'while on: the lit lamp’s whole card (as tall as it is always), the dark one’s head alone',
+    shown[0].height > 300 && shown[0].rulers > 0 && shown[1].height === 84 && shown[1].rulers === 0,
+    JSON.stringify(shown),
+  );
+
+  /**
+   * A tap on the lamp's switch, and every frame of the next second: the card's height, the top of the card under it
+   * (from the frame's own), and how much of what the card folds shows.
+   */
+  const flip = () =>
+    page.evaluate(
+      () =>
+        new Promise((resolve) => {
+          const box = document.querySelector('[data-frame$="/Brightness · when on, the ease"]');
+          const light = box.querySelector('fluvy-light-card');
+          const tile = box.querySelector('fluvy-tile-card');
+          const samples = [];
+          const start = performance.now();
+          const read = () => {
+            const body = light.shadowRoot.querySelector('.sl-fold__body');
+            samples.push({
+              height: Math.round(light.getBoundingClientRect().height),
+              under: Math.round(tile.getBoundingClientRect().top - box.getBoundingClientRect().top),
+              shows: Number(getComputedStyle(body).opacity),
+            });
+            if (performance.now() - start < 1000) requestAnimationFrame(read);
+            else resolve(samples);
+          };
+          light.shadowRoot.querySelector('.fv-hit').click();
+          requestAnimationFrame(read);
+        }),
+    );
+  const opening = await flip();
+  await settle(page);
+  const open = opening.at(-1);
+  check(
+    'turned on, it eases from its head to its whole card, the card under it moving down with it at every frame',
+    open.height === shown[0].height &&
+      opening.some((f) => f.height > 84 && f.height < open.height) &&
+      opening.every((f) => f.under - f.height === opening[0].under - opening[0].height),
+    JSON.stringify(opening.map((f) => [f.height, f.under])),
+  );
+  check(
+    'what it holds fades in once the card has its room, never while it grows',
+    opening.every((f) => f.shows === 0 || f.height === open.height) && open.shows === 1,
+    JSON.stringify(opening.map((f) => [f.height, f.shows])),
+  );
+  const closing = await flip();
+  await settle(page);
+  check(
+    'turned off, it fades out first, then eases back to its head, the card under it rising with it',
+    closing.at(-1).height === 84 &&
+      closing.every((f) => f.shows === 0 || f.height === open.height) &&
+      closing.some((f) => f.height > 84 && f.height < open.height) &&
+      closing.every((f) => f.under - f.height === closing[0].under - closing[0].height),
+    JSON.stringify(closing.map((f) => [f.height, f.shows])),
+  );
+  // reduced motion, the system's and then the person's own (Fluvy's settings mark the card): its new size at once
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const reduced = await flip();
+  await settle(page);
+  await flip();
+  await settle(page);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await frame(page, 'Brightness · when on, the ease')
+    .locator('fluvy-light-card')
+    .evaluate((el) => el.setAttribute('reduced-motion', ''));
+  const own = await flip();
+  check(
+    'with reduced motion, the system’s or Fluvy’s own, it is its new size at once',
+    reduced.every((f) => f.height === open.height && f.shows === 1) &&
+      own.every((f) => f.height === open.height && f.shows === 1),
+    JSON.stringify([reduced.slice(0, 3), own.slice(0, 3)]),
+  );
+  await page.close();
+}
+
 await suite.finish();

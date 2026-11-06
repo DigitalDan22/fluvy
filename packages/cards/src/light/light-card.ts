@@ -47,8 +47,17 @@ export type LightVariant = 'auto' | 'full' | 'compact';
 /** How much of its colour a lit card shows: a lit tile's whole fill, a gentle wash, or as much as the lamp is bright. */
 export type TintStrength = 'soft' | 'brightness' | 'full';
 
+/** When the card shows its light's brightness: always (`true`), never (`false`), or while the light is on (#124). */
+export type ShowBrightness = boolean | 'when_on';
+
 export interface LightCardConfig extends FluvyCardConfig {
   variant?: LightVariant;
+  /**
+   * The brightness and, with it, the stepper and the temperature and colour rows (#124): always (`true`, the default);
+   * never (`false`: the card is its head alone, as a bulb that only switches); or while the light is on (`when_on`:
+   * its head alone while it is off or cannot be read, the card easing open to the rest as it turns on).
+   */
+  show_brightness?: ShowBrightness;
   /** The − and + beside the full card's level (default). Off: the level is set on its ruler, and the readout is the card's tap. */
   show_stepper?: boolean;
   /** Send brightness while dragging (throttled) instead of only on release. */
@@ -95,10 +104,13 @@ const COLOUR_BULB: BulbDoes = { colour: true, temperature: true, dimmable: true 
  * its labels: 100) when a temperature or a hue ruler may show, and the quick colours (16 above, 44 rounds, six a row,
  * as many rows as the count takes; a named entry counts one) when they may — for what the bulb does, as the house
  * describes it (`house-heights.ts`), a colour bulb's where it is not there to say; a list of none draws no row. A
- * bulb that only switches is its head alone, 84, whatever the config asks.
+ * bulb that only switches is its head alone, 84, whatever the config asks, as a card that never shows the brightness
+ * is; one that shows it while the light is on declares its head, which it is while off, and grows from it as the light
+ * turns on, its grid row following (`getGridOptions`).
  */
 export function lightHeight(config: LightCardConfig, bulb: BulbDoes = COLOUR_BULB): number {
-  if (!bulb.dimmable) return 84;
+  if (!bulb.dimmable || config.show_brightness === false || config.show_brightness === 'when_on')
+    return 84;
   if (config.variant === 'compact') return 188;
   const slot =
     (config.show_temperature !== false && bulb.temperature) ||
@@ -141,10 +153,54 @@ export class FluvyLightCard extends Card<LightCardConfig> {
         height: auto;
         min-height: 256px;
       } /* the sheet fixes 256 so its five states line up; a colour-temperature ruler makes the card taller */
-      /* the compact card, and the head alone of a bulb that only switches (#65), are as tall as they draw */
+      /* the compact card, the head alone of a bulb that only switches (#65) and a card that folds its brightness
+         away (#124) are as tall as they draw */
       .sl-card--compact,
-      .sl-card--switch {
+      .sl-card--switch,
+      .sl-card--fold {
         min-height: 0;
+      }
+      /* the brightness shown while the light is on (#124): folded under the head while it is off. Turned on, the card
+         eases to its size and what it holds fades in once it has the room; turned off, it fades out, then the card
+         eases back. What it holds is laid out at its own size throughout, so nothing in it moves. */
+      .sl-fold {
+        display: grid;
+        grid-template-rows: 0fr;
+        transition: grid-template-rows var(--fv-slow) var(--fv-ease) var(--fv-fast);
+      }
+      .sl-fold.is-open {
+        grid-template-rows: 1fr;
+        transition-delay: 0s;
+      }
+      /* out to the card's edges (its padding given back inside), so what reaches past the column is never cut: the
+         ruler's knob at its ends, a focus ring; folded, it is not there at all once it has faded */
+      .sl-fold__body {
+        min-height: 0;
+        margin: 0 -20px -20px;
+        padding: 0 20px 20px;
+        overflow: clip;
+        opacity: 0;
+        visibility: hidden;
+        transition:
+          opacity var(--fv-fast) var(--fv-ease),
+          visibility 0s linear var(--fv-fast);
+      }
+      .sl-fold.is-open > .sl-fold__body {
+        opacity: 1;
+        visibility: visible;
+        transition:
+          opacity var(--fv-base) var(--fv-ease) var(--fv-slow),
+          visibility 0s;
+      }
+      /* reduced motion (the system's, or the person's in Fluvy's settings): the new size at once, waiting for nothing */
+      @media (prefers-reduced-motion: reduce) {
+        .sl-fold,
+        .sl-fold__body {
+          transition: none !important;
+        }
+      }
+      :host([reduced-motion]) :is(.sl-fold, .sl-fold__body) {
+        transition: none !important;
       }
     `,
   ];
@@ -187,13 +243,24 @@ export class FluvyLightCard extends Card<LightCardConfig> {
   }
 
   override getCardSize(): number {
-    // a bulb that only switches is its head alone, once the house has said so
-    if (!dims(this.entity().attr<string[]>('supported_color_modes') ?? [])) return 2;
+    // a bulb that only switches is its head alone, once the house has said so; so is a card that never shows the
+    // brightness, and one that shows it while the light is on while it is off (Home Assistant's masonry places a card
+    // once, by this: its column then grows and shrinks with it)
+    const view = this.entity();
+    const shows = this.config?.show_brightness;
+    if (
+      !dims(view.attr<string[]>('supported_color_modes') ?? []) ||
+      shows === false ||
+      (shows === 'when_on' && view.state !== 'on')
+    )
+      return 2;
     return this.config?.variant === 'compact' ? 2 : 4;
   }
   /**
    * Half a section is enough (two lamps on a line); a card asked to be compact starts there, and never goes under it:
-   * in a third, the switch left its name no room.
+   * in a third, the switch left its name no room. Its rows are `auto`: Home Assistant's sections size the row to the
+   * card, so one that shows its brightness while on grows and shrinks in it, the cards under it moving with it (a
+   * number of rows would cut it or leave a hole under it).
    */
   override getGridOptions(): LovelaceGridOptions {
     return this.config?.variant === 'compact'
@@ -310,9 +377,13 @@ export class FluvyLightCard extends Card<LightCardConfig> {
     const unusable = !isUsable(view);
     const on = !unusable && (this.stateOf(view) === 'on' || (this.level.chosen ?? 0) > 0);
     const modes = view.attr<string[]>('supported_color_modes') ?? [];
+    const shows = this.config?.show_brightness;
     // a light Home Assistant has not described (gone, or unavailable since it started) draws as a dimmer; one that
-    // only switches, described as such (its attributes kept while it cannot be read), is its head alone (#65)
-    const dimmable = dims(modes);
+    // only switches, described as such (its attributes kept while it cannot be read), is its head alone (#65), as a card
+    // that never shows the brightness is (#124)
+    const dimmable = dims(modes) && shows !== false;
+    // one that shows it while the light is on folds it under its head while it is off or cannot be read (#124)
+    const folds = dimmable && shows === 'when_on';
     const raw = view.attr<number | null>('brightness');
     const reported = on && typeof raw === 'number' ? Math.max(1, Math.round((raw / 255) * 100)) : 0;
     const level = this.level.read(reported);
@@ -362,7 +433,8 @@ export class FluvyLightCard extends Card<LightCardConfig> {
         : [];
 
     // a colour bulb: its controls come with their module (the first colour bulb fetches it); until then, the white bulb's card
-    const coloured = modes.some((m) => COLOURED.has(m)) && this.config?.show_color !== false;
+    const coloured =
+      dimmable && modes.some((m) => COLOURED.has(m)) && this.config?.show_color !== false;
     if (coloured && !this.colour) this.loadColour();
     const colour = coloured ? this.colour : undefined;
     const kelvin = view.attr<number | null>('color_temp_kelvin');
@@ -406,7 +478,11 @@ export class FluvyLightCard extends Card<LightCardConfig> {
         ? undefined
         : this.accents.lit(
             source,
-            strength === 'soft' ? LIT_FLOOR : dimmable ? Math.max(LIT_FLOOR, shownLevel / 100) : 1,
+            strength === 'soft'
+              ? LIT_FLOOR
+              : dims(modes)
+                ? Math.max(LIT_FLOOR, shownLevel / 100)
+                : 1,
           )
       : tint === 'always' && !unusable && !this.config?.card_color
         ? this.accents.lit(source, 0)
@@ -426,8 +502,65 @@ export class FluvyLightCard extends Card<LightCardConfig> {
         ? () => this.temperatureRuler(name, w, on, kelvin ?? minK, minK, maxK, unusable, full)
         : undefined;
 
+    // what the head is over: the level, its ruler, the colours (folded under the head while the light is off, where the
+    // card shows them while it is on)
+    const body = html`${
+      dimmable
+        ? html` ${compact ? nothing : this.renderLevel(view.id, name, on, unusable, shownLevel)}
+            <div class="sl-bubble-row"></div>
+            <fluvy-ruler
+              .value=${level}
+              .min=${0}
+              .max=${100}
+              .step=${1}
+              .length=${w}
+              .tone=${on ? tone : 'neutral'}
+              ?disabled=${unusable}
+              ?inactive=${!on}
+              ?wake=${!unusable}
+              ?on-fill=${full}
+              unit="%"
+              .label=${`${name} · ${this.t('light.brightness')}`}
+              .format=${(v: number) => formatNumber(this.hass, v, { digits: 0 })}
+              @fluvy-input=${(e: CustomEvent<RulerChangeDetail>) =>
+                this.level.input(e.detail.value, this.config?.live_update === true)}
+              @fluvy-change=${(e: CustomEvent<RulerChangeDetail>) => this.level.set(e.detail.value)}
+              @fluvy-window=${(e: CustomEvent<RulerWindowDetail>) => this.level.zoom(e.detail)}
+            ></fluvy-ruler>
+            ${rulerLabels(ticks)}`
+        : nothing
+    }
+    ${
+      // the compact layout asked for keeps the head and the ruler; one of a colour bulb by its width (a zoomed phone)
+      // keeps a row of its quick colours too
+      variant === 'compact' || !dimmable
+        ? nothing
+        : colour
+          ? colour.colourControls({
+              view,
+              t: (key) => this.t(key),
+              name,
+              width: w,
+              on,
+              held: choice,
+              colors: this.config?.colors,
+              minK,
+              maxK,
+              format: (v) => formatNumber(this.hass, v, { digits: 0 }),
+              temperature,
+              disabled: unusable,
+              onFill: full,
+              row: compact,
+              host: this,
+              pick: (picked, data) => this.pickColour(picked, data),
+            })
+          : compact
+            ? nothing
+            : (temperature?.() ?? nothing)
+    }`;
+
     return html`<article
-      class="fv-card sl-card ${unusable ? 'is-unavailable is-off' : ''} ${compact ? 'sl-card--compact' : dimmable ? '' : 'sl-card--switch'} ${full ? `is-lit fv-tone--${tone}` : lit && surface ? 'is-glow' : ''}"
+      class="fv-card sl-card ${unusable ? 'is-unavailable is-off' : ''} ${compact ? 'sl-card--compact' : dimmable ? '' : 'sl-card--switch'} ${folds ? 'sl-card--fold' : ''} ${full ? `is-lit fv-tone--${tone}` : lit && surface ? 'is-glow' : ''}"
       data-card
       data-accent=${accent ?? nothing}
       data-surface=${surface ?? nothing}
@@ -453,58 +586,11 @@ export class FluvyLightCard extends Card<LightCardConfig> {
         ...this.headActions(view.id),
       })}
       ${
-        dimmable
-          ? html` ${compact ? nothing : this.renderLevel(view.id, name, on, unusable, shownLevel)}
-              <div class="sl-bubble-row"></div>
-              <fluvy-ruler
-                .value=${level}
-                .min=${0}
-                .max=${100}
-                .step=${1}
-                .length=${w}
-                .tone=${on ? tone : 'neutral'}
-                ?disabled=${unusable}
-                ?inactive=${!on}
-                ?wake=${!unusable}
-                ?on-fill=${full}
-                unit="%"
-                .label=${`${name} · ${this.t('light.brightness')}`}
-                .format=${(v: number) => formatNumber(this.hass, v, { digits: 0 })}
-                @fluvy-input=${(e: CustomEvent<RulerChangeDetail>) =>
-                  this.level.input(e.detail.value, this.config?.live_update === true)}
-                @fluvy-change=${(e: CustomEvent<RulerChangeDetail>) => this.level.set(e.detail.value)}
-                @fluvy-window=${(e: CustomEvent<RulerWindowDetail>) => this.level.zoom(e.detail)}
-              ></fluvy-ruler>
-              ${rulerLabels(ticks)}`
-          : nothing
-      }
-      ${
-        // the compact layout asked for keeps the head and the ruler; one of a colour bulb by its width (a zoomed phone)
-        // keeps a row of its quick colours too
-        variant === 'compact'
-          ? nothing
-          : colour
-            ? colour.colourControls({
-                view,
-                t: (key) => this.t(key),
-                name,
-                width: w,
-                on,
-                held: choice,
-                colors: this.config?.colors,
-                minK,
-                maxK,
-                format: (v) => formatNumber(this.hass, v, { digits: 0 }),
-                temperature,
-                disabled: unusable,
-                onFill: full,
-                row: compact,
-                host: this,
-                pick: (picked, data) => this.pickColour(picked, data),
-              })
-            : compact
-              ? nothing
-              : (temperature?.() ?? nothing)
+        folds
+          ? html`<div class="sl-fold ${on ? 'is-open' : ''}" ?inert=${!on}>
+              <div class="sl-fold__body">${body}</div>
+            </div>`
+          : body
       }
     </article>`;
   }

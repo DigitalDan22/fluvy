@@ -562,6 +562,13 @@
       "reason": "the house's sources and devices draw the tiers (live; the sankey's layout is its own)"
     },
     {
+      "frame": "slider/Brightness · when on",
+      "tag": "fluvy-light-card",
+      "declared": 84,
+      "drawn": 428,
+      "reason": "show_brightness: when_on with its light on (#124): the card grows from the head it declares as the light turns on, the person's choice; its grid row is auto, so the cards under it move with it"
+    },
+    {
       "frame": "storage/From the Energy dashboard",
       "tag": "fluvy-batteries-card",
       "declared": 240,

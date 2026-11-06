@@ -115,6 +115,14 @@ export const sheet: SheetSpec = {
       { friendly_name: 'EG_GA_L_Baum Baum', brightness: 150, color_mode: 'hs', ...ORANGE, ...BULB },
     ],
     ['light.nm_beet', 'off', { friendly_name: 'EG_GA_L_BeetTerrasse Beet', ...BULB }],
+    // #124: colour bulbs whose cards show the brightness never, or while they are on
+    [
+      'light.sb_desk',
+      'on',
+      { friendly_name: 'Desk', brightness: 180, color_mode: 'color_temp', ...WARM_WHITE, ...BULB },
+    ],
+    ['light.sb_hall', 'off', { friendly_name: 'Hall', ...BULB }],
+    ['light.sb_landing', 'off', { friendly_name: 'Landing', ...BULB }],
   ],
   registry: {
     areas: { nm_garden: { area_id: 'nm_garden', name: 'Garten' } },
@@ -551,6 +559,63 @@ export const sheet: SheetSpec = {
             { entity: 'light.nm_beet', name: { type: 'device' } },
           ],
         },
+      ],
+    },
+    // #124: the brightness never shown, the card its head alone as a bulb that only switches is, on and off
+    {
+      title: 'Brightness · never',
+      cards: [
+        { type: 'custom:fluvy-light-card', entity: 'light.sb_desk', show_brightness: false },
+        {
+          type: 'custom:fluvy-light-card',
+          entity: 'light.sb_desk',
+          show_brightness: false,
+          variant: 'compact',
+          cols: 6,
+        },
+        {
+          type: 'custom:fluvy-light-card',
+          entity: 'light.sb_hall',
+          show_brightness: false,
+          variant: 'compact',
+          cols: 6,
+        },
+      ],
+    },
+    // shown while the light is on: the whole card while on, its head alone while off
+    {
+      title: 'Brightness · when on',
+      cards: [
+        { type: 'custom:fluvy-light-card', entity: 'light.sb_desk', show_brightness: 'when_on' },
+        { type: 'custom:fluvy-light-card', entity: 'light.sb_hall', show_brightness: 'when_on' },
+      ],
+    },
+    {
+      title: 'Brightness · when on, compact',
+      cards: [
+        {
+          type: 'custom:fluvy-light-card',
+          entity: 'light.sb_desk',
+          show_brightness: 'when_on',
+          variant: 'compact',
+          cols: 6,
+        },
+        {
+          type: 'custom:fluvy-light-card',
+          entity: 'light.sb_hall',
+          show_brightness: 'when_on',
+          variant: 'compact',
+          cols: 6,
+        },
+      ],
+    },
+    // the ease: its switch opens the card to its brightness, and the card under it moves down with it as it does
+    // (`interactions-lights.mjs`)
+    {
+      title: 'Brightness · when on, the ease',
+      cards: [
+        { type: 'custom:fluvy-light-card', entity: 'light.sb_landing', show_brightness: 'when_on' },
+        { type: 'custom:fluvy-tile-card', entity: 'light.sb_desk' },
       ],
     },
   ],

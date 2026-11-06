@@ -23,6 +23,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   or its floor's, alone or in a list, so a light of the device "EG_GA_L_Baum" named "Baum" reads "Baum" with
   `name: { type: entity }`, where such a name read "[object Object]"; left out, a card says the friendly name as
   before (#125).
+- The Light card shows its brightness always, never or only while the light is on (`show_brightness`: `true`, `false`,
+  `when_on`): never, the card is its head alone; while on, it is its head alone while the light is off and eases open
+  to its brightness, its rulers and its colours as it turns on (#124).
 
 ### Fixed
 

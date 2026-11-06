@@ -9,6 +9,7 @@ import { configKeys } from '../shared/config.js';
 import {
   actionFields,
   boolField,
+  choiceField,
   colourFields,
   editorLanguage,
   editorWord,
@@ -117,9 +118,27 @@ const bulbColours: BulbWhen = (config, hass) => {
   return !modes.length || modes.some((mode) => COLOURED.has(mode));
 };
 
+/**
+ * What the card shows of the bulb under its head, where it shows it at all (`show_brightness` other than never, #124):
+ * the card that never shows the brightness is its head alone, as a bulb that only switches.
+ */
+const shown =
+  (when: BulbWhen): BulbWhen =>
+  (config, hass) =>
+    config['show_brightness'] !== false && when(config, hass);
+
+/** When the card shows the brightness (#124), as its config writes it: always, while the light is on, never. */
+const brightnessField = (): HaFormSchemaItem =>
+  choiceField('show_brightness', [
+    ['true', 'option.always'],
+    ['when_on', 'option.on'],
+    ['false', 'option.never'],
+  ]);
+
 export const base = HEAD_BASE;
 
 export const keys = configKeys<LightCardConfig>()([
+  'show_brightness',
   'variant',
   'show_stepper',
   'live_update',
@@ -141,8 +160,9 @@ export const lists: readonly RowsListSpec[] = [
     key: 'colors',
     title: 'editor.colors',
     idKey: 'color',
-    // the quick colours are a colour bulb's: the list is edited while the bulb has a colour to take
-    when: bulbColours,
+    // the quick colours are a colour bulb's: the list is edited while the bulb has a colour to take, on a card that
+    // shows them
+    when: shown(bulbColours),
     get picker() {
       return swatchFieldsFor().color;
     },
@@ -169,6 +189,7 @@ export const lists: readonly RowsListSpec[] = [
 
 /** What the editor shows where the config says nothing: what the card does then (the quick colours by the bulb). */
 export const defaults: EditorDefaults = (config, hass) => ({
+  show_brightness: true,
   live_update: false,
   variant: 'auto',
   show_stepper: true,
@@ -187,20 +208,24 @@ export function getConfigForm(): LovelaceConfigForm {
       entityField(['light']),
       nameIconFields(),
       showIconField(),
-      // the editor offers what the bulb does (#65): the dimmer's layout, stepper and live update while it dims,
-      // the temperature ruler's options with a white, the colours' with a colour
+      // the editor offers what the bulb does (#65): when the card shows its brightness while it dims (#124); then,
+      // where it shows it, the dimmer's layout, stepper and live update, the temperature ruler's options with a white,
+      // the colours' with a colour
       onlyWhen(
         bulbDims,
-        fieldRow(selectField('variant', ['auto', 'full', 'compact']), boolField('show_stepper')),
+        fieldRow(
+          brightnessField(),
+          onlyWhen(shown(bulbDims), selectField('variant', ['auto', 'full', 'compact'])),
+        ),
       ),
+      onlyWhen(shown(bulbDims), fieldRow(boolField('show_stepper'), boolField('live_update'))),
       fieldRow(
-        onlyWhen(bulbWarms, boolField('show_temperature')),
-        onlyWhen(bulbColours, boolField('show_color')),
+        onlyWhen(shown(bulbWarms), boolField('show_temperature')),
+        onlyWhen(shown(bulbColours), boolField('show_color')),
       ),
       // the list is edited row by row (the rows editor takes the field out of the form)
       { name: 'colors', selector: { object: {} } },
-      onlyWhen(bulbWarms, boolField('temperature_tint')),
-      onlyWhen(bulbDims, boolField('live_update')),
+      onlyWhen(shown(bulbWarms), boolField('temperature_tint')),
       // its colour follows the light's unless one is given (Home Assistant's State, as its own tile's)
       ...colourFields({ state: true }),
       fieldRow(
