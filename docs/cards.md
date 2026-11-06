@@ -419,31 +419,31 @@ Electrolux, PetKit, PETLIBRO) or by its name in any of Fluvy's languages, else i
 card guesses wrong, `roles` names an entity for a role (a helper you attached to its device, a template or a utility
 meter, plays one only where nothing of its integration's own does) or `none` for one the card found and should leave
 out, everything else as found (#127: a remote start that says off while the appliance takes a start, the wrong door, a
-water meter of its whole life; the editor's **None**, or an entity left empty), and `scan: false` makes it read only
-the entities you name (`entity` and `roles`) and nothing else of its device. The card is the design a reader drew for us: a picture
-of the appliance (`picture`: a drawing a kind, the icon, none, or `image` for your own photo; it steps down from 64 to
-44 and 32 before it gives way to a letter of the name, and `picture_min: 32`, `44` or `64` keeps it at least that large,
-a long name ending in "…" beside it), its name and what it is doing (off while its power switch is off, unless it says
-it runs, waits or is done), a power button tinted by what it does, its kind's hero — the time left over a bar, an oven's
-temperature and target, a fridge's compartments, a hob's zones, a coffee machine's drinks — and three `rows` under a
-hairline (the programme, water, energy, a filter to clean, the last coffee: picked, ordered, named, coloured and given
-actions in the rows editor), `maintenance` as rows of their own, and buttons only where the integration's own code says
-exactly how (start, pause, stop, power, the light; the rest is shown and never written) — or, for any integration, the
-Start, Pause, Resume and Stop its `roles` name (`start`, `pause`, `resume`, `stop`: a device's button, a helper's button
-or a script), found by themselves where the integration names its buttons so. `confirm` names the commands that ask
-first in Home Assistant's dialog, wherever they are tapped (its buttons, its power button, the row's round): `start`,
-`resume`, `pause`, `stop`, `off` (switching off, or `power`), `feed`, `clean` and `level`, in any case, in words that
-name the appliance ("Start Oven?"). Unset, a stop asks, and so do switching off while it runs, waits to start or has
-failed (a fridge at any time), a meal, a clean and a levelling, and a litter box's resume; an oven, a microwave and an
-air fryer ask before they start too (#128: a stray tap heats whatever was left inside, with nobody by it), where a
-kettle, which stops at the boil, and a washer, a dryer or a dishwasher start at one tap. An oven's buttons are Start,
+water meter of its whole life; the editor's **None**, or an entity left empty), and `scan: false` makes it read only the
+entities you name (`entity` and `roles`) and nothing else of its device. The card is the design a reader drew for us: a
+picture of the appliance (`picture`: a drawing a kind, the icon, none, or `image` for your own photo; it steps down from
+64 to 44 and 32 before it gives way to a letter of the name, and `picture_min: 32`, `44` or `64` keeps it at least that
+large, a long name ending in "…" beside it), its name and what it is doing (off while its power switch is off, unless it
+says it runs, waits or is done), a power button tinted by what it does, its kind's hero — the time left over a bar, an
+oven's temperature and target, a fridge's compartments, a hob's zones, a coffee machine's drinks — and three `rows`
+under a hairline (the programme, water, energy, a filter to clean, the last coffee: picked, ordered, named, coloured and
+given actions in the rows editor), `maintenance` as rows of their own, and buttons only where the integration's own code
+says exactly how (start, pause, stop, power, the light; the rest is shown and never written) — or, for any integration,
+the Start, Pause, Resume and Stop its `roles` name (`start`, `pause`, `resume`, `stop`: a device's button, a helper's
+button or a script), found by themselves where the integration names its buttons so. `confirm` names the commands that
+ask first in Home Assistant's dialog, wherever they are tapped (its buttons, its power button, the row's round):
+`start`, `resume`, `pause`, `stop`, `off` (switching off, or `power`), `feed`, `clean` and `level`, in any case, in
+words that name the appliance ("Start Oven?"). Unset, a stop asks, and so do switching off while it runs, waits to start
+or has failed (a fridge at any time), a meal, a clean and a levelling, and a litter box's resume; an oven, a microwave
+and an air fryer ask before they start too (#128: a stray tap heats whatever was left inside, with nobody by it), where
+a kettle, which stops at the boil, and a washer, a dryer or a dishwasher start at one tap. An oven's buttons are Start,
 Stop, the light and its power, each where its integration can do it. A list replaces that set: name every command that
 asks, `off` included (`confirm: [start, stop, off]`); `confirm: []` asks for nothing, which is the home's choice, where
-a list of names the card does not know asks as unset does, and its editor says which it does not know. The editor
-offers the commands its appliance can send at all, by the entities the card found, whatever they list at the moment. `variant: compact`, `ring` (a dial) and `row` are the smaller layouts; every part
-switches off (`show_power`, `show_hero`, `show_progress`, `show_rows`, `show_controls`…). An administrator sees a bell
-beside the time left: "Tell me when it's done" writes a normal automation that notifies their phone when the appliance
-finishes.
+a list of names the card does not know asks as unset does, and its editor says which it does not know. The editor offers
+the commands its appliance can send at all, by the entities the card found, whatever they list at the moment. `variant:
+compact`, `ring` (a dial) and `row` are the smaller layouts; every part switches off (`show_power`, `show_hero`,
+`show_progress`, `show_rows`, `show_controls`…). An administrator sees a bell beside the time left: "Tell me when it's
+done" writes a normal automation that notifies their phone when the appliance finishes.
 
 ```yaml
 type: custom:fluvy-appliance-card

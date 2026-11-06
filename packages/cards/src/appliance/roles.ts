@@ -15,11 +15,11 @@ import { entityOf, stateOf } from './refs.js';
  * plays it over a helper a person attached to its device (a template, a utility meter), then the one known more
  * surely. A role the card names by hand (`roles`) wins, and one it names `none` plays no part (#127). The rest of a
  * device's entities are read in kind: its compartments and their setpoints, its maintenance flags, a fridge's quick
- * modes, a hob's plates, a coffee machine's counters. An integration's system buttons — firmware, reboot, a factory reset — are never anything, read
- * by their key or their id without the device's name (a Miele coffee machine is the "Coffee system", and all its ids
- * say so). LG's older integration says the whole cycle in the attributes of the device's own sensor, and the sensors
- * it makes for most of them are off by default: each of those attributes is a candidate of its own
- * ("sensor.washer#remain_time", `refs.ts`), under any sensor that says the same.
+ * modes, a hob's plates, a coffee machine's counters. An integration's system buttons — firmware, reboot, a factory
+ * reset — are never anything, read by their key or their id without the device's name (a Miele coffee machine is the
+ * "Coffee system", and all its ids say so). LG's older integration says the whole cycle in the attributes of the
+ * device's own sensor, and the sensors it makes for most of them are off by default: each of those attributes is a
+ * candidate of its own ("sensor.washer#remain_time", `refs.ts`), under any sensor that says the same.
  */
 
 export type ApplianceRole =

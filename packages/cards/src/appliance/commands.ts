@@ -81,7 +81,7 @@ export const CONFIRM_DEFAULT: readonly ConfirmName[] = ['stop', 'off', 'feed', '
  */
 const CAVITY: ReadonlySet<ApplianceKind> = new Set(['oven', 'microwave', 'air_fryer']);
 
-/** What a card of a kind asks before where it names nothing: `CONFIRM_DEFAULT`, a start first where it heats a cavity. */
+/** What a card of a kind asks before where it names nothing: `CONFIRM_DEFAULT`, and a start where it heats a cavity. */
 export const confirmDefault = (kind: ApplianceKind | undefined): readonly ConfirmName[] =>
   kind && CAVITY.has(kind) ? ['start', ...CONFIRM_DEFAULT] : CONFIRM_DEFAULT;
 
@@ -101,7 +101,7 @@ export const CONFIRM_ACTION: Readonly<Record<ConfirmName, Action>> = {
 const confirmList = (named: unknown): readonly unknown[] | undefined =>
   typeof named === 'string' ? [named] : Array.isArray(named) ? named : undefined;
 
-/** A name as a person writes it, as the card reads it: in any case, `power` for switching off; none it does not know. */
+/** A name as a person writes it, as the card reads it: in any case, `power` for switching off; none it doesn't know. */
 function confirmName(name: unknown): ConfirmName | undefined {
   const word = typeof name === 'string' ? name.trim().toLowerCase() : '';
   const read = word === 'power' ? 'off' : word;

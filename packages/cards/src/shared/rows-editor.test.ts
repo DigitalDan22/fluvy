@@ -568,7 +568,7 @@ describe('a list’s own entities (`own`, an appliance’s device’s, #115)', (
   it('says what the list is for, and offers the device’s entities until its switch lets the house in', async () => {
     const element = await editor({ device: 'de1' });
     expect(element.shadowRoot!.querySelector('.list__helper')?.textContent).toBe(
-      'Name the entities the card did not find.',
+      'Name the entities the card did not find, or None for one it should not use.',
     );
     const [own, item, picker] = forms(element);
     expect(own?.data).toEqual({ roles: true });

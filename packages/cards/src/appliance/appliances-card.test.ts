@@ -233,7 +233,12 @@ describe('the house’s appliances', () => {
       appliances: [
         { device: 'lg-fridge', kind: 'fridge' },
         'hc-oven',
-        { device: 'lg-washer', rows: ['program', 'energy'], confirm: [] },
+        {
+          device: 'lg-washer',
+          rows: ['program', 'energy'],
+          confirm: [],
+          roles: [{ role: 'remote', entity: 'none' }],
+        },
       ],
     });
     type Whole = HTMLElement & { config: Record<string, unknown>; hass: HomeAssistant };
@@ -255,6 +260,8 @@ describe('the house’s appliances', () => {
       _now: AT,
     });
     expect(wholes()[2]!.config['rows']).toEqual(['program', 'energy']);
+    // its roles as named, a role named none among them (#127)
+    expect(wholes()[2]!.config['roles']).toEqual([{ role: 'remote', entity: 'none' }]);
     // what its whole cards ask before (#120): the list's, where an appliance names nothing of its own
     expect(wholes()[2]!.config['confirm']).toEqual([]);
     // a whole card holds in 300 at least (four across a desktop's band), rows alone in 240
