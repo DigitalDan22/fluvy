@@ -69,6 +69,7 @@ import {
   printerDevices,
   printerEntities,
   printerTrays,
+  traySlots,
   type PrinterEntities,
   type PrinterRole,
 } from './roles.js';
@@ -550,7 +551,10 @@ export class FluvyPrinterCard extends Card<PrinterCardConfig> {
   });
   /** Whether each heater reads "now / target": kept between renders so a reading near its target does not flicker. */
   private readonly heating = new Map<'nozzle' | 'bed', boolean>();
-  /** The device, its roles and its trays, found once per registry and config: the search walks every entity. */
+  /**
+   * The device, its roles and its trays, found once per registry and config (the search walks every entity), the
+   * trays' order again once their slots say otherwise.
+   */
   private found: PrinterFound | undefined;
 
   /** A printer has no entity of its own to show: its device does; `entity` names one of its entities instead. */
@@ -673,20 +677,34 @@ export class FluvyPrinterCard extends Card<PrinterCardConfig> {
     return v === 'compact' || v === 'row' ? v : 'full';
   }
 
-  /** The printer: its device, its roles (found on it, then the ones named by hand) and its filament trays. */
+  /**
+   * The printer: its device, its roles (found on it, then the ones named by hand) and its filament trays, in the order
+   * their slots give once they say them (an AMS read while out of reach says none, and its trays sort by their ids).
+   */
   private printer(): PrinterFound {
     const registry = this.hass?.entities;
     const key = JSON.stringify([this.config?.device, this.config?.entity, this.config?.roles]);
-    if (this.found && this.found.registry === registry && this.found.key === key) return this.found;
+    const found = this.found;
+    if (found && found.registry === registry && found.key === key) {
+      if (traySlots(this.hass, found.trays) === found.slots) return found;
+      this.found = { ...found, ...this.traysOf(found.device) };
+      return this.found;
+    }
     const device = printerDevice(this.hass, this.config?.device, this.config?.entity);
     this.found = {
       registry,
       key,
       device,
       entities: printerEntities(this.hass, device, this.config?.roles ?? [], this.config?.entity),
-      trays: printerTrays(this.hass, device),
+      ...this.traysOf(device),
     };
     return this.found;
+  }
+
+  /** A device's trays in their order, and the slots that order was read with. */
+  private traysOf(device: string | undefined): Pick<PrinterFound, 'trays' | 'slots'> {
+    const trays = printerTrays(this.hass, device);
+    return { trays, slots: traySlots(this.hass, trays) };
   }
 
   private roles(): PrinterEntities {
@@ -1683,4 +1701,6 @@ interface PrinterFound {
   readonly device: string | undefined;
   readonly entities: PrinterEntities;
   readonly trays: string[];
+  /** The trays' slots as their states said them when they were ordered (`traySlots`). */
+  readonly slots: string;
 }

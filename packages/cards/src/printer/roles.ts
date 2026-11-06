@@ -637,3 +637,12 @@ export function printerTrays(
     )
     .map((entry) => entry.entity_id);
 }
+
+/**
+ * What the trays' order reads of their states: each tray's slot, which an AMS since Bambu Lab's 2.2 says in an
+ * attribute, and says only while it is in reach. The order is read again when this changes, never on every state.
+ */
+export const traySlots = (
+  hass: Pick<HomeAssistant, 'states'> | undefined,
+  trays: readonly string[],
+): string => trays.map((id) => String(hass?.states?.[id]?.attributes['slot'] ?? '')).join(' ');

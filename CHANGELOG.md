@@ -54,6 +54,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   "Kitchen").
 - The Openings and Automations cards' editors take as many rows as the cards fold after, where they stopped at 20 and
   30.
+- The Printer card puts an AMS's trays in their slots' order once the AMS says them, where trays first read while it
+  was out of reach (after a restart) kept their ids' order until the page was reloaded.
 
 ## [1.15.0] — 2026-11-06
 
