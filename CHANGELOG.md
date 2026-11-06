@@ -5,6 +5,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.16.0] — 2026-11-06
+
 ### Visible on upgrade
 
 - The Appliance card of an oven whose integration can start it (LocalThings, Home Connect, Miele, SmartThings) shows a
