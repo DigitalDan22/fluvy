@@ -263,6 +263,12 @@
   color: var(--fluvy-accent);
 }
 
+/* the glyph keeps its 20 whatever room the pill is given: the name gives way to its ellipsis, never the glyph */
+.am-area__badge > svg,
+.am-area__badge > .fv-haicon {
+  flex: none;
+}
+
 .am-area__stats {
   display: grid;
   grid-template-columns: 96px 96px 96px;

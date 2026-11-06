@@ -12,7 +12,8 @@
  * call, its blinds' closes them (a roof that only tilts by its slats, a screen that can do neither left out), asked
  * first in one question for the blinds and the roof alike, both moving at its yes, a hold on
  * a set of several opens the room and on an entity its details, one that cannot be read or act takes no tap, and half
- * a section holds as many as the name leaves room for;
+ * a section holds as many as the name leaves room for; its picture's pill fits its glyph and its name whole as the card's
+ * width moves, its glyph coming and going with the room;
  * the map's zones hold the right faces, a person nobody can place stands in Unknown, the rows say
  * the distance only for someone away with a fix, and Home Assistant's map, which the playground cannot make,
  * gives way to the zones silently.
@@ -355,6 +356,38 @@ const navigations = (page) => page.evaluate(() => window.__navigations.splice(0)
       answered.join(' | ') ===
         'cover.close_cover cover.rm_sunroom_blinds | cover.close_cover_tilt cover.rm_sunroom_roof',
     JSON.stringify({ asked, before, answered }),
+  );
+  await page.close();
+}
+
+/* ---------- the room's pill as its card's width moves: its glyph comes and goes, the pill fits what it holds ---------- */
+{
+  // half of a 260 section (122): "Garten" holds its pill without its glyph; at 152 with it, and back again
+  const page = await suite.sheet('rooms', { width: 260, lang: 'hu' });
+  const garden = frame(page, 'Room · four areas, two sensors each (#39)')
+    .locator('fluvy-room-card')
+    .first();
+  const pill = () =>
+    garden.evaluate((card) => {
+      const badge = card.shadowRoot.querySelector('.am-area__badge');
+      const glyph = badge.querySelector(':scope > svg, :scope > .fv-haicon');
+      const name = badge.querySelector('.fv-chip__name');
+      return {
+        glyph: glyph ? Math.round(glyph.getBoundingClientRect().width * 100) / 100 : 0,
+        whole: name.scrollWidth <= name.clientWidth + 0.5,
+        held: badge.scrollWidth <= badge.clientWidth + 0.5,
+      };
+    });
+  const widths = [];
+  for (const width of ['', '152px', '122px']) {
+    await garden.evaluate((card, w) => (card.style.width = w), width);
+    await settle(page, 300);
+    widths.push(await pill());
+  }
+  check(
+    'a room’s pill fits what it holds as its card’s width moves: its glyph whole where it comes, its name whole',
+    widths.map((p) => p.glyph).join() === '0,20,0' && widths.every((p) => p.whole && p.held),
+    JSON.stringify(widths),
   );
   await page.close();
 }

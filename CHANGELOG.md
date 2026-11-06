@@ -56,6 +56,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   30.
 - The Printer card puts an AMS's trays in their slots' order once the AMS says them, where trays first read while it
   was out of reach (after a restart) kept their ids' order until the page was reloaded.
+- The Room card's picture pill fits its glyph and its name whole when the card's width changes after it is drawn (a
+  phone turned, a column resized, a slow first layout), where a pill first drawn without its glyph kept that width
+  and squeezed the glyph and cut the name once the glyph came; its glyph never shrinks.
 
 ## [1.15.0] — 2026-11-06
 

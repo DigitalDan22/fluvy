@@ -802,18 +802,20 @@ const up4 = (n: number): number => Math.ceil(n / 4) * 4;
  * grid — the rule the design sheets are measured by. The text is measured with layout metrics (the used
  * `width` under `max-content`), not client rects: a card that is still scaling in would otherwise measure
  * 1.5 % short. The used width keeps its fraction and is rounded up — `offsetWidth` rounds to the nearest
- * pixel, and a 68.4 px label given a 68 px box breaks onto a second line. `force` re-measures pills whose
- * text did not change (a web font arrived).
+ * pixel, and a 68.4 px label given a 68 px box breaks onto a second line. A pill is measured again when what it
+ * holds changes: its words, or what stands beside them (a room's glyph comes with the room for it, where the pill
+ * fitted to its name alone squeezed the glyph and cut the name). `force` re-measures pills whose content did not
+ * change (a web font arrived).
  */
 export function fitPills(root: ParentNode, force = false): void {
   root.querySelectorAll<HTMLElement>('[data-fit]').forEach((el) => {
     const pad = Number(el.dataset['fit']);
     if (!pad) return;
-    const text = el.textContent ?? '';
-    if (!force && el.dataset['fitKey'] === text) return;
-    const previous = el.style.width;
     // the box that lays the content out: a chip's pill, otherwise the pill itself
     const box = el.querySelector<HTMLElement>('.fv-chip__pill') ?? el;
+    const held = `${box.childElementCount} ${el.textContent ?? ''}`;
+    if (!force && el.dataset['fitKey'] === held) return;
+    const previous = el.style.width;
     box.style.paddingLeft = ''; // measured without last time's lead-in and tail
     box.style.paddingRight = '';
     el.style.width = 'max-content';
@@ -840,7 +842,7 @@ export function fitPills(root: ParentNode, force = false): void {
     box.style.justifyContent = 'flex-start';
     box.style.paddingLeft = `${lead}px`;
     box.style.paddingRight = `${Math.max(0, width - natural - lead)}px`;
-    el.dataset['fitKey'] = text;
+    el.dataset['fitKey'] = held;
   });
 }
 
