@@ -1501,6 +1501,30 @@ await page
   .catch(() => {});
 await page.evaluate(() => document.fonts.ready);
 if (isHttp) await page.waitForTimeout(1500); // cards fit their pills after the font arrives, and once more at 1.2 s (the safety re-fit)
+// A card's entrance (`fv-enter`, 1 ms under reduced motion) holds its first keyframe until the page paints it: a heavy
+// sheet on a runner without a GPU (the see-through cards' blur) can still be at its start here, every box scaled to
+// 0.985. Measure once every finite animation has ended (the infinite ones, a liquid gauge's waves, never do), within
+// ten seconds.
+if (isHttp)
+  await page
+    .evaluate(() => {
+      // the document's own list leaves out the cards': each shadow root keeps its own
+      const animations = [];
+      const walk = (root) => {
+        animations.push(...root.getAnimations());
+        for (const el of root.querySelectorAll('*')) if (el.shadowRoot) walk(el.shadowRoot);
+      };
+      walk(document);
+      return Promise.race([
+        Promise.all(
+          animations
+            .filter((animation) => Number.isFinite(animation.effect?.getComputedTiming().endTime))
+            .map((animation) => animation.finished.catch(() => undefined)),
+        ),
+        new Promise((resolve) => setTimeout(resolve, 10_000)),
+      ]);
+    })
+    .catch(() => {});
 
 const frames = await page.evaluate(audit, {
   frameSel: args.frame,
