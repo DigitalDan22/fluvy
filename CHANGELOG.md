@@ -5,6 +5,16 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.15.0] — 2026-11-06
+
+### Visible on upgrade
+
+- The Appliance card of an espresso machine over MQTT says "Needs attention" or "Error" in its head, its own word in
+  its alarm row, where the DE1 said "Refill" or "Fatal error" in English.
+- A wall shows a view's own background where the view has one, where the wall's mesh or page colour covered it.
+- Labels in buttons, chips, badges, pills, dropdowns and the view tabs move up by half a pixel to a pixel in Safari
+  and Home Assistant's iPhone app, to the middle of their control as in Chrome (#122).
+
 ### Added
 
 - The Appliance card asks first before the commands a home names (`confirm: [start, stop]`): a start, a resume, a
