@@ -263,10 +263,13 @@ function perform(host: QuickHost, flip: Flip): void {
  * An action answered no is Home Assistant's to drop, and the question goes with it.
  */
 const asked = new WeakMap<object, () => void>();
+/** Whether the window hears the yes Home Assistant fires from its root: from the first question on, once. */
+let hearing = false;
 
 /**
- * Home Assistant's yes: its `fire-dom-event` comes back as `ll-custom` from the card that asked, which hears it on
- * itself, in the page or drawn anew since; only the action it asked about moves its round, and only once.
+ * Home Assistant's yes: its `fire-dom-event` comes back as `ll-custom`, from its root on 2026.9 (it bubbles to the
+ * window, never through the card) and from the card that asked on later frontends (which hears it on itself, in the
+ * page or drawn anew since); only the action it asked about moves its round, and only once.
  */
 export function answered(event: Event): void {
   // any other `ll-custom` (a frontend integration's, a page's) is no question of the rounds'
@@ -311,6 +314,10 @@ function runFlip(
     confirmation: { ...own, text: own.text ?? (said && said !== key ? said : name) },
   };
   asked.set(action, () => perform(host, flip));
+  if (!hearing) {
+    window.addEventListener('ll-custom', answered);
+    hearing = true;
+  }
   host.run(action, undefined);
 }
 

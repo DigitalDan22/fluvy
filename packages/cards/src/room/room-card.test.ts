@@ -974,6 +974,37 @@ describe('a room’s quick actions (#113)', () => {
     }
   });
 
+  it('moves a set at the yes Home Assistant 2026.9 fires from its root, which bubbles to the window and never through the card', async () => {
+    const { asked, done } = homeAssistant();
+    try {
+      sent.length = 0;
+      const config = {
+        area: 'lounge',
+        quick_actions: [{ group: 'covers', tap_action: { action: 'toggle', confirmation: true } }],
+      } as const;
+      const house = lounge([['cover.lounge_louvre', 'open', { supported_features: 16 | 32 }]]);
+      const card = await room(config, house);
+      rounds(card)[0]!.click();
+      expect(sent).toEqual([]);
+      const action = asked[0]!.action;
+      document.body.dispatchEvent(
+        new CustomEvent('ll-custom', { detail: action, bubbles: true, composed: true }),
+      );
+      expect(moved()).toEqual([
+        'close_cover cover.lounge_blinds',
+        'close_cover_tilt cover.lounge_louvre',
+      ]);
+      // once: the same yes again, or a foreign one, moves nothing
+      document.body.dispatchEvent(
+        new CustomEvent('ll-custom', { detail: action, bubbles: true, composed: true }),
+      );
+      window.dispatchEvent(new CustomEvent('ll-custom', { detail: { ...action } }));
+      expect(sent).toHaveLength(2);
+    } finally {
+      done();
+    }
+  });
+
   it('moves a set at its yes where the card was drawn anew while Home Assistant asked, and keeps nothing of a question answered no', async () => {
     const { asked, yes, done } = homeAssistant();
     const listening: string[] = [];
@@ -1007,10 +1038,10 @@ describe('a room’s quick actions (#113)', () => {
       yes(asked[0]);
       yes({ node: again, action: { ...asked[0]!.action } });
       expect(sent).toHaveLength(2);
-      // a question answered no (Home Assistant says nothing) leaves no listener behind, nor one asked before it
+      // a question answered no (Home Assistant says nothing) moves nothing, and the window hears the yes once at most
       rounds(again)[0]!.click();
       expect(asked).toHaveLength(2);
-      expect(listening).not.toContain('ll-custom');
+      expect(listening.filter((type) => type === 'll-custom').length).toBeLessThanOrEqual(1);
       expect(sent).toHaveLength(2);
     } finally {
       window.addEventListener = add;
