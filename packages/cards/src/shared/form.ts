@@ -127,12 +127,16 @@ export const areaField = (name = 'area'): HaFormSchemaItem => ({
   selector: { area: {} },
 });
 export const boolField = (name: string): HaFormSchemaItem => ({ name, selector: { boolean: {} } });
+/** A number typed in a box, from `min` to `max`; without a `max` where the card takes any (a list's rows). */
 export const numberField = (
   name: string,
   min: number,
-  max: number,
+  max?: number,
   step = 1,
-): HaFormSchemaItem => ({ name, selector: { number: { min, max, step, mode: 'box' } } });
+): HaFormSchemaItem => ({
+  name,
+  selector: { number: { min, ...(max === undefined ? {} : { max }), step, mode: 'box' } },
+});
 /**
  * A choice among values the catalogue names (a value without a word does not compile), in the editor's language;
  * `custom` lets a value of the person's own be typed as well (an attribute's name, a template); `words` names a value

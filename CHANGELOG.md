@@ -52,6 +52,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   Obývačka" is "Obývačka", where they read "Sala estar", "Fürdő Konyha", "Quarto 2", "haut", "d' Salon" and "teploty
   Obývačka"; a sensor's "and" goes with its words in every language ("Temperature and Humidity Sensor Kitchen" is
   "Kitchen").
+- The Openings and Automations cards' editors take as many rows as the cards fold after, where they stopped at 20 and
+  30.
 
 ## [1.15.0] — 2026-11-06
 

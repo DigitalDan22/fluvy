@@ -418,7 +418,8 @@ export class FluvyAutomationsCard extends Card<AutomationsCardConfig> {
         fieldRow(selectField('show', AUTOMATIONS_SHOW), selectField('sort', AUTOMATIONS_SORT)),
         fieldRow(boolField('show_add'), boolField('show_switch')),
         fieldRow(boolField('show_last'), boolField('show_next')),
-        fieldRow(boolField('show_filters'), numberField('max_rows', 1, 30)),
+        // as many rows as asked for, past thirty too (an automatic dashboard in full asks for every one)
+        fieldRow(boolField('show_filters'), numberField('max_rows', 1)),
         entitiesField('entities', ['automation']),
         { name: 'area', selector: { area: {} } },
         fieldRow(entityField(['binary_sensor'], 'workday', false), numberField('time_step', 1, 60)),

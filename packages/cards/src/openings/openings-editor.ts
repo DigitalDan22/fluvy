@@ -138,7 +138,8 @@ export function getConfigForm(): LovelaceConfigForm {
       titleFields(),
       fieldRow(iconField(), showIconField()),
       ...colourFields(),
-      fieldRow(selectField('variant', OPENINGS_VARIANTS), numberField('max_rows', 1, 20)),
+      // as many rows as asked for, past twenty too (an automatic dashboard in full asks for every one)
+      fieldRow(selectField('variant', OPENINGS_VARIANTS), numberField('max_rows', 1)),
       fieldRow(boolField('show_count'), boolField('show_time')),
       // where the rows read their last change from, for the rows that say nothing: while the times show
       onlyWhen(({ show_time, variant }) => show_time !== false && variant !== 'compact', {

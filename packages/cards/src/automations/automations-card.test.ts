@@ -273,6 +273,11 @@ describe('the automations card', () => {
     expect(FluvyAutomationsCard.layoutHeight({ ...config, max_rows: 30 })).toBeLessThan(
       FluvyAutomationsCard.layoutHeight(config),
     );
+    // and its editor takes as many: a box from one, with no top
+    const field = FluvyAutomationsCard.getConfigForm()
+      .schema.flatMap((item) => item.schema ?? [item])
+      .find((item) => item.name === 'max_rows');
+    expect(field?.selector).toEqual({ number: { min: 1, step: 1, mode: 'box' } });
   });
 
   it('flips the switch under the finger and asks Home Assistant once', async () => {

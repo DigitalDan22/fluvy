@@ -229,6 +229,12 @@ describe('the openings card’s fold', () => {
     // the "All sensors" row after the rows asked for
     const folded = await draw({ rows, max_rows: 20 });
     expect(folded.shadowRoot!.querySelectorAll('.am-rows .fv-row')).toHaveLength(21);
+    // and its editor takes as many: a box from one, with no top
+    const field = openingsEditor
+      .getConfigForm()
+      .schema.flatMap((item) => item.schema ?? [item])
+      .find((item) => item.name === 'max_rows');
+    expect(field?.selector).toEqual({ number: { min: 1, step: 1, mode: 'box' } });
   });
 });
 
