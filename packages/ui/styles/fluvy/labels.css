@@ -9,10 +9,12 @@
  * words alone       a button, a badge or a chip's pill that holds nothing but its words (and at most the file chooser
  *                   laid over it) is a block centring its one line (in a flex row the words are an anonymous box,
  *                   which no rule can trim)
- * words of their own   a chip's label or name (a row that fills may give a label less than its sides, and the row
- *                   centres it all the same), a room's name, a dropdown's value, a row's value pill, a month's day,
- *                   the period's dates, a state on the Activity page, a sheet's Run that turns to Done: their own
- *                   box, the ellipsis a name may end in clipping no more of a letter than it did */
+ * words of their own   a chip's label alone in it (a row that fills may give it less than its sides, and the row
+ *                   centres it all the same) or its name, a room's name, a dropdown's value, a row's value pill, a
+ *                   month's day, the period's dates, a state on the Activity page, a sheet's Run that turns to Done:
+ *                   their own box, the ellipsis a name may end in clipping no more of a letter than it did
+ * A chip's label beside its glyph stays the pill's own line, which the glyph leads (13 px words, a line both engines
+ * already draw alike): the glyph stands where its pill's sides put it, measured as the start of that line. */
 
 @supports (text-box: trim-both cap alphabetic) {
   :is(.fv-btn, .fv-badge, .fv-chip__pill):not(:has(> :not(input))) {
