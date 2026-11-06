@@ -1,4 +1,5 @@
 import {
+  deviceNameOf,
   entityName,
   formatNumber,
   localize,
@@ -4642,7 +4643,7 @@ export class FluvyApplianceCard extends Card<ApplianceCardConfig> {
     const device = view.found.device ? this.hass?.devices?.[view.found.device] : undefined;
     const head = namesHead(
       view.found.candidates.map((candidate) => this.entity(candidate.id).name),
-      device?.name_by_user || device?.name || '',
+      deviceNameOf(device) ?? '',
     );
     for (const id of r.counters)
       out.push({

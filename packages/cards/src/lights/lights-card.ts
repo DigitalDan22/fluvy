@@ -3,18 +3,19 @@ import {
   actionRuns,
   areaEntities,
   areasInOrder,
+  entriesOf,
   formatNumber,
+  idsOf,
   isActive,
   isUsable,
+  registryText,
   strings,
+  textName,
   type EntityName,
   type EntityView,
   type FluvyCardConfig,
   type LovelaceGridOptions,
   type Registries,
-  entriesOf,
-  idsOf,
-  textName,
 } from '@fluvy/core';
 import {
   chips,
@@ -357,7 +358,7 @@ export class FluvyLightsCard extends FluvyTileCard {
     const lamps = this.lamps();
     const w = this.contentWidth;
     const area = this.room?.area ? this.hass?.areas?.[this.room.area] : undefined;
-    const name = textName(this.config?.name) ?? area?.name ?? s(this.hass, 'title');
+    const name = textName(this.config?.name) ?? (registryText(area?.name) || s(this.hass, 'title'));
     // the room's own glyph — never a light's, so the room's circle is never taken for one of its lights
     const glyph = this.config?.icon ?? area?.icon ?? 'home';
     hideEmpty(this, !lamps.length);

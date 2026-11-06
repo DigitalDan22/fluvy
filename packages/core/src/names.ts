@@ -1,4 +1,5 @@
 import type { EntityView } from './entity.js';
+import { deviceNameOf, registryText } from './registry.js';
 import type { DeviceRegistryEntry, HassEntity, HomeAssistant } from './ha/types.js';
 
 /*
@@ -29,7 +30,7 @@ const stateName = (stateObj: HassEntity): string => {
 };
 
 const deviceName = (device: DeviceRegistryEntry): string | undefined =>
-  (device.name_by_user || device.name)?.trim();
+  deviceNameOf(device)?.trim();
 
 /**
  * An entity's name without its device's in front of it ("Kitchen Light" of a "Kitchen": "Light"), its first word
@@ -53,7 +54,7 @@ function stripPrefix(name: string, prefix: string): string | undefined {
 function ownPart(stateObj: HassEntity, registries: NameRegistries): string | undefined {
   const entry = registries.entities?.[stateObj.entity_id];
   if (!entry) return stateName(stateObj);
-  const name = entry.name || undefined;
+  const name = registryText(entry.name) || undefined;
   const device = entry.device_id ? registries.devices?.[entry.device_id] : undefined;
   if (!device) return name;
   const of = deviceName(device);
@@ -81,9 +82,9 @@ function partNames(
       : item.type === 'device'
         ? device && deviceName(device)
         : item.type === 'area'
-          ? area?.name?.trim()
+          ? registryText(area?.name)?.trim()
           : item.type === 'floor'
-            ? floor?.name?.trim()
+            ? registryText(floor?.name)?.trim()
             : item.type === 'text'
               ? item.text
               : '',
