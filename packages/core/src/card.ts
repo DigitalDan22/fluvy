@@ -166,14 +166,20 @@ const wearSurfaces = (): void => {
  */
 let glass: typeof import('./look/glass.js') | undefined;
 let fetchingGlass: Promise<void> | undefined;
+/** Whether the fetch is over, landed or failed: a first frame never waits on one that cannot land. */
+let glassSettled = false;
 function fetchGlass(): Promise<void> {
-  fetchingGlass ??= import('./look/glass.js').then(
-    (module) => {
-      glass = module;
-      wearSurfaces();
-    },
-    () => undefined,
-  );
+  fetchingGlass ??= import('./look/glass.js')
+    .then(
+      (module) => {
+        glass = module;
+        wearSurfaces();
+      },
+      () => undefined,
+    )
+    .finally(() => {
+      glassSettled = true;
+    });
   return fetchingGlass;
 }
 
@@ -183,14 +189,20 @@ function fetchGlass(): Promise<void> {
  */
 let quietSheet: CSSStyleSheet | undefined;
 let fetchingQuiet: Promise<void> | undefined;
+/** Whether the fetch is over, landed or failed: a first frame never waits on one that cannot land. */
+let quietSettled = false;
 function fetchQuiet(): Promise<void> {
-  fetchingQuiet ??= import('./look/quiet.js').then(
-    (module) => {
-      quietSheet = module.quietSheet;
-      wearSurfaces();
-    },
-    () => undefined,
-  );
+  fetchingQuiet ??= import('./look/quiet.js')
+    .then(
+      (module) => {
+        quietSheet = module.quietSheet;
+        wearSurfaces();
+      },
+      () => undefined,
+    )
+    .finally(() => {
+      quietSettled = true;
+    });
   return fetchingQuiet;
 }
 
@@ -564,10 +576,13 @@ export abstract class FluvyCard<C extends FluvyCardConfig = FluvyCardConfig>
     this.wearSurface();
   }
 
-  /** What the card's first frame waits for: what a see-through or a quiet card wears, until it has landed. */
+  /**
+   * What the card's first frame waits for: what a see-through or a quiet card wears, until its fetch is over (one that
+   * failed leaves the card solid or dashed, never waiting).
+   */
   private wearing(): Promise<void> | undefined {
-    if (this.surface && cardOpacity(this.config) < 100 && !glass) return fetchGlass();
-    if (this.asksQuiet() && !quietSheet) return fetchQuiet();
+    if (this.surface && cardOpacity(this.config) < 100 && !glassSettled) return fetchGlass();
+    if (this.asksQuiet() && !quietSettled) return fetchQuiet();
     return undefined;
   }
 
