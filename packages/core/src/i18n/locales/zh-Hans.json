@@ -338,6 +338,7 @@
     "editor_confirm": "操作前确认",
     "editor_confirm_unknown": "未知，已略过：{words}。",
     "editor_confirm_unknown_all": "未知：{words}。卡片执行默认命令前会先询问。",
+    "editor_confirm_each": "留空时，每台设备按其卡片上的设置询问，烤箱、微波炉或空气炸锅在启动前也会询问。在此选择的项目，每台设备都会询问。",
     "editor_show_programs": "可选程序",
     "editor_unload_reminder": "取出提醒",
     "editor_unload_after": "提醒延迟（分钟）",
@@ -721,7 +722,9 @@
     "no_helpers": "无辅助元素",
     "no_actions": "无操作",
     "no_scenes": "无场景",
-    "no_tabs": "无标签页"
+    "no_tabs": "无标签页",
+    "fluvy_updated": "Fluvy 已更新",
+    "reload": "重新加载"
   },
   "state": {
     "unavailable": "不可用",
@@ -1356,8 +1359,9 @@
     "weekday": "星期",
     "short": "短",
     "soft": "柔和",
-    "brightness": "跟随亮度",
+    "brightness": "柔和，跟随亮度",
     "full_colour": "全彩",
+    "full_brightness": "完整，跟随亮度",
     "palette": "主题灯光",
     "temperature": "灯泡白光",
     "regular": "常规",

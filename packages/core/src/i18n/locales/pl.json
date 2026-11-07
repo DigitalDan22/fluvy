@@ -404,6 +404,7 @@
     "editor_confirm": "Pytaj przed wykonaniem",
     "editor_confirm_unknown": "Nieznane, pominięte: {words}.",
     "editor_confirm_unknown_all": "Nieznane: {words}. Karta zapyta przed użyciem domyślnych poleceń.",
+    "editor_confirm_each": "Puste: każde urządzenie pyta tak jak na swojej karcie, a piekarnik, mikrofalówka lub frytkownica beztłuszczowa także przed uruchomieniem. O to, co tu wybierzesz, zapyta każde urządzenie.",
     "editor_show_programs": "Programy do wyboru",
     "editor_unload_reminder": "Przypomnienie o wyjęciu",
     "editor_unload_after": "Przypomnij po (min)",
@@ -962,7 +963,9 @@
     "no_helpers": "Brak pomocników",
     "no_actions": "Brak akcji",
     "no_scenes": "Brak scen",
-    "no_tabs": "Brak zakładek"
+    "no_tabs": "Brak zakładek",
+    "fluvy_updated": "Fluvy został zaktualizowany",
+    "reload": "Odśwież"
   },
   "cover": {
     "position": "Pozycja",
@@ -1932,8 +1935,9 @@
     "weekday": "Dzień tygodnia",
     "short": "Krótki",
     "soft": "Miękki",
-    "brightness": "Z jasnością",
+    "brightness": "Miękki, z jasnością",
     "full_colour": "Pełny kolor",
+    "full_brightness": "Pełny, z jasnością",
     "palette": "Światło motywu",
     "temperature": "Biel żarówki",
     "regular": "Zwykły",
