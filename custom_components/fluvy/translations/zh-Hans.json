@@ -27,7 +27,7 @@
     },
     "resources_yaml_mode": {
       "title": "添加 Fluvy 的仪表盘资源",
-      "description": "你的仪表盘资源由 YAML 管理，Fluvy 无法自行注册。请在 configuration.yaml 的 `lovelace: resources:` 下添加以下内容，然后刷新浏览器：\n\n```yaml\n  - url: {url}\n    type: module\n```\n\nFluvy 已在每个页面加载；此资源可让仪表盘在渲染前先加载它。"
+      "description": "您的仪表盘资源由 YAML 管理，Fluvy 无法自行注册。请在 configuration.yaml 的 `lovelace: resources:` 下添加以下内容，然后刷新浏览器：\n\n```yaml\n  - url: {url}\n    type: module\n```\n\nFluvy 已在每个页面加载；此资源可让仪表盘在渲染前先加载它。"
     }
   }
 }
