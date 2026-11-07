@@ -116,9 +116,11 @@ interface PlaceWord {
  * A name without the words that say a reading rather than a place (`PLACE_NOISE`, written plain, read plain letter by
  * letter where each stands: "Snímač" as "snimac", "Hőmérséklet" as "homerseklet"; a letter that would not stay one, ß,
  * as written), nor the words that join them (`PLACE_JOINS`: an article, a preposition, a conjunction, an elision),
- * read as written — "là" is no "la", "Nó" no "no" — save where one stands between two words that stay: "Fürdő és
- * Konyha", "Sala de estar" and "Salle d'eau" keep theirs, where "Capteur d'humidité Salon" is "Salon". What goes is cut
- * from the name as written.
+ * read as written — "là" is no "la", "Nó" no "no", and the "O" of "O’Brien" no word of its own — save where one stands
+ * between two words that stay: "Fürdő és Konyha", "Sala de estar" and "Salle d'eau" keep theirs, where "Capteur
+ * d'humidité Salon" is "Salon". A join of one letter ("a", "e", "i", "o", "v", "y") is a label where it stands after
+ * the place or last, and stays: "Sensor Kid E" is "Kid E", "Hall I Sensor" "Hall I"; only before the place does it go,
+ * "Termostat V obývačke" being "obývačke". What goes is cut from the name as written.
  */
 function withoutPlaceNoise(name: string): string {
   const written = name.normalize('NFC');
@@ -129,11 +131,17 @@ function withoutPlaceNoise(name: string): string {
     })
     .join('');
   const found = (text: string, words: RegExp, join: boolean): PlaceWord[] =>
-    [...text.matchAll(words)].map(({ index, 0: word }) => ({
-      at: index,
-      end: index + word.length,
-      join,
-    }));
+    [...text.matchAll(words)]
+      // a join glued to an apostrophe and a letter is part of a name, unless it is an elision itself
+      .filter(
+        ({ index, 0: word }) =>
+          !join || /['’]$/.test(word) || !/^['’]\p{L}/u.test(text.slice(index + word.length)),
+      )
+      .map(({ index, 0: word }) => ({
+        at: index,
+        end: index + word.length,
+        join,
+      }));
   const words = [...found(read, PLACE_NOISE, false), ...found(written, PLACE_JOINS, true)].sort(
     (a, b) => a.at - b.at,
   );
@@ -150,14 +158,31 @@ function withoutPlaceNoise(name: string): string {
       if (!next?.join) return false;
     }
   };
+  // a join of one letter stays after the place or last; any other between two words that stay
+  const stays = (word: PlaceWord, at: number): boolean =>
+    word.end - word.at === 1
+      ? staysBeside(at, -1) || !/[\p{L}\p{N}]/u.test(written.slice(word.end))
+      : staysBeside(at, -1) && staysBeside(at, 1);
   let kept = '';
   let from = 0;
   words.forEach((word, at) => {
-    if (word.join && staysBeside(at, -1) && staysBeside(at, 1)) return;
+    if (word.join && stays(word, at)) return;
     kept += `${written.slice(from, word.at)} `;
     from = Math.max(from, word.end);
   });
   return kept + written.slice(from);
+}
+
+/**
+ * A place cut out of its name in the name's case: a first word the cut left lower-case ("Termostat v obývačke" leaves
+ * "obývačke") takes a capital where the name began with one ("Obývačke"), never where it did not, nor a word written
+ * in mixed case ("iPhone").
+ */
+function inCaseOf(name: string, place: string): string {
+  const first = /\p{L}/u.exec(name)?.[0] ?? '';
+  const word = /[\p{L}\p{N}]+/u.exec(place)?.[0] ?? '';
+  if (first === first.toLowerCase() || word !== word.toLowerCase()) return place;
+  return place.replace(/\p{L}/u, (letter) => letter.toUpperCase());
 }
 
 export type Registry = Pick<
@@ -306,16 +331,17 @@ export class HomeRegistry {
   }
   /**
    * Where a reading is: the area, else the device's name without the sensor words (and the separators they leave at
-   * its ends: 「寝室：温度」 is 寝室), else the entity's name.
+   * its ends: 「寝室：温度」 is 寝室) in the name's case, else the entity's name.
    */
   placeName(id: string): string {
     const area = this.areaName(this.areaOf(id));
     if (area) return area;
     return this.called(id, () => {
-      const device = withoutPlaceNoise(this.deviceName(id) ?? '')
+      const name = this.deviceName(id) ?? '';
+      const device = withoutPlaceNoise(name)
         .replace(/\s{2,}/g, ' ')
         .replace(LOOSE_ENDS, '');
-      return device || this.displayName(id);
+      return device ? inCaseOf(name, device) : this.displayName(id);
     });
   }
   /** `name` for a card only when it improves on what the card would show by itself. */

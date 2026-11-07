@@ -315,7 +315,8 @@ describe('custom:fluvy-home strategy — a place named by its device, no separat
       'Nó 3',
       'Là-haut',
     ]);
-    // every language's: each beside a sensor word goes, and with a mark on its first vowel stays (unless that is one too)
+    // every language's: each beside a sensor word goes, and with a mark on its first vowel stays (unless that is one too),
+    // capitalised as the name is
     const joins = (await listed('place_joins')).filter((join) => !join.endsWith("'"));
     const marked = joins
       .map((join) => join.replace(/[aeiouy]/, (vowel) => `${vowel}\u0301`).normalize('NFC'))
@@ -323,8 +324,72 @@ describe('custom:fluvy-home strategy — a place named by its device, no separat
     expect(marked.length).toBeGreaterThan(30);
     expect(placed(joins.map((join) => `Sensor ${join} 3`))).toEqual(joins.map(() => '3'));
     expect(placed(marked.map((word) => `Sensor ${word} 3`))).toEqual(
-      marked.map((word) => `${word} 3`),
+      marked.map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)} 3`),
     );
+  });
+
+  it('keeps a letter alone after the place or last as the place’s own label, in every language, and takes one before it', async () => {
+    expect(
+      placed([
+        'Sensor Kid E',
+        'Hall I Sensor',
+        'Bedroom A Sensor',
+        'Sensor Kid Y',
+        'Termostat V obývačke',
+        'Sensor A nappali',
+        'Sensor O’Brien Room',
+        "Sensor O'Brien Room",
+      ]),
+    ).toEqual([
+      'Kid E',
+      'Hall I',
+      'Bedroom A',
+      'Kid Y',
+      'Obývačke',
+      'Nappali',
+      'O’Brien Room',
+      "O'Brien Room",
+    ]);
+    // every language's joins of one letter: a label after the place or last, a join only before it or between two places
+    const letters = (await listed('place_joins')).filter((join) => [...join].length === 1);
+    expect(letters).toEqual(expect.arrayContaining(['a', 'e', 'i', 'o', 'v', 'y']));
+    for (const letter of letters) {
+      const label = letter.toUpperCase();
+      expect(
+        placed([
+          `Sensor Kid ${label}`,
+          `Hall ${label} Sensor`,
+          `Hall ${letter}`,
+          `Sensor ${letter} Hall`,
+          `Sensor ${label} Hall`,
+          `Hall ${letter} Kitchen Sensor`,
+          `Temperature ${letter} Humidity Sensor Hall`,
+        ]),
+        letter,
+      ).toEqual([
+        `Kid ${label}`,
+        `Hall ${label}`,
+        `Hall ${letter}`,
+        'Hall',
+        'Hall',
+        `Hall ${letter} Kitchen`,
+        'Hall',
+      ]);
+    }
+  });
+
+  it('keeps the case the place was written in: a capital where the name began with one, never where it did not', async () => {
+    // every language's sensor words before a place written in lower case
+    const noise = await listed('place_noise');
+    const capital = (word: string): string => `${word.charAt(0).toUpperCase()}${word.slice(1)}`;
+    expect(placed(noise.map((word) => `${capital(word)} kuchyňa`))).toEqual(
+      noise.map((word) => (word === capital(word) ? 'kuchyňa' : 'Kuchyňa')),
+    );
+    expect(placed(noise.map((word) => `${word} kuchyňa`))).toEqual(noise.map(() => 'kuchyňa'));
+    // a place's own capitals stay as written, and a word in mixed case is never capitalised
+    expect(
+      placed(['Sensor iPhone Lounge', 'Sensor Wohnzimmer', 'Thermostat bad OG', 'sensor obývačka']),
+    ).toEqual(['iPhone Lounge', 'Wohnzimmer', 'Bad OG', 'obývačka']);
   });
 
   it('takes an elision with the sensor word it leans on, in either apostrophe, and keeps one between two words that stay', () => {
@@ -432,9 +497,10 @@ describe('custom:fluvy-home strategy — a place named by its device, no separat
   });
 
   it('takes every language’s sensor words out of a name, as the words write them and capitalised', async () => {
-    // a word that joins goes too where it joins nothing that stays: at a name's end
+    // a word that joins goes too where it joins nothing that stays: at a name's end (a letter alone there is a label)
     const stems = [...(await listed('place_noise')), ...(await listed('place_joins'))];
     expect(stems.length).toBeGreaterThan(100);
+    const letters = new Set((await listed('place_joins')).filter((join) => [...join].length === 1));
     const names = Object.fromEntries(
       stems.flatMap((stem, at) => [
         [`sensor.${at}`, `Werkstatt ${stem}`],
@@ -443,7 +509,9 @@ describe('custom:fluvy-home strategy — a place named by its device, no separat
     );
     const registry = readings(names);
     for (const [id, name] of Object.entries(names))
-      expect(registry.placeName(id), name).toBe('Werkstatt');
+      expect(registry.placeName(id), name).toBe(
+        letters.has(name.slice('Werkstatt '.length)) ? name : 'Werkstatt',
+      );
   });
 });
 
