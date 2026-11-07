@@ -460,11 +460,12 @@ export class FluvyRoomCard extends FluvyTileCard {
     const width = (text: string): number => this.headFit.ruler.width(cls, text);
     // the count stays, the climate leaves first; then the count in figures ("3/5") where its words would be cut, the
     // tile's fill already saying that something is on — or, with nothing on, the word for it ("3 appareils" in half a
-    // section is "Éteint")
+    // section is "Éteint"), in figures too where that word would be cut ("0/3" for Polish "Wyłączono")
     const worded = fitLine([...(count ? [{ text: count }] : []), ...climate], room, width);
+    const off = this.t('common.off');
     return count && width(worded) > room
       ? fitLine(
-          [{ text: on > 0 ? `${on}/${ids.length}` : this.t('common.off') }, ...climate],
+          [{ text: on > 0 || width(off) > room ? `${on}/${ids.length}` : off }, ...climate],
           room,
           width,
         )
