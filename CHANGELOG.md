@@ -5,11 +5,17 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.17.0] — 2026-11-07
+
 ### Visible on upgrade
 
 - From this version on, a page left open through a Fluvy update says "Fluvy was updated" in Home Assistant's own toast
   with Reload as Home Assistant comes back from the restart, and a dashboard nobody touches for a minute, with no
   editor, dialog or unsaved change open, reloads by itself once (a wall tablet, a tab in the background).
+- Polish, Slovak, Hungarian and Turkish letters with marks (ł, ń, č, ő, ş…) are drawn in Fluvy's own font, where they
+  dropped to another face mid-word.
+- The Light card's editor names "With the brightness" "Soft, with the brightness", beside the new "Full colour, with the
+  brightness".
 
 ### Added
 
