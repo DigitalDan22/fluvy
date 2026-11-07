@@ -142,7 +142,7 @@ there; *Recreate* takes them all back to their defaults):
 | `caps` | a list's own number or `none` by its key (`caps: { lights: 12, humidity: none }`), or `none` for every list | all | how many of a long list a view shows (default: the house's caps, above, each with its "N more" row); the panel offers *Shortened* (the default) or *In full* |
 | `rooms` | by area id, a room's `include` and `exclude`, as the room card takes them: entity ids, patterns of ids, device ids or domains (`rooms: { kitchen: { exclude: [switch.dishwasher_*] } }`) | home, rooms, wall | what that room's card counts and fills by, whether the room is shown, and what its page holds; in the raw configuration only (the settings file never carries a house's entities) |
 | `weather` | a `weather.*` entity | all | the weather of the greeting and the clock (default: the first) |
-| `language` | `en`, `es`, `de`, `nl`, `fr`, `it`, `pt-BR`, `pt-PT`, `tr`, `ja`, `hu`, `sk` | all | the dashboard's words in that language, whoever opens it |
+| `language` | `en`, `es`, `de`, `nl`, `fr`, `it`, `pt-BR`, `pt-PT`, `tr`, `ja`, `hu`, `sk`, `pl`, `zh-Hans` | all | the dashboard's words in that language, whoever opens it |
 
 Without `language`, the dashboard's words follow the language of whoever opens it (Home Assistant's, or the one
 chosen in the panel's *Preferences*). A house is read in every language at once: a switch called *Küche* or

@@ -18,7 +18,7 @@ catalogue per language, and a person may choose theirs in the panel's *Preferenc
 | `ja` | Japanese | `packages/core/src/i18n/locales/ja.json` | [@vinjex](https://github.com/vinjex) |
 | `hu` | Hungarian | `packages/core/src/i18n/locales/hu.json` | [@wickdj](https://github.com/wickdj) |
 | `sk` | Slovak | `packages/core/src/i18n/locales/sk.json` | — |
-| `pl` | Polish | `packages/core/src/i18n/locales/pl.json` | — |
+| `pl` | Polish | `packages/core/src/i18n/locales/pl.json` | [@paproh](https://github.com/paproh) |
 | `zh-Hans` | Chinese (Simplified) | `packages/core/src/i18n/locales/zh-Hans.json` — `zh`, `zh-CN` and `zh-SG` read it; Traditional Chinese (`zh-Hant`, `zh-TW`, `zh-HK`) is not it | — |
 
 ## How a language works
@@ -44,7 +44,7 @@ catalogue per language, and a person may choose theirs in the panel's *Preferenc
   taken off and in ordinary width, so "Kühlschrank" is `kuhlschrank`, "Płyta" is `plyta` and "ＬＥＤ" is `led`). A
   stem in Latin letters is matched as its category asks (a light's as a whole word, a place's noise as whole words, the
   rest as a substring);
-  a stem in kana or kanji is always matched as a substring, since Japanese writes no spaces between words. The words
+  a stem in Han or kana is always matched as a substring, since Chinese and Japanese write no spaces between words. The words
   that join a place's noise to the place (`place_joins`: an article, a preposition, the language's "and", an elision
   such as `d'`) are written as the language writes them, marks and all, since a mark makes another word (`és` is
   Hungarian's "and", "là" is no `la`); the dashboard takes one out of a place's name beside a sensor word or at the

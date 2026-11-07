@@ -148,7 +148,7 @@ describe('what an appliance is', () => {
     expect(kindOf(signals({ platform: 'matter', tops: [250] }))).toMatchObject({ kind: 'oven' });
   });
 
-  it('reads a name in any of the thirteen languages, accents or none, the more particular kind first', () => {
+  it('reads a name in any of the fourteen languages, accents or none, the more particular kind first', () => {
     const names: ReadonlyArray<readonly [string, string]> = [
       ['Washing machine', 'washer'],
       ['Waschmaschine', 'washer'],

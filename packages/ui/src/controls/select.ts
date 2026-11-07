@@ -496,7 +496,7 @@ export class FluvySelect extends LitElement {
   /* ---------- markup ---------- */
 
   /**
-   * The list; out of the tab order (a list that scrolls — twelve languages — would otherwise be a tab stop of its own).
+   * The list; out of the tab order (a list that scrolls — fourteen languages — would otherwise be a tab stop of its own).
    * An anchored one holds the focus while open, and says which row the keys are on itself: its active row is its ring.
    */
   private renderMenu(): TemplateResult {
