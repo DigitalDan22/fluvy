@@ -1,16 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import {
-  APPLIANCE_OUT,
-  CJK,
-  generate,
-  generateAppliance,
-  ordered,
-  OUT,
-  pattern,
-  plain,
-} from './build.js';
+import { APPLIANCE_OUT, CJK, generate, generateAppliance, ordered, OUT, pattern } from './build.js';
+import { plain } from '../../../packages/core/src/plain.js';
 import {
   catalogueCodes,
   compare,
@@ -335,6 +327,9 @@ describe('the generated patterns', () => {
     expect(plain('Kühlschrank')).toBe('kuhlschrank');
     expect(plain('Çamaşır makinesi')).toBe('camasir makinesi');
     expect(plain('Heißluftfritteuse')).toBe('heissluftfritteuse');
+    // the letters Unicode gives no decomposition: a Polish ł as l, capital or not
+    expect(plain('Płyta indukcyjna')).toBe('plyta indukcyjna');
+    expect(plain('ŁAZIENKA')).toBe('lazienka');
     expect(plain('ＬＥＤライト')).toBe('ledライト');
     expect(plain('ｶﾞﾚｰｼﾞ')).toBe('ガレージ');
     expect(plain('ガレージ'.normalize('NFD'))).toBe('ガレージ');

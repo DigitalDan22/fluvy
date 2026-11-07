@@ -1,5 +1,5 @@
 import type { EntityRegistryDisplayEntry, HassEntity, HomeAssistant } from '@fluvy/core';
-import { deviceNameOf, registryText } from '@fluvy/core';
+import { deviceNameOf, plainLetters, registryText } from '@fluvy/core';
 import { boostOf, hobOf, zoneOf } from './zones.js';
 import { maintenanceOf } from './maintenance.js';
 import { entityOf, stateOf } from './refs.js';
@@ -954,12 +954,7 @@ export function deviceSlug(objects: readonly string[], name: string | null | und
 
 /** A name as Home Assistant makes it an id: lower case, its accents taken off, anything else an underscore. */
 export function slugify(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '')
-    .replace(/ı/g, 'i')
-    .replace(/[łŁ]/g, 'l')
-    .replace(/ß/g, 'ss')
+  return plainLetters(text.normalize('NFD').replace(/\p{M}/gu, ''))
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '');

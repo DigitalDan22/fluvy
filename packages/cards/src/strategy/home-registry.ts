@@ -2,7 +2,6 @@ import {
   APPLIANCE_WORDS,
   applianceDevices,
   kindOf,
-  plain,
   signalsOf,
   type ApplianceKind,
 } from '../appliance/kinds.js';
@@ -17,6 +16,7 @@ import {
   floorsInOrder,
   isLoad,
   localize,
+  plain,
   registryText,
   usableEntity,
   type AreaContents,

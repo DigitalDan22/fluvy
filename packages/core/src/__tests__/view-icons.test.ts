@@ -108,6 +108,55 @@ describe('the icon a view’s name says', () => {
       undefined,
       'bulb',
     ]);
+    // Polish, its ł and its accents read plain
+    const polish: ReadonlyArray<readonly [string, string]> = [
+      ['Światła', 'bulb'],
+      ['Ogrzewanie', 'thermo'],
+      ['Pogoda', 'cloud'],
+      ['Fotowoltaika', 'sun'],
+      ['Bezpieczeństwo', 'shield'],
+      ['Łazienka', 'rooms'],
+      ['Sypialnia', 'rooms'],
+      ['Kamery', 'camera'],
+      ['Ogród', 'leaf'],
+      ['Garaż', 'car'],
+      ['Rolety', 'blinds'],
+      ['Odkurzacz', 'vacuum'],
+      ['Czujniki', 'chart'],
+      ['Dom', 'home'],
+      ['Strona główna', 'home'],
+    ];
+    expect(polish.map(([t]) => named(t))).toEqual(polish.map(([, icon]) => icon));
+    // Simplified Chinese, its words found anywhere; a robot vacuum and a body sensor are no person, the household's
+    // appliances no home
+    const chinese: ReadonlyArray<readonly [string, string | undefined]> = [
+      ['客厅灯光', 'bulb'],
+      ['空调', 'thermo'],
+      ['储能电池', 'battery'],
+      ['天气', 'cloud'],
+      ['光伏发电', 'sun'],
+      ['能源', 'bolt'],
+      ['安防', 'shield'],
+      ['主卧', 'rooms'],
+      ['二楼', 'rooms'],
+      ['监控', 'camera'],
+      ['门锁', 'lock'],
+      ['音乐', 'speaker'],
+      ['电视', 'film'],
+      ['花园', 'leaf'],
+      ['场景', 'automation'],
+      ['车库', 'car'],
+      ['日历', 'calendar'],
+      ['家人', 'person'],
+      ['人体传感器', 'chart'],
+      ['浇水', 'drop'],
+      ['新风', 'fan'],
+      ['窗帘', 'blinds'],
+      ['扫地机器人', 'vacuum'],
+      ['首页', 'home'],
+      ['家电', undefined],
+    ];
+    expect(chinese.map(([t]) => named(t))).toEqual(chinese.map(([, icon]) => icon));
     // a name it does not know reads its path
     expect(named('Mi sitio', 'fotovoltaica')).toBe('sun');
     expect(named('Xyzzy', 'qwerty')).toBeUndefined();

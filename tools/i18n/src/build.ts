@@ -33,6 +33,7 @@
  */
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { plain } from '../../../packages/core/src/plain.js';
 import { catalogueCodes, readCatalogue, ROOT, type Words } from './lib.js';
 
 export const OUT = join(ROOT, 'packages', 'cards', 'src', 'strategy', 'words.generated.ts');
@@ -201,22 +202,6 @@ export function pattern(stems: readonly string[], shape: Shape): string {
       return `(${both})`;
   }
 }
-
-/**
- * A stem as the appliance words read a name (`plain` in packages/cards/src/appliance/kinds.ts, the same): lower-case,
- * in ordinary width, its accents taken off ("ladesäule" is "ladesaule", "ＬＥＤ" is "led"); a kana keeps its voicing
- * mark (が is not か) and is composed again.
- */
-export const plain = (stem: string): string =>
-  stem
-    .normalize('NFKC')
-    .normalize('NFD')
-    .replace(/(?![\u3099\u309a])\p{M}/gu, '')
-    .normalize('NFC')
-    .replace(/ı/g, 'i')
-    .replace(/[łŁ]/g, 'l')
-    .replace(/ß/g, 'ss')
-    .toLowerCase();
 
 /** A pattern as a regex literal, compiled first: a stem that does not compile stops the build here, not in a browser. */
 function literal(source: string, flags: string): string {

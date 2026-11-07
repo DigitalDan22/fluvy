@@ -1,4 +1,4 @@
-import { deviceNameOf, registryText } from '@fluvy/core';
+import { deviceNameOf, plain, registryText } from '@fluvy/core';
 import type { Tone } from '@fluvy/ui';
 import { printerDevices } from '../printer/roles.js';
 import type { CommandName } from './commands.js';
@@ -420,23 +420,6 @@ function byKeys(signals: KindSignals): KindVerdict | undefined {
     default:
       return undefined;
   }
-}
-
-/**
- * A name as the words read it (`plain` in tools/i18n/src/build.ts, the same): lower case, in ordinary width, its
- * accents taken off ("Kühlschrank" is "kuhlschrank", "ＬＥＤ" is "led", half-width "ｶﾞﾚｰｼﾞ" is "ガレージ"); a kana keeps
- * its voicing mark (が is not か) and is composed again.
- */
-export function plain(text: string): string {
-  return text
-    .normalize('NFKC')
-    .normalize('NFD')
-    .replace(/(?![\u3099\u309a])\p{M}/gu, '')
-    .normalize('NFC')
-    .replace(/ı/g, 'i')
-    .replace(/[łŁ]/g, 'l')
-    .replace(/ß/g, 'ss')
-    .toLowerCase();
 }
 
 /**

@@ -1,6 +1,7 @@
 export * from './ha/types.js';
 export * from './entity.js';
 export * from './names.js';
+export * from './plain.js';
 export * from './areas.js';
 export * from './registry.js';
 export * from './lists.js';
