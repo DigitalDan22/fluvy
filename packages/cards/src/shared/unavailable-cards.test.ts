@@ -528,6 +528,46 @@ describe('lists of things out of reach', () => {
   });
 });
 
+describe('an energy source out of reach', () => {
+  const W = { unit_of_measurement: 'W', device_class: 'power', state_class: 'measurement' };
+  const flows = house([
+    ...STATES,
+    state('sensor.solar_power', '1800', W),
+    state('sensor.grid_power', 'unavailable', W),
+  ]);
+  const lanes = (card: Mounted) =>
+    [...root(card).querySelectorAll('.en-flow')].map((lane) =>
+      [...lane.classList].filter((name) => /^en-ink--|^is-rest$/.test(name)).join(' '),
+    );
+
+  it.each(['stream', 'rail'])(
+    '%s: a dashed hairline, and quiet its lanes at rest as a source at 0 W (#126)',
+    async (style) => {
+      const config = {
+        type: 'custom:fluvy-energy-flow-card',
+        flow_style: style,
+        sources: [
+          { type: 'solar', power: 'sensor.solar_power' },
+          { type: 'grid', power: 'sensor.grid_power' },
+        ],
+        _now: STAMP,
+      };
+      const dashed = await draw(config, flows);
+      const quiet = await draw({ ...config, unavailable: 'quiet' }, flows);
+      expect(root(dashed).querySelectorAll('.en-hairline')).toHaveLength(1);
+      expect(root(quiet).querySelectorAll('.en-hairline')).toHaveLength(0);
+      if (style === 'rail')
+        expect(root(quiet).querySelectorAll('.en-rail.en-ink--grid.is-rest')).toHaveLength(1);
+      else {
+        expect(lanes(dashed)).toEqual(['en-ink--solar']);
+        expect(lanes(quiet)).toEqual(['en-ink--solar', 'en-ink--grid is-rest']);
+      }
+      // still out of reach: its circle says so, nothing travels its lane
+      expect(root(quiet).querySelectorAll('.en-node.is-outage')).toHaveLength(1);
+    },
+  );
+});
+
 describe('maps out of reach', () => {
   const zones = house([
     ...STATES,

@@ -6,8 +6,8 @@
  * every arrowhead ends its lane (the lane stops 7 px before the tip); pulses are Web Animations, at most eight a
  * card, faster for a bigger flow in px/s, retuned in place when a reading changes, paused off screen and in a hidden
  * tab, absent under reduced motion and `motion: off`; a flow below its threshold rests, a stale card says so, an
- * unreadable source is a hairline; the cross bridges its crossing; narrow columns list; the Energy dashboard's own
- * sources and a day's totals are read; 1.3's YAML still draws.
+ * unreadable source is a hairline (quiet out of reach, its lanes rest); the cross bridges its crossing; narrow columns
+ * list; the Energy dashboard's own sources and a day's totals are read; 1.3's YAML still draws.
  */
 import { contrastRatio, toHex } from './lib/colour.mjs';
 import { BASE, frame, startSuite } from './lib/suite.mjs';
@@ -262,6 +262,23 @@ const pulses = (flow) =>
     (await down.locator('.en-hairline').count()) === 1 &&
       (await down.locator('.en-node.is-outage').count()) === 1 &&
       (await down.locator('.en-words').last().textContent()).replace(/\s+/g, '') === 'House—',
+  );
+  const quiet = card(page, 'The grid unreadable · quiet');
+  const quietRail = card(page, 'The grid unreadable · quiet', 1);
+  const grid = (await lanes(quiet)).filter((l) => l.ink === 'en-ink--grid');
+  check(
+    'quiet, an unreadable grid draws no hairline: its lane rests as a grid at 0 W does, a rail’s too',
+    (await quiet.locator('.en-hairline').count()) === 0 &&
+      grid.some((l) => !l.hidden) &&
+      grid.every((l) => l.rest) &&
+      (await quietRail.locator('.en-hairline').count()) === 0 &&
+      (await quietRail.locator('.en-rail.en-ink--grid.is-rest').count()) === 1,
+    JSON.stringify(grid),
+  );
+  check(
+    '…still saying so: its circle marked out of reach, the house unknown',
+    (await quiet.locator('.en-node.is-outage').count()) === 1 &&
+      (await quiet.locator('.en-words').last().textContent()).replace(/\s+/g, '') === 'House—',
   );
   await page.close();
 }

@@ -24,6 +24,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - A card's editor, a sheet or the settings panel opened in a page left open through an update say "Fluvy was updated ·
   Reload" where they failed without a word ("Failed to fetch dynamically imported module"), and opening the settings
   panel in a page still running a build from before 1.17 says it too (#132).
+- The Energy flow card quiet out of reach (`unavailable: quiet`) draws a source it cannot read with its lanes at rest,
+  as a source at 0 W, where its lane stayed the dashed hairline.
 
 ## [1.16.0] — 2026-11-06
 

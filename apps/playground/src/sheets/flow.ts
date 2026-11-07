@@ -495,6 +495,21 @@ export const sheet: SheetSpec = {
         },
       ],
     },
+    // quiet out of reach (#126): the grid's lanes rest as a grid at 0 W does, its circle as it rests; streams, a rail
+    {
+      title: 'The grid unreadable · quiet',
+      cards: (['stream', 'rail'] as const).map((style) => ({
+        type: 'custom:fluvy-energy-flow-card',
+        flow_style: style,
+        unavailable: 'quiet',
+        sources: [
+          { type: 'solar', power: 'sensor.fl_down_solar' },
+          { type: 'grid', power: 'sensor.fl_down_grid' },
+          { type: 'battery', power: 'sensor.fl_down_battery', level: 'sensor.fl_down_level' },
+        ],
+        _now: NOW,
+      })),
+    },
     {
       title: 'Stale',
       cards: [

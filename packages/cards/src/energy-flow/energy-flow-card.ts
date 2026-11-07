@@ -483,7 +483,10 @@ export class FluvyEnergyFlowCard extends Card<EnergyFlowCardConfig> {
         if (show === 'never') return false;
         return n.lanes.some((l) => !l.rest);
       })
-      .map((n) => (stale ? { ...n, lanes: n.lanes.map((l) => ({ ...l, rest: true })) } : n));
+      // nothing is known to flow from a stale house or a source that cannot be read: its lanes rest
+      .map((n) =>
+        stale || n.dead ? { ...n, lanes: n.lanes.map((l) => ({ ...l, rest: true })) } : n,
+      );
 
     // the house: its own meter, else what the sources add up to (known only when every source reads)
     const homeId = this.config?.home;
@@ -948,6 +951,14 @@ export class FluvyEnergyFlowCard extends Card<EnergyFlowCardConfig> {
     </div>`;
   }
 
+  /**
+   * Whether a source's lanes are the dashed hairline of a source out of reach; quiet out of reach (#126), they are the
+   * lanes of a source at rest, as its circle is.
+   */
+  private outOfReach(n: Node): boolean {
+    return n.dead && !this.looksQuiet;
+  }
+
   private houseIcon(c: Point): TemplateResult {
     const homeId = this.config?.home;
     return html`<div class="en-node en-node--house" style="left:${c[0] - 22}px;top:${c[1] - 22}px">
@@ -969,7 +980,8 @@ export class FluvyEnergyFlowCard extends Card<EnergyFlowCardConfig> {
         : rows.lanes.map((l) => {
             const n = scene.nodes[l.node] as Node;
             const state = n.lanes[l.index] as LaneState;
-            if (n.dead) return svg`<path class="en-hairline" d=${pathOf(l.path)}></path>`;
+            if (this.outOfReach(n))
+              return svg`<path class="en-hairline" d=${pathOf(l.path)}></path>`;
             return this.lane(l.path, state, {
               reversible: !oneWay(n.kind),
               heads: n.arrows,
@@ -1046,7 +1058,7 @@ export class FluvyEnergyFlowCard extends Card<EnergyFlowCardConfig> {
     for (const l of rows.lanes) {
       const n = scene.nodes[l.node] as Node;
       const state = n.lanes[l.index] as LaneState;
-      if (n.dead) {
+      if (this.outOfReach(n)) {
         out.push(svg`<path class="en-hairline" d=${pathOf(l.path)}></path>`);
         continue;
       }
@@ -1391,7 +1403,6 @@ export class FluvyEnergyFlowCard extends Card<EnergyFlowCardConfig> {
     if (rows.narrow) return [];
     for (const l of rows.lanes) {
       const n = scene.nodes[l.node] as Node;
-      if (n.dead) continue;
       push(`${n.key}-${l.index}`, l.path, n.lanes[l.index] as LaneState, n.arrows);
     }
     if (wide)
