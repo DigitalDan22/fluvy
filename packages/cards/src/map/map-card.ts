@@ -17,7 +17,7 @@ import {
   type PropertyValues,
   type TemplateResult,
 } from 'lit';
-import { renderAvatar, type Presence } from '../shared/avatar.js';
+import { renderAvatar, unplaced, type Presence } from '../shared/avatar.js';
 import { HeadFit } from '../energy/head.js';
 import { mapHead, mapRow } from '../shared/map-head.js';
 import { Card, type CardEditor } from '../shared/base.js';
@@ -168,7 +168,11 @@ export class FluvyMapCard extends Card<MapCardConfig> {
   }
 
   private presence(person: Placed): Presence {
-    return person.where === 'home' ? 'home' : person.where === 'unknown' ? 'off' : 'away';
+    return person.where === 'home'
+      ? 'home'
+      : person.where === 'unknown'
+        ? unplaced(person.view)
+        : 'away';
   }
 
   private picture(person: Placed): string {

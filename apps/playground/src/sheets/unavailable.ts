@@ -28,7 +28,7 @@ import { sheet as solar } from './solar.js';
  * its twin out of reach next", "Out of reach"). The suite `interactions-unavailable.mjs` holds every card of the
  * catalogue to it, in every variant, unavailable, unknown and missing. Last, a card out of reach dashed beside the same
  * card quiet (`unavailable: quiet`, #126: as it rests, saying so): tiles, a group's tiles each its own, the light card,
- * rows and the room.
+ * rows, the room and people (one out of reach, one nobody can place).
  */
 
 /** The sheets the families' cards come from: their house is this sheet's. */
@@ -225,6 +225,14 @@ const frames: FrameSpec[] = [
     entities: ['light.ceiling', 'switch.ac_washer', 'sensor.ac_washer_power', 'lock.front_door'],
   }),
   dashedBesideQuiet('the room', from(rooms, 'Room · photo'), inArea('rm_living')),
+  // Guest out of reach loses the dashed ring quiet; Noa, whom nobody can place, keeps hers either way
+  {
+    title: 'Dashed and quiet · people',
+    cards: dashedAndQuiet({
+      type: 'custom:fluvy-people-card',
+      entities: ['person.am_jan', 'person.am_noa', 'person.am_guest'],
+    }),
+  },
 ];
 
 export const sheet: SheetSpec = {

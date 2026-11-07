@@ -201,8 +201,10 @@
   background: var(--fluvy-accent-fill);
   color: var(--fluvy-accent-on-fill);
 }
-/* unavailable / unknown: the dashed ring of the language, no fill, no presence to report */
-.am-avatar.is-off {
+/* out of reach (`is-off`) or somewhere nobody knows (`is-unknown`): the dashed ring of the language, no fill, no
+   presence to report */
+.am-avatar.is-off,
+.am-avatar.is-unknown {
   background: none;
   outline: 1px dashed var(--fluvy-unavailable-border);
   outline-offset: -1px;

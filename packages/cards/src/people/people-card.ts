@@ -26,7 +26,7 @@ import { mapHead, mapRow } from '../shared/map-head.js';
 import { Card, type CardEditor } from '../shared/base.js';
 import { ITEM_ALIASES, type AliasSpec } from '../shared/config.js';
 import { changedAt, sinceIds } from '../shared/since.js';
-import { renderAvatar } from '../shared/avatar.js';
+import { renderAvatar, unplaced, type Presence } from '../shared/avatar.js';
 import { charging, personBattery, type BatterySource } from '../shared/battery.js';
 import { EMPTY, entryCount, HEAD, rowsOf, ROW } from '../shared/heights.js';
 import { emptyPanel, itemsOf, listOf, type EmptyList } from '../shared/lists.js';
@@ -65,8 +65,6 @@ export interface PeopleCardConfig extends FluvyCardConfig, EmptyList {
   /** Test hook: an ISO date that freezes "now" (the times in the sub lines). Undocumented. */
   _now?: string;
 }
-
-type Presence = 'home' | 'away' | 'off';
 
 interface Person {
   readonly item: PersonItem;
@@ -252,11 +250,13 @@ export class FluvyPeopleCard extends Card<PeopleCardConfig> {
         : source?.attribute
           ? charge.attr<number | null>(source.attribute)
           : charge.number;
-    const presence: Presence = !usable ? 'off' : view.state === 'home' ? 'home' : 'away';
+    const presence: Presence = !usable ? unplaced(view) : view.state === 'home' ? 'home' : 'away';
     const changed = changedAt(this.hass, view, item.since);
-    // out of reach the dashed ring, or quiet (`unavailable`) their face as it rests
+    // out of reach the dashed ring, or quiet (`unavailable`) their face as it rests; unknown, the ring either way
     const picture =
-      usable || this.looksQuiet ? (view.attr<string | null>('entity_picture') ?? '') : '';
+      usable || (presence === 'off' && this.looksQuiet)
+        ? (view.attr<string | null>('entity_picture') ?? '')
+        : '';
     return {
       item,
       view,
@@ -269,10 +269,9 @@ export class FluvyPeopleCard extends Card<PeopleCardConfig> {
             : null,
       charging: source !== undefined && charging(this.hass, source),
       presence,
-      word:
-        presence === 'off'
-          ? stateText(this.hass, view)
-          : this.t(presence === 'home' ? 'person.home' : 'person.away'),
+      word: !usable
+        ? stateText(this.hass, view)
+        : this.t(presence === 'home' ? 'person.home' : 'person.away'),
       // a person in a zone reports the zone's own name as its state
       zone: presence === 'away' && view.state !== 'not_home' ? view.state : '',
       since:
@@ -338,12 +337,17 @@ export class FluvyPeopleCard extends Card<PeopleCardConfig> {
 
   /**
    * A person's word in a grid column of that width: their own; for someone out of reach (whose "Entity not found" is
-   * the longest thing a person says) "Unavailable", else a dash — never cut, and never what turns the grid into rows,
-   * so the card keeps its size (1.9). Undefined where a reachable person's word would be cut.
+   * the longest thing a person says) "Unavailable", else a dash, and for someone nobody can place a dash — never cut,
+   * and never what turns the grid into rows, so the card keeps its size (1.9). Undefined where a placed person's word
+   * would be cut.
    */
   private gridWord(person: Person, column: number): string | undefined {
     const words =
-      person.presence === 'off' ? [person.word, this.t('state.unavailable'), '—'] : [person.word];
+      person.presence === 'off'
+        ? [person.word, this.t('state.unavailable'), '—']
+        : person.presence === 'unknown'
+          ? [person.word, '—']
+          : [person.word];
     return words.find((word) => this.headFit.ruler.width('am-person__state', word) <= column);
   }
 

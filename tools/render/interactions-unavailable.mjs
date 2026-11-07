@@ -317,13 +317,18 @@ const measure = (page, tag, source, cases) =>
       });
       /**
        * What a quiet twin still draws of the unavailable skin: a dashed hairline, a fade, the ban glyph — in its own
-       * shadow root and in the cards it holds (the Appliances card's whole cards).
+       * shadow root and in the cards it holds (the Appliances card's whole cards). A person nobody can place (`unknown`)
+       * keeps the ring of their own: they are in reach.
        */
       const skin = (el, said = new Set()) => {
         for (const node of el.renderRoot?.querySelectorAll('*') ?? []) {
           const style = getComputedStyle(node);
           const what = `${node.localName}.${[...node.classList].join('.')}`;
-          if (style.outlineStyle === 'dashed' && parseFloat(style.outlineWidth) > 0)
+          if (
+            style.outlineStyle === 'dashed' &&
+            parseFloat(style.outlineWidth) > 0 &&
+            !node.matches('.am-avatar.is-unknown')
+          )
             said.add(`a dashed hairline on ${what}`);
           if (node.classList.contains('is-unavailable') && Number(style.opacity) < 1)
             said.add(`${what} faded to ${style.opacity}`);

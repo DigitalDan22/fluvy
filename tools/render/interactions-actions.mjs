@@ -11,7 +11,8 @@
  * tap; the greeting's avatar taps and holds as an icon; a scene tile runs on a tap and holds without running; a
  * sensor tile's whole surface taps and holds; a tap to be asked about first goes to Home Assistant and moves nothing,
  * and a `fire-dom-event` reaches the page's listeners; a finger's long press on a head (a touch screen, Chromium)
- * holds, selects nothing and never taps. `ENGINE=webkit` runs it in WebKit (the long press is Chromium's alone).
+ * holds, selects nothing and never taps; quiet out of reach, a person out of reach loses the dashed ring and one nobody
+ * can place keeps it. `ENGINE=webkit` runs it in WebKit (the long press is Chromium's alone).
  */
 import { holdForFine, mousePointer, rulerGeometry } from './lib/gestures.mjs';
 import {
@@ -375,6 +376,29 @@ async function hold(page, locator, ms = 650) {
     'people: an entry’s own name and battery sensor',
     jan.name === 'Jan' && jan.battery === '64 %',
     JSON.stringify(jan),
+  );
+  await page.close();
+}
+
+/* ---------- the people quiet out of reach (#126): the ring goes for one out of reach, never for one unplaced ---------- */
+{
+  const page = await suite.sheet('unavailable');
+  const rings = (n) =>
+    frame(page, 'Dashed and quiet · people')
+      .locator('fluvy-people-card')
+      .nth(n)
+      .evaluate((el) =>
+        [...el.shadowRoot.querySelectorAll('.am-avatar')].map((face) => {
+          const style = getComputedStyle(face);
+          return style.outlineStyle === 'dashed' && parseFloat(style.outlineWidth) > 0;
+        }),
+      );
+  // Jan away, Noa unknown, Guest unavailable: dashed, then quiet
+  const [dashed, quiet] = [await rings(0), await rings(1)];
+  check(
+    'people: quiet takes the dashed ring off a person out of reach, and a person nobody can place keeps hers',
+    dashed.join() === 'false,true,true' && quiet.join() === 'false,true,false',
+    `dashed ${dashed.join()} · quiet ${quiet.join()}`,
   );
   await page.close();
 }

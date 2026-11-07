@@ -1,3 +1,4 @@
+import type { EntityView } from '@fluvy/core';
 import { html, nothing, type TemplateResult } from 'lit';
 
 /** Two letters from the name: the face of a person without a picture. */
@@ -8,7 +9,15 @@ export function initials(name: string): string {
   return `${[...first][0] ?? '?'}${[...last][0] ?? ''}`.toLocaleUpperCase();
 }
 
-export type Presence = 'home' | 'away' | 'off';
+/**
+ * Where a person is: home, away, somewhere nobody knows (`unknown`: the person is there to read, their trackers say
+ * nothing) or out of reach (`off`: unavailable, or gone from the house).
+ */
+export type Presence = 'home' | 'away' | 'unknown' | 'off';
+
+/** A person who cannot be placed: their presence unknown, or out of reach. */
+export const unplaced = (view: EntityView): Presence =>
+  view.status === 'unknown' ? 'unknown' : 'off';
 
 export interface AvatarOptions {
   readonly name: string;
@@ -22,7 +31,8 @@ export interface AvatarOptions {
 
 /**
  * A person's 44 circle (`.am-avatar`, ambient.css): the picture Home Assistant has, else initials on the accent
- * fill, with the presence dot; a picture that will not load falls back to the initials.
+ * fill, with the presence dot; a picture that will not load falls back to the initials. Unknown or out of reach, the
+ * dashed ring and no dot; quiet out of reach (#126) takes the ring off a person out of reach (`is-off`) alone.
  */
 export function renderAvatar({
   name,
@@ -33,7 +43,7 @@ export function renderAvatar({
 }: AvatarOptions): TemplateResult {
   const shown = picture !== '' && !broken.has(picture);
   return html`<span
-    class="am-avatar ${presence === 'home' ? 'is-home' : ''} ${shown ? '' : 'is-initials'} ${presence === 'off' ? 'is-off' : ''}"
+    class="am-avatar ${presence === 'home' ? 'is-home' : ''} ${shown ? '' : 'is-initials'} ${presence === 'off' ? 'is-off' : presence === 'unknown' ? 'is-unknown' : ''}"
     data-icon
   >
     ${
@@ -47,6 +57,6 @@ export function renderAvatar({
           />`
         : html`<span class="am-avatar__face" aria-hidden="true">${initials(name)}</span>`
     }
-    ${presence === 'off' ? nothing : html`<i class="am-avatar__dot"></i>`}
+    ${presence === 'home' || presence === 'away' ? html`<i class="am-avatar__dot"></i>` : nothing}
   </span>`;
 }

@@ -11,8 +11,11 @@ import { inlineImports, parseRules } from '../../scripts/build-styles.js';
  */
 const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'styles');
 const MARK = ":where([data-unavailable='quiet'], [data-unavailable='quiet'] *)";
-/** A card with nothing to show (no config, no entity) draws the hairline too: nothing of it is out of reach. */
-const NOT_OUT_OF_REACH = new Set(['.fv-card--empty']);
+/**
+ * What draws the hairline with nothing out of reach: a card with nothing to show (no config, no entity), and a person
+ * nobody can place (their presence unknown, the person in reach), whose ring is their own.
+ */
+const NOT_OUT_OF_REACH = new Set(['.fv-card--empty', '.am-avatar.is-unknown']);
 
 /** A rule's selectors, split at its own commas (never at those inside `:is()`, `:where()` or `:not()`). */
 function selectors(prelude: string): string[] {

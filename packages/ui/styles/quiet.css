@@ -124,7 +124,8 @@
   color: var(--fluvy-text);
 }
 
-/* a person's face, a camera's thumb and plate, a printer's plate: no dashed ring, their words in the secondary ink */
+/* a person's face out of reach, a camera's thumb and plate, a printer's plate: no dashed ring, their words in the
+   secondary ink (a person somewhere nobody knows, `.am-avatar.is-unknown`, is in reach: their ring stays) */
 .am-avatar.is-off:where([data-unavailable='quiet'], [data-unavailable='quiet'] *) {
   background: var(--fluvy-page);
   outline: none;

@@ -26,6 +26,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   panel in a page still running a build from before 1.17 says it too (#132).
 - The Energy flow card quiet out of reach (`unavailable: quiet`) draws a source it cannot read with its lanes at rest,
   as a source at 0 W, where its lane stayed the dashed hairline.
+- The People card and the Map card quiet out of reach keep the dashed ring of a person whose presence is unknown, and
+  take it off only a person out of reach, where an unknown person lost it too.
 
 ## [1.16.0] — 2026-11-06
 

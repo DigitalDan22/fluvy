@@ -282,6 +282,32 @@ describe('people out of reach', () => {
     expect(root(twin).querySelector('.am-people')).not.toBeNull();
     expect(root(twin).querySelector('.am-rows')).toBeNull();
   });
+
+  it('quiet out of reach takes the ring off a person out of reach, never off one nobody can place (#126)', async () => {
+    const live = house();
+    const states = outOfReachStates(
+      outOfReachStates(live.states, ['person.marta'], 'unavailable'),
+      ['person.pau'],
+      'unknown',
+    );
+    const entities = ['person.marta', 'person.pau', 'person.ona'];
+    for (const unavailable of ['dashed', 'quiet']) {
+      const card = await draw(
+        { type: 'custom:fluvy-people-card', entities, unavailable },
+        { ...live, states },
+      );
+      const faces = [...root(card).querySelectorAll('.am-avatar')];
+      // out of reach: the ring the quiet sheet takes off; nobody can place them: a ring of their own, kept
+      expect(faces.map((face) => face.matches('.is-off'))).toEqual([true, false, false]);
+      expect(faces.map((face) => face.matches('.is-unknown'))).toEqual([false, true, false]);
+      expect(faces.map((face) => face.querySelector('.am-avatar__dot') !== null)).toEqual([
+        false,
+        false,
+        true,
+      ]);
+      expect(texts(card, '.am-person__state')[1]).toMatch(/^Unknown/);
+    }
+  });
 });
 
 describe('openings out of reach', () => {
