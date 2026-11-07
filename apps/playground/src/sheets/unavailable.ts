@@ -1,5 +1,6 @@
 import type { HomeAssistant, LovelaceCardConfig } from '@fluvy/core';
 import type { StateSeed } from '../hass.js';
+import { NOW } from '../now.js';
 import { outOfReachView } from '../out-of-reach.js';
 import { mergeWs, type FrameSpec, type SheetSpec } from '../scenes.js';
 import { sheet as actions } from './actions.js';
@@ -231,6 +232,8 @@ const frames: FrameSpec[] = [
     cards: dashedAndQuiet({
       type: 'custom:fluvy-people-card',
       entities: ['person.am_jan', 'person.am_noa', 'person.am_guest'],
+      // the playground's clock: "51 days ago" is read against it, never against today
+      _now: NOW.toISOString(),
     }),
   },
 ];

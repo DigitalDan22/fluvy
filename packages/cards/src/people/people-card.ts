@@ -417,7 +417,8 @@ export class FluvyPeopleCard extends Card<PeopleCardConfig> {
             tap();
           }
         };
-        // the battery stays whole; its detail (the zone, the time) goes, whole, where the line cannot hold both
+        // the battery stays whole; its detail (the zone, the time) goes, whole, where the line cannot hold it (beside
+        // the battery, both), never cut
         const battery = person.battery === undefined ? null : this.renderBattery(person);
         const detail = this.detail(person);
         // a state that would leave the name under 40 (never before it has begun), or cut the battery, is a dash, its
@@ -429,9 +430,10 @@ export class FluvyPeopleCard extends Card<PeopleCardConfig> {
             : person.word;
         const room = this.contentWidth - (keep ? 56 : 0) - 12 - ruler.width('fv-row__value', word);
         const sub =
-          !battery ||
           !detail ||
-          18 + ruler.width('fv-row__sub', `${this.batteryFigure(person)} · ${detail}`) <= room
+          (battery
+            ? 18 + ruler.width('fv-row__sub', `${this.batteryFigure(person)} · ${detail}`)
+            : ruler.width('fv-row__sub', detail)) <= room
             ? detail
             : '';
         return html`<div
