@@ -970,11 +970,13 @@ for (const [name, query, language] of [
       await wait(50);
     };
     await tick('0');
+    // a draw the tick asked for (`hass` among its changes); a card's own timer (a clock's minute, the wall's half
+    // minute) is no tick's, and on a slow runner one can land inside the twenty
     let count = 0;
     for (const card of cards) {
       const update = Object.getPrototypeOf(card).update;
       card.update = function (changed) {
-        count++;
+        if (changed.has('hass')) count++;
         return update.call(this, changed);
       };
     }

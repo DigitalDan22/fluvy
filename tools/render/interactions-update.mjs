@@ -58,6 +58,8 @@ const NEW = newDir ? await buildIn(newDir) : await nextOf(OLD);
 /** What the server serves: a build, and whether a cache still answers the old one's page and files. */
 const server = { build: OLD, stuck: false };
 const loaderOf = (build) => `/fluvy-frontend/${build.folder}/loader.js`;
+/** The version of the copy from before 1.17 that `?older=1` stands in for: never one of the builds served. */
+const OLDER = '1.16.0';
 
 /**
  * Home Assistant's page as far as Fluvy asks it, before the loader (its `extra_module_url`): the app element with its
@@ -73,7 +75,7 @@ const page = (loader) => `<!doctype html><html lang="en"><head><meta charset="ut
   window.toasts = [];
   window.reconnect = () => ready.forEach((listener) => listener());
   window.panelsChanged = () => panelEvents.forEach((listener) => listener());
-  if (new URLSearchParams(location.search).has('older')) window.__fluvy = { version: '1.16.0' };
+  if (new URLSearchParams(location.search).has('older')) window.__fluvy = { version: '${OLDER}' };
   const app = document.createElement('home-assistant');
   app.addEventListener('hass-notification', (event) => {
     const toast = event.detail;
@@ -199,7 +201,7 @@ const runs = (tab, loads, count, build) =>
   until(
     async () =>
       loads.length === count &&
-      (await tab.evaluate(() => window.__fluvy?.version)) === build.version,
+      (await tab.evaluate(() => window.__fluvy?.version)) === (build.version ?? build),
   );
 /** A tab on `path` with the old build served, its clock ours, its page loads counted, the old build running. */
 async function open(context, path) {
@@ -210,7 +212,9 @@ async function open(context, path) {
   const loads = [];
   tab.on('load', () => loads.push(tab.url()));
   await tab.goto(`${BASE}${path}`);
-  if (!(await runs(tab, loads, 1, OLD))) throw new Error(`${path}: the old build does not run`);
+  // an older copy already running keeps its own version: the loader stands down beside it
+  const running = new URL(path, BASE).searchParams.has('older') ? OLDER : OLD;
+  if (!(await runs(tab, loads, 1, running))) throw new Error(`${path}: the old build does not run`);
   return { tab, loads };
 }
 const toasts = (tab) => tab.evaluate(() => window.toasts);
