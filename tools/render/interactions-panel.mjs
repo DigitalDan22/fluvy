@@ -229,13 +229,13 @@ const keysSeen = (page) => page.evaluate(() => window.__keys.splice(0));
   await settle(page, 200);
   check(
     'a letter opens on the first name starting with it',
-    (await d.active.textContent()).trim() === 'Português (Brasil)',
+    (await d.active.textContent()).trim() === 'Polski',
   );
   await page.keyboard.type('es'); // "pes": no such name, the row stays
   await settle(page, 100);
   check(
     'letters that spell no name leave the row',
-    (await d.active.textContent()).trim() === 'Português (Brasil)',
+    (await d.active.textContent()).trim() === 'Polski',
   );
   await settle(page, 600); // a pause starts a new word
   await page.keyboard.type('es');
