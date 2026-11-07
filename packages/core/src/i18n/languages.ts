@@ -58,6 +58,12 @@ export interface LanguageInfo {
    * of its own (Japanese joins with 「・」, 17日（木）・イベント4件 — a space after a full-width bracket reads doubled).
    */
   readonly joiner?: string;
+  /**
+   * The script it is written in, where its language is written in more than one (Chinese: Simplified `Hans`,
+   * Traditional `Hant`): a tag whose script is another, said or likely (`zh-Hant`, `zh-TW`, `zh-HK`), is not this
+   * language, so a Traditional reader is never given Simplified by the base language they share.
+   */
+  readonly script?: string;
 }
 
 export const LANGUAGES: Readonly<Record<LanguageCode, LanguageInfo>> = {
@@ -160,6 +166,7 @@ export const LANGUAGES: Readonly<Record<LanguageCode, LanguageInfo>> = {
     english: 'Chinese (Simplified)',
     // "早上好" until noon, "下午好" through the afternoon, "晚上好" from 18:00, "晚安" from 23:00
     dayParts: { morning: 5, afternoon: 12, evening: 18, night: 23 },
+    script: 'Hans',
   },
 };
 
@@ -177,10 +184,27 @@ export const offeredLanguages = (): readonly LanguageInfo[] => [
     .sort((a, b) => a.name.localeCompare(b.name)),
 ];
 
+/** A tag's script, said (`zh-Hant`) or the one its language and region are likely written in (`zh-TW` → `Hant`). */
+function scriptOf(tag: string): string | undefined {
+  try {
+    return new Intl.Locale(tag).maximize().script;
+  } catch {
+    // not a well-formed tag: no script to tell
+    return undefined;
+  }
+}
+
+/** One of ours is a variant of the tag's language: the same base, in the same script where ours names one. */
+function variantOf(own: LanguageCode, tag: string): boolean {
+  const { script } = LANGUAGES[own];
+  const base = tag.split(/[-_]/)[0]?.toLowerCase() ?? '';
+  return own.split('-')[0] === base && (!script || script === scriptOf(tag.replace('_', '-')));
+}
+
 /**
  * The language Fluvy speaks for a tag Home Assistant reports: the tag itself, else the language Home Assistant files
  * under it (`pt` → `pt-PT`); the same for its base (`es-ES` → `es`, `pt-AO` → `pt-PT`); else the first variant
- * shipped for that base, else English.
+ * shipped for that base in the tag's script (`zh-CN` → `zh-Hans`; `zh-Hant`, `zh-TW`: none), else English.
  */
 export function resolveLanguage(tag: string | undefined): LanguageCode {
   if (!tag) return 'en';
@@ -191,12 +215,14 @@ export function resolveLanguage(tag: string | undefined): LanguageCode {
     const filed = LANGUAGE_CODES.find((own) => LANGUAGES[own].ha === candidate);
     if (filed) return filed;
   }
-  return LANGUAGE_CODES.find((own) => own.split('-')[0] === base) ?? 'en';
+  return LANGUAGE_CODES.find((own) => variantOf(own, code)) ?? 'en';
 }
 
-/** Fluvy has words in this language (any variant of it): its own copy is used rather than Home Assistant's translation. */
+/**
+ * Fluvy has words in this language (any variant of it, in its script): its own copy is used rather than Home
+ * Assistant's translation.
+ */
 export function speaks(tag: string | undefined): boolean {
   if (!tag) return false;
-  const base = tag.split(/[-_]/)[0]?.toLowerCase() ?? '';
-  return LANGUAGE_CODES.some((code) => code.split('-')[0] === base);
+  return LANGUAGE_CODES.some((code) => variantOf(code, tag));
 }

@@ -19,7 +19,7 @@ catalogue per language, and a person may choose theirs in the panel's *Preferenc
 | `hu` | Hungarian | `packages/core/src/i18n/locales/hu.json` | [@wickdj](https://github.com/wickdj) |
 | `sk` | Slovak | `packages/core/src/i18n/locales/sk.json` | — |
 | `pl` | Polish | `packages/core/src/i18n/locales/pl.json` | — |
-| `zh-Hans` | Chinese (Simplified) | `packages/core/src/i18n/locales/zh-Hans.json` | [@waphbs](https://github.com/waphbs) |
+| `zh-Hans` | Chinese (Simplified) | `packages/core/src/i18n/locales/zh-Hans.json` — `zh`, `zh-CN` and `zh-SG` read it; Traditional Chinese (`zh-Hant`, `zh-TW`, `zh-HK`) is not it | — |
 
 ## How a language works
 
@@ -65,7 +65,11 @@ catalogue per language, and a person may choose theirs in the panel's *Preferenc
   language's own name, its English name, when its day's parts begin (the greeting's "morning", "afternoon",
   "evening", "night"), and, for a language that writes it short beside a day's number, `weekday: 'short'` (the
   calendar's 17日（木）); a language with a mark of its own between two parts of a line names it as `joiner`
-  (Japanese 「・」: 17日（木）・イベント4件, where " · " after the bracket would read doubled).
+  (Japanese 「・」: 17日（木）・イベント4件, where " · " after the bracket would read doubled). A language written in
+  more than one script names its own as `script`: Simplified Chinese is `Hans`, so a tag in the other one, said or
+  by its region (`zh-Hant`, `zh-TW`, `zh-HK`), never falls to it by the base language they share. A Traditional
+  Chinese house reads Fluvy in English, and Home Assistant's own words in Traditional, unless a person chooses
+  Simplified Chinese in the panel.
 - **The integration** has a translation of its own texts (the Repairs it raises, its setup dialog) in
   `custom_components/fluvy/translations/<code>.json`, key for key with `strings.json` — under Home Assistant's code
   for the language where it is not ours (`pt.json` for Portugal's Portuguese).

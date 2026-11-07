@@ -41,12 +41,18 @@ describe('the language of Fluvy’s words', () => {
     setLanguageOverride('pt-PT');
     expect((await mounted('pt')).hasAttribute('lang')).toBe(false);
     expect((await mounted('pt-BR')).getAttribute('lang')).toBe('pt-PT');
+    // Simplified chosen on a Traditional page: marked, so its Han takes the Simplified forms; on a Simplified page, none
+    setLanguageOverride('zh-Hans');
+    expect((await mounted('zh-Hant')).getAttribute('lang')).toBe('zh-Hans');
+    expect((await mounted('en')).getAttribute('lang')).toBe('zh-Hans');
+    expect((await mounted('zh-Hans')).hasAttribute('lang')).toBe(false);
     // English chosen on a page in a language Fluvy does not speak: English is said, so it is marked
     setLanguageOverride('en');
-    expect((await mounted('zh-Hans')).getAttribute('lang')).toBe('en');
+    expect((await mounted('sv')).getAttribute('lang')).toBe('en');
     // the page's language followed (Fluvy speaks it, or falls back to English): nothing to mark
     setLanguageOverride(undefined);
-    expect((await mounted('zh-Hans')).hasAttribute('lang')).toBe(false);
+    expect((await mounted('sv')).hasAttribute('lang')).toBe(false);
+    expect((await mounted('zh-Hant')).hasAttribute('lang')).toBe(false);
     expect((await mounted('de')).hasAttribute('lang')).toBe(false);
   });
 

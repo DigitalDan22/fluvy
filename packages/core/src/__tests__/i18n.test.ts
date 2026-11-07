@@ -41,13 +41,29 @@ describe('the language registry', () => {
     expect(resolveLanguage('pt-PT')).toBe('pt-PT');
     expect(resolveLanguage('pt-AO')).toBe('pt-PT');
     expect(resolveLanguage('en-GB')).toBe('en');
-    expect(resolveLanguage('zh-Hans')).toBe('en');
+    expect(resolveLanguage('pl')).toBe('pl');
+    expect(resolveLanguage('pl-PL')).toBe('pl');
+    expect(resolveLanguage('sv')).toBe('en');
     expect(resolveLanguage(undefined)).toBe('en');
     expect(speaks('de-CH')).toBe(true);
     expect(speaks('sv')).toBe(false);
     expect(isCardLanguage('auto')).toBe(true);
     expect(isCardLanguage('fr')).toBe(true);
     expect(isCardLanguage('sv')).toBe(false);
+  });
+
+  it('gives Simplified Chinese to a tag written in it, and a Traditional one English', () => {
+    // Home Assistant's own code, the bare language and the regions that write Simplified
+    for (const tag of ['zh-Hans', 'zh-hans', 'zh', 'zh-CN', 'zh_CN', 'zh-SG', 'zh-Hans-CN']) {
+      expect(resolveLanguage(tag), tag).toBe('zh-Hans');
+      expect(speaks(tag), tag).toBe(true);
+    }
+    // Traditional, said or by its region: never Simplified by the base language they share; Home Assistant's
+    // Traditional words stay its own
+    for (const tag of ['zh-Hant', 'zh-TW', 'zh-HK', 'zh-MO', 'zh-Hant-TW', 'zh_TW']) {
+      expect(resolveLanguage(tag), tag).toBe('en');
+      expect(speaks(tag), tag).toBe(false);
+    }
   });
 
   it('offers English first, then the rest by their own names', () => {
