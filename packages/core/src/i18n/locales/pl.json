@@ -615,7 +615,7 @@
     "title": "Automatyzacje",
     "schedules": "Harmonogramy",
     "schedule": "Harmonogram",
-    "schedule_short": "Harmonogram",
+    "schedule_short": "Plan",
     "new": "Nowy harmonogram",
     "add": "Dodaj harmonogram",
     "all": "Wszystkie automatyzacje",
@@ -715,7 +715,7 @@
     "count_many": "{count} baterii",
     "state_of_charge": "Poziom naładowania",
     "full_in": "Pełna za",
-    "empty_in": "Rozładowana za",
+    "empty_in": "Pusta za",
     "reserve": "Rezerwa",
     "charging_at": "ładowanie {power}",
     "discharging_at": "rozładowanie {power}",
@@ -917,7 +917,7 @@
     "editor.week": "Pokaż numer tygodnia",
     "editor.hour12": "Zegar 12-godzinny",
     "editor.time_zone": "Strefa czasowa (IANA, np. Europe/Warsaw)",
-    "partlycloudy": "Częściowe zachmurzenie",
+    "partlycloudy": "Częściowo pochmurno",
     "pouring": "Ulewa"
   },
   "common": {
@@ -1305,7 +1305,7 @@
     "editor_show_compare": "Pokaż przycisk Porównaj"
   },
   "energy-sankey": {
-    "title": "Dokąd poszła energia",
+    "title": "Dokąd poszła",
     "charged": "Naładowane",
     "exported": "Oddane",
     "other_devices": "Inne urządzenia",
@@ -1802,7 +1802,7 @@
     "alerts_few": "{count} alarmy",
     "alerts_many": "{count} alarmów",
     "all_clear": "Wszystko w porządku",
-    "all_sensors": "Wszystkie czujniki",
+    "all_sensors": "Wszystkie",
     "more": "Jeszcze {count}",
     "less": "Pokaż mniej",
     "detected": "Wykryto",
@@ -1811,7 +1811,7 @@
     "dry": "Sucho",
     "problem": "Problem",
     "ok": "OK",
-    "editor.max_rows": "Wiersze przed „Wszystkie czujniki”"
+    "editor.max_rows": "Wiersze przed „Wszystkie”"
   },
   "option": {
     "0": "0",
@@ -2211,7 +2211,7 @@
     "dashboard.tile": "Kafelek",
     "dashboard.row": "Wiersz",
     "dashboard.recreate": "Zacznij od nowa",
-    "dashboard.recreate_sub": "Powrót do ustawień domyślnych",
+    "dashboard.recreate_sub": "Przywraca domyślne",
     "dashboard.recreate_btn": "Utwórz ponownie",
     "dashboard.recreate_armed": "Dotknij ponownie",
     "dashboard.recreated": "Pulpit utworzony ponownie",
@@ -2503,7 +2503,7 @@
   },
   "room": {
     "no_area": "Nie znaleziono obszaru",
-    "nothing": "To pomieszczenie jest jeszcze puste",
+    "nothing": "Nic tu jeszcze nie ma",
     "devices_on": "Włączone",
     "of": "z {count}",
     "all_devices": "Wszystkie urządzenia",
@@ -2864,7 +2864,7 @@
     "rain": "Opady",
     "sunny": "Słonecznie",
     "clear-night": "Bezchmurnie",
-    "partlycloudy": "Częściowe zachmurzenie",
+    "partlycloudy": "Częściowo pochmurno",
     "cloudy": "Pochmurno",
     "rainy": "Przelotne opady",
     "pouring": "Ulewa",
