@@ -49,11 +49,11 @@ import {
 import type { EditorDefaults, RowsListSpec } from '../shared/rows-editor.js';
 import { Ticker, MINUTE } from '../shared/ticker.js';
 import { applianceHouseHeight, type ApplianceCardConfig } from './appliance-card.js';
-import { CONFIRM_DEFAULT, type ConfirmName } from './commands.js';
+import type { ConfirmName } from './commands.js';
 import {
   choiceField,
   confirmField,
-  confirmHelper,
+  listConfirmHelper,
   deviceField,
   kindField,
   option,
@@ -430,7 +430,7 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
     variant: 'rows',
     picture: 'art',
     picture_min: 'auto',
-    confirm: [...CONFIRM_DEFAULT],
+    // no `confirm`: its appliances ask as each kind does (`listConfirmHelper` says so), which one list cannot show
     max_rows: APPLIANCES_MAX_ROWS,
     show: 'all',
     sort: config['variant'] === 'cards' ? 'none' : 'state',
@@ -493,8 +493,8 @@ export class FluvyAppliancesCard extends Card<AppliancesCardConfig> {
         picture_min: 'editor_picture_min',
         confirm: 'editor_confirm',
       }),
-      // a command it does not know, said under what it asks before
-      computeHelper: confirmHelper,
+      // what its appliances ask before where it names nothing, and a command it does not know
+      computeHelper: listConfirmHelper,
     };
   }
 

@@ -2206,6 +2206,7 @@
     "editor_confirm": "Perguntar antes",
     "editor_confirm_unknown": "Desconhecido, ignorado: {words}.",
     "editor_confirm_unknown_all": "Desconhecido: {words}. O cartão pergunta antes dos seus comandos predefinidos.",
+    "editor_confirm_each": "Vazio, cada aparelho pergunta como no seu próprio cartão; um forno, um micro-ondas ou uma fritadeira de ar quente também antes de iniciar. O que escolher aqui, todos os aparelhos perguntam.",
     "editor_show_programs": "Programas para escolher",
     "editor_unload_reminder": "Lembrete para retirar",
     "editor_unload_after": "Lembrar após (min)",

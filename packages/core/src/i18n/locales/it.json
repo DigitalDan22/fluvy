@@ -2206,6 +2206,7 @@
     "editor_confirm": "Chiedi prima",
     "editor_confirm_unknown": "Sconosciuto, tralasciato: {words}.",
     "editor_confirm_unknown_all": "Sconosciuto: {words}. La scheda chiede prima dei suoi comandi predefiniti.",
+    "editor_confirm_each": "Vuoto, ogni elettrodomestico chiede come sulla sua scheda; un forno, un microonde o una friggitrice ad aria anche prima di avviarsi. Ciò che scegli qui lo chiedono tutti gli elettrodomestici.",
     "editor_show_programs": "Programmi da scegliere",
     "editor_unload_reminder": "Promemoria per svuotare",
     "editor_unload_after": "Ricorda dopo (min)",

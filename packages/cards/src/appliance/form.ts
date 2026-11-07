@@ -84,6 +84,17 @@ export const confirmHelper: FormHelper = (schema, _localize, data) => {
   );
 };
 
+/**
+ * The Appliances card's: the same, and, where `confirm` names nothing, that each appliance asks as on its own card (an
+ * oven, a microwave or an air fryer before a start too, `confirmDefault`), which one list could not show: what is chosen
+ * here, every appliance asks.
+ */
+export const listConfirmHelper: FormHelper = (schema, localize, data) =>
+  confirmHelper(schema, localize, data) ??
+  (schema.name === 'confirm' && data?.['confirm'] === undefined
+    ? editorWord('appliance.editor_confirm_each')
+    : undefined);
+
 /** The commands a card may ask before, as its editor offers them. */
 export const confirmChoices = (
   names: readonly ConfirmName[],

@@ -31,6 +31,9 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The automatic dashboards keep a letter that ends a place's name or follows it ("Sensor Kid E" is "Kid E", "Hall I
   Sensor" is "Hall I", where they read "Kid" and "Hall"), keep the "O" of "O’Brien", and capitalise a place left in
   lower case by the words cut before it where its name was capitalised ("Termostat V obývačke" is "Obývačke").
+- The Appliances card's editor no longer shows a list of commands to ask before that leaves out an oven's start:
+  left empty, it says that each appliance asks as on its own card, where editing the list it showed silently stopped
+  ovens, microwaves and air fryers asking before they start.
 
 ## [1.16.0] — 2026-11-06
 

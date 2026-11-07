@@ -163,6 +163,7 @@
     "editor_confirm": "Ask first",
     "editor_confirm_unknown": "Not known, left out: {words}.",
     "editor_confirm_unknown_all": "Not known: {words}. The card asks before its default commands.",
+    "editor_confirm_each": "Left empty, each appliance asks as on its own card, an oven, a microwave or an air fryer before it starts too. What you choose here, every appliance asks.",
     "editor_show_programs": "Programmes to choose from",
     "editor_unload_reminder": "Unload reminder",
     "editor_unload_after": "Remind after (min)",

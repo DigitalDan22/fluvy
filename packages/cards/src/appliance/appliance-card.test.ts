@@ -19,7 +19,7 @@ import {
   plugFridge,
   type De1Moment,
 } from './fixtures/index.js';
-import { confirmHelper } from './form.js';
+import { confirmHelper, listConfirmHelper } from './form.js';
 import { applianceDevices } from './kinds.js';
 import { forgetUnloaded } from './memory.js';
 import { SETTLE_MS } from './nudge.js';
@@ -679,7 +679,24 @@ describe('the appliance card', () => {
       'Not known: stopp, paus. The card asks before its default commands.',
     );
     expect(form.computeHelper).toBe(confirmHelper);
-    expect(FluvyAppliancesCard.getConfigForm().computeHelper).toBe(confirmHelper);
+    expect(FluvyAppliancesCard.getConfigForm().computeHelper).toBe(listConfirmHelper);
+  });
+
+  it('the Appliances card’s editor shows no `confirm` of its own: its appliances ask as each kind does, which it says', () => {
+    // one list cannot show an oven's start beside a washer's: a default shown and then edited would drop the oven's
+    const defaults = FluvyAppliancesCard.defaults?.({ type: 'x', variant: 'cards' }, house());
+    expect(defaults).not.toHaveProperty('confirm');
+    const helper = (data: Record<string, unknown>) =>
+      listConfirmHelper({ name: 'confirm' }, (key) => key, data);
+    expect(helper({ variant: 'cards' })).toBe(
+      'Left empty, each appliance asks as on its own card, an oven, a microwave or an air fryer before it starts too. What you choose here, every appliance asks.',
+    );
+    expect(helper({ variant: 'cards', confirm: ['stop'] })).toBeUndefined();
+    expect(helper({ variant: 'cards', confirm: [] })).toBeUndefined();
+    expect(helper({ variant: 'cards', confirm: ['stopp'] })).toBe(
+      'Not known: stopp. The card asks before its default commands.',
+    );
+    expect(listConfirmHelper({ name: 'sort' }, (key) => key, { variant: 'cards' })).toBeUndefined();
   });
 
   it('leaves out a control it does not know, a typo by hand, and draws the others', async () => {

@@ -353,6 +353,7 @@
     "editor_confirm": "Najprv potvrdiť",
     "editor_confirm_unknown": "Neznáme, vynechané: {words}.",
     "editor_confirm_unknown_all": "Neznáme: {words}. Karta sa pýta pred svojimi predvolenými príkazmi.",
+    "editor_confirm_each": "Prázdne: každý spotrebič sa pýta ako na vlastnej karte, rúra, mikrovlnná rúra či teplovzdušná fritéza aj pred spustením. Čo tu vyberiete, pýta sa každý spotrebič.",
     "editor_show_programs": "Výber programov",
     "editor_unload_reminder": "Pripomenúť vyloženie",
     "editor_unload_after": "Pripomenúť po (min)",

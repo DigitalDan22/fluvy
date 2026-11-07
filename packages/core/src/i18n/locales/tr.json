@@ -2206,6 +2206,7 @@
     "editor_confirm": "Önce sor",
     "editor_confirm_unknown": "Bilinmiyor, atlandı: {words}.",
     "editor_confirm_unknown_all": "Bilinmiyor: {words}. Kart varsayılan komutlarından önce sorar.",
+    "editor_confirm_each": "Boş bırakılırsa her cihaz kendi kartındaki gibi sorar; fırın, mikrodalga veya airfryer başlatmadan önce de sorar. Burada seçtiğinizi her cihaz sorar.",
     "editor_show_programs": "Seçilecek programlar",
     "editor_unload_reminder": "Boşaltma hatırlatması",
     "editor_unload_after": "Hatırlatma süresi (dk)",

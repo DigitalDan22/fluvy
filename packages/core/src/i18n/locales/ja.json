@@ -1301,6 +1301,7 @@
     "editor_confirm": "確認する",
     "editor_confirm_unknown": "不明なため除外：{words}",
     "editor_confirm_unknown_all": "不明：{words}。カードは既定のコマンドの前に確認します。",
+    "editor_confirm_each": "空欄なら、各家電はそれぞれのカードと同じく確認します（オーブン、電子レンジ、エアフライヤーは開始前も）。ここで選ぶと、すべての家電がそれを確認します。",
     "editor_show_programs": "選べるコース",
     "editor_unload_reminder": "取り出しリマインダー",
     "editor_unload_after": "リマインドまでの時間 (分)",

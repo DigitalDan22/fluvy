@@ -2206,6 +2206,7 @@
     "editor_confirm": "Vorher fragen",
     "editor_confirm_unknown": "Unbekannt, ausgelassen: {words}.",
     "editor_confirm_unknown_all": "Unbekannt: {words}. Die Karte fragt vor ihren Standardbefehlen.",
+    "editor_confirm_each": "Leer fragt jedes Gerät wie auf seiner eigenen Karte, ein Backofen, eine Mikrowelle oder eine Heißluftfritteuse auch vor dem Start. Was du hier wählst, fragt jedes Gerät.",
     "editor_show_programs": "Programme zur Auswahl",
     "editor_unload_reminder": "Entnahme-Erinnerung",
     "editor_unload_after": "Erinnern nach (min)",

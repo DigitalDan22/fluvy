@@ -1301,6 +1301,7 @@
     "editor_confirm": "Rákérdezés előtte",
     "editor_confirm_unknown": "Ismeretlen, kimarad: {words}.",
     "editor_confirm_unknown_all": "Ismeretlen: {words}. A kártya az alapértelmezett parancsai előtt kérdez rá.",
+    "editor_confirm_each": "Üresen minden készülék úgy kérdez, mint a saját kártyáján, a sütő, a mikrohullámú sütő és a forrólevegős sütő az indítás előtt is. Amit itt választasz, azt minden készülék kérdezi.",
     "editor_show_programs": "Választható programok",
     "editor_unload_reminder": "Kiürítési emlékeztető",
     "editor_unload_after": "Emlékeztetés ennyi idő után (perc)",

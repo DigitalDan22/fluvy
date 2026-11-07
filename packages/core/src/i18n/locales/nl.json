@@ -2206,6 +2206,7 @@
     "editor_confirm": "Eerst vragen",
     "editor_confirm_unknown": "Onbekend, weggelaten: {words}.",
     "editor_confirm_unknown_all": "Onbekend: {words}. De kaart vraagt eerst bij haar standaardopdrachten.",
+    "editor_confirm_each": "Leeg vraagt elk apparaat zoals op zijn eigen kaart, een oven, magnetron of airfryer ook voor het starten. Wat je hier kiest, vraagt elk apparaat.",
     "editor_show_programs": "Programma’s om te kiezen",
     "editor_unload_reminder": "Herinnering om uit te ruimen",
     "editor_unload_after": "Herinneren na (min)",
