@@ -156,16 +156,17 @@ export const LANGUAGES: Readonly<Record<LanguageCode, LanguageInfo>> = {
     code: 'pl',
     name: 'Polski',
     english: 'Polish',
-    // "dzień dobry" all day, "dobry wieczór" from 18:00: the afternoon says the morning's word; "dobranoc" is a
-    // farewell before sleep, never a greeting, so no band reaches it
-    dayParts: { morning: 5, afternoon: 12, evening: 18, night: 24 },
+    // "dzień dobry" all day, "dobry wieczór" from 18:00 until the morning: the afternoon says the morning's word, and
+    // the night the evening's, since "dobranoc" is a farewell before sleep, never a greeting
+    dayParts: { morning: 5, afternoon: 12, night: 18 },
   },
   'zh-Hans': {
     code: 'zh-Hans',
     name: '简体中文',
     english: 'Chinese (Simplified)',
-    // "早上好" until noon, "下午好" through the afternoon, "晚上好" from 18:00, "晚安" from 23:00
-    dayParts: { morning: 5, afternoon: 12, evening: 18, night: 23 },
+    // three greetings: 早上好 until noon, 下午好 through the afternoon, 晚上好 from 18:00 as the last band (no evening);
+    // 晚安 is said on parting or going to sleep, never as a greeting, and never shows
+    dayParts: { morning: 5, afternoon: 12, night: 18 },
     script: 'Hans',
   },
 };
