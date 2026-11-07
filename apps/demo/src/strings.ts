@@ -459,6 +459,40 @@ const pl: Table = {
     'Automatyczny pulpit powstaje w Home Assistancie; karta Pulpit pokazuje jego podgląd',
 };
 
+const zhHans: Table = {
+  'brand.sub': '在线演示',
+  'family.home': '家',
+  'family.devices': '设备',
+  'family.climate': '温控',
+  'family.energy': '能源',
+  'family.charts': '图表',
+  'family.media': '媒体',
+  'family.time': '时间',
+  'family.helpers': '辅助元素',
+  'family.vehicles': '汽车',
+  'page.panel': '设置',
+  'page.activity': '活动',
+  'page.history': '历史',
+  'mode.light': '浅色',
+  'mode.dark': '深色',
+  'device.title': '设备',
+  'device.phone': '手机',
+  'device.phone-l': '大屏手机',
+  'device.tablet': '平板',
+  'device.desktop': '电脑',
+  'palette.title': '调色板',
+  'palette.custom': '在设置面板中选择您自己的强调色',
+  'language.title': '语言',
+  'links.install': '安装',
+  'links.github': 'GitHub',
+  'banner.text':
+    '一个模拟的家：周四晚上 Marta 的公寓。这里的每张卡片、每个页面和每项设置都是真实的；Home Assistant 由一个小小的替身代替，它在服务调用 140 毫秒后改变状态。没有连接任何设备。',
+  'banner.ok': '知道了',
+  'notice.more_info': '在 Home Assistant 中打开 {entity} 的详细信息',
+  'notice.navigate': '在 Home Assistant 中打开 {path}',
+  'notice.auto': '自动仪表盘在 Home Assistant 中生成；“仪表盘”标签页显示它的预览',
+};
+
 const TABLES: Readonly<Record<LanguageCode, Table>> = {
   en,
   es,
@@ -473,6 +507,7 @@ const TABLES: Readonly<Record<LanguageCode, Table>> = {
   hu,
   sk,
   pl,
+  'zh-Hans': zhHans,
 };
 
 /** A word of the demo in `language`. */
