@@ -67,7 +67,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         )
     swept = await hass.async_add_executor_job(sweep_sidecars, frontend_dir)
     if swept:
-        _LOGGER.warning("Removed %d compressed sidecar(s) beside Fluvy's scripts", swept)
+        _LOGGER.debug("Made or removed %d compressed sidecar(s) beside Fluvy's files", swept)
     runtime = FluvyRuntime(version, build, frontend_dir, root / "themes" / THEME_FILE)
     await async_register_static(hass, runtime)
     hass.data[FLUVY_DATA] = runtime

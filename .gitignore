@@ -10,6 +10,8 @@ apps/playground/out/
 # the build the integration ships: written by `pnpm build`, zipped by the release
 /custom_components/fluvy/frontend/
 /custom_components/fluvy/themes/
+# what a running integration proved of the build's compressed sidecars (frontend.py, `sweep_sidecars`)
+/custom_components/fluvy/.sidecars
 *.zip
 *.log
 .DS_Store

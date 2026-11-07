@@ -3,13 +3,15 @@
  * After `vite build`: copy the fonts and the loader next to the bundle, and write a manifest with sizes and hashes —
  * the entry, its chunks (what every page loads, and what a page fetches on demand), the loader and the fonts. The
  * manifest's `build` stamp names the folder the integration serves the build from, so any changed byte changes the
- * URL. The budget holds for what every page loads: the entry and the chunks it imports statically.
+ * URL. The budget holds for what every page loads: the entry and the chunks it imports statically. Last, every text
+ * file gets the compressed sidecars Home Assistant sends in its place (`sidecars.mjs`).
  */
 import { createHash } from 'node:crypto';
 import { cp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
+import { isSidecar, pack, SIDECARS, travelsCompressed } from './sidecars.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 // the build lives inside the integration, which serves it: custom_components/fluvy/frontend
@@ -24,7 +26,9 @@ for (const file of ['inter-variable.woff2', 'inter-italic-variable.woff2', 'OFL-
 // the module Home Assistant loads on every page: it imports the build beside it (see src/loader.js)
 await cp(join(root, 'src', 'loader.js'), join(dist, 'loader.js'));
 
-const chunks = (await readdir(join(dist, 'chunks'))).map((f) => `chunks/${f}`);
+const chunks = (await readdir(join(dist, 'chunks')))
+  .filter((f) => !isSidecar(f))
+  .map((f) => `chunks/${f}`);
 const files = {};
 for (const name of [
   'fluvy.js',
@@ -38,12 +42,6 @@ for (const name of [
     sha256: createHash('sha256').update(data).digest('hex'),
     ...(name.endsWith('.js') ? { gzip: gzipSync(data).length } : {}),
   };
-}
-// a compressed sidecar next to a script would be served in its place by aiohttp, stale or not
-const sidecars = Object.keys(files).filter((name) => /\.(gz|br)$/.test(name));
-if (sidecars.length > 0) {
-  console.error(`compressed sidecars must not ship: ${sidecars.join(', ')}`);
-  process.exit(1);
 }
 const build = createHash('sha256')
   .update(
@@ -129,3 +127,27 @@ if (gzip(initial) > BUDGET) {
   console.error('bundle is over its gzip budget');
   process.exit(1);
 }
+
+// what Home Assistant sends in their place (#134): a `.br` and a `.gz` beside every text file over 1 KB, the manifest's
+// too; never in the manifest nor the build stamp (made of the files, they change only with them)
+const shipped = (await readdir(dist, { recursive: true, withFileTypes: true })).filter(
+  (entry) => entry.isFile() && !isSidecar(entry.name),
+);
+const sent = { files: 0, bytes: 0, '.br': 0, '.gz': 0 };
+await Promise.all(
+  shipped.map(async (entry) => {
+    const path = join(entry.parentPath, entry.name);
+    const data = await readFile(path);
+    if (!travelsCompressed(entry.name, data.length)) return;
+    const packed = await pack(data);
+    sent.files++;
+    sent.bytes += data.length;
+    for (const suffix of SIDECARS) {
+      sent[suffix] += packed[suffix].length;
+      await writeFile(`${path}${suffix}`, packed[suffix]);
+    }
+  }),
+);
+console.log(
+  `  sent compressed · ${sent.files} files · ${kb(sent.bytes)} as ${kb(sent['.br'])} brotli, ${kb(sent['.gz'])} gzip`,
+);

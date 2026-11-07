@@ -37,3 +37,8 @@ jobs:
               importlib.import_module('custom_components.fluvy.' + path.stem if path.stem != '__init__' else 'custom_components.fluvy')
           print('Fluvy imports on Home Assistant', __version__)
           "
+      # the integration's own tests, on the same image: the compressed sidecars beside the build stay true (#134)
+      - run: |
+          docker run --rm -v "$PWD/custom_components:/config/custom_components:ro" \
+            -v "$PWD/tests:/config/tests:ro" -w /config \
+            ghcr.io/home-assistant/home-assistant:${{ matrix.channel }} python3 -m unittest discover -s tests -v

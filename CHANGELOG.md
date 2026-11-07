@@ -59,6 +59,10 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The Appliances card's editor no longer shows a list of commands to ask before that leaves out an oven's start:
   left empty, it says that each appliance asks as on its own card, where editing the list it showed silently stopped
   ovens, microwaves and air fryers asking before they start.
+- Fluvy's files reach the browser compressed, where every one was sent whole: what every dashboard loads is 235 KB
+  with gzip (192 KB with Brotli, over HTTPS) instead of 770 KB, and all of Fluvy's scripts 1,036 KB instead of 3,165
+  KB; at every start the integration keeps each compressed copy true to its file, so one changed in place by a deploy
+  is never sent as it was (#134).
 - Fluvy's settings draw a preview card again only when an entity it shows changes, where every preview card was drawn
   again on every state change in the house while the settings were open (a house of 914 states changes some twenty a
   second): six redraws a tick on the Appearance tab are none, and the page's work while the house ticks falls by about

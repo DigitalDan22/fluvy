@@ -9,11 +9,13 @@
  * - one version: the root package.json, every workspace package.json and custom_components/fluvy/manifest.json;
  * - one set of metadata (license, author, homepage, repository, bugs, engines) on every workspace package;
  * - with --release: the build the integration ships is present (frontend/manifest.json with its build stamp,
- *   fluvy.js, loader.js, the theme, the icons) and no compressed sidecar lies beside a script.
+ *   fluvy.js, loader.js, the theme, the icons), and every text file over 1 KB has its compressed sidecars, each
+ *   holding exactly its file's bytes (`packages/bundle/scripts/sidecars.mjs`).
  */
-import { readdir, stat } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { holds, SIDECARS, travelsCompressed } from '../../packages/bundle/scripts/sidecars.mjs';
 import { readJson, workspaceManifests } from './lib.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -198,17 +200,29 @@ if (release) {
       else if (gzip > budget) problem(`${file}: ${gzip} B gzip over its budget of ${budget} B`);
     }
   }
-  const sidecars = [];
-  const walk = async (dir) => {
-    for (const entry of await readdir(dir, { withFileTypes: true }).catch(() => [])) {
-      const path = join(dir, entry.name);
-      if (entry.isDirectory()) await walk(path);
-      else if (/\.(gz|br)$/.test(entry.name)) sidecars.push(relative(root, path));
-    }
-  };
-  await walk(integration);
-  for (const file of sidecars)
-    problem(`${file}: a compressed sidecar would be served in place of its script`);
+  // what Home Assistant sends in a file's place: every text file over 1 KB has its sidecars, and each holds exactly its
+  // file's bytes (a stale one would be served for it)
+  const frontend = join(integration, 'frontend');
+  const shipped = (
+    await readdir(frontend, { recursive: true, withFileTypes: true }).catch(() => [])
+  )
+    .filter((entry) => entry.isFile())
+    .map((entry) => join(entry.parentPath, entry.name));
+  const present = new Set(shipped);
+  for (const path of shipped) {
+    const file = relative(root, path);
+    const suffix = SIDECARS.find((ending) => path.endsWith(ending));
+    if (suffix) {
+      const source = path.slice(0, -suffix.length);
+      if (!present.has(source) || !travelsCompressed(source, (await stat(source)).size))
+        problem(`${file}: a compressed sidecar of nothing the build compresses`);
+      else if (!holds(suffix, await readFile(path), await readFile(source)))
+        problem(`${file}: does not hold its file's bytes (it would be served in their place)`);
+    } else if (travelsCompressed(path, (await stat(path)).size))
+      for (const ending of SIDECARS)
+        if (!present.has(`${path}${ending}`))
+          problem(`${file}: no ${ending} beside it (run pnpm build)`);
+  }
 }
 
 if (problems.length > 0) {

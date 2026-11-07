@@ -110,14 +110,23 @@ budget (`BUDGETS`; the facts guard in `tools/docs` holds this table to it):
 | `rolldown-runtime` | 2 KB | the bundler's runtime |
 | `loader.js` | 4 KB | the loader the integration puts on every page |
 
+These are the bytes a browser is sent (since 1.17, #134): the build writes a `.br` (Brotli's best) and a `.gz` (gzip's
+best) beside every text file over 1 KB (`packages/bundle/scripts/sidecars.mjs`), and Home Assistant's static handler
+sends one of them in the file's place to a browser that accepts it: gzip on a plain `http://` address, Brotli (about a
+fifth smaller again) over HTTPS. `check.mjs --release` holds every sidecar to its file's bytes.
+
 ## How it reaches Home Assistant
 
 The integration (`custom_components/fluvy`) serves `frontend/` under `/fluvy-frontend/<version>-<build>/`: one URL per
 build, so the month-long cache Home Assistant puts on static files can never serve an old build. It loads
 `loader.js` on every page and registers the panel with it; the loader restores the last look before Home Assistant
 paints, registers the `fluvy:` icon set, waits for Home Assistant's connection and imports `fluvy.js` from the same
-folder — the same URL the dashboard resource names, so the browser evaluates the build once. The theme file is
-written into `<config>/themes/fluvy/` and reloaded. `docs/installation.md` lists the Repairs it raises.
+folder — the same URL the dashboard resource names, so the browser evaluates the build once. At every start the
+integration keeps the compressed sidecars true to their files (`sweep_sidecars`): what it proved is recorded beside
+the folder (`.sidecars`, each file's size and times), so a start that finds every file as recorded only reads the
+folder; a sidecar whose file changed since (a deploy that copies files over the old ones) is unpacked and compared, and
+made again where it does not hold, and one without its file goes. The theme file is written into
+`<config>/themes/fluvy/` and reloaded. `docs/installation.md` lists the Repairs it raises.
 
 ## Version
 
