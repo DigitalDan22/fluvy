@@ -22,9 +22,30 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   and Home Assistant integration messages.
 - Simplified Chinese (`zh-Hans`): the whole catalogue (2633 words), the word stems the generated dashboards read,
   and the integration's own strings; Fluvy offers it in its settings and follows Home Assistant's `zh-Hans`.
+- Polish, thanks to @paproh (#130): every card, page, dialog and editor form, the settings panel's language list and
+  the integration's own texts, with the naming words the automatic dashboards and the appliance cards read a Polish
+  house by, as written or as an entity id writes them (a name's ł is read as l). It says Home Assistant's own words
+  where Home Assistant names the same thing (Włączono, Wyłączono), and greets "Dzień dobry" through the day and
+  "Dobry wieczór" from 18:00; "Dobranoc" is a farewell and never shows.
+- Simplified Chinese, thanks to @waphbs (#133): every card, page, dialog and editor form, the settings panel's language
+  list and the integration's own texts, in Home Assistant's register (您) and words. Home Assistant's `zh-Hans`, and a
+  browser's `zh`, `zh-CN` and `zh-SG`, read it; its Han is drawn in a Simplified face (PingFang SC, Microsoft YaHei,
+  Noto Sans SC) and wraps between any two characters. The automatic dashboards and the appliance cards read a house
+  named in Chinese, its words found anywhere in a name since Chinese writes no spaces (客厅温度传感器 is the living
+  room's reading, 洗碗机插座 the dishwasher). Three greetings: 早上好, 下午好, and 晚上好 from 18:00; 晚安 is a farewell
+  and never shows. Traditional Chinese (`zh-Hant`, `zh-TW`, `zh-HK`) is not Simplified: a Traditional house reads
+  Fluvy in English, and Home Assistant's own words in Traditional, unless a person chooses Simplified Chinese in the
+  panel.
+- A view's icon in a tab row reads Polish and Chinese names (Światła, Łazienka, 客厅, 光伏发电).
 
 ### Fixed
 
+- The letters of Polish, Slovak, Hungarian and Turkish (ł, ń, ś, č, ľ, ő, ű, ş, ğ) are drawn in Inter, where each fell
+  back to another face in the middle of a word: the Inter Fluvy ships covers Latin Extended-A, as its notes said.
+- The Room card with nothing on says so in figures ("0/3") where its language's word for off would be cut, as it
+  already does with something on.
+- The Energy period card measures its chips' words again once Inter is in use, where a word measured before the font
+  arrived could leave four chips on one line with a label cut.
 - A card's editor, a sheet or the settings panel opened in a page left open through an update say "Fluvy was updated ·
   Reload" where they failed without a word ("Failed to fetch dynamically imported module"), and opening the settings
   panel in a page still running a build from before 1.17 says it too (#132).
