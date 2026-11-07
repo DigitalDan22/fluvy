@@ -192,6 +192,24 @@ describe('custom:fluvy-home strategy — a house named in Japanese', () => {
     expect(TODAY.test('dnesna spotreba')).toBe(true);
     expect(BATTERY_POWER.test('bess power')).toBe(true);
   });
+
+  it('reads a Polish house by its names as written: a light, a garden, a washer’s switch, a child lock that is none', () => {
+    const registry = new HomeRegistry(
+      house([
+        entity('switch.s1', 'on', { friendly_name: 'Światło w salonie' }),
+        entity('switch.s2', 'off', { friendly_name: 'Lampa ogród' }),
+        entity('switch.s3', 'off', { friendly_name: 'Włącznik pralki' }),
+        entity('switch.s4', 'off', { friendly_name: 'Blokada rodzicielska zmywarki' }),
+      ]),
+    );
+    const { lights, appliances } = registry;
+    expect(lights).toEqual(expect.arrayContaining(['switch.s1', 'switch.s2']));
+    expect(registry.outdoor('switch.s2')).toBe(true);
+    expect(registry.outdoor('switch.s1')).toBe(false);
+    // a switch (włącznik) is no setting to switch on (włącz): the washer's plug is the washer
+    expect(appliances).toContain('switch.s3');
+    expect(appliances).not.toContain('switch.s4');
+  });
 });
 
 describe('custom:fluvy-home strategy — a place named by its device, no separator left hanging', () => {
