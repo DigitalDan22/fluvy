@@ -41,6 +41,7 @@ import { toneOf } from '../shared/colour.js';
 import { configKeys } from '../shared/config.js';
 import type { DatesDetail, PickerString } from '../shared/date-picker.js';
 import { TextRuler } from '../shared/fit.js';
+import { FontsSettled } from '../shared/fonts.js';
 import {
   boolField,
   colourFields,
@@ -513,6 +514,11 @@ export class FluvyEnergyPeriodCard extends Card<EnergyPeriodCardConfig> {
     this.leaving_ = false;
     this.custom_ = false;
     this.datesReady_ = false;
+    // a word measured before Inter was in use (a period's chip, the sheet's) is measured again once it is
+    new FontsSettled(this, () => {
+      this.ruler.clear();
+      this.requestUpdate();
+    });
     // the sheet is drawn for the design's 360 before it is laid out: drawn again for the width it was given
     new LaidWidth(
       this,
