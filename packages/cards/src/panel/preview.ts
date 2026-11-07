@@ -1,4 +1,4 @@
-import type { HassEntity, HomeAssistant, LovelaceCard } from '@fluvy/core';
+import { remember, type HassEntity, type HomeAssistant, type LovelaceCard } from '@fluvy/core';
 import { simulate } from '@fluvy/demo-home/simulate';
 
 /**
@@ -196,10 +196,39 @@ export class PreviewHouse {
   private real: HomeAssistant | undefined;
   /** A mode of the preview's own (the wall's night), or the app's. */
   private dark: boolean | undefined;
-  // made once, changed only by a tap in the preview: the same state objects every update, so the cards redraw
-  // only for the look
-  private readonly states: Record<string, HassEntity>;
+  // made once, replaced only by a tap in the preview (the states it did not touch kept): the same state objects every
+  // update, so the cards redraw only for the look
+  private states: Record<string, HassEntity>;
   private readonly areas: ReturnType<typeof AREAS>;
+  // each part of the preview's `hass` is made again only when what it is made of changed: a tick of the real house
+  // (some twenty a second in a large one, #135) gives the cards new states alone, and a card redraws only when one it
+  // watches changed (`FluvyCard.shouldUpdate` sees any other part that is a new object as a change)
+  private readonly statesOf = remember(
+    (real: HomeAssistant['states'], own: Record<string, HassEntity>) => ({ ...real, ...own }),
+  );
+  // the preview's entities sit in the preview's rooms, so a room card finds them (the house's registry stays)
+  private readonly entitiesOf = remember((real: HomeAssistant['entities']) => {
+    const entities = { ...real };
+    for (const [id, area] of Object.entries(IN_AREAS))
+      entities[id] = { ...(entities[id] ?? { entity_id: id }), area_id: area } as never;
+    return entities;
+  });
+  private readonly areasOf = remember(
+    (real: HomeAssistant['areas'], own: ReturnType<typeof AREAS>) => ({ ...real, ...own }),
+  );
+  private readonly themesOf = remember(
+    (real: HomeAssistant['themes'], dark: boolean | undefined) =>
+      dark === undefined ? real : { ...real, darkMode: dark },
+  );
+  private readonly previewOf = remember(
+    (
+      real: HomeAssistant,
+      states: HomeAssistant['states'],
+      entities: HomeAssistant['entities'],
+      areas: HomeAssistant['areas'],
+      themes: HomeAssistant['themes'],
+    ) => ({ ...real, states, entities, areas, themes, callService: this.answer }) as HomeAssistant,
+  );
 
   constructor(names: PreviewNames) {
     this.states = STATES(names);
@@ -298,18 +327,13 @@ export class PreviewHouse {
 
   update(hass: HomeAssistant): void {
     this.real = hass;
-    // the preview's entities sit in the preview's rooms, so a room card finds them (the house's registry stays)
-    const entities = { ...hass.entities };
-    for (const [id, area] of Object.entries(IN_AREAS))
-      entities[id] = { ...(entities[id] ?? { entity_id: id }), area_id: area } as never;
-    this.preview = {
-      ...hass,
-      ...(this.dark === undefined ? {} : { themes: { ...hass.themes, darkMode: this.dark } }),
-      states: { ...hass.states, ...this.states },
-      entities,
-      areas: { ...hass.areas, ...this.areas },
-      callService: this.answer,
-    } as unknown as HomeAssistant;
+    this.preview = this.previewOf(
+      hass,
+      this.statesOf(hass.states, this.states),
+      this.entitiesOf(hass.entities),
+      this.areasOf(hass.areas, this.areas),
+      this.themesOf(hass.themes, this.dark),
+    );
     for (const card of this.made.values()) card.hass = this.preview;
   }
 
@@ -322,7 +346,7 @@ export class PreviewHouse {
       target: target as { entity_id?: string | string[] } | undefined,
     };
     window.setTimeout(() => {
-      Object.assign(this.states, simulate(this.states, call));
+      this.states = { ...this.states, ...simulate(this.states, call) };
       if (this.real) this.update(this.real);
     }, ANSWER_MS);
     return undefined as never;

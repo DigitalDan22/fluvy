@@ -59,6 +59,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 - The Appliances card's editor no longer shows a list of commands to ask before that leaves out an oven's start:
   left empty, it says that each appliance asks as on its own card, where editing the list it showed silently stopped
   ovens, microwaves and air fryers asking before they start.
+- Fluvy's settings draw a preview card again only when an entity it shows changes, where every preview card was drawn
+  again on every state change in the house while the settings were open (a house of 914 states changes some twenty a
+  second): six redraws a tick on the Appearance tab are none, and the page's work while the house ticks falls by about
+  60 % (#135).
+- Every card on a dashboard whose cards speak a language of the person's own (Fluvy's settings › Preferences) is drawn
+  again only for what it shows, where each one was drawn again on every state change in the house (#135).
 
 ## [1.16.0] — 2026-11-06
 

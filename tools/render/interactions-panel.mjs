@@ -23,6 +23,8 @@
  * with motion and under reduced motion, nor when the panel is hidden and shown again. The Cards group (1.15, #121), at
  * 360 and 1400: solid until chosen; its ruler holds in its card's column; four steps down on the keys make 80 %, said in
  * the bar, the preview's cards see-through and blurred on a picture; the blur off leaves them see-through, unblurred.
+ * The house ticking (1.17, #135): twenty ticks of an entity no card watches draw none of the Appearance, Dashboard or
+ * night wall previews again, nor the cards of a page that speak a language of the person's own.
  */
 import { everyLanguage } from './lib.mjs';
 import { BASE, settle, startSuite } from './lib/suite.mjs';
@@ -930,6 +932,61 @@ const chartsTab = (page) => ({
     );
     await page.close();
   }
+}
+
+/* ---------- the house ticking (#135) ---------- */
+// a large house changes some twenty states a second, each a new `hass` with its registries and themes the same objects:
+// a preview card is drawn again only for an entity it watches (the wall's night tells the cards their own mode), and so
+// is a card on a page whose cards speak a language of the person's own
+for (const [name, query, language] of [
+  ['the Appearance tab', 'panel=appearance&sheet=home&frames=none'],
+  ['the Dashboard tab', 'panel=dashboard&sheet=home&frames=none'],
+  ['the wall at night', 'panel=wall&state=night&sheet=home&frames=none'],
+  ['a page whose cards speak Spanish', 'panel=preferences&sheet=home', 'es'],
+]) {
+  const page = await suite.page(query, { wait: 1500 });
+  const drawn = await page.evaluate(async (language) => {
+    const panel = document.querySelector('fluvy-panel');
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    if (language) {
+      await panel.handle.store.savePersonal({ language });
+      await wait(800); // its words land, and every card says them
+    }
+    // what draws for a tick: the panel's previews, else the sheet's own cards
+    const cards = language
+      ? [...document.querySelectorAll('#stage *')].filter(
+          (el) => 'rawHass' in el && el.rawHass && !el.closest('fluvy-panel'),
+        )
+      : [...panel.shadowRoot.querySelectorAll('[preview]')].filter((el) => 'hass' in el);
+    let hass = window.fluvyMock.hass();
+    const tick = async (state) => {
+      const states = {
+        ...hass.states,
+        'sensor.pg_tick': { entity_id: 'sensor.pg_tick', state, attributes: {} },
+      };
+      hass = { ...hass, states };
+      panel.hass = hass;
+      if (language) for (const card of cards) card.hass = hass;
+      await wait(50);
+    };
+    await tick('0');
+    let count = 0;
+    for (const card of cards) {
+      const update = Object.getPrototypeOf(card).update;
+      card.update = function (changed) {
+        count++;
+        return update.call(this, changed);
+      };
+    }
+    for (let i = 1; i <= 20; i++) await tick(String(i));
+    return { cards: cards.length, count };
+  }, language);
+  check(
+    `${name}: twenty ticks of an entity no card watches draw none of its ${drawn.cards} cards again`,
+    drawn.cards > 0 && drawn.count === 0,
+    `${drawn.count} redraws`,
+  );
+  await page.close();
 }
 
 /* ---------- reduced motion ---------- */

@@ -21,6 +21,7 @@ import { layoutHeightOf } from './layout-heights.js';
 import { idsOf, type EntityEntry } from './lists.js';
 import { AccentSheet } from './look/accent.js';
 import { entityName, type EntityName } from './names.js';
+import { remember } from './remember.js';
 import { CHART_DEFAULTS, type ChartSettings, type SavedSeries } from './settings/charts.js';
 import {
   UNAVAILABLE_LOOKS,
@@ -55,6 +56,16 @@ export interface FluvyCardConfig extends LovelaceCardConfig {
 
 /** One `hass` per Home Assistant update, in the language fluvy's settings chose (shared by every card). */
 const inLanguage = new WeakMap<HomeAssistant, HomeAssistant>();
+/**
+ * Home Assistant's `locale` in the language chosen: one object while neither changes, so an update of the house
+ * that changed only states leaves it as it was (a card draws again when the locale is another object).
+ */
+const localeIn = remember(
+  (locale: HomeAssistant['locale'], language: string): HomeAssistant['locale'] => ({
+    ...locale,
+    language,
+  }),
+);
 /** Cards on the page, to hand the language change to at once. */
 const live = new Set<FluvyCard>();
 
@@ -68,7 +79,7 @@ function withLanguage(hass: HomeAssistant | undefined): HomeAssistant | undefine
   if (!hass || !language || hass.language === language) return hass;
   let view = inLanguage.get(hass);
   if (view?.language !== language) {
-    view = { ...hass, language, locale: { ...hass.locale, language } };
+    view = { ...hass, language, locale: localeIn(hass.locale, language) };
     inLanguage.set(hass, view);
   }
   return view;

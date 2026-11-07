@@ -389,8 +389,10 @@ export class FluvyPanel extends LitElement {
           // the Charts tab draws both modes side by side: the day's tokens scoped to its light half
           lookRule(this.draft, 'light', '.pn-day', false, statuses),
       );
+      // the preview's cards derive their colours on the look being chosen: read again when it changes, never on a
+      // tick of the house (a card attached again reads its own)
+      resyncCardThemes();
     }
-    resyncCardThemes(); // the preview's cards derive their colours on the look being chosen
     if (
       changed.has('tryOnApp') ||
       changed.has('houseEdit') ||

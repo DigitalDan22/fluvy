@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { html, type TemplateResult } from 'lit';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FluvyCard, refreshCards } from '../card.js';
 import type { HomeAssistant } from '../ha/types.js';
 import { markLanguage, setLanguageOverride } from '../i18n/index.js';
@@ -64,6 +64,35 @@ describe('the language of Fluvy’s words', () => {
     setLanguageOverride(undefined);
     refreshCards();
     expect(card.hasAttribute('lang')).toBe(false);
+  });
+
+  // #135: the card's `hass` in the language chosen carried a new `locale` on every update of the house, and every card
+  // was drawn again on each tick
+  it('keeps the locale through a tick of the house, so a card is drawn again only for what it watches', async () => {
+    setLanguageOverride('de');
+    const card = await mounted('en');
+    const real = card.rawHass!;
+    const house = {
+      ...real,
+      locale: { language: 'en', number_format: 'language' },
+    } as HomeAssistant;
+    card.hass = house;
+    await card.updateComplete;
+    const { locale } = card.hass!;
+    expect(locale.language).toBe('de');
+    const drawn = vi.spyOn(card as unknown as { update: () => void }, 'update');
+    card.hass = {
+      ...house,
+      states: { 'sensor.outside': { state: '7' } },
+    } as unknown as HomeAssistant;
+    await card.updateComplete;
+    expect(card.hass!.locale).toBe(locale);
+    expect(drawn).not.toHaveBeenCalled();
+    // Home Assistant's own locale changed (its number format): the card's follows, in the language chosen
+    card.hass = { ...house, locale: { ...house.locale, number_format: 'none' } } as HomeAssistant;
+    await card.updateComplete;
+    expect(card.hass!.locale).toMatchObject({ language: 'de', number_format: 'none' });
+    expect(drawn).toHaveBeenCalledTimes(1);
   });
 
   it('is marked on any of Fluvy’s own elements the same way (the panel, a page of ours)', () => {
