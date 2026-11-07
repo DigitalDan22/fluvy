@@ -210,6 +210,49 @@ describe('custom:fluvy-home strategy — a house named in Japanese', () => {
     expect(appliances).toContain('switch.s3');
     expect(appliances).not.toContain('switch.s4');
   });
+
+  it('reads a house named in Simplified Chinese by its Han, anywhere in a name: its lights, its garden, its appliances’ plugs', () => {
+    const registry = new HomeRegistry(
+      house([
+        entity('switch.z1', 'on', { friendly_name: '卧室 灯' }),
+        entity('switch.z2', 'off', { friendly_name: '主卧吊灯' }),
+        entity('switch.z3', 'off', { friendly_name: '花园灯' }),
+        entity('switch.z4', 'off', { friendly_name: '洗碗机插座' }),
+        entity('switch.z5', 'off', { friendly_name: '厨房热水壶' }),
+        entity('switch.z6', 'off', { friendly_name: '洗碗机童锁' }),
+      ]),
+    );
+    const { lights, appliances } = registry;
+    expect(lights).toEqual(expect.arrayContaining(['switch.z1', 'switch.z2', 'switch.z3']));
+    expect(registry.outdoor('switch.z3')).toBe(true);
+    expect(registry.outdoor('switch.z1')).toBe(false);
+    // a dishwasher's and a kettle's plugs are those appliances, not lights; a child lock is no appliance
+    for (const id of ['switch.z4', 'switch.z5']) {
+      expect(lights, id).not.toContain(id);
+      expect(appliances, id).toContain(id);
+    }
+    expect(appliances).not.toContain('switch.z6');
+  });
+
+  it('names a Chinese house’s energy readings’ roles: the sun, the grid, the battery, the charger, the house', () => {
+    const registry = powerHouse(
+      [
+        power('sensor.pv', '光伏发电功率'),
+        power('sensor.meter', '电网 功率'),
+        power('sensor.storage', '储能电池 功率'),
+        power('sensor.wallbox', '充电桩 功率'),
+        power('sensor.house', '全屋用电'),
+      ],
+      'zh-Hans',
+    );
+    expect(findEnergyRoles(registry, null)).toMatchObject({
+      solarPower: 'sensor.pv',
+      gridPower: 'sensor.meter',
+      batteryPower: 'sensor.storage',
+      charger: 'sensor.wallbox',
+      homePower: 'sensor.house',
+    });
+  });
 });
 
 describe('custom:fluvy-home strategy — a place named by its device, no separator left hanging', () => {
@@ -422,6 +465,19 @@ describe('custom:fluvy-home strategy — a place named by its device, no separat
     ).toEqual(['Salon', 'Salon', 'Cucina', 'Entrée', "Salle d'eau"]);
   });
 
+  it('reads a Chinese place out of its sensor’s name, the reading’s words anywhere in it (a Japanese 和室 keeps its 和)', () => {
+    expect(
+      placed([
+        '客厅温度传感器',
+        '卧室温湿度传感器',
+        '书房 温度',
+        '主卧湿度计',
+        '儿童房：温度',
+        '和室温度',
+      ]),
+    ).toEqual(['客厅', '卧室', '书房', '主卧', '儿童房', '和室']);
+  });
+
   it('reads Slovak’s sensor words in every case they are said in, and Hungarian’s as the reading’s own', () => {
     expect(
       placed([
@@ -471,6 +527,10 @@ describe('custom:fluvy-home strategy — a place named by its device, no separat
         ['Temperatuur en vochtigheid sensor Keuken', 'Keuken'],
         ['Keuken en Woonkamer Sensor', 'Keuken en Woonkamer'],
       ],
+      pl: [
+        ['Czujnik temperatury i wilgotności Salon', 'Salon'],
+        ['Kuchnia i Salon Czujnik', 'Kuchnia i Salon'],
+      ],
       'pt-BR': [
         ['Sensor de temperatura e umidade Sala', 'Sala'],
         ['Sala e Cozinha Sensor', 'Sala e Cozinha'],
@@ -486,6 +546,12 @@ describe('custom:fluvy-home strategy — a place named by its device, no separat
       tr: [
         ['Sıcaklık ve nem sensörü Salon', 'Salon'],
         ['Mutfak ve Salon Sensör', 'Mutfak ve Salon'],
+      ],
+      'zh-Hans': [
+        ['客厅温度和湿度', '客厅'],
+        ['客厅和餐厅温度', '客厅和餐厅'],
+        ['客厅温度与湿度', '客厅'],
+        ['客厅与餐厅温度', '客厅与餐厅'],
       ],
     };
     for (const [code, names] of Object.entries(and))

@@ -273,6 +273,27 @@ describe('what an appliance is', () => {
       ['Dávkovač krmiva', 'feeder'],
       ['Fontána pre zvieratá', 'fountain'],
       ['Mačacia toaleta', 'litter_box'],
+      // Simplified Chinese, its Han anywhere in the name
+      ['洗衣机', 'washer'],
+      ['洗烘一体机', 'washer_dryer'],
+      ['厨房洗碗机', 'dishwasher'],
+      ['干衣机', 'dryer'],
+      ['微波炉', 'microwave'],
+      ['蒸烤一体机', 'oven'],
+      ['集成灶', 'hob'],
+      ['抽油烟机', 'hood'],
+      ['酒柜', 'wine'],
+      ['冰箱', 'fridge'],
+      ['冰柜', 'freezer'],
+      ['咖啡机', 'coffee'],
+      ['电水壶', 'kettle'],
+      ['空气炸锅', 'air_fryer'],
+      ['早餐机', 'sandwich_maker'],
+      ['多士炉', 'toaster'],
+      ['破壁机', 'blender'],
+      ['自动喂食器', 'feeder'],
+      ['宠物饮水机', 'fountain'],
+      ['猫砂盆', 'litter_box'],
     ];
     for (const [name, kind] of names) expect(byWords(name), name).toEqual({ kind, by: 'words' });
     // a name that says no kind says none: a solar panel is no hob ("placa"), a brand ("marca") no freezer ("arca")
@@ -285,6 +306,10 @@ describe('what an appliance is', () => {
     expect(byWords('Hobby room plug')).toBeUndefined();
     // Slovak's cooling ("chladenie") is no fridge ("chladnička")
     expect(byWords('Chladenie obývačka')).toBeUndefined();
+    // the laundry room and the detergent are no washer; a home's water dispenser no pet fountain
+    expect(byWords('洗衣房插座')).toBeUndefined();
+    expect(byWords('洗衣液')).toBeUndefined();
+    expect(byWords('饮水机')).toBeUndefined();
   });
 
   it('never takes a vacuum, a charger, a hair dryer or what waits for 1.10 for an appliance', () => {
@@ -303,6 +328,8 @@ describe('what an appliance is', () => {
       'ロボット掃除機',
       'ドライヤー',
       '布団乾燥機',
+      '扫地机器人',
+      '吹风机',
     ])
       expect(byWords(name), name).toEqual({ excluded: 'name' });
     expect(kindOf(signals({ domains: new Set(['vacuum']), name: 'Waschmaschine' }))).toEqual({
