@@ -17,6 +17,7 @@
  *
  *   node interactions-update.mjs        (`pnpm visual` runs it with the suites)
  */
+import { existsSync } from 'node:fs';
 import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
@@ -365,10 +366,13 @@ async function suite(engine, context, label) {
   }
 }
 
-// Chromium and WebKit (which names no file when a module fails to load)
+// Chromium and WebKit (which names no file when a module fails to load); WebKit where it is installed (CI installs
+// Chromium alone: its runs say they left WebKit out, and a machine with it runs both)
+const hasWebkit = existsSync(webkit.executablePath());
+if (!hasWebkit) console.log('· WebKit is not installed here: its pass is left out');
 for (const [engine, launcher] of [
   ['chromium', () => chromium.launch(launchOptions)],
-  ['webkit', () => webkit.launch()],
+  ...(hasWebkit ? [['webkit', () => webkit.launch()]] : []),
 ]) {
   const browser = await launcher();
   await suite(engine, await browser.newContext(), engine);
