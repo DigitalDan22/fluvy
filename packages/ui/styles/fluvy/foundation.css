@@ -41,9 +41,18 @@
 }
 
 /* Japanese wraps between its phrases, never inside a word (追|加), where the browser knows them (Chromium 119+; the
-   rest keep their own breaks). Home Assistant writes its language on <html>; every other language is left as it is. */
+   rest keep their own breaks). Home Assistant writes its language on <html>; every other language is left as it is:
+   Chinese wraps between any two characters, as it is set. */
 :host(:lang(ja)) {
   word-break: auto-phrase;
+}
+
+/* Simplified Chinese: Inter has no Han, so a Simplified face draws it, named before the system's own (a Japanese
+   system would draw 骨 and 直 in their Japanese forms); Latin letters and figures stay Inter's. */
+:host(:lang(zh-Hans)) {
+  --fluvy-font-sans:
+    'Inter', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', 'Noto Sans CJK SC',
+    'Source Han Sans SC', ui-sans-serif, system-ui, sans-serif;
 }
 
 /* ---------- tones ---------- */
