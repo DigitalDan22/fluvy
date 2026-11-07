@@ -4,7 +4,8 @@
  * opened. The playground registers every part of English at start; the bundle registers a lazy family's part only
  * when the family's chunk lands, so this is where a word said outside its chunk shows — as a key. Serves
  * `custom_components/fluvy/frontend` (run `pnpm build` first) on a dashboard's address under a bare stand-in Home
- * Assistant, in English and in German, and proves:
+ * Assistant, in English, in German and in the newest languages (Polish, Simplified Chinese), and proves:
+ * - a language's chunk lands and its catalogue is read (the chunk's `default`): every word below is the language's own;
  * - a wall's pieces (its way back, its corner both ways, its toast both ways) say their words, and the panel's chunk
  *   never loaded;
  * - the schedule sheet's details say "Open in Home Assistant" and "Traces", and the Activity page's chunk never
@@ -45,11 +46,13 @@ const chunk = (name) =>
     new RegExp(`^chunks/${name}-[\\w-]{8}\\.js$`).test(file),
   );
 
-/** The words each language must say: English from all its parts, German from its catalogue. */
+/** The words each language must say: English from all its parts, every other language from its catalogue. */
 const english = {};
 for (const part of await readdir(join(LOCALES, 'en')))
   Object.assign(english, await readJson(join(LOCALES, 'en', part)));
-const WORDS = { en: english, de: await readJson(join(LOCALES, 'de.json')) };
+const LANGUAGES = ['en', 'de', 'pl', 'zh-Hans'];
+const WORDS = { en: english };
+for (const lang of LANGUAGES.slice(1)) WORDS[lang] = await readJson(join(LOCALES, `${lang}.json`));
 
 /** Another theme, as Home Assistant applies it inline on `<html>`: its font, its primary, its page and bar colours. */
 const OTHER_THEME =
@@ -136,7 +139,7 @@ function standIn() {
   };
 }
 
-for (const lang of ['en', 'de']) {
+for (const lang of LANGUAGES) {
   const tab = await browser.newPage();
   const errors = [];
   tab.on('pageerror', (error) => errors.push(String(error)));
