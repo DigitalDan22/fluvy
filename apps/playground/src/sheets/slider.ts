@@ -1,3 +1,4 @@
+import type { StateSeed } from '../hass.js';
 import type { SheetSpec } from '../scenes.js';
 
 /** A colour bulb's lit colour, Home Assistant's own orange: what `rgb_color` says beside its `hs_color`. */
@@ -10,6 +11,43 @@ const BULB = {
   min_color_temp_kelvin: 2200,
   max_color_temp_kelvin: 6500,
 };
+
+/** The levels a card in its light's whole colour is shown at (#131), each a lamp of its own. */
+const LEVELS = [10, 30, 50, 70, 100] as const;
+/** The lamps it is shown in: a warm white at 2,700 K and a saturated red, as Home Assistant reports them. */
+const FOLLOWED = {
+  warm: {
+    friendly_name: 'Desk',
+    color_mode: 'color_temp',
+    color_temp_kelvin: 2700,
+    hs_color: [28.6, 65.9],
+    rgb_color: [255, 167, 87],
+  },
+  red: { friendly_name: 'Red', color_mode: 'hs', hs_color: [0, 100], rgb_color: [255, 0, 0] },
+};
+type Followed = keyof typeof FOLLOWED;
+
+/**
+ * A lamp of each level in each strength that follows it — the wash, the whole fill — and the whole fill that does not,
+ * a row each: the compact card, five to a row, for the eye (the measurer reads the card in the frames after it, the full
+ * one a section wide and the compact one half a section).
+ */
+const followed = (colour: Followed) => ({
+  title: `Tint · with the brightness · ${colour === 'warm' ? 'warm white' : 'red'}`,
+  width: 1160,
+  columns: 5,
+  measure: false,
+  cards: (['brightness', 'full_brightness', 'full'] as const).flatMap((strength) =>
+    LEVELS.map((level) => ({
+      type: 'custom:fluvy-light-card',
+      entity: `light.fb_${colour}_${level}`,
+      variant: 'compact',
+      tint: 'on',
+      tint_strength: strength,
+      cols: 1,
+    })),
+  ),
+});
 
 export const sheet: SheetSpec = {
   states: [
@@ -105,6 +143,14 @@ export const sheet: SheetSpec = {
     ],
     // a colour bulb that cannot be read: Home Assistant keeps what it can do
     ['light.tn_gone', 'unavailable', { friendly_name: 'Hall lamp', ...BULB }],
+    // the whole fill as the lamp is bright (#131): a warm white and a red, at 10, 30, 50, 70 and 100 %
+    ...(Object.keys(FOLLOWED) as Followed[]).flatMap((colour) =>
+      LEVELS.map((level): StateSeed => [
+        `light.fb_${colour}_${level}`,
+        'on',
+        { ...FOLLOWED[colour], brightness: Math.round(level * 2.55), ...BULB },
+      ]),
+    ),
     // bulbs that only switch (#65): the card is their head alone, in every style
     ['light.pantry', 'on', { friendly_name: 'Pantry', supported_color_modes: ['onoff'] }],
     ['light.stairs', 'off', { friendly_name: 'Stairs', supported_color_modes: ['onoff'] }],
@@ -347,6 +393,49 @@ export const sheet: SheetSpec = {
           entity: 'light.lamp',
           tint: 'on',
           tint_strength: 'soft',
+        },
+      ],
+    },
+    // the whole fill as the lamp is bright (#131): from the soft wash to the whole fill, beside the wash that follows
+    // the lamp and the whole fill that does not; the full card at 10 and 70 % (its labels, stepper and colours on it)
+    // and the compact one at 30 and 50 %, half a section each
+    followed('warm'),
+    followed('red'),
+    {
+      title: 'Tint · full colour with the brightness',
+      cards: [
+        {
+          type: 'custom:fluvy-light-card',
+          entity: 'light.fb_red_10',
+          tint: 'on',
+          tint_strength: 'full_brightness',
+        },
+        {
+          type: 'custom:fluvy-light-card',
+          entity: 'light.fb_warm_70',
+          tint: 'on',
+          tint_strength: 'full_brightness',
+        },
+      ],
+    },
+    {
+      title: 'Tint · full colour with the brightness, compact',
+      cards: [
+        {
+          type: 'custom:fluvy-light-card',
+          entity: 'light.fb_red_30',
+          variant: 'compact',
+          tint: 'on',
+          tint_strength: 'full_brightness',
+          cols: 6,
+        },
+        {
+          type: 'custom:fluvy-light-card',
+          entity: 'light.fb_warm_50',
+          variant: 'compact',
+          tint: 'on',
+          tint_strength: 'full_brightness',
+          cols: 6,
         },
       ],
     },

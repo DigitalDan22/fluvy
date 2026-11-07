@@ -92,6 +92,8 @@ export {
   identityVars,
   LIT_FLOOR,
   LIT_REST,
+  litFlip,
+  litFull,
   litSurface,
   surfaceInset,
   surfaceWash,

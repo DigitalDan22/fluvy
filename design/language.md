@@ -2008,6 +2008,17 @@ dashboards' bands — and change only their hero and their words.
     and lit never equals rest. `soft` is that floor whatever the level; `brightness` follows the level, and the finger
     while it drags. On a wash a ruler's words take the secondary ink, its resting ticks half the wash's hairline, the
     inner fills the wash's deeper step (`--fluvy-inset`), and lit the circle and the thumb are plain-card discs.
+  - **`full_brightness`** (1.17, #131) is the whole fill as much as the lamp is bright (`litFull`, `[data-surface]`
+    `full <colour>-<level>`): from the soft wash (the floor's share) at the lowest step to `full` itself at 100 %, the
+    very card, in 5 % steps that follow the finger. Two sets of inks take turns on it: the card's (a wash's, as above)
+    and the fill's (a lit tile's skin: the on-fill ink, its state line at 80 %, a solid fill's ink on its switch and
+    rulers). The card wears the fill's from the step where they clear their gates (words 4.5, the ink 3) at least as
+    well as its own: from the first on the tints and the light solids, at 25–40 % on the dark solids (Volt, Mint, Noir:
+    light words on a dim wash, dark ones on a bright fill). Where neither reads (from about a quarter to three quarters of a dark solid's fill)
+    those shares are left out and each side's levels spread over what reads, so the inks and the surface change once,
+    at one step, the same up and down — tied to the step, they cannot flicker. On the fill's side the step redefines
+    what the role is drawn by (its fill and hairline: the accent's and the lit light's for a colour), so the thumb, the
+    knobs and a quick colour's edge wear the step, and the hairline keeps 1.35 from it on the side it sits at 100 %.
   - **At rest** (`always`) every strength shows the rest wash of its own colour (or of the palette's light), unless the
     card has a `card_color` — that is its rest. Lit, the light's surface is over a `card_color`. A light that cannot be
     read keeps the unavailable skin: a state is never covered.

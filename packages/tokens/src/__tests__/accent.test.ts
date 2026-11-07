@@ -3,11 +3,20 @@ import { accentFamily, paletteAccent } from '../build/accent-family.js';
 import { derivePalette, GATES } from '../build/derive.js';
 import { LIMITS } from '../build/derive/limits.js';
 import { derivePalettes } from '../build/palettes.js';
-import { contrastRatio, deltaE, fromHex, minPairwiseDeltaE, toHex } from '../color/index.js';
+import {
+  composite,
+  contrastRatio,
+  deltaE,
+  fromHex,
+  minPairwiseDeltaE,
+  toHex,
+} from '../color/index.js';
 import { PALETTE_MODES } from '../config.js';
 import {
   accentFamilyVars,
   LIT_FLOOR,
+  litFlip,
+  litFull,
   litSurface,
   surfaceInset,
   surfaceWash,
@@ -369,6 +378,132 @@ describe('a lit light card’s surface (1.9, #41)', () => {
         // the same every time
         expect(litSurface(role, colors, 0.75)).toEqual(litSurface(role, colors, 0.75));
       }
+  });
+});
+
+describe('a light card in its light’s whole colour, with the brightness (`full_brightness`, 1.17, #131)', () => {
+  /** Every 5 % step the card takes: 0 is a lamp at 1 or 2 %. */
+  const LEVELS = Array.from({ length: 21 }, (_, i) => i / 20);
+  /** What a lamp glows: its whites, a warm colour, a saturated red, green and blue, a pale yellow, Home Assistant's. */
+  const LAMPS = ['#ff9800', '#ff0000', '#00ff00', '#0000ff', '#fff3a0', ...BULBS];
+  const LIGHT = ['state-light-active'];
+  /** A step as drawn: its surface, its hairline, and whether its inks are the fill's (a lit tile's skin). */
+  const stepOf = (
+    role: Parameters<typeof litFull>[0],
+    colors: Parameters<typeof litFull>[1],
+    level: number,
+  ) => {
+    const vars = new Map(litFull(role, colors, level, LIGHT));
+    const wash = vars.get('--fluvy-card');
+    return wash
+      ? { onFill: false, surface: wash, border: vars.get('--fluvy-border')!, vars }
+      : {
+          onFill: true,
+          surface: vars.get('--fluvy-state-light-active-fill')!,
+          border: vars.get('--fluvy-state-light-active-fill-border')!,
+          vars,
+        };
+  };
+  const everyRole = (palette: Palette, mode: PaletteMode) => {
+    const seed = seeds[palette.name as keyof typeof seeds];
+    const colors = palette[mode];
+    return [
+      ['light-active', colors.state['light-active']] as const,
+      ['accent', colors.accent] as const,
+      ...KELVIN.map((hex) => [`white ${hex}`, accentFamily(seed, colors, hex, true)] as const),
+      ...LAMPS.map((hex) => [hex, accentFamily(seed, colors, hex)] as const),
+    ];
+  };
+
+  it('reads at every step on every palette, in either set of inks: the card’s own, or the fill’s once they read as well', () => {
+    for (const palette of palettes)
+      for (const mode of PALETTE_MODES) {
+        const colors = palette[mode];
+        const solid = colors.fillStyle === 'solid';
+        for (const [name, role] of everyRole(palette, mode))
+          for (const level of LEVELS) {
+            const { onFill, surface, border, vars } = stepOf(role, colors, level);
+            const at = (fg: string, min: number, what: string): void =>
+              expect(
+                contrastRatio(fg, surface),
+                `${palette.name}/${mode} ${name} ${level}: ${what}`,
+              ).toBeGreaterThanOrEqual(min);
+            at(border, 1.35, 'the card’s edge');
+            if (onFill) {
+              // a lit tile's skin: its words, its state line and labels at 80 %, its switch and rulers, resting ticks
+              at(role.onFill, 4.5, 'the title and the level');
+              at(composite(role.onFill, surface, 0.8), 4.5, 'the state line and the labels');
+              at(solid ? role.onFill : role.ink, 3, 'the switch and the rulers');
+              at(
+                solid ? composite(role.onFill, surface, 0.28) : colors.surface.borderStrong,
+                1.35,
+                'the resting ticks',
+              );
+            } else {
+              // a wash's: the page's words, the role's ink, the ticks half the hairline
+              at(colors.text.primary, 4.5, 'the title and the level');
+              at(colors.text.secondary, 4.5, 'the state line and the labels');
+              at(role.ink, 3, 'the glyph, the switch and the rulers');
+              at(
+                composite(colors.surface.borderStrong, role.fillBorder, 0.5),
+                1.35,
+                'the resting ticks',
+              );
+              expect(
+                contrastRatio(colors.text.primary, vars.get('--fluvy-inset')!),
+                `${palette.name}/${mode} ${name} ${level}: the words on an inner fill`,
+              ).toBeGreaterThanOrEqual(4.5);
+            }
+          }
+      }
+  });
+
+  it('goes from the soft wash to the whole fill, never nearer the card as it brightens, its inks changing once', () => {
+    for (const palette of palettes)
+      for (const mode of PALETTE_MODES) {
+        const colors = palette[mode];
+        const { card } = colors.surface;
+        for (const [name, role] of everyRole(palette, mode)) {
+          const at = `${palette.name}/${mode} ${name}`;
+          const steps = LEVELS.map((level) => stepOf(role, colors, level));
+          // the lowest step is the soft wash; 100 % the role's own colours, a lit tile's
+          expect(steps[0]!.surface, at).toBe(
+            new Map(litSurface(role, colors, LIT_FLOOR)).get('--fluvy-card'),
+          );
+          expect([steps[20]!.onFill, steps[20]!.surface, steps[20]!.border], at).toEqual([
+            true,
+            role.fill,
+            role.fillBorder,
+          ]);
+          // each step a share of the fill over the card, in fiftieths, never less than the one under it
+          const shares = Array.from({ length: 51 }, (_, share) =>
+            composite(role.fill, card, share / 50),
+          );
+          const flip = litFlip(role, colors);
+          steps.forEach((step, i) => {
+            expect(step.onFill, `${at} ${LEVELS[i]}`).toBe(LEVELS[i]! >= flip);
+            expect(shares.indexOf(step.surface), `${at} ${LEVELS[i]}`).toBeGreaterThanOrEqual(
+              i ? shares.indexOf(steps[i - 1]!.surface) : 1,
+            );
+          });
+          // the card's inks, then the fill's: one change, at one level, the same up and down
+          expect(
+            steps.filter((step, i) => i && step.onFill !== steps[i - 1]!.onFill).length,
+            at,
+          ).toBeLessThanOrEqual(1);
+        }
+      }
+  });
+
+  it('redefines what the role is drawn by from the flip, the fill and its hairline: a colour’s accent and lit light both', () => {
+    const colors = palettes[0]!.dark;
+    const role = accentFamily(seeds[palettes[0]!.name as keyof typeof seeds], colors, '#ff0000');
+    expect(litFull(role, colors, 1, ['accent', 'state-light-active'])).toEqual([
+      ['--fluvy-accent-fill', role.fill],
+      ['--fluvy-accent-fill-border', role.fillBorder],
+      ['--fluvy-state-light-active-fill', role.fill],
+      ['--fluvy-state-light-active-fill-border', role.fillBorder],
+    ]);
   });
 });
 

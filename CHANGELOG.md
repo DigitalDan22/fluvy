@@ -5,6 +5,14 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- The Light card can wear its light's whole colour as bright as the lamp is (`tint_strength: full_brightness`, Full
+  colour, with the brightness): a soft wash for a dim lamp, at 100 % the very card Full colour draws, following the
+  finger as it drags. Its words are the fill's own wherever they read on it, else the card's: on Volt, Mint and Noir in
+  dark they change once, at one level, the same up and down. The wash that follows the lamp is now worded Soft, with
+  the brightness (#131).
+
 ## [1.16.0] — 2026-11-06
 
 ### Visible on upgrade

@@ -185,21 +185,24 @@ colors:
 
 A lit light card can show its light's colour on its whole surface (`tint`, 1.9): `on` while the light is on, `always`
 with a quiet wash of it at rest too, `off` never. How much: `full` (the default) is a lit tile's fill in that colour —
-the same on every palette as a tile's — `soft` a gentler wash, and `brightness` a wash as strong as the lamp is bright
-(a lamp at 10 % still reads lit). The colour is the card's own `color` when it has one (*Primary* is the palette's
-accent; the editor's *State* follows the light), else its `tone`, else the light's: the colour it glows, a group's lit
-members' by their brightness, the one you just tapped. A white shows its warmth (1.10) on one scale, from Home
-Assistant's own colour for its temperature: a candle's (2,200 K) the warmest, 2,700 K warm, 4,000 K a little, 5,000 K
-nearly neutral, daylight (6,500 K) neutral, and a cool one, above it, cool — or the palette's lit light with
-`light_whites: palette`. A light that only dims or only switches, and a white Home Assistant gives no colour for, have
-no colour of their own and take the palette's lit light. Where a card says nothing of its surface, the house decides
-(the settings panel → Appearance → Lights; off unless chosen):
+the same on every palette as a tile's — `soft` a gentler wash, `brightness` a wash as strong as the lamp is bright
+(a lamp at 10 % still reads lit), and `full_brightness` (1.17) as much of the whole fill as the lamp is bright: the
+soft wash for a dim lamp, the very card `full` draws at 100 %, the steps between following the brightness as you drag.
+Its words are the fill's own wherever they read on it, else the card's: on a solid palette in dark (Volt, Mint, Noir)
+they change once, at one level, the same up and down. The colour is the card's own `color` when it has one
+(*Primary* is the palette's accent; the editor's *State* follows the light), else its `tone`, else the light's: the
+colour it glows, a group's lit members' by their brightness, the one you just tapped. A white shows its warmth (1.10)
+on one scale, from Home Assistant's own colour for its temperature: a candle's (2,200 K) the warmest, 2,700 K warm,
+4,000 K a little, 5,000 K nearly neutral, daylight (6,500 K) neutral, and a cool one, above it, cool — or the palette's
+lit light with `light_whites: palette`. A light that only dims or only switches, and a white Home Assistant gives no
+colour for, have no colour of their own and take the palette's lit light. Where a card says nothing of its surface, the
+house decides (the settings panel → Appearance → Lights; off unless chosen):
 
 ```yaml
 type: custom:fluvy-light-card
 entity: light.sofa_lamp
 tint: on
-tint_strength: brightness
+tint_strength: full_brightness
 ```
 
 Tiles, a tiles group, a room's tiles and rows, and an entities card's rows can wear a lit bulb's colour as well
@@ -1080,7 +1083,7 @@ roles:
 | **Tile** | `custom:fluvy-tile-card` | A light, switch, cover, fan, player, number or sensor as a tile: large with a precision ruler or two readouts, compact row, or mini. | `size` (`large`, `compact`, `mini`), `name_lines` (`1`, `2`), `since`, `tint` (`on`, `always`), `light_colors`, `light_whites` (`palette`, `temperature`), `readouts` | — |
 | **Tiles** | `custom:fluvy-tiles-card` | A group of compact or mini tiles, two to four per row, 8 px apart. | `size` (`compact`, `mini`, `large`), `columns` (`1`, `2`, `3`, `4`, `auto`), `name_lines` (`1`, `2`), `tint` (`on`, `always`), `light_colors`, `light_whites` (`palette`, `temperature`), `readouts`, `empty_text`, `hide_empty`, `tiles` (a list: `entity`, `name`, `icon`, `tone`, `color`, `readouts`, `since`, `unavailable`, `tap_action`, `hold_action`) | `entities` → `tiles` |
 | **Template** | `custom:fluvy-template-card` | A tile whose name, line, icon, colour and fill are templates, with or without an entity; a Mushroom template card pastes in. | `secondary` (`state`, `area`, `last-changed`, `none`), `since`, `variant` (`compact`, `mini`, `large`), `active` (`auto`, `always`, `never`), `name_lines` (`1`, `2`), `tint` (`on`, `always`), `readouts` | `primary` → `name`, `icon_color` → `color`, `layout` → `variant`, `vertical` → `variant` |
-| **Light** | `custom:fluvy-light-card` | The precision dimmer: relative drag, slide away to slow down, hold for the 1 % scale, colour temperature. | `show_brightness` (`true`, `when_on`, `false`), `variant` (`auto`, `full`, `compact`), `show_stepper`, `live_update`, `show_temperature`, `show_color`, `temperature_tint`, `tint` (`off`, `on`, `always`), `tint_strength` (`soft`, `brightness`, `full`), `light_whites` (`palette`, `temperature`), `colors` (a list: `color`, `name`, `rgb`) | — |
+| **Light** | `custom:fluvy-light-card` | The precision dimmer: relative drag, slide away to slow down, hold for the 1 % scale, colour temperature. | `show_brightness` (`true`, `when_on`, `false`), `variant` (`auto`, `full`, `compact`), `show_stepper`, `live_update`, `show_temperature`, `show_color`, `temperature_tint`, `tint` (`off`, `on`, `always`), `tint_strength` (`soft`, `brightness`, `full`, `full_brightness`), `light_whites` (`palette`, `temperature`), `colors` (a list: `color`, `name`, `rgb`) | — |
 | **Slider** | `custom:fluvy-slider-card` | Any value on the precision ruler: a player’s volume with its mute, a number or a helper, a fan’s speed, another entity’s switch in its head. | `variant` (`full`, `compact`, `tile`), `show_stepper`, `control` (`auto`, `mute`, `switch`, `none`), `toggle_entity`, `min`, `max`, `label`, `live_update`, `tint` (`off`, `on`, `always`) | — |
 | **Room lights** | `custom:fluvy-lights-card` | A room’s lights on one card: one tap for the whole room, a round, chip or tile for each light, in its colour. | `area`, `variant` (`row`, `chips`, `tiles`), `show_brightness`, `show_count`, `show_level`, `light_colors`, `light_whites` (`palette`, `temperature`), `tint` (`on`, `always`), `name_lines` (`1`, `2`), `empty_text`, `hide_empty`, `lights` (a list: `entity`, `name`, `icon`, `color`) | `entities` → `lights` |
 | **Thermostat** | `custom:fluvy-thermostat-card` | Climate, water heater or humidifier on a dial, with modes, presets and fan speeds. | `image`, `subtitle`, `variant` (`dial`, `compact`, `ruler`), `show_stepper`, `show_modes`, `modes_style` (`tiles`, `chips`, `full`), `modes` (`off`, `heat`, `cool`, `heat_cool`, `auto`, `dry`, `fan_only`), `show_current`, `show_presets`, `preset_style` (`full`, `chips`), `show_fan`, `fan_style` (`full`, `chips`), `when_off` (`all`, `essentials`) | — |

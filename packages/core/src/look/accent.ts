@@ -3,6 +3,8 @@ import {
   accentFamilyVars,
   declarationsCss,
   DEFAULT_PALETTE,
+  litFlip,
+  litFull,
   litSurface,
   paletteAccent,
   parsePaletteKey,
@@ -16,6 +18,7 @@ import {
   type PaletteMode,
   type PaletteChoice,
   type PaletteModeColors,
+  type RoleColors,
 } from '@fluvy/tokens/runtime';
 import { paletteOf } from './css.js';
 
@@ -31,12 +34,14 @@ const kept = new Map<string, string>();
 const KEPT = 128;
 /** The inks tones and colours are drawn in, per palette × mode (`AccentSheet.inkOf`), kept the same way. */
 const inks = new Map<string, string>();
+/** From which level a light card in its light's whole colour wears the fill's inks (`flipOf`), kept the same way. */
+const flips = new Map<string, number>();
 
-function remember(key: string, css: string): string {
-  kept.delete(key);
-  kept.set(key, css);
-  if (kept.size > KEPT) kept.delete(kept.keys().next().value as string);
-  return css;
+function remember<T>(map: Map<string, T>, key: string, value: T): T {
+  map.delete(key);
+  map.set(key, value);
+  if (map.size > KEPT) map.delete(map.keys().next().value as string);
+  return value;
 }
 
 /** The palette a key names, the default where the key is not one of ours (a page without a look). */
@@ -108,7 +113,7 @@ export function paletteAccentCss(paletteKey: string, mode: PaletteMode): string 
   const known = kept.get(key);
   if (known !== undefined) return known;
   const colors = colorsOf(paletteKey, mode);
-  return remember(key, declarationsCss(accentFamilyVars(paletteAccent(colors), colors)));
+  return remember(kept, key, declarationsCss(accentFamilyVars(paletteAccent(colors), colors)));
 }
 
 /**
@@ -123,6 +128,7 @@ export function surfaceCss(paletteKey: string, mode: PaletteMode, pick: Hex): st
   const colors = colorsOf(paletteKey, mode);
   const family = familyOf(paletteKey, mode, pick);
   return remember(
+    kept,
     key,
     declarationsCss([
       ['--fluvy-card', surfaceWash(family, colors)],
@@ -154,10 +160,33 @@ export const TONE_STATES: Readonly<Record<string, keyof PaletteModeColors['state
   vehicle: 'energy-water',
 };
 
+/** A lit surface in its light's whole colour as the lamp is bright (`full_brightness`): this mark, then its colour. */
+const FULL = 'full ';
+
 /**
- * What a lit surface (a light card's `tint`, 1.9) writes for what it is lit in — a colour's family (`#rrggbb`, a
- * white's: `WHITE`) or a tone of the palette's own (`light`: its lit light) — at `level` (0 at rest): `litSurface`,
- * kept like the rest.
+ * What a lit surface is lit in on a palette × mode — a colour's family (`#rrggbb`, a white's: `WHITE`) or a tone of the
+ * palette's own (`light`: its lit light) — and the names it is drawn by: a colour's, the accent's and the lit light's,
+ * as its family writes them.
+ */
+function litRole(
+  paletteKey: string,
+  mode: PaletteMode,
+  source: string,
+): readonly [RoleColors, readonly string[]] {
+  const colors = colorsOf(paletteKey, mode);
+  const state = TONE_STATES[source];
+  return source.includes('#')
+    ? [familyOf(paletteKey, mode, source), ['accent', 'state-light-active']]
+    : state
+      ? [colors.state[state], [`state-${state}`]]
+      : source === 'warning'
+        ? [colors.semantic.warning, ['warning']]
+        : [colors.accent, ['accent']];
+}
+
+/**
+ * What a lit surface (a light card's `tint`, 1.9) writes for what it is lit in (`litRole`) at `level` (0 at rest):
+ * `litSurface`; in its light's whole colour (`FULL`), `litFull`. Kept like the rest.
  */
 export function litCss(
   paletteKey: string,
@@ -169,15 +198,25 @@ export function litCss(
   const known = kept.get(key);
   if (known !== undefined) return known;
   const colors = colorsOf(paletteKey, mode);
-  const state = TONE_STATES[source];
-  const role = source.includes('#')
-    ? familyOf(paletteKey, mode, source)
-    : state
-      ? colors.state[state]
-      : source === 'warning'
-        ? colors.semantic.warning
-        : colors.accent;
-  return remember(key, declarationsCss(litSurface(role, colors, level)));
+  const full = source.startsWith(FULL);
+  const [role, names] = litRole(paletteKey, mode, full ? source.slice(FULL.length) : source);
+  return remember(
+    kept,
+    key,
+    declarationsCss(full ? litFull(role, colors, level, names) : litSurface(role, colors, level)),
+  );
+}
+
+/** From which level a light card in its light's whole colour wears the fill's inks on a palette × mode (`litFlip`). */
+function flipOf(paletteKey: string, mode: PaletteMode, source: string): number {
+  const key = `${paletteKey}|${mode}|${source}`;
+  const known = flips.get(key);
+  if (known !== undefined) return known;
+  return remember(
+    flips,
+    key,
+    litFlip(litRole(paletteKey, mode, source)[0], colorsOf(paletteKey, mode)),
+  );
 }
 
 export function accentCss(paletteKey: string, mode: PaletteMode, pick: string): string {
@@ -185,6 +224,7 @@ export function accentCss(paletteKey: string, mode: PaletteMode, pick: string): 
   const known = kept.get(key);
   if (known !== undefined) return known;
   return remember(
+    kept,
     key,
     declarationsCss(accentFamilyVars(familyOf(paletteKey, mode, pick), colorsOf(paletteKey, mode))),
   );
@@ -290,9 +330,7 @@ export class AccentSheet {
           : source === 'accent' || source === PALETTE_ACCENT
             ? colors.accent.ink
             : '';
-    inks.set(key, ink);
-    if (inks.size > KEPT) inks.delete(inks.keys().next().value as string);
-    return ink || undefined;
+    return remember(inks, key, ink) || undefined;
   }
 
   /**
@@ -303,6 +341,21 @@ export class AccentSheet {
     const key = `${source}-${Math.round(level * 20) * 5}`;
     this.surfaces.add(key);
     return key;
+  }
+
+  /**
+   * A lit surface in its light's whole colour, following the lamp (`full_brightness`, 1.17), at `level` (the lamp's
+   * share, in 5 % steps): the value for its `data-surface` — none at 100 %, the whole fill, a lit tile's as `full`'s —
+   * and whether the card wears the fill's inks there (a lit tile's skin) or its own (a wash's): the same at a step every
+   * time, so they change at one step, the same up and down.
+   */
+  litFull(source: string, level: number): { readonly surface?: string; readonly onFill: boolean } {
+    const step = Math.round(level * 20) / 20;
+    if (step >= 1) return { onFill: true };
+    return {
+      surface: this.lit(FULL + source, step),
+      onFill: step >= flipOf(this.paletteKey, this.mode, source),
+    };
   }
 
   /**

@@ -1,7 +1,9 @@
 import { LIMITS } from '../build/derive/limits.js';
+import { SECONDARY_ON_FILL } from '../build/derive/profiles.js';
 import { meshOf } from '../build/mesh.js';
 import { composite, contrastRatio } from '../color/contrast.js';
-import { fromHex } from '../color/oklch.js';
+import { ensureContrast } from '../color/fit.js';
+import { fromHex, toHex } from '../color/oklch.js';
 import { cssVar, DEFAULT_MODE, DEFAULT_PALETTE, PALETTE_TOKEN } from '../config.js';
 import type { AccentFamily } from '../build/derive/accent.js';
 import {
@@ -202,11 +204,37 @@ export const LIT_REST = 0.4;
 export const LIT_FLOOR = 0.6;
 
 /**
+ * Whether a wash of a role reads in the card's own inks: the words at 4.5 (a ruler's labels then take the secondary
+ * ink), the role's ink (the glyph, the switch's track, the ruler) at 3, the fill's hairline (the card's edge, a ruler's
+ * resting ticks) at 1.35.
+ */
+const washReads =
+  (role: RoleColors, colors: PaletteModeColors) =>
+  (wash: Hex): boolean =>
+    wordsRead(colors, wash) &&
+    contrastRatio(role.ink, wash) >= 3 &&
+    contrastRatio(role.fillBorder, wash) >= 1.35;
+
+/** A wash of a role `step` fiftieths over the card: the card's fill, the fill's hairline, its inner fills' step. */
+const washVars = (
+  role: RoleColors,
+  colors: PaletteModeColors,
+  step: number,
+): readonly CssDeclaration[] => [
+  ['--fluvy-card', composite(role.fill, colors.surface.card, step / 50)],
+  ['--fluvy-border', role.fillBorder],
+  ['--fluvy-inset', insetWash(role.fill, step, colors)],
+];
+
+/** The share of its cap a lit surface takes at `level` (0 at rest). */
+const litShare = (level: number): number =>
+  level > 0 ? LIT_REST + (1 - LIT_REST) * Math.min(1, Math.max(LIT_FLOOR, level)) : LIT_REST;
+
+/**
  * A light card's lit surface (`tint_strength: soft | brightness`, 1.9): the role's fill washed into the card. Its cap
- * is the most of the fill at which everything on it reads — the words at 4.5 (a ruler's labels then take the
- * secondary ink), the role's ink (the glyph, the switch's track, the ruler) at 3, the fill's hairline (the card's edge,
- * a ruler's resting ticks) at 1.35 —; at rest (`level` 0) it takes two fifths of the cap, lit `rest + (cap − rest) ×
- * max(0.6, level)`, so a dim lamp reads lit and lit never reads as rest. Its inner fills take the wash's deeper step.
+ * is the most of the fill at which everything on it reads in the card's own inks (`washReads`); at rest (`level` 0)
+ * it takes two fifths of the cap, lit `rest + (cap − rest) × max(0.6, level)`, so a dim lamp reads lit and lit never
+ * reads as rest. Its inner fills take the wash's deeper step.
  */
 export function litSurface(
   role: RoleColors,
@@ -214,20 +242,102 @@ export function litSurface(
   level: number,
 ): readonly CssDeclaration[] {
   const { card } = colors.surface;
-  const reads = (wash: Hex): boolean =>
-    wordsRead(colors, wash) &&
-    contrastRatio(role.ink, wash) >= 3 &&
-    contrastRatio(role.fillBorder, wash) >= 1.35;
+  const reads = washReads(role, colors);
   const cap = washStep(role.fill, card, 50, reads);
-  const share =
-    level > 0 ? LIT_REST + (1 - LIT_REST) * Math.min(1, Math.max(LIT_FLOOR, level)) : LIT_REST;
-  const step = washStep(role.fill, card, Math.round(cap * share), reads);
-  const wash = composite(role.fill, card, step / 50);
-  return [
-    ['--fluvy-card', wash],
-    ['--fluvy-border', role.fillBorder],
-    ['--fluvy-inset', insetWash(role.fill, step, colors)],
-  ];
+  return washVars(
+    role,
+    colors,
+    washStep(role.fill, card, Math.round(cap * litShare(level)), reads),
+  );
+}
+
+/** How far a set of inks clears its gates on a wash: the least of its words' (4.5) and its ink's (3); from 1, it reads. */
+const clears = (words: Hex, secondary: Hex, ink: Hex, wash: Hex): number =>
+  Math.min(
+    contrastRatio(words, wash) / 4.5,
+    contrastRatio(secondary, wash) / 4.5,
+    contrastRatio(ink, wash) / 3,
+  );
+
+/**
+ * How a light card in its light's whole colour follows the lamp (`tint_strength: full_brightness`, 1.17), in fiftieths
+ * of the role's fill over the card: from the soft wash (`litSurface`'s floor) at the lowest level to the whole fill at
+ * 100 %. Two sets of inks take turns on it: the card's (its words, the role's ink, the fill's hairline: a wash's,
+ * `washReads`) and the fill's (its on-fill ink, the state line in it at 80 %, the ink a solid fill's switch and rulers
+ * take: a lit tile's). The card wears the fill's from the share where they clear their gates at least as well as its
+ * own (`flip`), at `at` of the levels: once, at one level, the same up and down. Where neither reads there (a solid
+ * palette in dark: light words on a dim wash, dark ones on a bright fill), the shares from the last the card's read on
+ * (`top`) to the first from which the fill's read on to the fill (`bottom`) are left out, and the levels on each side
+ * spread over what reads there.
+ */
+function litRamp(role: RoleColors, colors: PaletteModeColors) {
+  const { card } = colors.surface;
+  const reads = washReads(role, colors);
+  const wash = (step: number): Hex => composite(role.fill, card, step / 50);
+  const ink = colors.fillStyle === 'solid' ? role.onFill : role.ink;
+  const fills = (step: number): number => {
+    const on = wash(step);
+    return clears(role.onFill, composite(role.onFill, on, SECONDARY_ON_FILL), ink, on);
+  };
+  const own = (step: number): number =>
+    clears(colors.text.primary, colors.text.secondary, role.ink, wash(step));
+  const cap = washStep(role.fill, card, 50, reads);
+  const soft = washStep(role.fill, card, Math.round(cap * litShare(LIT_FLOOR)), reads);
+  let from = 50;
+  while (from > 0 && fills(from - 1) >= 1) from--;
+  let flip = soft;
+  while (flip < 50 && fills(flip) < own(flip)) flip++;
+  return {
+    reads,
+    soft,
+    top: Math.min(cap, flip),
+    bottom: Math.max(from, flip),
+    at: (flip - soft) / (50 - soft),
+  };
+}
+
+/** From which level (0 to 1) a light card in its light's whole colour wears the fill's inks (`litRamp`). */
+export const litFlip = (role: RoleColors, colors: PaletteModeColors): number =>
+  litRamp(role, colors).at;
+
+/**
+ * A light card in its light's whole colour at `level` (`tint_strength: full_brightness`, 1.17, `litRamp`). Under the
+ * flip, a wash in the card's own inks, as `litSurface`'s; from it, the fill at the level's share in its own inks, what
+ * the role is drawn by (`names`: `accent`, `state-light-active`) redefined there — its fill, and its hairline kept 1.35
+ * from it on the side it sits at 100 % — so the lit tile's skin and every part of it that takes the fill (a switch's
+ * thumb, a knob, a quick colour's edge) wear it. At 100 %, the role's own colours: a lit tile's.
+ */
+export function litFull(
+  role: RoleColors,
+  colors: PaletteModeColors,
+  level: number,
+  names: readonly string[],
+): readonly CssDeclaration[] {
+  const { card } = colors.surface;
+  const { reads, soft, top, bottom, at } = litRamp(role, colors);
+  if (level < at)
+    return washVars(
+      role,
+      colors,
+      washStep(role.fill, card, Math.round(soft + ((top - soft) * level) / at), reads),
+    );
+  const step = at < 1 ? Math.round(bottom + ((50 - bottom) * (level - at)) / (1 - at)) : 50;
+  const fill = composite(role.fill, card, step / 50);
+  const border =
+    contrastRatio(role.fillBorder, fill) >= 1.35
+      ? role.fillBorder
+      : toHex(
+          ensureContrast(
+            fromHex(role.fillBorder),
+            fill,
+            1.35,
+            fromHex(role.fillBorder).l < fromHex(role.fill).l ? 'darker' : 'lighter',
+          ),
+        );
+  return names.flatMap((name): CssDeclaration[] => [
+    [cssVar(`${name}-fill`), fill],
+    [cssVar(`${name}-fill-border`), border],
+  ]);
 }
 
 /**

@@ -44,8 +44,11 @@ import type { SwatchEntry } from './swatches.js';
 /** How the card is drawn: the full dimmer, or the compact one (its level in the head, the ruler alone); `auto` picks by width. */
 export type LightVariant = 'auto' | 'full' | 'compact';
 
-/** How much of its colour a lit card shows: a lit tile's whole fill, a gentle wash, or as much as the lamp is bright. */
-export type TintStrength = 'soft' | 'brightness' | 'full';
+/**
+ * How much of its colour a lit card shows: a gentle wash, alone or as strong as the lamp is bright, or a lit tile's
+ * whole fill, alone or as much of it as the lamp is bright (#131).
+ */
+export type TintStrength = 'soft' | 'brightness' | 'full' | 'full_brightness';
 
 /** When the card shows its light's brightness: always (`true`), never (`false`), or while the light is on (#124). */
 export type ShowBrightness = boolean | 'when_on';
@@ -77,7 +80,11 @@ export interface LightCardConfig extends FluvyCardConfig {
    * too (`always`: a quiet wash) — the house's choice (fluvy's settings) where the card says none.
    */
   tint?: LightTint;
-  /** How much: a lit tile's whole fill (`full`, the default), a gentle wash (`soft`), or as the lamp is bright. */
+  /**
+   * How much: a lit tile's whole fill (`full`, the default), a gentle wash (`soft`), the wash as strong as the lamp is
+   * bright (`brightness`), or the fill as much as the lamp is bright (`full_brightness`, #131: from the soft wash to the
+   * whole fill at 100 %, in the fill's words where they read and the card's where they do not).
+   */
   tint_strength?: TintStrength;
   /** A lit white: by its temperature (`temperature`, the default since 1.10), or as the palette's lit light (`palette`). */
   light_whites?: LightWhites;
@@ -465,25 +472,27 @@ export class FluvyLightCard extends Card<LightCardConfig> {
     // the icon, the switch and the rulers take it through the light-active family `data-accent` remaps
     const accent = live ? this.accents.item(live) : undefined;
 
-    // its surface (`tint`): lit, a lit tile's whole fill or a wash as strong as asked; at rest (`always`) a quiet wash
-    // where no `card_color` is; a light that cannot be read keeps the unavailable skin
+    // its surface (`tint`): lit, a lit tile's whole fill or a wash as strong as asked, or as much of the fill as the
+    // lamp is bright; at rest (`always`) a quiet wash where no `card_color` is; a light that cannot be read keeps the
+    // unavailable skin
     const tint = this.config?.tint ?? lightDefaults().tint;
     const strength = this.config?.tint_strength ?? 'full';
     // a word the card does not know is never lit
     const lit = on && (tint === 'on' || tint === 'always');
-    const full = lit && strength === 'full';
     const source = live ?? (own && own !== PALETTE_ACCENT ? own : tone);
+    // as bright as the lamp is, where the strength follows it (the finger's level while it drags); a bulb that does not
+    // dim, at its brightest
+    const bright = dims(modes) ? shownLevel / 100 : 1;
+    // the fill as much as the lamp is bright: a step of it, in the fill's inks (a lit tile's skin) or the card's
+    const step =
+      lit && strength === 'full_brightness' ? this.accents.litFull(source, bright) : undefined;
+    const full = lit && (step ? step.onFill : strength === 'full');
     const surface = lit
-      ? full
-        ? undefined
-        : this.accents.lit(
-            source,
-            strength === 'soft'
-              ? LIT_FLOOR
-              : dims(modes)
-                ? Math.max(LIT_FLOOR, shownLevel / 100)
-                : 1,
-          )
+      ? step
+        ? step.surface
+        : full
+          ? undefined
+          : this.accents.lit(source, strength === 'soft' ? LIT_FLOOR : Math.max(LIT_FLOOR, bright))
       : tint === 'always' && !unusable && !this.config?.card_color
         ? this.accents.lit(source, 0)
         : undefined;

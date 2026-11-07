@@ -30,7 +30,7 @@ import type { LightCardConfig, TintStrength } from './light-card.js';
 
 /** The light card's editor: fetched by its `editor()` the first time the card is edited, never by a dashboard. */
 
-const STRENGTHS: readonly TintStrength[] = ['soft', 'brightness', 'full'];
+const STRENGTHS: readonly TintStrength[] = ['soft', 'brightness', 'full', 'full_brightness'];
 
 /** A row's fields in one language: the select and the name on one line, the well under them while the row is Custom. */
 interface SwatchFields {

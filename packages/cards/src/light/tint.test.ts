@@ -5,6 +5,7 @@ import {
   type HomeAssistant,
   type LovelaceCardConfig,
 } from '@fluvy/core';
+import { baseStyles, setFallbackTokens } from '@fluvy/ui';
 import { afterAll, afterEach, describe, expect, it } from 'vitest';
 import { familiesDefined } from '../index.js';
 import { cardForm, drawEditor, shownNames } from '../shared/fixtures/editor.js';
@@ -178,6 +179,93 @@ describe('a light card shows its colour (`tint`, #41)', () => {
     expect(dim.surface).toBe('#ff9800-60');
   });
 
+  it('as much of the whole fill as the lamp is bright (`full_brightness`, #131): a step of it, in the fill’s words', async () => {
+    // Linen's fill takes the fill's words from the soft wash up: a lit tile's skin at every step, its fill the step's
+    const bright = await light({ tint: 'on', tint_strength: 'full_brightness' });
+    expect([bright.lit, bright.glow, bright.tone, bright.surface]).toEqual([
+      true,
+      false,
+      'fv-tone--light',
+      'full #ff9800-80',
+    ]);
+    expect(bright.card.shadowRoot!.querySelector('fluvy-ruler')!.hasAttribute('on-fill')).toBe(
+      true,
+    );
+    const dim = await light({ entity: 'light.dim', tint: 'on', tint_strength: 'full_brightness' });
+    expect([dim.lit, dim.surface]).toEqual([true, 'full #ff9800-10']);
+    // a bulb that does not dim is at its brightest: the whole fill
+    const plain = await light(
+      {
+        entity: 'light.kitchen',
+        tint: 'on',
+        tint_strength: 'full_brightness',
+      },
+      {
+        ...STATES,
+        'light.kitchen': state('light.kitchen', 'on', {
+          friendly_name: 'Kitchen',
+          supported_color_modes: ['onoff'],
+        }),
+      },
+    );
+    expect([plain.lit, plain.surface]).toEqual([true, '']);
+  });
+
+  it('where the fill takes words a dim wash cannot (Noir in dark), the card’s words under the flip, the fill’s from it', async () => {
+    setFallbackTokens(':host([no-theme]){--fluvy-palette:noir}');
+    try {
+      const inDark = async (entity: string) => {
+        const { card, article } = await light({
+          entity,
+          tint: 'on',
+          tint_strength: 'full_brightness',
+        });
+        card.hass = { ...house(), themes: { darkMode: true } } as unknown as HomeAssistant;
+        await card.updateComplete;
+        return {
+          lit: article.classList.contains('is-lit'),
+          glow: article.classList.contains('is-glow'),
+          surface: article.dataset['surface'],
+          onFill: card.shadowRoot!.querySelector('fluvy-ruler')!.hasAttribute('on-fill'),
+        };
+      };
+      expect(await inDark('light.dim')).toEqual({
+        lit: false,
+        glow: true,
+        surface: 'full #ff9800-10',
+        onFill: false,
+      });
+      expect(await inDark('light.lamp')).toEqual({
+        lit: true,
+        glow: false,
+        surface: 'full #ff9800-80',
+        onFill: true,
+      });
+    } finally {
+      setFallbackTokens(baseStyles[0]!.cssText);
+    }
+  });
+
+  it('at 100 % is the card `full` draws, to the rule', async () => {
+    const states = {
+      ...STATES,
+      'light.lamp': state('light.lamp', 'on', {
+        ...STATES['light.lamp'].attributes,
+        brightness: 255,
+      }),
+    };
+    const drawn = async (strength: string) => {
+      const { card, article } = await light({ tint: 'on', tint_strength: strength }, states);
+      return [
+        article.outerHTML,
+        card.shadowRoot!.adoptedStyleSheets.map((sheet) =>
+          [...sheet.cssRules].map((rule) => rule.cssText).join(''),
+        ),
+      ];
+    };
+    expect(await drawn('full_brightness')).toEqual(await drawn('full'));
+  });
+
   it('always: a quiet wash at rest, which a lit card never equals; a card colour of its own is its rest', async () => {
     const rest = await light({ entity: 'light.reading', tint: 'always' });
     expect([rest.lit, rest.glow, rest.surface]).toEqual([false, false, 'light-0']);
@@ -303,8 +391,9 @@ describe('the light card’s editor (#41)', () => {
     ]);
     expect(options('tint_strength').map((o) => [o.value, o.label])).toEqual([
       ['soft', 'Soft'],
-      ['brightness', 'With the brightness'],
+      ['brightness', 'Soft, with the brightness'],
       ['full', 'Full colour'],
+      ['full_brightness', 'Full colour, with the brightness'],
     ]);
     expect(options('light_whites').map((o) => o.value)).toEqual(['palette', 'temperature']);
     const row = lightEditor

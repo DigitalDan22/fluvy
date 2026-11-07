@@ -9,6 +9,7 @@
  * rounds that leave the name too little take their own line; chips and tiles do the same as rounds; the room's ruler
  * sets what is on; a light that cannot be read is a dashed ring that takes no tap; the words follow the language.
  */
+import { Buffer } from 'node:buffer';
 import { contrastRatio } from './lib/colour.mjs';
 import { calls, frame, moreInfo, reset, settle, startSuite } from './lib/suite.mjs';
 
@@ -733,6 +734,93 @@ const ids = (call) => [].concat(call?.d?.entity_id ?? call?.t?.entity_id ?? []);
     JSON.stringify(tiles),
   );
   await page.close();
+}
+
+/* ---------- #131: the whole fill as the lamp is bright (`full_brightness`), on the `slider` sheet ---------- */
+{
+  /** A row of a frame of five lamps (10, 30, 50, 70, 100 %): the soft wash, the whole fill as bright, the whole fill. */
+  const row = (page, colour, strength) =>
+    frame(page, `Tint · with the brightness · ${colour}`)
+      .locator('fluvy-light-card')
+      .evaluateAll(
+        (cards, at) =>
+          cards.slice(at * 5, at * 5 + 5).map((el) => {
+            const article = el.shadowRoot.querySelector('article');
+            return {
+              lit: article.classList.contains('is-lit'),
+              glow: article.classList.contains('is-glow'),
+              surface: article.dataset.surface ?? '',
+              fill: getComputedStyle(article).backgroundColor,
+            };
+          }),
+        ['brightness', 'full_brightness', 'full'].indexOf(strength),
+      );
+  const lamp = (page, colour, n) =>
+    frame(page, `Tint · with the brightness · ${colour}`).locator('fluvy-light-card').nth(n);
+  /** The finger on a lamp's ruler, at each of `values`: whether the card wears the fill's inks under it. */
+  const drag = (card, values) =>
+    card.evaluate(async (el, values) => {
+      const ruler = el.shadowRoot.querySelector('fluvy-ruler');
+      const sides = [];
+      for (const value of values) {
+        ruler.dispatchEvent(new CustomEvent('fluvy-input', { detail: { value } }));
+        await el.updateComplete;
+        const article = el.shadowRoot.querySelector('article');
+        sides.push([value, article.classList.contains('is-lit'), article.dataset.surface ?? '']);
+      }
+      return sides;
+    }, values);
+
+  const page = await suite.sheet('slider');
+  const steps = await row(page, 'warm white', 'full_brightness');
+  const full = await row(page, 'warm white', 'full');
+  check(
+    'with the brightness, the whole fill (Linen): a lit tile’s skin at every level, its fill the step’s, the whole fill at 100 %',
+    steps.every((s) => s.lit) &&
+      steps.map((s) => s.surface).join() ===
+        'full white #ffa757-10,full white #ffa757-30,full white #ffa757-50,full white #ffa757-70,' &&
+      new Set(steps.map((s) => s.fill)).size === 5 &&
+      steps[4].fill === full[4].fill,
+    JSON.stringify(steps),
+  );
+  const [followed, whole] = await Promise.all(
+    [9, 14].map((n) => lamp(page, 'warm white', n).screenshot()),
+  );
+  check(
+    'at 100 % the card is the very pixels of `full`',
+    Buffer.compare(followed, whole) === 0,
+    `${followed.length} B, ${whole.length} B`,
+  );
+  await reset(page);
+  const dragged = await drag(lamp(page, 'warm white', 5), [60, 95, 100]);
+  check(
+    'dragging re-tints under the finger, step by step to the whole fill, and sends nothing yet',
+    dragged.map(([, , surface]) => surface).join() ===
+      'full white #ffa757-60,full white #ffa757-95,' && (await calls(page)).length === 0,
+    JSON.stringify(dragged),
+  );
+  await page.close();
+
+  // Noir in dark: light words on a dim wash, dark ones on the bright fill: the card's inks under the flip, the fill's from it
+  const noir = await suite.sheet('slider', { extra: '&palette=noir&mode=dark' });
+  const red = await row(noir, 'red', 'full_brightness');
+  const flips = red.map((s) => s.lit).filter((lit, i, all) => i && lit !== all[i - 1]).length;
+  check(
+    'Noir in dark: the card’s words on the dim wash, then the fill’s, the inks changing once; the whole fill at 100 %',
+    red[0].glow && !red[0].lit && red[4].lit && red[4].surface === '' && flips === 1,
+    JSON.stringify(red),
+  );
+  const up = Array.from({ length: 41 }, (_, i) => 20 + i);
+  const there = await drag(lamp(noir, 'red', 5), up);
+  const back = await drag(lamp(noir, 'red', 5), [...up].reverse());
+  const sides = (seen) => seen.map(([value, lit]) => `${value}${lit ? 'f' : 'c'}`);
+  check(
+    'dragged across it and back, 1 % at a time: the inks change at one level, the same up and down, never between',
+    there.filter(([, lit], i) => i && lit !== there[i - 1][1]).length === 1 &&
+      sides(back).reverse().join() === sides(there).join(),
+    sides(there).join(' '),
+  );
+  await noir.close();
 }
 
 /* ---------- the lit surface eases in, never on the first frame, and not at all under reduced motion ---------- */
