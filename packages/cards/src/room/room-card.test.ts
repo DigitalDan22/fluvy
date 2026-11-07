@@ -476,7 +476,7 @@ describe('a room in a narrow column', () => {
     expect(root(none).querySelector('.fv-card__head .fv-ico')).toBeNull();
   });
 
-  it('keeps an administrator’s hint to three lines at 211 in every language: the why, the way out left out', async () => {
+  it('keeps an administrator’s hint to three lines at 211 in every language: the why, the way out left out where the whole runs past them', async () => {
     await preloadLanguages();
     // the ruler as a browser's: a class's measure caps its probe, as the hint's 380 does — the room measures the hint's
     // whole line (7 px a glyph, 14 a kana or kanji), so a long one is never taken for three lines it would run past
@@ -496,8 +496,8 @@ describe('a room in a narrow column', () => {
         ruler,
         hass as HomeAssistant,
       );
-      // three lines of 211's 139 less what wrapping by words loses: 389
-      expect(hint(narrow), language).toBe(why);
+      // three lines of 211's 139 less what wrapping by words loses: 389 — Chinese says the whole in that
+      expect(hint(narrow), language).toBe(glyphs(full) + 1 <= 389 ? full : why);
       expect(glyphs(why) + 1, language).toBeLessThanOrEqual(389);
       const wide = await roomAt(
         { area: 'wohnzimmer', ...REPORTER },
