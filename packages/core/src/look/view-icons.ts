@@ -544,12 +544,13 @@ const TABLE: ReadonlyArray<readonly [icon: string, words: readonly string[]]> = 
 ];
 
 /**
- * Lower case, in ordinary width, no accents (a Turkish ı too; a kana keeps its voicing mark, が is not か), separators
+ * Lower case, in ordinary width, no accents (a Turkish ı and a Polish ł too; a kana keeps its voicing mark, が is not か), separators
  * as spaces: "Habitación_1" → "habitacion 1", "ＬＥＤ照明" → "led照明".
  */
 const plain = (text: string): string =>
   text
     .replace(/ı/g, 'i')
+    .replace(/[łŁ]/g, 'l')
     .normalize('NFKC')
     .normalize('NFD')
     .replace(/(?![\u3099\u309a])\p{M}/gu, '')

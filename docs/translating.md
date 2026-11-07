@@ -18,6 +18,7 @@ catalogue per language, and a person may choose theirs in the panel's *Preferenc
 | `ja` | Japanese | `packages/core/src/i18n/locales/ja.json` | [@vinjex](https://github.com/vinjex) |
 | `hu` | Hungarian | `packages/core/src/i18n/locales/hu.json` | [@wickdj](https://github.com/wickdj) |
 | `sk` | Slovak | `packages/core/src/i18n/locales/sk.json` | — |
+| `pl` | Polish | `packages/core/src/i18n/locales/pl.json` | — |
 
 ## How a language works
 
@@ -39,8 +40,9 @@ catalogue per language, and a person may choose theirs in the panel's *Preferenc
 - **The naming words**, `packages/core/src/i18n/words/<code>.json`: the stems the automatic dashboard reads a house
   by (what people call their lights, their garden, the solar inverter, the grid meter), and the `appliance_*` stems
   an appliance card tells a washer from a dishwasher by (plain lower-case letters: a name is read with its accents
-  taken off and in ordinary width, so "Kühlschrank" is `kuhlschrank` and "ＬＥＤ" is `led`). A stem in Latin letters
-  is matched as its category asks (a light's as a whole word, a place's noise as whole words, the rest as a substring);
+  taken off and in ordinary width, so "Kühlschrank" is `kuhlschrank`, "Płyta" is `plyta` and "ＬＥＤ" is `led`). A
+  stem in Latin letters is matched as its category asks (a light's as a whole word, a place's noise as whole words, the
+  rest as a substring);
   a stem in kana or kanji is always matched as a substring, since Japanese writes no spaces between words. The words
   that join a place's noise to the place (`place_joins`: an article, a preposition, the language's "and", an elision
   such as `d'`) are written as the language writes them, marks and all, since a mark makes another word (`és` is

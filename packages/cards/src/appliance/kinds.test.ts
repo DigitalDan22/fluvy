@@ -148,7 +148,7 @@ describe('what an appliance is', () => {
     expect(kindOf(signals({ platform: 'matter', tops: [250] }))).toMatchObject({ kind: 'oven' });
   });
 
-  it('reads a name in any of the twelve languages, accents or none, the more particular kind first', () => {
+  it('reads a name in any of the thirteen languages, accents or none, the more particular kind first', () => {
     const names: ReadonlyArray<readonly [string, string]> = [
       ['Washing machine', 'washer'],
       ['Waschmaschine', 'washer'],
@@ -234,6 +234,26 @@ describe('what an appliance is', () => {
       ['ホットサンドメーカー', 'sandwich_maker'],
       ['ミキサー', 'blender'],
       ['ワインセラー', 'wine'],
+      // Polish, its ł read as l: a Polish name keeps it, an entity id writes l
+      ['Pralka', 'washer'],
+      ['Pralko-suszarka', 'washer_dryer'],
+      ['Zmywarka', 'dishwasher'],
+      ['Suszarka', 'dryer'],
+      ['Kuchenka mikrofalowa', 'microwave'],
+      ['Piekarnik', 'oven'],
+      ['Płyta indukcyjna', 'hob'],
+      ['plyta_indukcyjna', 'hob'],
+      ['Okap', 'hood'],
+      ['Chłodziarka do win', 'wine'],
+      ['Lodówka', 'fridge'],
+      ['Chłodziarka', 'fridge'],
+      ['Zamrażarka', 'freezer'],
+      ['Ekspres do kawy', 'coffee'],
+      ['Czajnik', 'kettle'],
+      ['Frytkownica beztłuszczowa', 'air_fryer'],
+      ['Toster', 'toaster'],
+      ['Toster do kanapek', 'sandwich_maker'],
+      ['Kuweta', 'litter_box'],
       // Slovak, with its accents or as an entity id carries it
       ['Práčka', 'washer'],
       ['Práčka so sušičkou', 'washer_dryer'],
@@ -276,6 +296,8 @@ describe('what an appliance is', () => {
       'Wallbox',
       'Haartrockner',
       'Hair dryer',
+      'Suszarka do włosów',
+      'Odkurzacz',
       'Wärmeschublade',
       'Styler',
       'ロボット掃除機',

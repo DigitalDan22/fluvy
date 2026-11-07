@@ -97,6 +97,12 @@ const MEASURE_WORDS: Record<string, Record<string, string>> = {
     power: 'Výkon',
     atmospheric_pressure: 'Atmosferický tlak',
   },
+  pl: {
+    temperature: 'Temperatura',
+    humidity: 'Wilgotność',
+    power: 'Moc',
+    atmospheric_pressure: 'Ciśnienie atmosferyczne',
+  },
 };
 const MEASURE_KEY = /^component\.sensor\.entity_component\.([a-z_]+)\.name$/;
 
@@ -113,6 +119,7 @@ const OPENING_WORDS: Record<string, readonly [string, string]> = {
   'pt-PT': ['Aberto', 'Fechada'],
   tr: ['Açık', 'Kapalı'],
   ja: ['開', '閉'],
+  pl: ['Otwarte', 'Zamknięte'],
 };
 /** Home Assistant's words for motion, detected and clear, in the same languages. */
 const MOTION_WORDS: Record<string, readonly [string, string]> = {
@@ -127,6 +134,7 @@ const MOTION_WORDS: Record<string, readonly [string, string]> = {
   tr: ['Algılandı', 'Temiz'],
   ja: ['検出', 'クリア'],
   sk: ['Zistené', 'Čisté'],
+  pl: ['Wykryto ruch', 'Brak ruchu'],
 };
 
 /** Home Assistant's own Spanish state words, by domain, device class and state: the longest of them are what a pill has to hold. */

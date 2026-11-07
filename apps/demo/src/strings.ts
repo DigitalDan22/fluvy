@@ -424,6 +424,41 @@ const sk: Table = {
     'Automatický dashboard sa vytvára v Home Assistante; záložka Dashboardy zobrazuje jeho náhľad',
 };
 
+const pl: Table = {
+  'brand.sub': 'Demo na żywo',
+  'family.home': 'Dom',
+  'family.devices': 'Urządzenia',
+  'family.climate': 'Klimat',
+  'family.energy': 'Energia',
+  'family.charts': 'Wykresy',
+  'family.media': 'Media',
+  'family.time': 'Czas',
+  'family.helpers': 'Pomocnicy',
+  'family.vehicles': 'Samochody',
+  'page.panel': 'Ustawienia',
+  'page.activity': 'Aktywność',
+  'page.history': 'Historia',
+  'mode.light': 'Jasny',
+  'mode.dark': 'Ciemny',
+  'device.title': 'Urządzenie',
+  'device.phone': 'Telefon',
+  'device.phone-l': 'Duży telefon',
+  'device.tablet': 'Tablet',
+  'device.desktop': 'Komputer',
+  'palette.title': 'Paleta',
+  'palette.custom': 'Własny kolor akcentu w panelu ustawień',
+  'language.title': 'Język',
+  'links.install': 'Zainstaluj',
+  'links.github': 'GitHub',
+  'banner.text':
+    'Symulowany dom: mieszkanie Marty w czwartkowy wieczór. Każda karta, strona i ustawienie są prawdziwe; Home Assistanta zastępuje mała symulacja, która zmienia stan 140 ms po wywołaniu akcji. Nic nie jest podłączone.',
+  'banner.ok': 'Rozumiem',
+  'notice.more_info': 'Otwiera szczegóły {entity} w Home Assistancie',
+  'notice.navigate': 'Otwiera {path} w Home Assistancie',
+  'notice.auto':
+    'Automatyczny pulpit powstaje w Home Assistancie; karta Pulpit pokazuje jego podgląd',
+};
+
 const TABLES: Readonly<Record<LanguageCode, Table>> = {
   en,
   es,
@@ -437,6 +472,7 @@ const TABLES: Readonly<Record<LanguageCode, Table>> = {
   ja,
   hu,
   sk,
+  pl,
 };
 
 /** A word of the demo in `language`. */

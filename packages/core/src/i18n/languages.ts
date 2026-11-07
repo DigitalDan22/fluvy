@@ -17,6 +17,7 @@ export const LANGUAGE_CODES = [
   'ja',
   'hu',
   'sk',
+  'pl',
 ] as const;
 
 /** A code as Home Assistant reports `hass.language` for it (`pt-BR`, not `pt_BR`). */
@@ -143,6 +144,14 @@ export const LANGUAGES: Readonly<Record<LanguageCode, LanguageInfo>> = {
     // "dobré ráno" until 9:00 (the early morning only), "dobrý deň" through the day, "dobrý večer" from 18:00 until
     // the morning: "dobrú noc" is a farewell (@elgonnt, #116), so the night says the evening's greeting
     dayParts: { morning: 5, afternoon: 9, night: 18 },
+  },
+  pl: {
+    code: 'pl',
+    name: 'Polski',
+    english: 'Polish',
+    // "dzień dobry" all day, "dobry wieczór" from 18:00: the afternoon says the morning's word; "dobranoc" is a
+    // farewell before sleep, never a greeting, so no band reaches it
+    dayParts: { morning: 5, afternoon: 12, evening: 18, night: 24 },
   },
 };
 

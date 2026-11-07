@@ -958,6 +958,7 @@ export function slugify(text: string): string {
     .normalize('NFD')
     .replace(/\p{M}/gu, '')
     .replace(/ı/g, 'i')
+    .replace(/[łŁ]/g, 'l')
     .replace(/ß/g, 'ss')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_')

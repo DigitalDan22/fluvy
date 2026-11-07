@@ -214,6 +214,7 @@ export const plain = (stem: string): string =>
     .replace(/(?![\u3099\u309a])\p{M}/gu, '')
     .normalize('NFC')
     .replace(/ı/g, 'i')
+    .replace(/[łŁ]/g, 'l')
     .replace(/ß/g, 'ss')
     .toLowerCase();
 

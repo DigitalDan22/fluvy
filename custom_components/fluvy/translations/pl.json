@@ -1,0 +1,33 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Fluvy",
+        "description": "Instaluje motyw Fluvy, karty i panel ustawień. Nie ma tu nic do skonfigurowania."
+      }
+    },
+    "abort": {
+      "already_configured": "Fluvy jest już skonfigurowany.",
+      "single_instance_allowed": "Fluvy jest już skonfigurowany."
+    }
+  },
+  "exceptions": {
+    "frontend_missing": {
+      "message": "Brakuje plików frontendu Fluvy w custom_components/fluvy/frontend. Zainstaluj Fluvy ponownie przez HACS (albo uruchom `pnpm build` w kopii deweloperskiej), a potem uruchom ponownie Home Assistanta."
+    }
+  },
+  "issues": {
+    "legacy_yaml": {
+      "title": "Usuń stare wpisy Fluvy z configuration.yaml",
+      "description": "Fluvy jest teraz integracją i sam rejestruje swój panel oraz moduł. Usuń te wpisy z configuration.yaml (zostaw `frontend: themes: !include_dir_merge_named themes`), sprawdź konfigurację i w dogodnej chwili uruchom ponownie Home Assistanta:\n\n{lines}"
+    },
+    "theme_not_loaded": {
+      "title": "Motyw Fluvy nie jest wczytany",
+      "description": "Fluvy zapisał swój motyw w `{path}`, ale Home Assistant nie ma na liście motywu o nazwie Fluvy. Dodaj to do configuration.yaml, a potem wywołaj akcję `frontend.reload_themes` (Narzędzia deweloperskie → Akcje); restart nie jest potrzebny:\n\n{yaml}\n\nJeśli te wpisy już tam są, sprawdź w Ustawienia → System → Logi, czy któryś motyw nie wczytał się z błędem."
+    },
+    "resources_yaml_mode": {
+      "title": "Dodaj zasób pulpitu Fluvy",
+      "description": "Zasoby pulpitów są zarządzane w YAML, więc Fluvy nie może zarejestrować własnego. Dodaj to pod `lovelace: resources:` w configuration.yaml i odśwież przeglądarkę:\n\n```yaml\n  - url: {url}\n    type: module\n```\n\nFluvy wczytuje się już na każdej stronie; ten zasób pozwala pulpitom wczytać go, zanim się wyrenderują."
+    }
+  }
+}
