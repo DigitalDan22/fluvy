@@ -37,7 +37,9 @@
     "no_helpers": "Nincs segéd",
     "no_actions": "Nincs művelet",
     "no_scenes": "Nincs jelenet",
-    "no_tabs": "Nincs lap"
+    "no_tabs": "Nincs lap",
+    "fluvy_updated": "A Fluvy frissült",
+    "reload": "Újratöltés"
   },
   "state": {
     "unavailable": "Nem elérhető",

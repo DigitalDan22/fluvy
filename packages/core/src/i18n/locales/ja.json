@@ -37,7 +37,9 @@
     "no_helpers": "ヘルパーなし",
     "no_actions": "アクションなし",
     "no_scenes": "シーンなし",
-    "no_tabs": "タブなし"
+    "no_tabs": "タブなし",
+    "fluvy_updated": "Fluvy が更新されました",
+    "reload": "再読み込み"
   },
   "state": {
     "unavailable": "利用不可",

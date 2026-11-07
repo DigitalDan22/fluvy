@@ -37,7 +37,9 @@
     "no_helpers": "Aucun assistant",
     "no_actions": "Aucune action",
     "no_scenes": "Aucune scène",
-    "no_tabs": "Aucun onglet"
+    "no_tabs": "Aucun onglet",
+    "fluvy_updated": "Fluvy a été mis à jour",
+    "reload": "Recharger"
   },
   "state": {
     "unavailable": "Indisponible",

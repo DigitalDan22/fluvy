@@ -11,6 +11,15 @@ export function safeStorage(): Storage | undefined {
   }
 }
 
+/** This tab's storage (it lasts while the tab does, through its reloads), read as defensively. */
+export function safeSession(win?: Window): Storage | undefined {
+  try {
+    return (win ?? window).sessionStorage;
+  } catch {
+    return undefined;
+  }
+}
+
 /** A remembered value (JSON), or undefined. */
 export function readStored<T>(key: string): T | undefined {
   try {

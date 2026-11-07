@@ -1,3 +1,4 @@
+import { isLovelace } from '../pages.js';
 import { wearsLook, type EffectiveSettings, type WallSettings } from '../settings/schema.js';
 
 /*
@@ -15,14 +16,6 @@ export interface WallOnInput {
   readonly wall: Pick<WallSettings, 'dashboards'>;
   readonly settings: Pick<EffectiveSettings, 'dashboards'>;
 }
-
-/** The dashboard a location is on: its first path segment (`/fluvy-wall/home` → `fluvy-wall`). */
-export const urlPathOf = (pathname: string): string | undefined =>
-  pathname.split('/')[1] || undefined;
-
-/** A url path that is a dashboard (Home Assistant lists it as a lovelace panel). */
-export const isLovelace = (panels: WallOnInput['panels'], urlPath: string | undefined): boolean =>
-  Boolean(urlPath && panels?.[urlPath]?.component_name === 'lovelace');
 
 export function wallOn(input: WallOnInput): boolean {
   const { urlPath } = input;

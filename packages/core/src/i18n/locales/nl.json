@@ -37,7 +37,9 @@
     "no_helpers": "Geen helpers",
     "no_actions": "Geen acties",
     "no_scenes": "Geen scènes",
-    "no_tabs": "Geen tabbladen"
+    "no_tabs": "Geen tabbladen",
+    "fluvy_updated": "Fluvy is bijgewerkt",
+    "reload": "Opnieuw laden"
   },
   "state": {
     "unavailable": "Offline",

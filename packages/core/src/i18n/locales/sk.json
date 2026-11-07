@@ -741,7 +741,9 @@
     "no_helpers": "Žiadni pomocníci",
     "no_actions": "Žiadne akcie",
     "no_scenes": "Žiadne scény",
-    "no_tabs": "Žiadne záložky"
+    "no_tabs": "Žiadne záložky",
+    "fluvy_updated": "Fluvy bol aktualizovaný",
+    "reload": "Znova načítať"
   },
   "state": {
     "unavailable": "Nedostupné",

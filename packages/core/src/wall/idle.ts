@@ -1,3 +1,5 @@
+import { USE_EVENTS } from '../pages.js';
+
 /*
  * Idleness on a wall: a touch, a key, a scroll or a wheel keep it awake; after `after` minutes without any it is
  * idle (the screensaver); a motion sensor may wake it too. The document's events are read in the capture phase,
@@ -20,7 +22,6 @@ export interface Idle {
   stop(): void;
 }
 
-const EVENTS = ['pointerdown', 'keydown', 'wheel', 'touchstart'] as const;
 const MINUTE = 60_000;
 
 export function createIdle(doc: Document, options: IdleOptions): Idle {
@@ -44,7 +45,7 @@ export function createIdle(doc: Document, options: IdleOptions): Idle {
     }
     arm();
   };
-  for (const type of EVENTS) doc.addEventListener(type, poke, { capture: true, passive: true });
+  for (const type of USE_EVENTS) doc.addEventListener(type, poke, { capture: true, passive: true });
   const unwake = options.wake?.(poke);
   arm();
   return {
@@ -55,7 +56,7 @@ export function createIdle(doc: Document, options: IdleOptions): Idle {
     stop() {
       stopped = true;
       win.clearTimeout(timer);
-      for (const type of EVENTS) doc.removeEventListener(type, poke, { capture: true });
+      for (const type of USE_EVENTS) doc.removeEventListener(type, poke, { capture: true });
       unwake?.();
     },
   };

@@ -67,8 +67,23 @@ When something only you can do is needed, it appears in **Settings → System �
 
 ## Updating
 
-HACS shows the new version like any other; download, restart. The new build gets a new URL, so no browser or
-service worker ever serves an old build. The theme is rewritten only when it changed.
+HACS shows the new version like any other; download, restart. The new build gets a new URL, so a page opened after
+the restart loads the new build. The theme is rewritten only when it changed.
+
+### After an update
+
+A page left open through the update, a browser tab or the companion app, still runs the build it loaded, and that
+build's files are gone from the server: a card's editor, a sheet or the settings panel it has not opened yet can no
+longer load. From 1.17 on, Fluvy notices as Home Assistant comes back from the restart and says **Fluvy was updated**
+in Home Assistant's own toast, with **Reload**. A dashboard nobody touches for a minute (a wall tablet), with no
+editor, dialog or unsaved change open, reloads by itself, once. A page from before 1.17 says so when you open Fluvy's
+settings panel; otherwise reload it yourself.
+
+If a reload still brings the old build back:
+
+- **Android companion app:** it keeps its own cache. **Settings → Companion app → Debugging → Reset frontend cache**,
+  then reopen the app, or use the app's own refresh.
+- **A browser:** a hard reload (Ctrl+Shift+R, or Cmd+Shift+R on a Mac).
 
 ## Uninstalling
 

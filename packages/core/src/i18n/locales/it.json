@@ -37,7 +37,9 @@
     "no_helpers": "Nessun helper",
     "no_actions": "Nessuna azione",
     "no_scenes": "Nessuna scena",
-    "no_tabs": "Nessuna scheda"
+    "no_tabs": "Nessuna scheda",
+    "fluvy_updated": "Fluvy è stato aggiornato",
+    "reload": "Ricarica"
   },
   "state": {
     "unavailable": "Offline",

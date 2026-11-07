@@ -99,9 +99,11 @@ export const appHass = (): HomeAssistant | undefined =>
   (document.querySelector('home-assistant') as HassElement | null)?.hass;
 
 /** Home Assistant's app once it has connected (it connects before any panel renders). */
-async function connected(): Promise<HomeAssistant | undefined> {
+export async function connected(
+  app: () => HomeAssistant | undefined = appHass,
+): Promise<HomeAssistant | undefined> {
   for (let tries = 0; tries < 600; tries += 1) {
-    const hass = appHass();
+    const hass = app();
     if (hass?.connection) return hass;
     await new Promise((resolve) => setTimeout(resolve, 100));
   }

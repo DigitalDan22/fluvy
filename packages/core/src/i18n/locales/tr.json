@@ -37,7 +37,9 @@
     "no_helpers": "Yardımcı yok",
     "no_actions": "Eylem yok",
     "no_scenes": "Sahne yok",
-    "no_tabs": "Sekme yok"
+    "no_tabs": "Sekme yok",
+    "fluvy_updated": "Fluvy güncellendi",
+    "reload": "Yeniden yükle"
   },
   "state": {
     "unavailable": "Kullanılamıyor",

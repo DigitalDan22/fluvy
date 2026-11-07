@@ -5,6 +5,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Visible on upgrade
+
+- From this version on, a page left open through a Fluvy update says "Fluvy was updated" in Home Assistant's own toast
+  with Reload as Home Assistant comes back from the restart, and a dashboard nobody touches for a minute, with no
+  editor, dialog or unsaved change open, reloads by itself once (a wall tablet, a tab in the background).
+
 ### Added
 
 - The Light card can wear its light's whole colour as bright as the lamp is (`tint_strength: full_brightness`, Full
@@ -12,6 +18,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   finger as it drags. Its words are the fill's own wherever they read on it, else the card's: on Volt, Mint and Noir in
   dark they change once, at one level, the same up and down. The wash that follows the lamp is now worded Soft, with
   the brightness (#131).
+
+### Fixed
+
+- A card's editor, a sheet or the settings panel opened in a page left open through an update say "Fluvy was updated ·
+  Reload" where they failed without a word ("Failed to fetch dynamically imported module"), and opening the settings
+  panel in a page still running a build from before 1.17 says it too (#132).
 
 ## [1.16.0] — 2026-11-06
 

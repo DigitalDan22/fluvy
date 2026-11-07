@@ -1,5 +1,6 @@
 import {
   actionRuns,
+  failedToLoad,
   FluvyCard,
   type EntityView,
   type FluvyCardConfig,
@@ -103,7 +104,9 @@ export abstract class Card<C extends FluvyCardConfig = FluvyCardConfig> extends 
 
   /**
    * The visual editor: the card's form, its lists item by item, its defaults shown, its older names read. The
-   * editor is fetched the first time a card is edited (Home Assistant awaits this): a dashboard never loads it.
+   * editor is fetched the first time a card is edited (Home Assistant awaits this, and says what failed in the
+   * editor's place): a dashboard never loads it. A page left open through an update cannot fetch it any more, and
+   * asks the server which build it serves.
    */
   static async getConfigElement(): Promise<HTMLElement> {
     // a chart card's Chart section is the chart engine's: it lands with the bundle, so this waits on nothing in practice
@@ -111,7 +114,10 @@ export abstract class Card<C extends FluvyCardConfig = FluvyCardConfig> extends 
       import('./rows-editor.js'),
       this.editor(),
       loadChartEngine(),
-    ]);
+    ]).catch((error: unknown) => {
+      failedToLoad(error);
+      throw error;
+    });
     return listsEditor(
       editor.getConfigForm(),
       editor.lists ?? [],

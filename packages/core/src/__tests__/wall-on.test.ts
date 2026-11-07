@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { isLovelace, urlPathOf, wallOn } from '../wall/on.js';
+import { isLovelace, urlPathOf } from '../pages.js';
+import { wallOn } from '../wall/on.js';
 
 const panels = {
   lovelace: { component_name: 'lovelace' },

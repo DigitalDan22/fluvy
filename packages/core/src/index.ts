@@ -26,6 +26,7 @@ export {
 } from './shell/index.js';
 export * from './look/index.js';
 export * from './settings/index.js';
+export { buildOf, failedToLoad, standDown, watchUpdates, type UpdateWatch } from './update.js';
 export { startWall } from './wall/start.js';
 export { wallDark } from './wall/schedule.js';
 export type { SunLike } from './wall/schedule.js';

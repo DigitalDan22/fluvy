@@ -11,11 +11,13 @@ import {
 } from '../look/attributes.js';
 import type { RootElement } from '../look/tabs.js';
 import { currentView, NO_VIEW, VIEW_EVENT, type ViewFacts } from '../look/view.js';
+import { urlPathOf } from '../pages.js';
 import { walkShadow } from '../shell/dom.js';
 import { readDevice, writeDevice } from '../settings/device.js';
+import { safeSession } from '../storage.js';
 import type { EffectiveSettings, WallExit } from '../settings/schema.js';
 import { createIdle, type Idle } from './idle.js';
-import { urlPathOf, wallOn } from './on.js';
+import { wallOn } from './on.js';
 import { nextChange, wallDark, type SunLike } from './schedule.js';
 import { keepAwake } from './wake-lock.js';
 
@@ -129,14 +131,6 @@ const LEFT_NOTICE_MS = 8000;
 const WALL_MESH =
   'radial-gradient(120% 80% at 10% 0%, var(--fluvy-mesh-wall-1) 0%, transparent 60%), radial-gradient(100% 80% at 40% 110%, var(--fluvy-mesh-wall-2) 0%, transparent 60%), var(--fluvy-mesh-wall-3)';
 
-const session = (win: Window): Storage | undefined => {
-  try {
-    return win.sessionStorage;
-  } catch {
-    return undefined;
-  }
-};
-
 export function createWall(deps: WallDeps): WallHandle {
   const { doc, win } = deps;
   const html = doc.documentElement;
@@ -163,7 +157,7 @@ export function createWall(deps: WallDeps): WallHandle {
     phase = next;
     deps.onPhase?.(next);
   };
-  const paused = (): boolean => session(win)?.getItem(PAUSED_KEY) === '1';
+  const paused = (): boolean => safeSession(win)?.getItem(PAUSED_KEY) === '1';
   const wall = () => deps.settings().wall;
 
   /** The darkening layer at night: a click-through veil at the house's share of black, only while awake and dark. */
@@ -405,19 +399,19 @@ export function createWall(deps: WallDeps): WallHandle {
   };
 
   function pause(): void {
-    session(win)?.setItem(PAUSED_KEY, '1');
+    safeSession(win)?.setItem(PAUSED_KEY, '1');
     evaluate();
     armResume();
   }
   function resume(): void {
     win.clearTimeout(resumeTimer);
-    session(win)?.removeItem(PAUSED_KEY);
+    safeSession(win)?.removeItem(PAUSED_KEY);
     evaluate();
   }
   /** The device stops being a wall: its chrome returns for good, and a notice offers the way back for a moment. */
   function exit(): void {
     writeDevice({ wall: false });
-    session(win)?.removeItem(PAUSED_KEY);
+    safeSession(win)?.removeItem(PAUSED_KEY);
     evaluate();
     void ui().then((pieces) => {
       if (readDevice().wall) return;

@@ -226,10 +226,17 @@ export function wordsIn(code: LanguageCode): (key: MessageKey, values?: Values) 
 export const preloadLanguages = (): Promise<void[]> =>
   Promise.all(LANGUAGE_CODES.map((code) => ensureLanguage(code)));
 
-// the last chosen language starts loading with the module, before Home Assistant is connected: no flash of English
-try {
-  const hint = safeStorage()?.getItem(HINT_KEY) ?? globalThis.document?.documentElement?.lang;
-  if (hint) void ensureLanguage(resolveLanguage(hint));
-} catch {
-  // no storage, no document: English until hass says otherwise
+/** The language this browser last said Fluvy's words in (`languageOf` remembers it), else the page's, if either. */
+export function rememberedLanguage(): LanguageCode | undefined {
+  try {
+    const hint = safeStorage()?.getItem(HINT_KEY) ?? globalThis.document?.documentElement?.lang;
+    return hint ? resolveLanguage(hint) : undefined;
+  } catch {
+    // no storage, no document: none
+    return undefined;
+  }
 }
+
+// the last chosen language starts loading with the module, before Home Assistant is connected: no flash of English
+const remembered = rememberedLanguage();
+if (remembered) void ensureLanguage(remembered);
