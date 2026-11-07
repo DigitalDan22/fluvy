@@ -18,10 +18,6 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   finger as it drags. Its words are the fill's own wherever they read on it, else the card's: on Volt, Mint and Noir in
   dark they change once, at one level, the same up and down. The wash that follows the lamp is now worded Soft, with
   the brightness (#131).
-- Polish (`pl`) translation for the Fluvy interface, panel and cards, appliance and dashboard naming words, the demo
-  and Home Assistant integration messages.
-- Simplified Chinese (`zh-Hans`): the whole catalogue (2633 words), the word stems the generated dashboards read,
-  and the integration's own strings; Fluvy offers it in its settings and follows Home Assistant's `zh-Hans`.
 - Polish, thanks to @paproh (#130): every card, page, dialog and editor form, the settings panel's language list and
   the integration's own texts, with the naming words the automatic dashboards and the appliance cards read a Polish
   house by, as written or as an entity id writes them (a name's ł is read as l). It says Home Assistant's own words
