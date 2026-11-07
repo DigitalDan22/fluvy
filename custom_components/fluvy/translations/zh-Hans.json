@@ -1,0 +1,33 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Fluvy",
+        "description": "安装 Fluvy 的主题、卡片与设置面板。无需配置任何内容。"
+      }
+    },
+    "abort": {
+      "already_configured": "Fluvy 已设置。",
+      "single_instance_allowed": "Fluvy 已设置。"
+    }
+  },
+  "exceptions": {
+    "frontend_missing": {
+      "message": "custom_components/fluvy/frontend 中缺少 Fluvy 的前端文件。请通过 HACS 重新安装 Fluvy（或在开发副本中运行 `pnpm build`），然后重启 Home Assistant。"
+    }
+  },
+  "issues": {
+    "legacy_yaml": {
+      "title": "从 configuration.yaml 中删除 Fluvy 的旧配置行",
+      "description": "Fluvy 现在是一个集成，会自行注册面板与模块。请从 configuration.yaml 中删除以下内容（保留 `frontend: themes: !include_dir_merge_named themes`），检查配置后方便时重启 Home Assistant：\n\n{lines}"
+    },
+    "theme_not_loaded": {
+      "title": "Fluvy 的主题未加载",
+      "description": "Fluvy 已把主题写入 `{path}`，但 Home Assistant 的主题列表中没有名为 Fluvy 的主题。请在 configuration.yaml 中添加以下内容，然后运行操作 `frontend.reload_themes`（开发者工具 → 操作），无需重启：\n\n{yaml}\n\n如果这些行已经存在，请到 设置 → 系统 → 日志 中查看是否有主题加载失败。"
+    },
+    "resources_yaml_mode": {
+      "title": "添加 Fluvy 的仪表盘资源",
+      "description": "你的仪表盘资源由 YAML 管理，Fluvy 无法自行注册。请在 configuration.yaml 的 `lovelace: resources:` 下添加以下内容，然后刷新浏览器：\n\n```yaml\n  - url: {url}\n    type: module\n```\n\nFluvy 已在每个页面加载；此资源可让仪表盘在渲染前先加载它。"
+    }
+  }
+}

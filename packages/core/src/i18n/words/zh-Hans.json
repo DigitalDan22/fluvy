@@ -1,0 +1,240 @@
+{
+  "light": [
+    "灯",
+    "灯光",
+    "吊灯",
+    "台灯",
+    "落地灯",
+    "灯带",
+    "射灯",
+    "筒灯",
+    "吸顶灯",
+    "氛围灯",
+    "灯条",
+    "led",
+    "strip",
+    "spot"
+  ],
+  "outdoor": [
+    "庭院",
+    "花园",
+    "户外",
+    "车库",
+    "泳池",
+    "阳台",
+    "露台",
+    "门廊",
+    "porch",
+    "garden",
+    "outdoor",
+    "pool"
+  ],
+  "solar": [
+    "光伏",
+    "太阳能",
+    "逆变器",
+    "pv",
+    "solar",
+    "inverter",
+    "photovolt"
+  ],
+  "grid": [
+    "电表",
+    "电网",
+    "购电",
+    "买电",
+    "市电",
+    "grid",
+    "meter",
+    "import"
+  ],
+  "grid_export": [
+    "上网",
+    "卖电",
+    "余电",
+    "馈网",
+    "反送",
+    "export",
+    "feed_in",
+    "feed-in",
+    "feedin",
+    "returned"
+  ],
+  "battery": [
+    "电池",
+    "储能",
+    "battery",
+    "storage"
+  ],
+  "charger": [
+    "充电桩",
+    "充电器",
+    "壁挂",
+    "charger",
+    "wallbox",
+    "evse",
+    "ev_charg",
+    "charge_point"
+  ],
+  "home": [
+    "家庭",
+    "全屋",
+    "总负载",
+    "总用电",
+    "house",
+    "home",
+    "load"
+  ],
+  "today": [
+    "今日",
+    "今天",
+    "当日",
+    "daily"
+  ],
+  "not_appliance": [
+    "模式",
+    "定时",
+    "假期",
+    "预约",
+    "儿童",
+    "童锁",
+    "锁定",
+    "提示音",
+    "静音",
+    "指示灯",
+    "阀门",
+    "force",
+    "timer",
+    "holiday",
+    "boost",
+    "child",
+    "lock",
+    "enable",
+    "beep",
+    "sound",
+    "silent",
+    "indicator",
+    "valve"
+  ],
+  "generic": [
+    "温度",
+    "湿度",
+    "电量",
+    "功率",
+    "用电",
+    "状态",
+    "门",
+    "窗",
+    "漏水",
+    "水浸",
+    "开关",
+    "插座",
+    "人体",
+    "移动",
+    "存在"
+  ],
+  "place_noise": [
+    "传感器",
+    "温度",
+    "湿度",
+    "温控器",
+    "sensor",
+    "thermostat"
+  ],
+  "place_joins": [
+    "的",
+    "和",
+    "与",
+    "在",
+    "里"
+  ],
+  "appliance_never": [
+    "扫地机",
+    "扫地机器人",
+    "擦地机",
+    "暖被机",
+    "干衣机",
+    "吹风机",
+    "真空",
+    "vacuum",
+    "robot"
+  ],
+  "appliance_washer_dryer": [
+    "洗干一体",
+    "洗烘一体",
+    "洗烘"
+  ],
+  "appliance_dishwasher": [
+    "洗碗机"
+  ],
+  "appliance_washer": [
+    "洗衣机",
+    "洗衣"
+  ],
+  "appliance_dryer": [
+    "烘干机",
+    "干衣机"
+  ],
+  "appliance_microwave": [
+    "微波炉"
+  ],
+  "appliance_oven": [
+    "烤箱"
+  ],
+  "appliance_hob": [
+    "灶台",
+    "电磁炉",
+    "燃气灶"
+  ],
+  "appliance_hood": [
+    "油烟机",
+    "抽油烟机"
+  ],
+  "appliance_wine": [
+    "酒柜"
+  ],
+  "appliance_fridge": [
+    "冰箱",
+    "冷藏"
+  ],
+  "appliance_freezer": [
+    "冷冻",
+    "冰柜"
+  ],
+  "appliance_coffee": [
+    "咖啡机",
+    "咖啡"
+  ],
+  "appliance_kettle": [
+    "热水壶",
+    "电水壶",
+    "水壶"
+  ],
+  "appliance_air_fryer": [
+    "空气炸锅"
+  ],
+  "appliance_sandwich_maker": [
+    "三明治机",
+    "帕尼尼"
+  ],
+  "appliance_toaster": [
+    "吐司机",
+    "烤面包机"
+  ],
+  "appliance_blender": [
+    "破壁机",
+    "搅拌机",
+    "榨汁机"
+  ],
+  "appliance_feeder": [
+    "喂食器"
+  ],
+  "appliance_fountain": [
+    "宠物饮水机",
+    "饮水机"
+  ],
+  "appliance_litter_box": [
+    "猫砂盆",
+    "猫厕所"
+  ]
+}

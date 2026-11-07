@@ -217,7 +217,7 @@ creates any of them with one tap. Every one is rebuilt every time it opens, so a
 - **Everywhere**: Home Assistant's own pages in the same design while it wears the Fluvy theme — and left as Home
   Assistant draws them while it wears another.
 - **Thirteen languages** — English, Spanish, German, Dutch, French, Italian, Brazilian and European Portuguese, Turkish,
-  Hungarian, Japanese, Slovak and Polish — in every card, page and dialog, each fetched only when spoken.
+  Hungarian, Japanese, Slovak, Polish and Chinese (Simplified) — in every card, page and dialog, each fetched only when spoken.
 - **No telemetry, no network calls of its own**, no dependency but Lit, pinned to Home Assistant's version.
 
 ## Installation

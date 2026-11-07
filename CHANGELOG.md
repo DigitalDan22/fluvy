@@ -20,6 +20,8 @@ and the versions follow [Semantic Versioning](https://semver.org/).
   the brightness (#131).
 - Polish (`pl`) translation for the Fluvy interface, panel and cards, appliance and dashboard naming words, the demo
   and Home Assistant integration messages.
+- Simplified Chinese (`zh-Hans`): the whole catalogue (2633 words), the word stems the generated dashboards read,
+  and the integration's own strings; Fluvy offers it in its settings and follows Home Assistant's `zh-Hans`.
 
 ### Fixed
 
