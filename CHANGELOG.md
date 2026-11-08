@@ -5,6 +5,12 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.17.2] — 2026-11-08
+
+### Fixed
+
+- The clock size's words in every language, where 1.17.1 had them in English only (its release did not build).
+
 ## [1.17.1] — 2026-11-08
 
 ### Added
