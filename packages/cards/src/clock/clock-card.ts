@@ -17,7 +17,7 @@ import {
 import { Card, type CardEditor } from '../shared/base.js';
 import { FontsSettled } from '../shared/fonts.js';
 import { TextRuler } from '../shared/fit.js';
-import { heroAnalog, heroDigital, side, tile, type ClockModel } from './layouts.js';
+import { fillDigital, heroAnalog, heroDigital, side, tile, type ClockModel } from './layouts.js';
 import { ForecastFeed, offersDaily, readSky, type Forecast, type Sky } from './sky.js';
 import {
   calendarDate,
@@ -38,6 +38,11 @@ export interface ClockCardConfig extends FluvyCardConfig {
   face?: 'analog' | 'digital';
   /** hero = the big face / big digits · side = the compact face with the time beside it · tile = the 172 × 168 tile. */
   variant?: 'hero' | 'side' | 'tile';
+  /**
+   * Digital only: `fill` grows the time to the card's whole width (a wall display's clock), the date and the weather
+   * on one line under it; `standard` (default) is the variant's own size. An analog face ignores it.
+   */
+  size?: 'standard' | 'fill';
   numerals?: 'none' | 'quarters' | 'all';
   /** Analog: the second hand (default: on the hero face). Digital: the seconds as the unit on the baseline. */
   show_seconds?: boolean;
@@ -138,6 +143,34 @@ export class FluvyClockCard extends Card<ClockCardConfig> {
       }
       /* captions are fitted before they are drawn; this only guards the beat before a web font lands */
       .ck-caption {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      /* fill: the time as wide as the card, sized in em from its measure, so the unit and the gap scale with it */
+      .ck-fill {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .ck-fill__time {
+        justify-content: center;
+        height: auto;
+        margin-left: 0;
+        line-height: 1;
+      }
+      .ck-fill__time .ck-big__unit {
+        margin-left: 0.125em;
+        font-size: 0.375em;
+      }
+      .ck-fill__line {
+        max-width: 100%;
+        margin-top: 0.4em;
+        font-weight: 500;
+        line-height: 1.2;
+        color: var(--fluvy-text-secondary);
+        font-variant-numeric: tabular-nums;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -273,6 +306,11 @@ export class FluvyClockCard extends Card<ClockCardConfig> {
   }
 
   /** The config's `variant` (the look) — not the `layout` property Lovelace sets on the element. */
+  /** The time as wide as the card: digital faces only, any variant but the tile (which keeps its 172 × 168). */
+  private get fill(): boolean {
+    return this.config?.size === 'fill' && !this.analog && this.look !== 'tile';
+  }
+
   private get look(): 'hero' | 'side' | 'tile' {
     const value = this.config?.variant;
     return value === 'side' || value === 'tile' ? value : 'hero';
@@ -390,8 +428,9 @@ export class FluvyClockCard extends Card<ClockCardConfig> {
     const look = this.look;
     const spoken = [m.clock.time, m.clock.period].filter(Boolean).join(' ');
     this.faceLabel = spoken;
-    const body =
-      look === 'tile'
+    const body = this.fill
+      ? fillDigital(m)
+      : look === 'tile'
         ? tile(m)
         : look === 'side'
           ? side(m)

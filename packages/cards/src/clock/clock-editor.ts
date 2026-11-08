@@ -47,6 +47,7 @@ export const base: readonly BaseKey[] = [
 export const keys = configKeys<ClockCardConfig>()([
   'face',
   'variant',
+  'size',
   'numerals',
   'show_seconds',
   'hour12',
@@ -64,6 +65,7 @@ export const defaults: EditorDefaults = (config, hass) => {
   return {
     face: 'analog',
     variant: 'hero',
+    size: 'standard',
     numerals: 'none',
     show_seconds: analog && hero,
     hour12: resolveHour12(hass, undefined),
@@ -88,6 +90,8 @@ export function getConfigForm(): LovelaceConfigForm {
         selectField('variant', ['hero', 'side', 'tile']),
       ),
       grid(selectField('numerals', ['none', 'quarters', 'all']), textField('title')),
+      // the time as wide as the card: a digital face's
+      onlyWhen(({ face }) => face === 'digital', selectField('size', ['standard', 'fill'])),
       boolField('show_seconds'),
       boolField('hour12'),
       boolField('show_date'),

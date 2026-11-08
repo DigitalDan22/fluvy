@@ -103,6 +103,7 @@ export async function buildContext(
       ...(config.room_variant ? { room: config.room_variant } : {}),
       ...(config.camera_refresh ? { refresh: config.camera_refresh } : {}),
       ...(config.scenes_max ? { scenes: config.scenes_max } : {}),
+      ...(config.clock_size ? { clock: config.clock_size } : {}),
     },
     areas: config.areas,
     greetingTabs: config.greeting_tabs === 'show',

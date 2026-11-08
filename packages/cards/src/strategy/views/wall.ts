@@ -41,7 +41,13 @@ function wallView(ctx: StrategyContext): Section[] {
   );
   const left: Card[] = [
     helloCard(weather),
-    full('clock', { variant: 'side', ...(weather ? { weather } : {}) }),
+    full('clock', {
+      // fill: the digits as wide as the column, a wall display's clock; else the compact face beside the time
+      ...(style.clock === 'fill'
+        ? { face: 'digital', variant: 'hero', size: 'fill' }
+        : { variant: 'side' }),
+      ...(weather ? { weather } : {}),
+    }),
     ...readoutsCards(home, readings.shown, { variant: 'row' }),
     ...moreCard(readings),
     ...(scenes.length

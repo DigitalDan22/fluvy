@@ -138,6 +138,7 @@ there; *Recreate* takes them all back to their defaults):
 | `areas` | a list of area ids | wall | the rooms the wall shows, in that order, an empty one kept (default: every room with something in it) |
 | `camera_refresh` | `5`, `10` (default), `30` | security | seconds between the cameras' stills |
 | `scenes_max` | `4`, `6` (default), `8` | wall | how many scenes the wall offers as chips |
+| `clock_size` | `standard` (default), `fill` | wall | the wall's clock: the compact face beside the time, or the digital time as wide as its column |
 | `greeting_tabs` | `hide` (default), `show` | home, rooms, energy, security | the views as chips under the greeting too, besides the header's tabs (until 1.4 they always were) |
 | `caps` | a list's own number or `none` by its key (`caps: { lights: 12, humidity: none }`), or `none` for every list | all | how many of a long list a view shows (default: the house's caps, above, each with its "N more" row); the panel offers *Shortened* (the default) or *In full* |
 | `rooms` | by area id, a room's `include` and `exclude`, as the room card takes them: entity ids, patterns of ids, device ids or domains (`rooms: { kitchen: { exclude: [switch.dishwasher_*] } }`) | home, rooms, wall | what that room's card counts and fills by, whether the room is shown, and what its page holds; in the raw configuration only (the settings file never carries a house's entities) |

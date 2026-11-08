@@ -993,6 +993,7 @@ export class FluvyPanel extends LitElement {
       if (!host.isConnected) return; // the panel left meanwhile
       const close = sleep({
         clock: wall.clock,
+        clockSize: wall.clockSize,
         dim: wall.dim,
         weather: firstWeather(hass),
         hass: shown,

@@ -42,6 +42,7 @@ function follow(
 export function sleep(options: ScreensaverOptions): () => void {
   const saver = document.createElement('fluvy-wall-screensaver') as FluvyWallScreensaver;
   saver.clock = options.clock;
+  saver.size = options.clockSize ?? 'standard';
   saver.dim = options.dim;
   saver.weather = options.weather;
   saver.onWake = options.onWake;

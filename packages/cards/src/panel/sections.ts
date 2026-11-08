@@ -1620,6 +1620,24 @@ export function wall(ctx: PanelContext): TemplateResult {
           readonly: !admin,
           onToggle: (on) => edit({ clock: on }),
         })}
+      </div>
+      ${
+        settings.clock
+          ? html`<p class="fv-label pn-label">${ctx.t('wall.clock_size')}</p>
+              ${choice(
+                ctx,
+                (
+                  [
+                    ['standard', 'wall.clock_size_standard'],
+                    ['fill', 'wall.clock_size_fill'],
+                  ] as const
+                ).map(([size, word]) => chip(ctx.t(word), size, settings.clockSize === size)),
+                admin ? (key) => edit({ clockSize: key as WallSettings['clockSize'] }) : null,
+                2,
+              )}`
+          : nothing
+      }
+      <div class="pn-rows">
         ${listRow({
           icon: 'moon',
           title: ctx.t('wall.dim'),

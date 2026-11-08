@@ -4,12 +4,13 @@ import { css, html, LitElement, nothing, type PropertyValues } from 'lit';
 
 /*
  * The screensaver: a modal dialog in the browser's top layer (over every dialog of Home Assistant's), the wall's
- * background — or black — with the clock and the weather in a 480 column, or nothing. The touch that wakes the
- * wall ends here: it reaches no card. Escape does not close it (the wall has no keyboard); a touch does.
+ * background — or black — with the clock and the weather in a 480 column (or as wide as the screen), or nothing.
+ * The touch that wakes the wall ends here: it reaches no card. Escape does not close it (the wall has no keyboard); a touch does.
  */
 export class FluvyWallScreensaver extends LitElement {
   static override properties = {
     clock: { type: Boolean },
+    size: { type: String },
     dim: { type: Boolean },
     weather: { attribute: false },
     hass: { attribute: false },
@@ -59,6 +60,11 @@ export class FluvyWallScreensaver extends LitElement {
         --fluvy-card: transparent;
         --fluvy-border: transparent;
       }
+      /* fill: the clock as wide as the screen, a wall display's; capped by the height so a short screen keeps its date */
+      .column--fill {
+        width: calc(100vw - 64px);
+        --ck-fill-max: 52vh;
+      }
       dialog.is-dim .column {
         --fluvy-text: currentColor;
         --fluvy-text-secondary: currentColor;
@@ -67,6 +73,7 @@ export class FluvyWallScreensaver extends LitElement {
   ];
 
   declare clock: boolean;
+  declare size: 'standard' | 'fill';
   declare dim: boolean;
   declare weather: string | undefined;
   declare hass: HomeAssistant | undefined;
@@ -79,6 +86,7 @@ export class FluvyWallScreensaver extends LitElement {
   constructor() {
     super();
     this.clock = true;
+    this.size = 'standard';
     this.dim = false;
   }
 
@@ -112,6 +120,7 @@ export class FluvyWallScreensaver extends LitElement {
         type: 'custom:fluvy-clock-card',
         face: 'digital',
         variant: 'hero',
+        size: this.size === 'fill' ? 'fill' : 'standard',
         show_date: true,
         card_opacity: 100,
         ...(this.weather ? { weather: this.weather, show_forecast: false } : {}),
@@ -152,7 +161,7 @@ export class FluvyWallScreensaver extends LitElement {
       @click=${this.wake}
       @cancel=${(event: Event) => event.preventDefault()}
     >
-      <div class="column">${this.clockCard()}</div>
+      <div class="column ${this.size === 'fill' ? 'column--fill' : ''}">${this.clockCard()}</div>
     </dialog>`;
   }
 }

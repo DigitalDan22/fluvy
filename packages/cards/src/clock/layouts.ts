@@ -241,6 +241,38 @@ export function heroDigital(m: ClockModel): TemplateResult {
   `;
 }
 
+/* ---------- fill: the digits as wide as the surface (a wall, a screensaver) ---------- */
+
+/** The size the big time is measured at: `.ck-big`'s 64, its unit `.ck-big__unit`'s 24 beside it. */
+const FILL_BASE = 64;
+
+/**
+ * The digital time grown to the width it is given, as a wall display draws it: the widest time with its fullest unit
+ * is measured at 64 and scaled to the column, so the layout never moves with the hour. A surface that sets
+ * `--ck-fill-max` (the screensaver: a share of the screen's height) caps it, so a wide, short screen keeps the date.
+ * The date, and the weather when there is one, follow at a fifth of the time's size.
+ */
+export function fillDigital(m: ClockModel): TemplateResult {
+  const { time } = m.clock;
+  const unit = units(m)[0] ?? '';
+  const measured = m.ruler.width('ck-big', widest(time), 'ck-big__unit', unit);
+  // hidden (0) until the first layout: the hero's 64 meanwhile
+  const size =
+    measured > 0 ? Math.max(FILL_BASE, Math.floor((FILL_BASE * m.width) / measured)) : FILL_BASE;
+  const big = `min(${size}px, var(--ck-fill-max, ${size}px))`;
+  const small = `max(16px, calc(${big} * 0.2))`;
+  const { sky } = m;
+  const temperature =
+    sky && sky.temperature !== null ? `${degrees(m, sky.temperature)}${sky.unit}` : '';
+  const line = [m.date?.full, temperature, sky?.inline].filter(Boolean).join(' · ');
+  return html`<div class="ck-fill">
+    <p class="ck-big ck-fill__time" style="font-size:${big}">
+      <span>${time}</span>${unit ? html`<span class="ck-big__unit">${unit}</span>` : nothing}
+    </p>
+    ${line ? html`<p class="ck-fill__line" style="font-size:${small}">${line}</p>` : nothing}
+  </div>`;
+}
+
 /* ---------- side: the compact face with the time beside it ---------- */
 
 /**

@@ -407,6 +407,7 @@ const WALL_LABELS: ReadonlyArray<readonly [keyof WallSettings, StringKey]> = [
   ['dashboards', 'wall.dashboards'],
   ['after', 'wall.after'],
   ['clock', 'wall.clock'],
+  ['clockSize', 'wall.clock_size'],
   ['dim', 'wall.dim'],
   ['wakeEntity', 'wall.wake'],
   ['theme', 'wall.day_night'],

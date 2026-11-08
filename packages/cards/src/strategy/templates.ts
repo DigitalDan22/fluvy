@@ -185,6 +185,10 @@ export const TEMPLATES: readonly Template[] = [
       { key: 'areas', kind: 'areas', label: 'dashboard.areas' },
       THERMOSTAT,
       choice('scenes_max', 'dashboard.scenes', counts([4, 6, 8], 'dashboard.count')),
+      choice('clock_size', 'dashboard.clock', [
+        { value: 'standard', label: 'dashboard.clock_standard' },
+        { value: 'fill', label: 'dashboard.clock_fill' },
+      ]),
       CAPS,
     ],
   },

@@ -15,7 +15,7 @@ import { urlPathOf } from '../pages.js';
 import { walkShadow } from '../shell/dom.js';
 import { readDevice, writeDevice } from '../settings/device.js';
 import { safeSession } from '../storage.js';
-import type { EffectiveSettings, WallExit } from '../settings/schema.js';
+import type { EffectiveSettings, WallClockSize, WallExit } from '../settings/schema.js';
 import { createIdle, type Idle } from './idle.js';
 import { wallOn } from './on.js';
 import { nextChange, wallDark, type SunLike } from './schedule.js';
@@ -40,6 +40,8 @@ export interface WallState {
 export interface ScreensaverOptions {
   /** The clock (and the weather) on the screensaver; without it, the page under a veil. */
   readonly clock: boolean;
+  /** The clock in the 480 column, or as wide as the screen. */
+  readonly clockSize?: WallClockSize;
   /** Black instead of the wall's background. */
   readonly dim: boolean;
   /** The weather entity the clock shows, when the house has one. */
@@ -235,6 +237,7 @@ export function createWall(deps: WallDeps): WallHandle {
       closeSaver?.();
       closeSaver = pieces.sleep({
         clock: settings.clock,
+        clockSize: settings.clockSize,
         dim: settings.dim,
         weather,
         hass: deps.hass,

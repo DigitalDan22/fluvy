@@ -84,6 +84,8 @@ export interface FluvyStrategyConfig {
   camera_refresh?: CameraRefresh;
   /** How many scenes a wall offers (default 6). */
   scenes_max?: ScenesMax;
+  /** A wall's clock: the compact face beside the time (`standard`, default), or the time as wide as its column. */
+  clock_size?: 'standard' | 'fill';
   /** The dashboard's words in one language, whoever opens it (default: each person's). */
   language?: LanguageCode;
   /**
@@ -171,6 +173,7 @@ export interface CardStyle {
   readonly room?: RoomVariant;
   readonly refresh?: CameraRefresh;
   readonly scenes?: ScenesMax;
+  readonly clock?: 'standard' | 'fill';
 }
 
 export interface StrategyContext {

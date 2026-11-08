@@ -431,6 +431,17 @@ describe('the dashboard templates', () => {
       (await generate({ type: wall.type, scenes_max: 4 }, everything())).views,
     ).find((c) => c.type === 'custom:fluvy-chips-card') as unknown as { chips: unknown[] };
     expect(chips.chips.length).toBeLessThanOrEqual(4);
+    // a wall's clock as wide as its column: the digital face, filled; the compact face beside the time otherwise
+    const clockOf = async (extra: { clock_size?: 'fill' }) => {
+      const { views } = await generate({ type: wall.type, ...extra }, everything());
+      return cardsOf(views).find((c) => c.type === 'custom:fluvy-clock-card');
+    };
+    expect(await clockOf({ clock_size: 'fill' })).toMatchObject({
+      face: 'digital',
+      variant: 'hero',
+      size: 'fill',
+    });
+    expect(await clockOf({})).toMatchObject({ variant: 'side' });
   });
 
   it('keep only the options a template knows, each well formed', () => {

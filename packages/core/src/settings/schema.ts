@@ -68,6 +68,8 @@ export type WallTheme = 'dark' | 'follow' | 'sun' | 'hours';
 export type WallExit = 'button' | 'hold';
 /** The way back from a subview on a wall: a floating button with the view's title, or Home Assistant's header. */
 export type WallSubview = 'button' | 'header';
+/** The screensaver's clock: the 480 column's size, or the time as wide as the screen (a wall display's). */
+export type WallClockSize = 'standard' | 'fill';
 export const WALL_AFTER = [0, 2, 5, 10, 30] as const;
 export const WALL_NIGHT_DIM = [0, 20, 40, 60] as const;
 
@@ -101,6 +103,8 @@ export interface WallSettings {
   readonly after: (typeof WALL_AFTER)[number];
   /** The clock on the screensaver. */
   readonly clock: boolean;
+  /** How big the screensaver's clock is drawn. */
+  readonly clockSize: WallClockSize;
   /** The screensaver dims to black. */
   readonly dim: boolean;
   /** A `binary_sensor.` (motion, occupancy) that wakes the wall; '' none. */
@@ -217,6 +221,7 @@ export const HOUSE_DEFAULTS: HouseSettings = {
     dashboards: [],
     after: 10,
     clock: true,
+    clockSize: 'standard',
     dim: false,
     wakeEntity: '',
     theme: 'follow',
@@ -284,6 +289,9 @@ export function parseWall(raw: unknown): WallSettings {
       : d.dashboards,
     after: oneOfNumbers(value['after'], WALL_AFTER) ? value['after'] : d.after,
     clock: typeof value['clock'] === 'boolean' ? value['clock'] : d.clock,
+    clockSize: oneOf(value['clockSize'], ['standard', 'fill'] as const)
+      ? value['clockSize']
+      : d.clockSize,
     dim: typeof value['dim'] === 'boolean' ? value['dim'] : d.dim,
     wakeEntity: typeof wake === 'string' && wake.startsWith('binary_sensor.') ? wake : d.wakeEntity,
     theme: oneOf(value['theme'], ['dark', 'follow', 'sun', 'hours'] as const)

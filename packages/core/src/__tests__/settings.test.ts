@@ -294,6 +294,7 @@ describe('parsing stored settings', () => {
         dashboards: ['fluvy-wall', 7],
         after: 5,
         clock: false,
+        clockSize: 'fill',
         dim: true,
         wakeEntity: 'binary_sensor.hall_motion',
         theme: 'hours',
@@ -308,6 +309,7 @@ describe('parsing stored settings', () => {
       dashboards: ['fluvy-wall'],
       after: 5,
       clock: false,
+      clockSize: 'fill',
       dim: true,
       wakeEntity: 'binary_sensor.hall_motion',
       theme: 'hours',
@@ -321,6 +323,7 @@ describe('parsing stored settings', () => {
     expect(
       parseWall({
         after: 7,
+        clockSize: 'huge',
         wakeEntity: 'light.hall',
         theme: 'night',
         from: '25:00',
@@ -333,6 +336,8 @@ describe('parsing stored settings', () => {
     ).toEqual(WALL_DEFAULTS);
     // a wall saved before the way out could be chosen has the button
     expect(parseWall({ after: 5 }).exit).toBe('button');
+    // a wall saved before the clock's size could be chosen keeps the standard clock
+    expect(parseWall({ after: 5 }).clockSize).toBe('standard');
   });
 
   it('keeps the well-formed saved palettes, the first of each name, twelve at most', () => {

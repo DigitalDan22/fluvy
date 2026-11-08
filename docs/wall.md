@@ -27,7 +27,8 @@ Settings are never walls, so a tablet can always be administered from itself.
   - **Header**: Home Assistant's header, with its arrow and the view's name, in subviews only. The exit corner moves
     under it.
 - **Screensaver**: after 2, 5, 10 or 30 minutes without a touch (or never), the screen shows the clock and the weather
-  over the wall background, or dims to black. Any touch wakes it — that touch does nothing else. A motion or
+  over the wall background, or dims to black. *Clock size* draws that clock in its column (*Standard*) or as wide as
+  the screen (*Full width*, as a wall display does), capped by the screen's height. Any touch wakes it — that touch does nothing else. A motion or
   occupancy sensor chosen as *Wake on motion* (a dropdown of every one the house has, with its room) wakes it too.
   *See the screensaver → Preview* shows it over the settings, as the wall would show it now, until a tap.
 - **Day and night**: the wall is always dark, follows Home Assistant's own mode, follows the sun (`sun.sun`), or a
