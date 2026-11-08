@@ -5,6 +5,17 @@ and the versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.17.1] — 2026-11-08
+
+### Added
+
+- Wall settings: *Clock size* for the screensaver — *Standard* (the 480 column) or *Full width*, the time as wide as the
+  screen as a wall display draws it, capped by the screen's height so the date and the weather stay.
+- The Wall dashboard's *Clock* option (`clock_size`): *Full width* swaps the compact face beside the time for the
+  digital time as wide as its column.
+- The Clock card's `size: fill` (digital face): the time grown to the card's whole width, the date and the weather on
+  one line under it.
+
 ## [1.17.0] — 2026-11-07
 
 ### Visible on upgrade
